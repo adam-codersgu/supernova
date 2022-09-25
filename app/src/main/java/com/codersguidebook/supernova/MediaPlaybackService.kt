@@ -373,6 +373,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         mMediaSessionCompat.setMetadata(metadataBuilder.build())
     }
 
+    @Deprecated("Should retrieve the artwork from MediaSession.QueueItem.getDescription.getIconBitmap")
     private fun getArtwork(albumArtwork: String?) : Bitmap? {
         // set album artwork on player controls
         try {

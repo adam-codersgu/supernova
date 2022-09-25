@@ -1,8 +1,8 @@
 package com.codersguidebook.supernova
 
+import android.media.session.MediaSession.QueueItem
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.codersguidebook.supernova.entities.QueueItem
 import com.codersguidebook.supernova.entities.Song
 
 class PlaybackViewModel : ViewModel() {
