@@ -6,8 +6,11 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import kotlinx.parcelize.Parcelize
 
+/**
+ * Data class for mapping a song's metadata to a database table called music_library.
+ */
 @Parcelize
-@Entity(tableName = "music_table")
+@Entity(tableName = "music_library")
 data class Song(
     @PrimaryKey val songID: Long,
     @ColumnInfo(name = "song_track") var track: Int,
