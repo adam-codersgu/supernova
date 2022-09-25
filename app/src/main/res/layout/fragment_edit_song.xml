@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:scrollbars="none" >
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="12dp" >
+
+        <ImageView
+            android:id="@+id/editSongArtwork"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:clickable="true"
+            android:contentDescription="@string/set_album_artwork"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/editSongArtworkIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_edit"
+            android:clickable="true"
+            android:layout_margin="12dp"
+            android:contentDescription="@string/set_album_artwork"
+            app:layout_constraintBottom_toBottomOf="@id/editSongArtwork"
+            app:layout_constraintEnd_toEndOf="@id/editSongArtwork" />
+
+        <TextView
+            android:id="@+id/editSongInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
+            android:layout_marginVertical="8dp"
+            android:text="@string/edit_music"
+            android:textSize="14sp"
+            android:textColor="@color/accent"
+            app:layout_constraintTop_toBottomOf="@id/editSongArtwork" />
+
+        <TextView
+            android:id="@+id/editSongTitleHeading"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
+            android:layout_marginVertical="4dp"
+            android:text="@string/title"
+            android:textSize="12sp"
+            app:layout_constraintTop_toBottomOf="@id/editSongInfo" />
+
+        <EditText
+            android:id="@+id/editSongTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
+            android:layout_marginVertical="4dp"
+            android:textSize="16sp"
+            android:inputType="text"
+            android:maxLength="100"
+            android:hint="@string/title"
+            android:importantForAutofill="no"
+            app:layout_constraintTop_toBottomOf="@id/editSongTitleHeading" />
+
+        <TextView
+            android:id="@+id/editSongArtistHeading"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
+            android:layout_marginVertical="4dp"
+            android:text="@string/artist"
+            android:textSize="12sp"
+            app:layout_constraintTop_toBottomOf="@id/editSongTitle" />
+
+        <EditText
+            android:id="@+id/editSongArtist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
+            android:layout_marginVertical="4dp"
+            android:textSize="16sp"
+            android:inputType="text"
+            android:maxLength="100"
+            android:hint="@string/artist"
+            android:importantForAutofill="no"
+            app:layout_constraintTop_toBottomOf="@id/editSongArtistHeading" />
+
+        <TextView
+            android:id="@+id/editSongDiscHeading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
+            android:layout_marginVertical="4dp"
+            android:text="@string/disc"
+            android:textSize="12sp"
+            app:layout_constraintTop_toBottomOf="@id/editSongArtist"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <EditText
+            android:id="@+id/editSongDisc"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
+            android:layout_marginVertical="4dp"
+            android:textSize="16sp"
+            android:inputType="number"
+            android:maxLength="1"
+            android:hint="@string/disc"
+            android:importantForAutofill="no"
+            app:layout_constraintTop_toBottomOf="@id/editSongTrackHeading"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/editSongTrack" />
+
+        <TextView
+            android:id="@+id/editSongTrackHeading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
+            android:layout_marginVertical="4dp"
+            android:text="@string/track"
+            android:textSize="12sp"
+            app:layout_constraintTop_toBottomOf="@id/editSongArtist"
+            app:layout_constraintStart_toStartOf="@id/editSongTrack"/>
+
+        <EditText
+            android:id="@+id/editSongTrack"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
+            android:layout_marginVertical="4dp"
+            android:textSize="16sp"
+            android:inputType="number"
+            android:maxLength="3"
+            android:hint="@string/track"
+            android:importantForAutofill="no"
+            app:layout_constraintTop_toBottomOf="@id/editSongTrackHeading"
+            app:layout_constraintStart_toEndOf="@id/editSongDisc"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <TextView
+            android:id="@+id/editSongYearHeading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="4dp"
+            android:text="@string/year"
+            android:textSize="12sp"
+            app:layout_constraintTop_toBottomOf="@id/editSongDisc"
+            app:layout_constraintStart_toStartOf="@id/editSongYear"/>
+
+        <EditText
+            android:id="@+id/editSongYear"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
+            android:layout_marginVertical="4dp"
+            android:textSize="16sp"
+            android:inputType="number"
+            android:maxLength="4"
+            android:hint="@string/year"
+            android:importantForAutofill="no"
+            app:layout_constraintTop_toBottomOf="@id/editSongYearHeading"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/editSongTrack" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

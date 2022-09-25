@@ -1,0 +1,59 @@
+<resources>
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.MaterialComponents">
+        <item name="colorPrimary">@color/accent</item>
+        <item name="colorPrimaryVariant">@color/accent</item>
+        <item name="colorSecondary">@color/accent</item>
+        <item name="tabStyle">@style/Widget.Custom.TabLayout</item>
+        <item name="android:textViewStyle">@style/Widget.Custom.TextView</item>
+        <item name="materialButtonStyle">@style/Widget.MaterialComponents.Button</item>
+        <item name="navigationViewStyle">@style/Widget.Custom.NavigationView</item>
+    </style>
+
+    <style name="NavigationItemNoRipple">
+        <item name="android:colorControlHighlight">@android:color/transparent</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="Widget.Custom.TextView" parent="Widget.MaterialComponents.TextView">
+        <item name="android:ellipsize">none</item>
+        <item name="android:requiresFadingEdge">horizontal</item>
+    </style>
+
+    <style name="ScrollPopupTextViewStyle" parent="TextAppearance.AppCompat">
+        <item name="android:textSize">26sp</item>
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+
+    <style name="Widget.Custom.TabLayout" parent="Widget.MaterialComponents.TabLayout">
+        <item name="android:background">@color/tab_background</item>
+        <item name="tabBackground">@android:color/transparent</item>
+        <item name="tabTextColor">@color/onSurface60</item>
+        <item name="tabSelectedTextColor">?attr/colorOnSurface</item>
+        <item name="tabIndicatorColor">?attr/colorSecondary</item>
+        <item name="tabRippleColor">@color/accent</item>
+        <item name="android:elevation">14dp</item>
+        <item name="tabMode">fixed</item>
+        <item name="tabMaxWidth">0dp</item>
+        <item name="tabGravity">fill</item>
+        <item name="tabPaddingEnd">0dp</item>
+        <item name="tabPaddingStart">0dp</item>
+    </style>
+
+    <style name="Widget.Custom.NavigationView" parent="Widget.Design.NavigationView">
+        <item name="itemBackground">@drawable/menu_background_color_state</item>
+    </style>
+
+    <style name="Widget.Custom.Button" parent="Widget.MaterialComponents.Button">
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
+        <item name="android:tint">@color/onSurface60</item>
+        <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
+        <item name="android:scaleType">centerCrop</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:padding">0dp</item>
+    </style>
+</resources>

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item android:id="@+id/search"
+        android:title="@string/search_hint"
+        android:icon="@drawable/ic_search"
+        app:actionViewClass="android.widget.SearchView"
+        app:showAsAction="ifRoom" />
+
+    <item android:id="@+id/save"
+        android:title="@string/save"
+        android:visible="false"
+        app:showAsAction="ifRoom" />
+
+    <item android:id="@+id/done"
+        android:title="@string/done"
+        android:visible="false"
+        app:showAsAction="ifRoom" />
+
+    <item android:id="@+id/savePlayQueue"
+        android:title="@string/save_play_queue"
+        android:visible="false"
+        app:showAsAction="never" />
+
+    <group android:id="@+id/spotify_album_actions"
+        android:visible="false">
+        <item
+            android:id="@+id/spotify_play_next"
+            android:title="@string/play_next"
+            app:showAsAction="never" />
+
+        <item
+            android:id="@+id/spotify_add_playlist"
+            android:title="@string/add_playlist"
+            app:showAsAction="never" />
+    </group>
+
+    <group android:id="@+id/universal_playlist_actions"
+        android:visible="false">
+        <item android:id="@+id/playPlaylistNext"
+            android:title="@string/play_next"
+            app:showAsAction="never" />
+
+        <item android:id="@+id/queuePlaylist"
+            android:title="@string/add_que"
+            app:showAsAction="never" />
+    </group>
+
+    <group android:id="@+id/user_playlist_actions"
+        android:visible="false">
+        <item android:id="@+id/reorderPlaylist"
+            android:title="@string/reorder_playlist"
+            app:showAsAction="never" />
+
+        <item android:id="@+id/editPlaylist"
+            android:title="@string/edit_playlist"
+            app:showAsAction="never" />
+    </group>
+
+    <group android:id="@+id/menu_group_album_actions"
+        android:visible="false">
+        <item
+            android:id="@+id/album_play_next"
+            android:title="@string/play_next"
+            app:showAsAction="never" />
+
+        <item
+            android:id="@+id/album_add_queue"
+            android:title="@string/add_que"
+            app:showAsAction="never" />
+
+        <item
+            android:id="@+id/album_add_playlist"
+            android:title="@string/add_playlist"
+            app:showAsAction="never" />
+
+        <item android:id="@+id/album_view_artist"
+            android:title="@string/artist"
+            app:showAsAction="never" />
+
+        <item
+            android:id="@+id/album_edit_album_info"
+            android:title="@string/edit_album"
+            app:showAsAction="never" />
+    </group>
+
+    <group android:id="@+id/menu_group_artist_actions"
+        android:visible="false">
+        <item
+            android:id="@+id/artist_play_next"
+            android:title="@string/play_next"
+            app:showAsAction="never" />
+
+        <item
+            android:id="@+id/artist_add_queue"
+            android:title="@string/add_que"
+            app:showAsAction="never" />
+
+        <item
+            android:id="@+id/artist_add_playlist"
+            android:title="@string/add_playlist"
+            app:showAsAction="never" />
+
+        <item
+            android:id="@+id/artist_edit_artist_info"
+            android:title="@string/edit_artist"
+            app:showAsAction="never" />
+    </group>
+</menu>

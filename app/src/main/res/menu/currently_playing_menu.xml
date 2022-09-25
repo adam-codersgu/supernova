@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item android:id="@+id/search"
+        android:title="@string/search_hint"
+        android:icon="@drawable/ic_search"
+        app:actionViewClass="android.widget.SearchView" />
+
+    <item android:id="@+id/queue"
+        android:title="@string/play_queue"
+        android:icon="@drawable/ic_queue" />
+
+    <group android:id="@+id/menu_group_animations">
+
+        <item android:id="@+id/menu_animations"
+            android:title="@string/animations" >
+
+            <menu>
+                <item android:id="@+id/animation_play"
+                    android:title="@string/show_hide_animations" >
+                </item>
+
+                <item android:id="@+id/menu_animation_colour"
+                    android:title="@string/animation_colour"
+                    app:showAsAction="never">
+
+                    <menu>
+                        <item android:id="@+id/animation_red"
+                            android:title="@string/red" />
+                        <item android:id="@+id/animation_blue"
+                            android:title="@string/blue" />
+                        <item android:id="@+id/animation_night"
+                            android:title="@string/night" />
+                        <item android:id="@+id/animation_pastel"
+                            android:title="@string/pastel" />
+                    </menu>
+                </item>
+
+                <item android:id="@+id/menu_animation_drawable"
+                    android:title="@string/animation_images"
+                    app:showAsAction="never">
+
+                    <menu>
+                        <item android:id="@+id/animation_leaf"
+                            android:title="@string/leaves" />
+                        <item android:id="@+id/animation_space"
+                            android:title="@string/space" />
+                        <item android:id="@+id/animation_mandala"
+                            android:title="@string/mandala" />
+                        <item android:id="@+id/animation_animal"
+                            android:title="@string/animals" />
+                        <item android:id="@+id/animation_flower"
+                            android:title="@string/flowers" />
+                        <item android:id="@+id/animation_instruments"
+                            android:title="@string/instruments" />
+                        <item android:id="@+id/animation_custom"
+                            android:title="@string/custom_image" />
+                        <item android:id="@+id/change_custom_image"
+                            android:title="@string/manage_custom_images"
+                            android:visible="false" />
+                    </menu>
+                </item>
+
+                <item android:id="@+id/menu_animation_speed"
+                    android:title="@string/animation_speed"
+                    app:showAsAction="never">
+
+                    <menu>
+                        <item android:id="@+id/animation_fast"
+                            android:title="@string/fast" />
+                        <item android:id="@+id/animation_normal"
+                            android:title="@string/normal" />
+                        <item android:id="@+id/animation_slow"
+                            android:title="@string/slow" />
+                    </menu>
+                </item>
+
+                <item android:id="@+id/menu_more_settings"
+                    android:title="@string/more_settings"
+                    app:showAsAction="never" />
+            </menu>
+        </item>
+    </group>
+
+    <item android:id="@+id/artist"
+        android:title="@string/artist" />
+
+    <item android:id="@+id/album"
+        android:title="@string/album" />
+
+</menu>

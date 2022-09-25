@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="accent">#84C9FB</color>
+    <color name="accent12">#1F84C9FB</color>
+    <color name="onSurface60">#99FFFFFF</color>
+    <color name="primary12">#1FBB86FC</color>
+    <color name="tab_background">#111111</color>
+    <color name="preview_background">#121212</color>
+    <color name="fragment_background">#212121</color>
+
+    <color name="gold">#D4AF37</color>
+    <color name="silver">#C0C0C0</color>
+    <color name="bronze">#CD7F32</color>
+    <color name="gold60">#99D4AF37</color>
+    <color name="silver60">#99C0C0C0</color>
+    <color name="bronze60">#99CD7F32</color>
+
+    <!-- red colours -->
+    <color name="red1">#750000</color>
+    <color name="red2">#D32F2F</color>
+    <color name="red3">#C62828</color>
+    <color name="red4">#D50000</color>
+    <color name="red5">#B71C1C</color>
+    <color name="red6">#800000</color>
+    <color name="red7">#400000</color>
+
+    <!-- blue colours -->
+    <color name="blue1">#1565C0</color>
+    <color name="blue2">#3F51B5</color>
+    <color name="blue3">#3949AB</color>
+    <color name="blue4">#303F9F</color>
+    <color name="blue5">#283593</color>
+    <color name="blue6">#1A237E</color>
+    <color name="blue7">#0D47A1</color>
+
+    <!-- night colours -->
+    <color name="night1">#2C3531</color>
+    <color name="night2">#1A1A1D</color>
+    <color name="night3">#44000D</color>
+    <color name="night4">#29435C</color>
+    <color name="night5">#1F2833</color>
+    <color name="night6">#7B8993</color>
+    <color name="night7">#123269</color>
+
+    <!-- nav/pastel colours -->
+    <color name="nav_home">#659DBD</color>
+    <color name="nav_playing">#E27D60</color>
+    <color name="nav_playlists">#8EE4AF</color>
+    <color name="nav_artists">#E8A87C</color>
+    <color name="nav_albums">#C38D9E</color>
+    <color name="nav_songs">#41B3A3</color>
+    <color name="nav_settings">#F3D250</color>
+</resources>

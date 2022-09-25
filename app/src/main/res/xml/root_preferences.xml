@@ -1,0 +1,61 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory app:title="@string/playback_animations">
+
+        <SwitchPreferenceCompat
+            app:key="playAnimations"
+            app:defaultValue="true"
+            app:title="@string/show_animations" />
+
+        <ListPreference
+            app:defaultValue="@string/red"
+            app:entries="@array/colour_entries"
+            app:entryValues="@array/colour_entries"
+            app:key="colourAnimations"
+            app:title="@string/animation_colour"
+            app:useSimpleSummaryProvider="true" />
+
+        <ListPreference
+            app:defaultValue="@string/leaves"
+            app:entries="@array/drawable_entries"
+            app:entryValues="@array/drawable_entries"
+            app:key="drawableAnimations"
+            app:title="@string/animation_images"
+            app:useSimpleSummaryProvider="true" />
+
+        <Preference
+            app:title="@string/manage_custom_images"
+            android:fragment="com.codersguidebook.supernova.ui.currentlyPlaying.CustomAnimationFragment" />
+
+        <ListPreference
+            app:defaultValue="@string/normal"
+            app:entries="@array/drawable_speeds"
+            app:entryValues="@array/drawable_speeds"
+            app:key="speedAnimations"
+            app:title="@string/animation_speed"
+            app:useSimpleSummaryProvider="true" />
+
+        <SeekBarPreference
+            app:key="numberAnimations"
+            app:defaultValue="6"
+            app:title="Number of animation objects"
+            app:showSeekBarValue="true"
+            app:min="1"
+            android:max="10" />
+
+        <SeekBarPreference
+            app:key="spinAnimations"
+            app:defaultValue="20"
+            app:title="Spin speed"
+            app:min="1"
+            android:max="180" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/app_info">
+
+        <Preference
+            app:title="@string/about"
+            android:fragment="com.codersguidebook.supernova.ui.about.AboutFragment"/>
+    </PreferenceCategory>
+</PreferenceScreen>

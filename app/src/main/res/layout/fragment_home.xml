@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_marginHorizontal="8dp"
+    android:scrollbars="none" >
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/home_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="8dp" >
+
+        <RelativeLayout
+            android:id="@+id/homeSongOfTheDay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="parent" >
+
+            <TextView
+                android:id="@+id/textViewSongOfTheDay"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="20dp"
+                android:text="@string/song_day"
+                android:background="?attr/selectableItemBackground"
+                android:textSize="24sp" />
+
+            <ImageButton
+                android:id="@+id/refreshSongOfTheDay"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_refresh"
+                style="@style/Widget.Custom.Button"
+                android:layout_alignParentEnd="true"
+                android:layout_marginTop="13.5dp"
+                android:layout_marginEnd="10dp"
+                android:contentDescription="@string/refresh_today_s_song_of_the_day" />
+
+            <TextView
+                android:id="@+id/songOfTheDayNoContent"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:layout_marginVertical="10dp"
+                android:gravity="center"
+                android:text="@string/song_of_the_day_will_be_displayed_here"
+                android:textSize="16sp"
+                android:visibility="gone"
+                android:layout_below="@id/textViewSongOfTheDay" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/songOfTheDayRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textViewSongOfTheDay" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/homeFavourites"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/homeSongOfTheDay" >
+
+            <TextView
+                android:id="@+id/textViewFavourites"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="20dp"
+                android:background="?attr/selectableItemBackground"
+                android:text="@string/favourites"
+                android:textSize="24sp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/favouritesRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textViewFavourites" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/homeMostPlayed"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/homeFavourites" >
+
+            <TextView
+                android:id="@+id/textViewMostPlayed"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="20dp"
+                android:text="@string/most_played"
+                android:background="?attr/selectableItemBackground"
+                android:textSize="24sp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/mostPlayedRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textViewMostPlayed" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/homeRecentlyPlayed"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/homeMostPlayed" >
+
+            <TextView
+                android:id="@+id/textViewRecentlyPlayed"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="20dp"
+                android:text="@string/recently_played"
+                android:background="?attr/selectableItemBackground"
+                android:textSize="24sp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recentlyPlayedRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textViewRecentlyPlayed" />
+        </RelativeLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

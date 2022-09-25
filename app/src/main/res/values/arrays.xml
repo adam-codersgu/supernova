@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="colour_entries">
+        <item>@string/red</item>
+        <item>@string/blue</item>
+        <item>@string/night</item>
+        <item>@string/pastel</item>
+    </string-array>
+
+    <string-array name="drawable_entries">
+        <item>@string/leaves</item>
+        <item>@string/space</item>
+        <item>@string/mandala</item>
+        <item>@string/animals</item>
+        <item>@string/flowers</item>
+        <item>@string/instruments</item>
+        <item>@string/custom_image</item>
+    </string-array>
+
+    <string-array name="drawable_speeds">
+        <item>@string/fast</item>
+        <item>@string/normal</item>
+        <item>@string/slow</item>
+    </string-array>
+</resources>
