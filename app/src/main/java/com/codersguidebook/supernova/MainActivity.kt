@@ -11,7 +11,9 @@ import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.AudioManager
+import android.media.MediaDescription
 import android.media.MediaMetadataRetriever
+import android.media.session.MediaSession.QueueItem
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -47,10 +49,8 @@ import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.signature.ObjectKey
-import com.codersguidebook.supernova.*
 import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.entities.Playlist
-import com.codersguidebook.supernova.entities.QueueItem
 import com.codersguidebook.supernova.entities.Song
 import com.google.android.material.navigation.NavigationView
 import com.google.gson.Gson
