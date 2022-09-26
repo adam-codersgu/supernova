@@ -21,7 +21,7 @@ class ControlsFragment : Fragment() {
     private val binding get() = _binding!!
     private var fastForwarding = false
     private var fastRewinding = false
-    private val playbackViewModel: PlaybackViewModel by activityViewModels()
+    private val playQueueViewModel: PlayQueueViewModel by activityViewModels()
     private lateinit var callingActivity: MainActivity
 
     override fun onCreateView(
@@ -37,7 +37,7 @@ class ControlsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        playbackViewModel.currentlyPlayingSong.observe(viewLifecycleOwner, {
+        playQueueViewModel.currentlyPlayingSong.observe(viewLifecycleOwner, {
             if (it != null) {
                 binding.title.text = it.title
                 binding.artist.text = it.artist
@@ -65,21 +65,21 @@ class ControlsFragment : Fragment() {
             }
         })
 
-        playbackViewModel.isPlaying.observe(viewLifecycleOwner, { isPlaying ->
+        playQueueViewModel.isPlaying.observe(viewLifecycleOwner, { isPlaying ->
             isPlaying?.let {
                 if (it) binding.btnPlay.setImageResource(R.drawable.ic_pause)
                 else binding.btnPlay.setImageResource(R.drawable.ic_play)
             }
         })
 
-        playbackViewModel.currentPlaybackPosition.observe(viewLifecycleOwner, { position ->
+        playQueueViewModel.currentPlaybackPosition.observe(viewLifecycleOwner, { position ->
             position?.let {
                 binding.songProgressBar.progress = position
             }
         })
 
         // keep track of currently playing song duration
-        playbackViewModel.currentPlaybackDuration.observe(viewLifecycleOwner, { duration ->
+        playQueueViewModel.currentPlaybackDuration.observe(viewLifecycleOwner, { duration ->
             duration?.let {
                 binding.songProgressBar.max = it
             }
@@ -137,8 +137,8 @@ class ControlsFragment : Fragment() {
     override fun onResume() {
         super.onResume()
 
-        binding.songProgressBar.max = playbackViewModel.currentPlaybackDuration.value ?: 0
-        binding.songProgressBar.progress = playbackViewModel.currentPlaybackPosition.value ?: 0
+        binding.songProgressBar.max = playQueueViewModel.currentPlaybackDuration.value ?: 0
+        binding.songProgressBar.progress = playQueueViewModel.currentPlaybackPosition.value ?: 0
     }
 
     override fun onDestroyView() {

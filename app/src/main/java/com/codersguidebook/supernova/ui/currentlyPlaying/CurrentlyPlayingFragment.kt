@@ -39,7 +39,7 @@ import java.util.*
 
 class CurrentlyPlayingFragment : Fragment() {
 
-    private val playbackViewModel: PlaybackViewModel by activityViewModels()
+    private val playQueueViewModel: PlayQueueViewModel by activityViewModels()
     private var currentlyPlayingSong: Song? = null
     private var _binding: FragmentCurrentlyPlayingBinding? = null
     private val binding get() = _binding!!
@@ -76,7 +76,7 @@ class CurrentlyPlayingFragment : Fragment() {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
         
         // get information about the currently playing song
-        playbackViewModel.currentlyPlayingSong.observe(viewLifecycleOwner, { song ->
+        playQueueViewModel.currentlyPlayingSong.observe(viewLifecycleOwner, { song ->
             song?.let {
                 currentlyPlayingSong = it
                 binding.title.text = it.title
@@ -108,7 +108,7 @@ class CurrentlyPlayingFragment : Fragment() {
         })
 
         // check whether a song is currently playing
-        playbackViewModel.isPlaying.observe(viewLifecycleOwner, { playing ->
+        playQueueViewModel.isPlaying.observe(viewLifecycleOwner, { playing ->
             playing?.let {
                 if (it) binding.btnPlay.setImageResource(R.drawable.ic_pause)
                 else binding.btnPlay.setImageResource(R.drawable.ic_play)
@@ -116,7 +116,7 @@ class CurrentlyPlayingFragment : Fragment() {
         })
 
         // keep track of currently playing song duration
-        playbackViewModel.currentPlaybackDuration.observe(viewLifecycleOwner, { duration ->
+        playQueueViewModel.currentPlaybackDuration.observe(viewLifecycleOwner, { duration ->
             duration?.let {
                 binding.currentSeekBar.max = it
                 binding.currentMax.text = SimpleDateFormat("mm:ss", Locale.UK).format(it)
@@ -124,7 +124,7 @@ class CurrentlyPlayingFragment : Fragment() {
         })
 
         // keep track of currently playing song position
-        playbackViewModel.currentPlaybackPosition.observe(viewLifecycleOwner, { position ->
+        playQueueViewModel.currentPlaybackPosition.observe(viewLifecycleOwner, { position ->
             position?.let {
                 binding.currentSeekBar.progress = position
                 binding.currentPosition.text = SimpleDateFormat("mm:ss", Locale.UK).format(it)

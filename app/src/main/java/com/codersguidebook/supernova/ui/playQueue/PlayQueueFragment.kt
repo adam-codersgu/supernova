@@ -17,7 +17,7 @@ import com.codersguidebook.supernova.entities.Song
 class PlayQueueFragment : Fragment() {
     private var _binding: FragmentWithRecyclerViewBinding? = null
     private val binding get() = _binding!!
-    private val playbackViewModel: PlaybackViewModel by activityViewModels()
+    private val playQueueViewModel: PlayQueueViewModel by activityViewModels()
     private lateinit var callingActivity: MainActivity
     private lateinit var playQueueAdapter: PlayQueueAdapter
     private val itemTouchHelper by lazy {
@@ -33,7 +33,7 @@ class PlayQueueFragment : Fragment() {
                     super.clearView(recyclerView, viewHolder)
 
                     viewHolder.itemView.alpha = 1.0f
-                    playbackViewModel.currentPlayQueue.value = playQueueAdapter.playQueue
+                    playQueueViewModel.currentPlayQueue.value = playQueueAdapter.playQueue
                 }
 
                 override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
@@ -70,7 +70,7 @@ class PlayQueueFragment : Fragment() {
         binding.root.itemAnimator = DefaultItemAnimator()
         binding.root.adapter = playQueueAdapter
 
-        playbackViewModel.currentPlayQueue.observe(viewLifecycleOwner, { queue ->
+        playQueueViewModel.currentPlayQueue.observe(viewLifecycleOwner, { queue ->
             queue?.let {
                 if (playQueueAdapter.playQueue.size > it.size) {
                     // Songs removed from play queue
@@ -92,7 +92,7 @@ class PlayQueueFragment : Fragment() {
             }
         })
 
-        playbackViewModel.currentlyPlayingQueueID.observe(viewLifecycleOwner, { position ->
+        playQueueViewModel.currentlyPlayingQueueID.observe(viewLifecycleOwner, { position ->
             position?.let { playQueueAdapter.currentlyPlayingSongChanged(it) }
         })
 

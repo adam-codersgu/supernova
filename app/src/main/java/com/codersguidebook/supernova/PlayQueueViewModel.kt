@@ -5,7 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.codersguidebook.supernova.entities.Song
 
-class PlaybackViewModel : ViewModel() {
+class PlayQueueViewModel : ViewModel() {
     var currentPlayQueue = MutableLiveData<List<QueueItem>>()
     var currentPlaybackDuration = MutableLiveData<Int>()
     var currentPlaybackPosition = MutableLiveData<Int>()
