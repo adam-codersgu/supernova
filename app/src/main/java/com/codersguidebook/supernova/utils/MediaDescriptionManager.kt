@@ -2,10 +2,11 @@ package com.codersguidebook.supernova.utils
 
 import android.content.Context
 import android.content.ContextWrapper
-import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaDescription
+import android.net.Uri
+import android.os.Bundle
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Song
 import java.io.File
@@ -29,40 +30,74 @@ class MediaDescriptionManager(context: Context) {
     /**
      * Uses the data for a given Song object to construct a MediaDescription instance.
      *
-     * @param song - The Song object that the MediaDescription object should be built for
-     * @return MediaDescription object detailing the details of the supplied song
+     * @param song - The Song object that the MediaDescription object should be built for.
+     * @return MediaDescription object detailing the details of the supplied song.
      */
-    fun buildMediaDescription(song: Song): MediaDescription {
+    fun buildDescription(song: Song): MediaDescription {
+        val bundle = Bundle()
+        bundle.putString("album", song.albumName)
+
         return MediaDescription.Builder()
-            .setMediaId(song.songID.toString())
-            .setIconBitmap(getArtwork(song.albumID))
+            .setExtras(bundle)
+            .setIconBitmap(getArtworkAsBitmap(song.albumId))
+            .setMediaId(song.songId.toString())
+            .setMediaUri(Uri.parse(song.uri))
+            .setSubtitle(song.artist)
+            .setTitle(song.title)
             .build()
     }
 
     /**
-     * TODO: Implement
-     *  Returns default bitmap if an error occurs
+     * Retrieve the album artwork for a given album ID. If no artwork is found,
+     * then a default artwork image is returned instead.
+     *
+     * @param albumId - The ID of the album that artwork should be retrieved for.
+     * @return A Bitmap representation of the album artwork.
      */
-    private fun getArtwork(albumArtwork: String?) : Bitmap {
-        // set album artwork on player controls
-        try {
-            return BitmapFactory.Options().run {
-                inJustDecodeBounds = true
-                val cw = ContextWrapper(applicationContext)
-                val directory = cw.getDir("albumArt", Context.MODE_PRIVATE)
-                val f = File(directory, "$albumArtwork.jpg")
-                BitmapFactory.decodeStream(FileInputStream(f))
+    private fun getArtworkAsBitmap(albumId: String?) : Bitmap {
+        if (albumId != null) {
+            try {
+                return BitmapFactory.Options().run {
+                    inJustDecodeBounds = true
+                    val contextWrapper = ContextWrapper(applicationContext)
+                    val imageDirectory = contextWrapper.getDir("albumArt", Context.MODE_PRIVATE)
+                    val imageFile = File(imageDirectory, "$albumId.jpg")
+                    BitmapFactory.decodeStream(FileInputStream(imageFile))
 
-                // Calculate inSampleSize. width and height are in pixels
-                inSampleSize = calculateInSampleSize(this)
-
-                // Decode bitmap with inSampleSize set
-                inJustDecodeBounds = false
-
-                BitmapFactory.decodeStream(FileInputStream(f))
-            }
-        } catch (_: FileNotFoundException) { }
+                    inSampleSize = calculateInSampleSize(this)
+                    inJustDecodeBounds = false
+                    BitmapFactory.decodeStream(FileInputStream(imageFile))
+                }
+            } catch (_: FileNotFoundException) { }
+        }
         // FIXME: Could maybe try Resources.getSystem() for resources - either way this needs testing
+        // If an error has occurred or the album ID is null, then return a default artwork image
         return BitmapFactory.decodeResource(applicationContext.resources, R.drawable.no_album_artwork)
+    }
+
+    /**
+     * Calculate an inSampleSize value that can be used to scale the
+     * dimensions of a Bitmap image. Useful for compressing large images.
+     *
+     * @param options - The BitmapFactory.Options instance the should be used to
+     * calculate the inSampleSize value for.
+     * @return An integer inSampleSize value.
+     */
+    private fun calculateInSampleSize(options: BitmapFactory.Options): Int {
+        val reqWidth = 100; val reqHeight = 100
+        val (height: Int, width: Int) = options.run { outHeight to outWidth }
+        var inSampleSize = 1
+
+        if (height > reqHeight || width > reqWidth) {
+            val halfHeight = height / 2; val halfWidth = width / 2
+
+            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
+            // height and width larger than the requested height and width.
+            while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                inSampleSize *= 2
+            }
+        }
+
+        return inSampleSize
     }
 }

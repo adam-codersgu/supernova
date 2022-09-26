@@ -11,7 +11,6 @@ import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.AudioManager
-import android.media.MediaDescription
 import android.media.MediaMetadataRetriever
 import android.media.session.MediaSession.QueueItem
 import android.net.Uri
@@ -52,6 +51,7 @@ import com.bumptech.glide.signature.ObjectKey
 import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.utils.MediaDescriptionManager
 import com.google.android.material.navigation.NavigationView
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -68,18 +68,19 @@ class MainActivity : AppCompatActivity() {
     private var currentPlaybackPosition = 0
     private var currentPlaybackDuration = 0
     var playQueue = mutableListOf<QueueItem>()
-    private val playbackViewModel: PlaybackViewModel by viewModels()
+    private val playQueueViewModel: PlayQueueViewModel by viewModels()
     private var allPlaylists = listOf<Playlist>()
     private var musicDatabase: MusicDatabase? = null
     var completeLibrary = listOf<Song>()
     private var pbState = STATE_STOPPED
-    private var currentlyPlayingQueueID = 0
+    private var currentlyPlayingQueueItemId = 0L
     private lateinit var mediaBrowser: MediaBrowserCompat
     private lateinit var musicViewModel: MusicViewModel
     private lateinit var searchView: SearchView
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
+    private lateinit var mediaDescriptionManager: MediaDescriptionManager
 
     companion object {
         private const val QUEUE = "queue"
@@ -123,49 +124,49 @@ class MainActivity : AppCompatActivity() {
                     val playbackPosition = state.position.toInt()
                     if (state.extras != null) {
                         val playbackDuration = state.extras!!.getInt("duration")
-                        playbackViewModel.currentPlaybackDuration.value = playbackDuration
+                        playQueueViewModel.currentPlaybackDuration.value = playbackDuration
                     }
-                    playbackViewModel.currentPlaybackPosition.value = playbackPosition
-                    playbackViewModel.isPlaying.value = true
+                    playQueueViewModel.currentPlaybackPosition.value = playbackPosition
+                    playQueueViewModel.isPlaying.value = true
                 }
                 STATE_PAUSED -> {
                     pbState = STATE_PAUSED
                     val playbackPosition = state.position.toInt()
                     if (state.extras != null) {
                         val playbackDuration = state.extras!!.getInt("duration")
-                        playbackViewModel.currentPlaybackDuration.value = playbackDuration
+                        playQueueViewModel.currentPlaybackDuration.value = playbackDuration
                     }
-                    playbackViewModel.currentPlaybackPosition.value = playbackPosition
-                    playbackViewModel.isPlaying.value = false
+                    playQueueViewModel.currentPlaybackPosition.value = playbackPosition
+                    playQueueViewModel.isPlaying.value = false
                 }
                 STATE_STOPPED -> {
                     pbState = STATE_STOPPED
-                    playbackViewModel.isPlaying.value = false
-                    playbackViewModel.currentPlayQueue.value = mutableListOf()
-                    playbackViewModel.currentlyPlayingQueueID.value = 0
-                    playbackViewModel.currentlyPlayingSong.value = null
-                    playbackViewModel.currentPlaybackDuration.value = 0
-                    playbackViewModel.currentPlaybackPosition.value = 0
+                    playQueueViewModel.isPlaying.value = false
+                    playQueueViewModel.currentPlayQueue.value = mutableListOf()
+                    playQueueViewModel.currentlyPlayingQueueID.value = 0
+                    playQueueViewModel.currentlyPlayingSong.value = null
+                    playQueueViewModel.currentPlaybackDuration.value = 0
+                    playQueueViewModel.currentPlaybackPosition.value = 0
                 }
                 STATE_SKIPPING_TO_NEXT -> {
                     if (state.extras != null) {
                         val songIsFinished = state.extras!!.getBoolean("finished")
                         val currentQueueItem = playQueue.find {
-                            it.queueID == currentlyPlayingQueueID
+                            it.queueID == currentlyPlayingQueueItemId
                         }
                         if (songIsFinished && currentQueueItem != null) songFinished(currentQueueItem.song)
 
                         val repeatSetting = sharedPreferences.getInt("repeat", PlaybackStateCompat.REPEAT_MODE_NONE)
                         when {
                             repeatSetting == PlaybackStateCompat.REPEAT_MODE_ONE -> {}
-                            playQueue.isNotEmpty() && playQueue[playQueue.size - 1].queueID != currentlyPlayingQueueID -> {
+                            playQueue.isNotEmpty() && playQueue[playQueue.size - 1].queueID != currentlyPlayingQueueItemId -> {
                                 val index = playQueue.indexOfFirst {
-                                    it.queueID == currentlyPlayingQueueID
+                                    it.queueID == currentlyPlayingQueueItemId
                                 }
-                                currentlyPlayingQueueID = playQueue[index + 1].queueID
+                                currentlyPlayingQueueItemId = playQueue[index + 1].queueID
                             }
                             // we have reached the end of the queue. check whether we should start over from the beginning
-                            repeatSetting == PlaybackStateCompat.REPEAT_MODE_ALL -> currentlyPlayingQueueID = playQueue[0].queueID
+                            repeatSetting == PlaybackStateCompat.REPEAT_MODE_ALL -> currentlyPlayingQueueItemId = playQueue[0].queueID
                             else -> {
                                 mediaController.transportControls.stop()
                                 return
@@ -179,11 +180,11 @@ class MainActivity : AppCompatActivity() {
                     } else mediaController.transportControls.stop()
                 }
                 STATE_SKIPPING_TO_PREVIOUS -> {
-                    if (playQueue.isNotEmpty() && currentlyPlayingQueueID != playQueue[0].queueID) {
+                    if (playQueue.isNotEmpty() && currentlyPlayingQueueItemId != playQueue[0].queueID) {
                         val index = playQueue.indexOfFirst {
-                            it.queueID == currentlyPlayingQueueID
+                            it.queueID == currentlyPlayingQueueItemId
                         }
-                        currentlyPlayingQueueID = playQueue[index - 1].queueID
+                        currentlyPlayingQueueItemId = playQueue[index - 1].queueID
                         lifecycleScope.launch {
                             updateCurrentlyPlaying()
                             if (pbState == STATE_PLAYING) play()
@@ -206,6 +207,7 @@ class MainActivity : AppCompatActivity() {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         musicDatabase = MusicDatabase.getDatabase(this, lifecycleScope)
         musicViewModel = ViewModelProvider(this)[MusicViewModel::class.java]
+        mediaDescriptionManager = MediaDescriptionManager(this)
 
         // set up channel for music player notification
         createChannel()
@@ -268,29 +270,29 @@ class MainActivity : AppCompatActivity() {
             songs.let { completeLibrary = it.toMutableList() }
         }
 
-        playbackViewModel.currentPlayQueue.observe(this) { queue ->
+        playQueueViewModel.currentPlayQueue.observe(this) { queue ->
             queue?.let {
                 playQueue = queue.toMutableList()
                 savePlayQueue()
             }
         }
 
-        playbackViewModel.currentlyPlayingQueueID.observe(this) { id ->
+        playQueueViewModel.currentlyPlayingQueueID.observe(this) { id ->
             id?.let {
-                currentlyPlayingQueueID = id
+                currentlyPlayingQueueItemId = id
                 savePlayQueueID()
             }
         }
 
         // keep track of currently playing song position
-        playbackViewModel.currentPlaybackPosition.observe(this) { position ->
+        playQueueViewModel.currentPlaybackPosition.observe(this) { position ->
             position?.let {
                 currentPlaybackPosition = it
             }
         }
 
         // keep track of currently playing song duration
-        playbackViewModel.currentPlaybackDuration.observe(this) { duration ->
+        playQueueViewModel.currentPlaybackDuration.observe(this) { duration ->
             duration?.let {
                 currentPlaybackDuration = it
             }
@@ -368,7 +370,7 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(applicationContext, "Play queue unshuffled", Toast.LENGTH_SHORT).show()
             } else {
                 val currentQueueItem = playQueue.find {
-                    it.queueID == currentlyPlayingQueueID
+                    it.queueID == currentlyPlayingQueueItemId
                 }
                 if (currentQueueItem != null) {
                     playQueue.remove(currentQueueItem)
@@ -377,7 +379,7 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(applicationContext, "Play queue shuffled", Toast.LENGTH_SHORT).show()
                 }
             }
-            playbackViewModel.currentPlayQueue.value = playQueue
+            playQueueViewModel.currentPlayQueue.value = playQueue
         }
         
         val editor = sharedPreferences.edit()
@@ -395,7 +397,7 @@ class MainActivity : AppCompatActivity() {
             }
             if (shuffle) playQueue.shuffle()
 
-            currentlyPlayingQueueID = if (shuffle) playQueue[0].queueID
+            currentlyPlayingQueueItemId = if (shuffle) playQueue[0].queueID
             else startSong ?: 0
 
             val editor = sharedPreferences.edit()
@@ -408,18 +410,18 @@ class MainActivity : AppCompatActivity() {
 
     private suspend fun updateCurrentlyPlaying() {
         val index = playQueue.indexOfFirst {
-            it.queueID == currentlyPlayingQueueID
+            it.queueID == currentlyPlayingQueueItemId
         }
         val currentQueueItem = if (playQueue.isNotEmpty() && index != -1) playQueue[index]
         else null
         // need to retrieve up-to-date song info because properties may have changed since the play queue was created
         val upToDateSong = if (currentQueueItem != null) completeLibrary.find { songs ->
-            songs.songID == currentQueueItem.song.songID
+            songs.songId == currentQueueItem.song.songID
         } else null
         if (upToDateSong != null) withContext(Dispatchers.IO) {
-            playbackViewModel.currentlyPlayingSong.postValue(upToDateSong)
-            playbackViewModel.currentPlayQueue.postValue(playQueue)
-            playbackViewModel.currentlyPlayingQueueID.postValue(currentlyPlayingQueueID)
+            playQueueViewModel.currentlyPlayingSong.postValue(upToDateSong)
+            playQueueViewModel.currentPlayQueue.postValue(playQueue)
+            playQueueViewModel.currentlyPlayingQueueID.postValue(currentlyPlayingQueueItemId)
             val bundle = Bundle()
             // convert the Song object for each song to JSON and store it in a bundle
             val gPretty = GsonBuilder().setPrettyPrinting().create().toJson(upToDateSong)
@@ -439,54 +441,60 @@ class MainActivity : AppCompatActivity() {
 
     private fun savePlayQueueID() = lifecycleScope.launch(Dispatchers.IO) {
         val editor = sharedPreferences.edit()
-        editor.putInt(CURRENTLY_PLAYING_QUEUE_ID, currentlyPlayingQueueID)
+        editor.putInt(CURRENTLY_PLAYING_QUEUE_ID, currentlyPlayingQueueItemId)
         editor.apply()
     }
 
     private fun play() = mediaController.transportControls.play()
 
-    fun addSongsToPlayQueue(songs: List<Song>, end: Boolean) = lifecycleScope.launch(Dispatchers.Main) {
-        for ((i, s) in songs.withIndex()) {
-            val sortedQueue = playQueue.sortedByDescending {
-                it.queueID
-            }
+    /**
+     * Add a list of songs to the play queue. The songs can be added to the end of the play queue
+     * or after the currently playing song.
+     *
+     * @param songs - A list containing Song objects that should be added to the play queue.
+     * @param addSongsToEndOfQueue - A Boolean indicating whether the songs should be added to
+     * the end of the play queue (true) or after the currently playing song (false).
+     * @return
+     */
+    // TODO: Should this method maybe be moved to PlayQueueViewModel?
+    fun addSongsToPlayQueue(songs: List<Song>, addSongsToEndOfQueue: Boolean) = lifecycleScope.launch(Dispatchers.Main) {
+        for (song in songs) {
+            val mediaDescription = mediaDescriptionManager.buildDescription(song)
 
-            val highestQueueID = if (sortedQueue.isNotEmpty()) sortedQueue[0].queueID
+            val sortedQueue = playQueue.sortedByDescending {
+                it.queueId
+            }
+            val highestQueueId = if (sortedQueue.isNotEmpty()) sortedQueue[0].queueId
             else -1
 
-            val queueItem = QueueItem(highestQueueID + 1, s)
-            if (end || playQueue.isEmpty()) playQueue.add(queueItem)
+            val queueItem = QueueItem(mediaDescription, highestQueueId + 1)
+            if (addSongsToEndOfQueue || playQueue.isEmpty()) playQueue.add(queueItem)
             else {
-                val index = playQueue.indexOfFirst {
-                    it.queueID == currentlyPlayingQueueID
+                val indexOfCurrentlyPlayingQueueItem = playQueue.indexOfFirst {
+                    it.queueId == currentlyPlayingQueueItemId
                 }
-                // The add index is + 1 to find the position after the currently playing song
-                // and + i to also incorporate the number of preceding songs which have already been added
-                playQueue.add(index + 1 + i, queueItem)
+                playQueue.add(indexOfCurrentlyPlayingQueueItem + 1, queueItem)
             }
         }
-        playbackViewModel.currentPlayQueue.value = playQueue
-        if (songs.size > 1) Toast.makeText(
-            this@MainActivity,
-            "Your songs have been added to the play queue",
-            Toast.LENGTH_SHORT
-        ).show()
-        else Toast.makeText(
-            this@MainActivity,
-            songs[0].title + " has been added to the play queue",
-            Toast.LENGTH_SHORT
-        ).show()
+
+        playQueueViewModel.currentPlayQueue.value = playQueue
+        // TODO: In future, could add a parameter called message that provides a better description.
+        //  e.g. "Album Dilla Joints added to the play queue" or "Artist Gordon Lightfoot added to the play queue".
+        if (songs.size > 1) Toast.makeText(this@MainActivity,
+            "Your songs have been added to the play queue", Toast.LENGTH_SHORT).show()
+        else Toast.makeText(this@MainActivity,
+            songs[0].title + " has been added to the play queue", Toast.LENGTH_SHORT).show()
     }
 
     fun removeQueueItem(index: Int) {
         if (playQueue.isNotEmpty() && index != -1) {
             // Check if the currently playing song is being removed from the play queue
-            val currentlyPlayingSongRemoved = playQueue[index].queueID == currentlyPlayingQueueID
+            val currentlyPlayingSongRemoved = playQueue[index].queueID == currentlyPlayingQueueItemId
 
             playQueue.removeAt(index)
 
             if (currentlyPlayingSongRemoved) {
-                currentlyPlayingQueueID = when {
+                currentlyPlayingQueueItemId = when {
                     playQueue.isEmpty() -> {
                         val mediaController = MediaControllerCompat.getMediaController(this@MainActivity)
                         mediaController.transportControls.stop()
@@ -501,14 +509,14 @@ class MainActivity : AppCompatActivity() {
                     if (pbState == STATE_PLAYING) play()
                 }
             }
-            playbackViewModel.currentPlayQueue.postValue(playQueue)
+            playQueueViewModel.currentPlayQueue.postValue(playQueue)
         }
     }
 
     fun seekTo(position: Int) = mediaController.transportControls.seekTo(position.toLong())
 
     fun skipToQueueItem(position: Int) {
-        currentlyPlayingQueueID = playQueue[position].queueID
+        currentlyPlayingQueueItemId = playQueue[position].queueID
         lifecycleScope.launch {
             updateCurrentlyPlaying()
             play()
@@ -646,7 +654,7 @@ class MainActivity : AppCompatActivity() {
         when {
             date != lastUpdate -> {
                 val song = completeLibrary.random()
-                songIDList.add(0, song.songID)
+                songIDList.add(0, song.songId)
                 if (songIDList.size > 30) songIDList.removeAt(songIDList.size - 1)
                 savePlaylistNewSongIDList(playlist, songIDList)
                 val editor = sharedPreferences.edit()
@@ -657,7 +665,7 @@ class MainActivity : AppCompatActivity() {
                 // could use removeLast but that command is still experimental at the moment
                 if (songIDList.isNotEmpty()) songIDList.removeAt(0)
                 val song = completeLibrary.random()
-                songIDList.add(0, song.songID)
+                songIDList.add(0, song.songId)
                 savePlaylistNewSongIDList(playlist, songIDList)
             }
         }
@@ -681,7 +689,7 @@ class MainActivity : AppCompatActivity() {
         if (songList.isNullOrEmpty()) playlist.songs = null
         else {
             val songIDList = mutableListOf<Long>()
-            for (s in songList) songIDList.add(s.songID)
+            for (s in songList) songIDList.add(s.songId)
             val newSongListJSON = convertSongIDListToJSON(songIDList)
             playlist.songs = newSongListJSON
         }
@@ -692,7 +700,7 @@ class MainActivity : AppCompatActivity() {
         val playlist = findPlaylist(playlistName)
         if (playlist != null) {
             val songIDList = extractPlaylistSongIDs(playlist.songs)
-            for (s in songs) songIDList.add(s.songID)
+            for (s in songs) songIDList.add(s.songId)
             savePlaylistNewSongIDList(playlist, songIDList)
         }
     }
@@ -701,7 +709,7 @@ class MainActivity : AppCompatActivity() {
         musicViewModel.deletePlaylist(playlist)
         val cw = ContextWrapper(application)
         val directory = cw.getDir("playlistArt", Context.MODE_PRIVATE)
-        val path = File(directory, playlist.playlistID.toString() + ".jpg")
+        val path = File(directory, playlist.playlistId.toString() + ".jpg")
         if (path.exists()) path.delete()
     }
 
@@ -714,7 +722,7 @@ class MainActivity : AppCompatActivity() {
 
                 fun findIndex(): Int {
                     return newQueue.indexOfFirst {
-                        it.song.songID == s.songID
+                        it.song.songID == s.songId
                     }
                 }
 
@@ -731,7 +739,7 @@ class MainActivity : AppCompatActivity() {
                 for ((index, queueID) in queueIndexQueueIDMap) {
                     val queueItem = QueueItem(queueID, s)
                     newQueue.add(index, queueItem)
-                    playbackViewModel.currentPlayQueue.postValue(newQueue)
+                    playQueueViewModel.currentPlayQueue.postValue(newQueue)
                 }
             }
         }
@@ -744,12 +752,12 @@ class MainActivity : AppCompatActivity() {
         if (favouritesPlaylist != null) {
             val songIDList = extractPlaylistSongIDs(favouritesPlaylist.songs)
             val index = songIDList.indexOfFirst {
-                it == song.songID
+                it == song.songId
             }
             val message: String
             if (index == -1) {
                 song.isFavourite = true
-                songIDList.add(song.songID)
+                songIDList.add(song.songId)
                 message = "Added to"
                 added = true
             } else {
@@ -775,7 +783,7 @@ class MainActivity : AppCompatActivity() {
         ++song.plays
         val library = completeLibrary.toMutableList()
         library.removeIf {
-            it.songID == song.songID
+            it.songId == song.songId
         }
         library.add(song)
         completeLibrary = library
@@ -785,12 +793,12 @@ class MainActivity : AppCompatActivity() {
             val songIDList = extractPlaylistSongIDs(recentlyPlayedPlaylist.songs)
             if (songIDList.isNotEmpty()) {
                 val index = songIDList.indexOfFirst {
-                    it == song.songID
+                    it == song.songId
                 }
                 if (index != -1) songIDList.removeAt(index)
-                songIDList.add(0, song.songID)
+                songIDList.add(0, song.songId)
                 if (songIDList.size > 30) songIDList.removeAt(songIDList.size - 1)
-            } else songIDList.add(song.songID)
+            } else songIDList.add(song.songId)
             recentlyPlayedPlaylist.songs = convertSongIDListToJSON(songIDList)
             musicViewModel.updatePlaylists(listOf(recentlyPlayedPlaylist))
         }
@@ -798,13 +806,13 @@ class MainActivity : AppCompatActivity() {
 
     fun findFirstSongArtwork(songID: Long): String? {
         return completeLibrary.find {
-            it.songID == songID
-        }?.albumID
+            it.songId == songID
+        }?.albumId
     }
 
     fun convertSongsToSongIDJSON(songs: List<Song>): String {
         val songIDs = mutableListOf<Long>()
-        for (s in songs) songIDs.add(s.songID)
+        for (s in songs) songIDs.add(s.songId)
         return convertSongIDListToJSON(songIDs)
     }
 
@@ -827,7 +835,7 @@ class MainActivity : AppCompatActivity() {
             val playlistSongs = mutableListOf<Song>()
             for (i in songIDList) {
                 val song = completeLibrary.find {
-                    it.songID == i
+                    it.songId == i
                 }
                 if (song != null) playlistSongs.add(song)
             }
@@ -850,7 +858,7 @@ class MainActivity : AppCompatActivity() {
 
     fun openAlbumDialog(albumID: String) {
         val albumSongs = completeLibrary.filter {
-            it.albumID == albumID
+            it.albumId == albumID
         }.sortedBy { it.track }
         (AlbumOptions(albumSongs).show(supportFragmentManager, ""))
     }
@@ -881,7 +889,7 @@ class MainActivity : AppCompatActivity() {
     fun insertPlaylistArtwork(playlist: Playlist, view: ImageView) : Boolean {
         val cw = ContextWrapper(this)
         val directory = cw.getDir("playlistArt", Context.MODE_PRIVATE)
-        val file = File(directory, playlist.playlistID.toString() + ".jpg")
+        val file = File(directory, playlist.playlistId.toString() + ".jpg")
         return if (file.exists()) {
             runGlide(file, view)
             true
@@ -947,7 +955,7 @@ class MainActivity : AppCompatActivity() {
 
                 // check song has not been added to library. will return -1 if not in library
                 val indexOfSong = completeLibrary.indexOfFirst { song: Song ->
-                    song.songID == id
+                    song.songId == id
                 }
                 if (indexOfSong == -1) {
                     var trackString = cursor.getString(trackColumn) ?: "1001"
@@ -1070,9 +1078,9 @@ class MainActivity : AppCompatActivity() {
         val cw = ContextWrapper(application)
         val directory = cw.getDir("albumArt", Context.MODE_PRIVATE)
         for (s in songs){
-            val artworkInUse = musicDatabase!!.musicDao().doesAlbumIDExist(s.albumID)
+            val artworkInUse = musicDatabase!!.musicDao().doesAlbumIDExist(s.albumId)
             if (artworkInUse.isNullOrEmpty()){
-                val path = File(directory, s.albumID + ".jpg")
+                val path = File(directory, s.albumId + ".jpg")
                 if (path.exists()) path.delete()
             }
         }
@@ -1099,7 +1107,7 @@ class MainActivity : AppCompatActivity() {
                 // when a match is found, that song is removed from the library MutableList
                 // the remaining songs in the songsToBeDeleted MutableList will be songs where the music file no longer exists (because it was not found when searching the device)
                 val indexOfSong = songsToBeDeleted.indexOfFirst { song: Song ->
-                    song.songID == id
+                    song.songId == id
                 }
                 if (indexOfSong != -1) songsToBeDeleted.removeAt(indexOfSong)
             }
@@ -1119,7 +1127,7 @@ class MainActivity : AppCompatActivity() {
                         var playlistModified = false
                         fun findIndex(): Int {
                             return newSongIDList.indexOfFirst {
-                                it == s.songID
+                                it == s.songId
                             }
                         }
 
@@ -1148,7 +1156,7 @@ class MainActivity : AppCompatActivity() {
                 try {
                     do {
                         val index = playQueue.indexOfFirst {
-                            it.song.songID == s.songID
+                            it.song.songID == s.songId
                         }
 
                         // if song is found in current queue then request its removal
@@ -1244,15 +1252,15 @@ class MainActivity : AppCompatActivity() {
             Gson().fromJson(queueJSON, listType)
         } else mutableListOf()
 
-        playbackViewModel.currentPlayQueue.value = playQueue
-        currentlyPlayingQueueID = sharedPreferences.getInt(CURRENTLY_PLAYING_QUEUE_ID, 0)
-        playbackViewModel.currentlyPlayingQueueID.value = currentlyPlayingQueueID
+        playQueueViewModel.currentPlayQueue.value = playQueue
+        currentlyPlayingQueueItemId = sharedPreferences.getInt(CURRENTLY_PLAYING_QUEUE_ID, 0)
+        playQueueViewModel.currentlyPlayingQueueID.value = currentlyPlayingQueueItemId
         updateCurrentlyPlaying()
 
         val position = sharedPreferences.getInt(PLAYBACK_POSITION, 0)
         if (position != 0){
             seekTo(position)
-            playbackViewModel.currentPlaybackDuration.value = sharedPreferences.getInt(PLAYBACK_DURATION, 0)
+            playQueueViewModel.currentPlaybackDuration.value = sharedPreferences.getInt(PLAYBACK_DURATION, 0)
         }
     }
 

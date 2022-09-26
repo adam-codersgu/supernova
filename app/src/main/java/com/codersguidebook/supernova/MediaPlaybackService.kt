@@ -363,11 +363,11 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             )
             putString(
                 MediaMetadataCompat.METADATA_KEY_ALBUM,
-                currentlyPlayingSong?.album
+                currentlyPlayingSong?.albumName
             )
             putBitmap(
                 MediaMetadataCompat.METADATA_KEY_ALBUM_ART,
-                getArtwork(currentlyPlayingSong?.albumID) ?: BitmapFactory.decodeResource(application.resources, R.drawable.no_album_artwork)
+                getArtwork(currentlyPlayingSong?.albumId) ?: BitmapFactory.decodeResource(application.resources, R.drawable.no_album_artwork)
             )
         }
         mMediaSessionCompat.setMetadata(metadataBuilder.build())
@@ -396,6 +396,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         return null
     }
 
+    @Deprecated("Should retrieve the artwork from MediaSession.QueueItem.getDescription.getIconBitmap")
     private fun calculateInSampleSize(options: BitmapFactory.Options): Int {
         val reqWidth = 100
         val reqHeight = 100
