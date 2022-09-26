@@ -77,7 +77,7 @@ class SongsFragment : Fragment() {
                     val difference = completeLibrary - songs
                     for (s in difference) {
                         val index = completeLibrary.indexOfFirst {
-                            it.songID == s.songID
+                            it.songId == s.songId
                         }
                         if (index != -1) songsAdapter.notifyItemInserted(index)
                     }
@@ -86,7 +86,7 @@ class SongsFragment : Fragment() {
                     val difference = songs - completeLibrary
                     for (s in difference) {
                         val index = songs.indexOfFirst {
-                            it.songID == s.songID
+                            it.songId == s.songId
                         }
                         if (index != -1) songsAdapter.notifyItemRemoved(index)
                     }

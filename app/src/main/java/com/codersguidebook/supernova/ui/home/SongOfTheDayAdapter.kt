@@ -41,10 +41,10 @@ class SongOfTheDayAdapter(private val mainActivity: MainActivity):
     }
 
     override fun onBindViewHolder(holder: SongsViewHolder, position: Int) {
-        mainActivity.insertArtwork(song?.albumID, holder.mArtwork)
+        mainActivity.insertArtwork(song?.albumId, holder.mArtwork)
         holder.mTitle.text = song?.title
         holder.mArtist.text = song?.artist
-        holder.mAlbum.text = song?.album
+        holder.mAlbum.text = song?.albumName
     }
 
     internal fun changeItem(newSong: Song) {

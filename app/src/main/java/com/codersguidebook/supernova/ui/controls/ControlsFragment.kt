@@ -41,8 +41,8 @@ class ControlsFragment : Fragment() {
             if (it != null) {
                 binding.title.text = it.title
                 binding.artist.text = it.artist
-                binding.album.text = it.album
-                callingActivity.insertArtwork(it.albumID, binding.artwork)
+                binding.album.text = it.albumName
+                callingActivity.insertArtwork(it.albumId, binding.artwork)
                 binding.songInfo.setOnClickListener {
                     val extras = FragmentNavigatorExtras(
                         binding.artwork to binding.artwork.transitionName,

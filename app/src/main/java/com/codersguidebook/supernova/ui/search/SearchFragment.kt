@@ -142,7 +142,7 @@ class SearchFragment : Fragment() {
                                 val addItems = songs - adapterSongs
                                 for (s in removeItems) {
                                     val index = adapter.songs.indexOfFirst {
-                                        it.songID == s.songID
+                                        it.songId == s.songId
                                     }
                                     adapter.songs.removeAt(index)
                                     adapter.notifyItemRemoved(index)
@@ -150,7 +150,7 @@ class SearchFragment : Fragment() {
                                 }
                                 for (s in addItems) {
                                     val index = songs.indexOfFirst {
-                                        it.songID == s.songID
+                                        it.songId == s.songId
                                     }
                                     adapter.songs.add(index, s)
                                     adapter.notifyItemInserted(index)
@@ -165,7 +165,7 @@ class SearchFragment : Fragment() {
                 lifecycleScope.launch(Dispatchers.IO) {
                     val songs = musicDatabase!!.musicDao().findBySearchSongs(query)
                     val albums = songs.distinctBy { song ->
-                        song.album
+                        song.albumName
                     }.take(10)
 
                     lifecycleScope.launch(Dispatchers.Main) {
@@ -188,7 +188,7 @@ class SearchFragment : Fragment() {
                                 val addItems = albums - adapterAlbums
                                 for (a in removeItems) {
                                     val index = adapter.albums.indexOfFirst {
-                                        it.songID == a.songID
+                                        it.songId == a.songId
                                     }
                                     adapter.albums.removeAt(index)
                                     adapter.notifyItemRemoved(index)
@@ -196,7 +196,7 @@ class SearchFragment : Fragment() {
                                 }
                                 for (a in addItems) {
                                     val index = albums.indexOfFirst {
-                                        it.songID == a.songID
+                                        it.songId == a.songId
                                     }
                                     adapter.albums.add(index, a)
                                     adapter.notifyItemInserted(index)
@@ -274,7 +274,7 @@ class SearchFragment : Fragment() {
                                 val addItems = playlists - adapterPlaylists
                                 for (p in removeItems) {
                                     val index = adapter.playlists.indexOfFirst {
-                                        it.playlistID == p.playlistID
+                                        it.playlistId == p.playlistId
                                     }
                                     adapter.playlists.removeAt(index)
                                     adapter.notifyItemRemoved(index)
@@ -282,7 +282,7 @@ class SearchFragment : Fragment() {
                                 }
                                 for (p in addItems) {
                                     val index = playlists.indexOfFirst {
-                                        it.playlistID == p.playlistID
+                                        it.playlistId == p.playlistId
                                     }
                                     adapter.playlists.add(index, p)
                                     adapter.notifyItemInserted(index)

@@ -47,7 +47,7 @@ class ArtistFragment : Fragment() {
                     artistSongs = it.toMutableList()
                     artistAdapter.artistSongs = artistSongs
                     artistAlbums = it.distinctBy { album ->
-                        album.album
+                        album.albumName
                     }.sortedByDescending { album ->
                         album.year
                     }.toMutableList()

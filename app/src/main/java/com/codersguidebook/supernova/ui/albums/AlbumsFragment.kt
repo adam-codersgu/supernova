@@ -54,9 +54,9 @@ class AlbumsFragment : Fragment() {
         if (!isProcessing) {
             isProcessing = true
             albums = albumList.distinctBy { song ->
-                song.albumID
+                song.albumId
             }.sortedBy { song ->
-                song.album.toUpperCase(Locale.ROOT)
+                song.albumName.toUpperCase(Locale.ROOT)
             }.toMutableList()
 
             val adapterAlbums = albumsAdapter.albums
@@ -67,7 +67,7 @@ class AlbumsFragment : Fragment() {
                     val difference = albums - adapterAlbums
                     for (s in difference) {
                         val index = albums.indexOfFirst {
-                            it.albumID == s.albumID
+                            it.albumId == s.albumId
                         }
                         if (index != -1) albumsAdapter.notifyItemInserted(index)
                     }
@@ -76,7 +76,7 @@ class AlbumsFragment : Fragment() {
                     val difference = adapterAlbums - albums
                     for (s in difference) {
                         val index = adapterAlbums.indexOfFirst {
-                            it.albumID == s.albumID
+                            it.albumId == s.albumId
                         }
                         if (index != -1) albumsAdapter.notifyItemRemoved(index)
                     }

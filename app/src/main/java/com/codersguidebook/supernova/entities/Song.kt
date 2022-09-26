@@ -12,12 +12,12 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 @Entity(tableName = "music_library")
 data class Song(
-    @PrimaryKey val songID: Long,
+    @PrimaryKey val songId: Long,
     @ColumnInfo(name = "song_track") var track: Int,
     @ColumnInfo(name = "song_title") var title: String,
     @ColumnInfo(name = "song_artist") var artist: String,
-    @ColumnInfo(name = "song_album") var album: String,
-    @ColumnInfo(name = "song_album_id") val albumID: String,
+    @ColumnInfo(name = "song_album_name") var albumName: String,
+    @ColumnInfo(name = "song_album_id") val albumId: String,
     @ColumnInfo(name = "song_uri") val uri: String,
     @ColumnInfo(name = "song_year") var year: String,
     @ColumnInfo(name = "song_favourite") var isFavourite: Boolean,

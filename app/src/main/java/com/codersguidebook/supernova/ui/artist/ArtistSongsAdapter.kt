@@ -47,7 +47,7 @@ class ArtistSongsAdapter(private val mainActivity: MainActivity):
     override fun onBindViewHolder(holder: ArtistViewHolder, position: Int) {
         val current = songs[position]
 
-        mainActivity.insertArtwork(current.albumID, holder.mArtwork)
+        mainActivity.insertArtwork(current.albumId, holder.mArtwork)
 
         holder.mTitle.text = current.title
         holder.mArtist.text = current.artist
@@ -68,7 +68,7 @@ class ArtistSongsAdapter(private val mainActivity: MainActivity):
                         song.title.toUpperCase(Locale.ROOT)
                     }.toMutableList()
                     val index = songs.indexOfFirst {
-                        it.songID == s.songID
+                        it.songId == s.songId
                     }
                     if (index != -1) {
                         notifyItemInserted(index)
@@ -82,7 +82,7 @@ class ArtistSongsAdapter(private val mainActivity: MainActivity):
                 }
                 for (s in difference) {
                     val index = songs.indexOfFirst {
-                        it.songID == s.songID
+                        it.songId == s.songId
                     }
                     if (index != -1) {
                         songs.removeAt(index)

@@ -43,7 +43,7 @@ class PlaylistSongOptions(private val songs: MutableList<Song>,
 
         val callingActivity = activity as MainActivity
         val updatedSong = callingActivity.completeLibrary.find {
-            it.songID == songs[position].songID
+            it.songId == songs[position].songId
         }
 
         builder.setView(dialogView)
@@ -75,7 +75,7 @@ class PlaylistSongOptions(private val songs: MutableList<Song>,
         }
 
         txtViewAlbum.setOnClickListener{
-            val action = AlbumsFragmentDirections.actionSelectAlbum(songs[position].albumID)
+            val action = AlbumsFragmentDirections.actionSelectAlbum(songs[position].albumId)
             callingActivity.findNavController(R.id.nav_host_fragment).navigate(action)
             dismiss()
         }

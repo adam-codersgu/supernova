@@ -18,7 +18,7 @@ class AlbumsAdapter(private val mainActivity: MainActivity):
     var albums = mutableListOf<Song>()
 
     override fun getSectionName(position: Int): String {
-        return albums[position].album[0].toUpperCase().toString()
+        return albums[position].albumName[0].toUpperCase().toString()
     }
 
     inner class AlbumsViewHolder(itemView: View) :
@@ -34,13 +34,13 @@ class AlbumsAdapter(private val mainActivity: MainActivity):
             itemView.isClickable = true
             itemView.setOnClickListener(this)
             itemView.setOnLongClickListener{
-                mainActivity.openAlbumDialog(albums[layoutPosition].albumID)
+                mainActivity.openAlbumDialog(albums[layoutPosition].albumId)
                 return@setOnLongClickListener true
             }
         }
 
         override fun onClick(view: View) {
-            val action = AlbumsFragmentDirections.actionSelectAlbum(albums[layoutPosition].albumID)
+            val action = AlbumsFragmentDirections.actionSelectAlbum(albums[layoutPosition].albumId)
             view.findNavController().navigate(action)
         }
     }
@@ -52,13 +52,13 @@ class AlbumsAdapter(private val mainActivity: MainActivity):
     override fun onBindViewHolder(holder: AlbumsViewHolder, position: Int) {
         val current = albums[position]
 
-        holder.mTitle.text = current.album
+        holder.mTitle.text = current.albumName
         holder.mArtist.text = current.artist
 
-        mainActivity.insertArtwork(current.albumID, holder.mArtwork)
+        mainActivity.insertArtwork(current.albumId, holder.mArtwork)
 
         holder.mBtnMenu.setOnClickListener {
-            mainActivity.openAlbumDialog(current.albumID)
+            mainActivity.openAlbumDialog(current.albumId)
         }
     }
 

@@ -33,7 +33,7 @@ class SongOptions(private val song: Song) : DialogFragment() {
         binding.option7.text = getString(R.string.edit_music)
 
         val updatedSong = callingActivity.completeLibrary.find {
-            it.songID == song.songID
+            it.songId == song.songId
         }
 
         binding.option1.setOnClickListener{
@@ -61,7 +61,7 @@ class SongOptions(private val song: Song) : DialogFragment() {
         }
 
         binding.option5.setOnClickListener{
-            val action = AlbumsFragmentDirections.actionSelectAlbum(song.albumID)
+            val action = AlbumsFragmentDirections.actionSelectAlbum(song.albumId)
             callingActivity.findNavController(R.id.nav_host_fragment).navigate(action)
             dismiss()
         }

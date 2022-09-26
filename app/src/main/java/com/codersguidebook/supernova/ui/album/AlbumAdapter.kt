@@ -65,8 +65,8 @@ class AlbumAdapter(private val mainActivity: MainActivity):
                 holder.itemView.setBackgroundColor(ContextCompat.getColor(mainActivity, R.color.preview_background))
 
                 if (songs.isNotEmpty()){
-                    mainActivity.insertArtwork(songs[0].albumID, holder.mArtwork)
-                    holder.mTitle.text = songs[0].album
+                    mainActivity.insertArtwork(songs[0].albumId, holder.mArtwork)
+                    holder.mTitle.text = songs[0].albumName
                     holder.mArtist.text = songs[0].artist
                     val songCountInt = songs.size
                     holder.mSongCount.text = if (songCountInt == 1) "$songCountInt song"
@@ -121,7 +121,7 @@ class AlbumAdapter(private val mainActivity: MainActivity):
                         song.track
                     }.toMutableList()
                     val index = songs.indexOfFirst {
-                        it.songID == s.songID
+                        it.songId == s.songId
                     }
                     if (index != -1) {
                         notifyItemInserted(index + 1)
@@ -134,7 +134,7 @@ class AlbumAdapter(private val mainActivity: MainActivity):
                 val difference = songs - songList
                 for (s in difference) {
                     val index = songs.indexOfFirst {
-                        it.songID == s.songID
+                        it.songId == s.songId
                     }
                     if (index != -1) {
                         songs.removeAt(index)

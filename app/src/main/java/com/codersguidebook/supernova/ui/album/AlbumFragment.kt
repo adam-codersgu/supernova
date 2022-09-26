@@ -109,7 +109,7 @@ class AlbumFragment : Fragment() {
                 true
             }
             R.id.album_edit_album_info -> {
-                val action = AlbumFragmentDirections.actionEditAlbum(albumSongs[0].albumID)
+                val action = AlbumFragmentDirections.actionEditAlbum(albumSongs[0].albumId)
                 findNavController().navigate(action)
                 true
             }

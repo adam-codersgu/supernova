@@ -121,7 +121,7 @@ class EditPlaylistFragment : Fragment() {
                         if (newName != playlist!!.name || newArtwork != null) {
                             playlist!!.name = newName
                             // artwork has been changed
-                            if (newArtwork != null) callingActivity.changeArtwork("playlistArt", newArtwork!!, playlist!!.playlistID.toString())
+                            if (newArtwork != null) callingActivity.changeArtwork("playlistArt", newArtwork!!, playlist!!.playlistId.toString())
 
                             musicViewModel.updatePlaylists(listOf(playlist!!))
                         }

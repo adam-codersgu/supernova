@@ -35,7 +35,7 @@ class QueueOptions(private val queueItem: QueueItem,
         // album TextView
         binding.option2.text = getString(R.string.album)
         binding.option2.setOnClickListener{
-            val action = AlbumsFragmentDirections.actionSelectAlbum(queueItem.song.albumID)
+            val action = AlbumsFragmentDirections.actionSelectAlbum(queueItem.song.albumId)
             callingActivity.findNavController(R.id.nav_host_fragment).navigate(action)
             dismiss()
         }

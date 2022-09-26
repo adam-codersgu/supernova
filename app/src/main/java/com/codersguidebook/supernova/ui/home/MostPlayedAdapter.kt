@@ -72,7 +72,7 @@ class MostPlayedAdapter(private val mainActivity: MainActivity):
             }
         }
 
-        mainActivity.insertArtwork(current.albumID, holder.mArtwork)
+        mainActivity.insertArtwork(current.albumId, holder.mArtwork)
 
         holder.mTitle.text = current.title
         holder.mArtist.text = current.artist
@@ -86,9 +86,9 @@ class MostPlayedAdapter(private val mainActivity: MainActivity):
     internal fun processSongs(songList: List<Song>) {
         try {
             for ((i, s) in songList.withIndex()) {
-                if (s.songID != songs[i].songID) {
+                if (s.songId != songs[i].songId) {
                     val index = songs.indexOfFirst {
-                        it.songID == s.songID
+                        it.songId == s.songId
                     }
                     if (index != -1) {
                         songs.removeAt(index)

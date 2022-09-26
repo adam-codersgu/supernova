@@ -51,7 +51,7 @@ class SongsAdapter(private val activity: MainActivity):
     override fun onBindViewHolder(holder: SongsViewHolder, position: Int) {
         val current = songs[position]
 
-        activity.insertArtwork(current.albumID, holder.mArtwork)
+        activity.insertArtwork(current.albumId, holder.mArtwork)
 
         holder.mTitle.text = current.title
         holder.mArtist.text = current.artist

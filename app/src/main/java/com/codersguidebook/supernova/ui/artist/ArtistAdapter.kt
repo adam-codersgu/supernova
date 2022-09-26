@@ -76,13 +76,13 @@ private val fragment: ArtistFragment):
             itemView.isClickable = true
             itemView.setOnClickListener(this)
             itemView.setOnLongClickListener{
-                mainActivity.openAlbumDialog(albums[adapterPosition -2].albumID)
+                mainActivity.openAlbumDialog(albums[adapterPosition -2].albumId)
                 return@setOnLongClickListener true
             }
         }
 
         override fun onClick(view: View) {
-            val action = AlbumsFragmentDirections.actionSelectAlbum(albums[adapterPosition -2].albumID)
+            val action = AlbumsFragmentDirections.actionSelectAlbum(albums[adapterPosition -2].albumId)
             view.findNavController().navigate(action)
         }
     }
@@ -112,7 +112,7 @@ private val fragment: ArtistFragment):
                 holder.itemView.setBackgroundColor(ContextCompat.getColor(mainActivity, R.color.preview_background))
 
                 val uniqueArtworks = albums.distinctBy {
-                    it.albumID
+                    it.albumId
                 }
 
                 when {
@@ -120,12 +120,12 @@ private val fragment: ArtistFragment):
                         holder.mArtwork.isGone = true
                         holder.mArtworkGrid.isVisible = true
                         val shuffledArtworks = uniqueArtworks.shuffled()
-                        mainActivity.insertArtwork(shuffledArtworks[0].albumID, holder.mArtwork1)
-                        mainActivity.insertArtwork(shuffledArtworks[1].albumID, holder.mArtwork2)
-                        if (uniqueArtworks.size > 2) mainActivity.insertArtwork(shuffledArtworks[2].albumID, holder.mArtwork3)
-                        if (uniqueArtworks.size > 3) mainActivity.insertArtwork(shuffledArtworks[3].albumID, holder.mArtwork4)
+                        mainActivity.insertArtwork(shuffledArtworks[0].albumId, holder.mArtwork1)
+                        mainActivity.insertArtwork(shuffledArtworks[1].albumId, holder.mArtwork2)
+                        if (uniqueArtworks.size > 2) mainActivity.insertArtwork(shuffledArtworks[2].albumId, holder.mArtwork3)
+                        if (uniqueArtworks.size > 3) mainActivity.insertArtwork(shuffledArtworks[3].albumId, holder.mArtwork4)
                     }
-                    uniqueArtworks.size == 1 -> mainActivity.insertArtwork(albums[0].albumID, holder.mArtwork)
+                    uniqueArtworks.size == 1 -> mainActivity.insertArtwork(albums[0].albumId, holder.mArtwork)
                 }
 
                 if (albums.isNotEmpty()){
@@ -143,12 +143,12 @@ private val fragment: ArtistFragment):
 
                 val current = albums[position -2]
 
-                mainActivity.insertArtwork(current.albumID, holder.mArtwork)
+                mainActivity.insertArtwork(current.albumId, holder.mArtwork)
 
-                holder.mAlbumName.text = current.album
+                holder.mAlbumName.text = current.albumName
                 holder.mYear.text = current.year
                 holder.mBtnAlbumMenu.setOnClickListener {
-                    mainActivity.openAlbumDialog(current.albumID)
+                    mainActivity.openAlbumDialog(current.albumId)
                 }
             }
         }
@@ -163,10 +163,10 @@ private val fragment: ArtistFragment):
                 for (s in difference) {
                     albums.add(s)
                     albums = albums.sortedBy { song ->
-                        song.album.toUpperCase(Locale.ROOT)
+                        song.albumName.toUpperCase(Locale.ROOT)
                     }.toMutableList()
                     val index = albums.indexOfFirst {
-                        it.albumID == s.albumID
+                        it.albumId == s.albumId
                     }
                     if (index != -1) {
                         notifyItemInserted(index + 1)
@@ -180,7 +180,7 @@ private val fragment: ArtistFragment):
                 }
                 for (s in difference) {
                     val index = albums.indexOfFirst {
-                        it.albumID == s.albumID
+                        it.albumId == s.albumId
                     }
                     if (index != -1) {
                         albums.removeAt(index)

@@ -80,9 +80,9 @@ class CurrentlyPlayingFragment : Fragment() {
             song?.let {
                 currentlyPlayingSong = it
                 binding.title.text = it.title
-                binding.album.text = it.album
+                binding.album.text = it.albumName
                 binding.artist.text = it.artist
-                callingActivity.insertArtwork(it.albumID, binding.artwork)
+                callingActivity.insertArtwork(it.albumId, binding.artwork)
 
                 if (it.isFavourite) {
                     binding.currentFavourite.setImageResource(R.drawable.ic_heart)
@@ -365,7 +365,7 @@ class CurrentlyPlayingFragment : Fragment() {
                     R.id.album -> {
                         if (currentlyPlayingSong != null) {
                             findNavController().popBackStack()
-                            val action = MobileNavigationDirections.actionSelectAlbum(currentlyPlayingSong?.albumID!!)
+                            val action = MobileNavigationDirections.actionSelectAlbum(currentlyPlayingSong?.albumId!!)
                             callingActivity.findNavController(R.id.nav_host_fragment).navigate(action)
                         }
                     }

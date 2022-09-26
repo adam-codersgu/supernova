@@ -91,7 +91,7 @@ class HomeFragment : Fragment() {
                 if (songs.isEmpty()) binding.songOfTheDayNoContent.isVisible = true
                 else {
                     binding.songOfTheDayNoContent.isGone = true
-                    if (songOfTheDayAdapter.song == null || songOfTheDayAdapter.song?.songID != songs[0].songID) songOfTheDayAdapter.changeItem(songs[0])
+                    if (songOfTheDayAdapter.song == null || songOfTheDayAdapter.song?.songId != songs[0].songId) songOfTheDayAdapter.changeItem(songs[0])
                     binding.textViewSongOfTheDay.setOnClickListener{
                         val action = PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.song_day))
                         findNavController().navigate(action)
