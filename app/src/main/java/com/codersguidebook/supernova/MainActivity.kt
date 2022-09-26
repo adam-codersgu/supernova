@@ -457,6 +457,8 @@ class MainActivity : AppCompatActivity() {
      * @return
      */
     // TODO: Should this method maybe be moved to PlayQueueViewModel?
+    // TODO: ACTUALLY - MANAGE PLAY QUEUE USING THE SERVICE. AND REGULARLY GET THE QUEUE USING mediaController.queue
+    // TODO: WHEN CHANGING THE CURRENTLY PLAYING SONG, SEND THE ID OF THE CURRENTLY PLAYING QUEUE ITEM
     fun addSongsToPlayQueue(songs: List<Song>, addSongsToEndOfQueue: Boolean) = lifecycleScope.launch(Dispatchers.Main) {
         for (song in songs) {
             val mediaDescription = mediaDescriptionManager.buildDescription(song)
