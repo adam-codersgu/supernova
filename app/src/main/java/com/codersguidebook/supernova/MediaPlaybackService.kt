@@ -98,6 +98,9 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             return super.onMediaButtonEvent(mediaButtonEvent)
         }
 
+        // TODO: Implement addQueueItem(mediaDescriptionCompat) -> Could call the below method passing playQueue.size + 1 as the index
+        // TODO: Implement addQueueItem(mediaDescriptionCompat, index)
+
         override fun onPrepareFromUri(uri: Uri?, extras: Bundle?) {
             super.onPrepareFromUri(uri, extras)
             val bundle = extras!!.getString("song")

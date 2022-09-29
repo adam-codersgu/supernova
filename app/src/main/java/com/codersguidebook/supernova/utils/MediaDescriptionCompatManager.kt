@@ -4,9 +4,9 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.media.MediaDescription
 import android.net.Uri
 import android.os.Bundle
+import android.support.v4.media.MediaDescriptionCompat
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Song
 import java.io.File
@@ -14,13 +14,13 @@ import java.io.FileInputStream
 import java.io.FileNotFoundException
 
 /**
- * Utility class for building and handling MediaDescription objects.
+ * Utility class for building and handling MediaDescriptionCompat objects.
  *
  * @param context - A Context instance from which the application context can be sourced.
  */
 // TODO: Should maybe initialise an instance of this utils class when MainActivity is created,
 //    so the context may be supplied.
-class MediaDescriptionManager(context: Context) {
+class MediaDescriptionCompatManager(context: Context) {
     private val applicationContext: Context
 
     init {
@@ -28,16 +28,16 @@ class MediaDescriptionManager(context: Context) {
     }
 
     /**
-     * Uses the data for a given Song object to construct a MediaDescription instance.
+     * Uses the data for a given Song object to construct a MediaDescriptionCompat instance.
      *
-     * @param song - The Song object that the MediaDescription object should be built for.
-     * @return MediaDescription object detailing the details of the supplied song.
+     * @param song - The Song object that the MediaDescriptionCompat object should be built for.
+     * @return MediaDescriptionCompat object detailing the details of the supplied song.
      */
-    fun buildDescription(song: Song): MediaDescription {
+    fun buildDescription(song: Song): MediaDescriptionCompat {
         val bundle = Bundle()
         bundle.putString("album", song.albumName)
 
-        return MediaDescription.Builder()
+        return MediaDescriptionCompat.Builder()
             .setExtras(bundle)
             .setIconBitmap(getArtworkAsBitmap(song.albumId))
             .setMediaId(song.songId.toString())

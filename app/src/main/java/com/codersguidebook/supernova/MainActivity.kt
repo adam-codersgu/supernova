@@ -12,14 +12,15 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.AudioManager
 import android.media.MediaMetadataRetriever
-import android.media.session.MediaSession.QueueItem
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.Settings
 import android.support.v4.media.MediaBrowserCompat
+import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaControllerCompat
+import android.support.v4.media.session.MediaSessionCompat.*
 import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.media.session.PlaybackStateCompat.*
 import android.util.Size
@@ -51,7 +52,7 @@ import com.bumptech.glide.signature.ObjectKey
 import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
-import com.codersguidebook.supernova.utils.MediaDescriptionManager
+import com.codersguidebook.supernova.utils.MediaDescriptionCompatManager
 import com.google.android.material.navigation.NavigationView
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -80,7 +81,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
-    private lateinit var mediaDescriptionManager: MediaDescriptionManager
+    private lateinit var mediaDescriptionCompatManager: MediaDescriptionCompatManager
 
     companion object {
         private const val QUEUE = "queue"
@@ -99,6 +100,7 @@ class MainActivity : AppCompatActivity() {
                 // Create a MediaControllerCompat
                 val mediaControllerCompat = MediaControllerCompat(this@MainActivity, token)
                 mediaControllerCompat.registerCallback(controllerCallback)
+                // FIXME: Can you change the below to access mediaControllerCompat variable?
                 MediaControllerCompat.setMediaController(this@MainActivity, mediaControllerCompat)
             }
 
@@ -156,9 +158,9 @@ class MainActivity : AppCompatActivity() {
                         }
                         if (songIsFinished && currentQueueItem != null) songFinished(currentQueueItem.song)
 
-                        val repeatSetting = sharedPreferences.getInt("repeat", PlaybackStateCompat.REPEAT_MODE_NONE)
+                        val repeatSetting = sharedPreferences.getInt("repeat", REPEAT_MODE_NONE)
                         when {
-                            repeatSetting == PlaybackStateCompat.REPEAT_MODE_ONE -> {}
+                            repeatSetting == REPEAT_MODE_ONE -> {}
                             playQueue.isNotEmpty() && playQueue[playQueue.size - 1].queueID != currentlyPlayingQueueItemId -> {
                                 val index = playQueue.indexOfFirst {
                                     it.queueID == currentlyPlayingQueueItemId
@@ -166,7 +168,7 @@ class MainActivity : AppCompatActivity() {
                                 currentlyPlayingQueueItemId = playQueue[index + 1].queueID
                             }
                             // we have reached the end of the queue. check whether we should start over from the beginning
-                            repeatSetting == PlaybackStateCompat.REPEAT_MODE_ALL -> currentlyPlayingQueueItemId = playQueue[0].queueID
+                            repeatSetting == REPEAT_MODE_ALL -> currentlyPlayingQueueItemId = playQueue[0].queueID
                             else -> {
                                 mediaController.transportControls.stop()
                                 return
@@ -207,7 +209,7 @@ class MainActivity : AppCompatActivity() {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         musicDatabase = MusicDatabase.getDatabase(this, lifecycleScope)
         musicViewModel = ViewModelProvider(this)[MusicViewModel::class.java]
-        mediaDescriptionManager = MediaDescriptionManager(this)
+        mediaDescriptionCompatManager = MediaDescriptionManager(this)
 
         // set up channel for music player notification
         createChannel()
@@ -456,30 +458,24 @@ class MainActivity : AppCompatActivity() {
      * the end of the play queue (true) or after the currently playing song (false).
      * @return
      */
-    // TODO: Should this method maybe be moved to PlayQueueViewModel?
     // TODO: ACTUALLY - MANAGE PLAY QUEUE USING THE SERVICE. AND REGULARLY GET THE QUEUE USING mediaController.queue
     // TODO: WHEN CHANGING THE CURRENTLY PLAYING SONG, SEND THE ID OF THE CURRENTLY PLAYING QUEUE ITEM
-    fun addSongsToPlayQueue(songs: List<Song>, addSongsToEndOfQueue: Boolean) = lifecycleScope.launch(Dispatchers.Main) {
+    fun addSongsToPlayQueue(songs: List<Song>, addSongsToEndOfQueue: Boolean) {
+        val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
         for (song in songs) {
-            val mediaDescription = mediaDescriptionManager.buildDescription(song)
+            val mediaDescriptionCompat = mediaDescriptionCompatManager.buildDescription(song)
 
-            val sortedQueue = playQueue.sortedByDescending {
-                it.queueId
-            }
-            val highestQueueId = if (sortedQueue.isNotEmpty()) sortedQueue[0].queueId
-            else -1
-
-            val queueItem = QueueItem(mediaDescription, highestQueueId + 1)
-            if (addSongsToEndOfQueue || playQueue.isEmpty()) playQueue.add(queueItem)
-            else {
+            if (addSongsToEndOfQueue || playQueue.isEmpty()) {
+                mediaControllerCompat.addQueueItem(mediaDescriptionCompat)
+            } else {
                 val indexOfCurrentlyPlayingQueueItem = playQueue.indexOfFirst {
                     it.queueId == currentlyPlayingQueueItemId
                 }
-                playQueue.add(indexOfCurrentlyPlayingQueueItem + 1, queueItem)
+                mediaControllerCompat.addQueueItem(mediaDescriptionCompat,
+                    indexOfCurrentlyPlayingQueueItem + 1)
             }
         }
 
-        playQueueViewModel.currentPlayQueue.value = playQueue
         // TODO: In future, could add a parameter called message that provides a better description.
         //  e.g. "Album Dilla Joints added to the play queue" or "Artist Gordon Lightfoot added to the play queue".
         if (songs.size > 1) Toast.makeText(this@MainActivity,
@@ -489,6 +485,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun removeQueueItem(index: Int) {
+        // could use mediaControllerCompat.removeQueueItem(mediaDescriptionCompat) to remove all occurences
+        // could use mediaControllerCompat.sendCommand to remove specific occurence e.g. queue item. Use queue item ID ideally not index - in case of issues with play queue synchronisation
+
+
         if (playQueue.isNotEmpty() && index != -1) {
             // Check if the currently playing song is being removed from the play queue
             val currentlyPlayingSongRemoved = playQueue[index].queueID == currentlyPlayingQueueItemId
