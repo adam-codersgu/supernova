@@ -487,7 +487,7 @@ class MainActivity : AppCompatActivity() {
     fun removeQueueItem(index: Int) {
         // could use mediaControllerCompat.removeQueueItem(mediaDescriptionCompat) to remove all occurences
         // could use mediaControllerCompat.sendCommand to remove specific occurence e.g. queue item. Use queue item ID ideally not index - in case of issues with play queue synchronisation
-
+        // Actually, maybe use sendCommand for all. You could have a const val REMOVE_ALL_OCCURRENCES_FROM_PLAY_QUEUE with value -1 which signals removeAll (e.g. song removed from library), otherwise, remove specific value
 
         if (playQueue.isNotEmpty() && index != -1) {
             // Check if the currently playing song is being removed from the play queue

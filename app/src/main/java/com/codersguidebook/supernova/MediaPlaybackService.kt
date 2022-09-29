@@ -15,8 +15,10 @@ import android.os.Handler
 import android.os.Looper
 import android.service.media.MediaBrowserService
 import android.support.v4.media.MediaBrowserCompat
+import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
+import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat
 import android.text.TextUtils
 import android.view.KeyEvent
@@ -33,11 +35,13 @@ import java.io.FileNotFoundException
 import java.io.IOException
 
 class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorListener {
+
     private val channelID = "supernova"
     private var currentlyPlayingSong: Song? = null
     private val logTag = "AudioPlayer"
     private val handler = Handler(Looper.getMainLooper())
     private var mMediaPlayer: MediaPlayer? = null
+    private val playQueue: MutableList<QueueItem> = mutableListOf()
     private lateinit var audioFocusRequest: AudioFocusRequest
     private lateinit var mMediaSessionCompat: MediaSessionCompat
 
@@ -98,8 +102,34 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             return super.onMediaButtonEvent(mediaButtonEvent)
         }
 
-        // TODO: Implement addQueueItem(mediaDescriptionCompat) -> Could call the below method passing playQueue.size + 1 as the index
-        // TODO: Implement addQueueItem(mediaDescriptionCompat, index)
+        /**
+         * Add a song to the end of the play queue.
+         *
+         * @param description - A MediaDescriptionCompat object containing metadata for a given song.
+         */
+        override fun onAddQueueItem(description: MediaDescriptionCompat?) {
+            onAddQueueItem(description, playQueue.size)
+        }
+
+        /**
+         * Add a song at a given index in the play queue.
+         *
+         * @param description - A MediaDescriptionCompat object containing metadata for a given song.
+         * @param index - The index that the song should be added in the play queue.
+         */
+        override fun onAddQueueItem(description: MediaDescriptionCompat?, index: Int) {
+            super.onAddQueueItem(description, index)
+
+            val sortedQueue = playQueue.sortedByDescending {
+                it.queueId
+            }
+            val highestQueueId = if (sortedQueue.isNotEmpty()) sortedQueue[0].queueId
+            else -1
+
+            val queueItem = QueueItem(description, highestQueueId + 1)
+            playQueue.add(index, queueItem)
+            // TODO: Do we somehow need to update MainActivity here that a song has been added to the play queue e.g. through a state update
+        }
 
         override fun onPrepareFromUri(uri: Uri?, extras: Bundle?) {
             super.onPrepareFromUri(uri, extras)
@@ -210,6 +240,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
 
         override fun onStop() {
             super.onStop()
+            playQueue.clear()
             stopPlayback()
             setMediaPlaybackState(PlaybackStateCompat.STATE_STOPPED, 0L, 0f, null)
             handler.removeCallbacks(playbackPositionChecker)
@@ -230,7 +261,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                     val playbackPosition = mMediaPlayer!!.currentPosition.toLong()
                     setMediaPlaybackState(PlaybackStateCompat.STATE_PAUSED, playbackPosition, 0f, null)
                 }
-            } catch (e: NullPointerException) { }
+            } catch (_: NullPointerException) { }
         }
     }
 
@@ -244,7 +275,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             try {
                 val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
                 audioManager.abandonAudioFocusRequest(audioFocusRequest)
-            } catch (e: UninitializedPropertyAccessException){ }
+            } catch (_: UninitializedPropertyAccessException){ }
         }
     }
 
