@@ -384,20 +384,27 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         playbackPositionChecker.run()
     }
 
+    /**
+     * Handles playback becoming 'noisy' i.e. headphones being unplugged.
+     *
+     */
     private fun initNoisyReceiver() {
-        // Handles headphones coming unplugged
         val filter = IntentFilter(ACTION_AUDIO_BECOMING_NOISY)
         registerReceiver(mNoisyReceiver, filter)
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        mediaSessionCompat.controller.transportControls.stop()
         unregisterReceiver(mNoisyReceiver)
-        mMediaSessionCallback.onStop()
         mediaSessionCompat.release()
         NotificationManagerCompat.from(this).cancel(1)
     }
 
+    /**
+     * Refresh the metadata displayed in the media player notification and handle user interactions.
+     *
+     */
     private fun refreshNotification() {
         val isPlaying = mediaPlayer?.isPlaying ?: false
         val playPauseIntent = if (isPlaying) Intent(applicationContext, MediaPlaybackService::class.java).setAction("ACTION_PAUSE")
@@ -414,31 +421,25 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         val builder = NotificationCompat.Builder(applicationContext, channelID).apply {
             val mediaMetadata = mediaSessionCompat.controller.metadata
 
-            // previous button
+            // Previous button
             addAction(
-                NotificationCompat.Action(
-                    R.drawable.ic_back,
-                    getString(R.string.play_prev),
+                NotificationCompat.Action(R.drawable.ic_back, getString(R.string.play_prev),
                     PendingIntent.getService(applicationContext, 0, prevIntent, PendingIntent.FLAG_IMMUTABLE)
                 )
             )
 
-            // play/pause button
+            // Play/pause button
             val playOrPause = if (isPlaying) R.drawable.ic_pause
             else R.drawable.ic_play
             addAction(
-                NotificationCompat.Action(
-                    playOrPause,
-                    getString(R.string.play_pause),
+                NotificationCompat.Action(playOrPause, getString(R.string.play_pause),
                     PendingIntent.getService(applicationContext, 0, playPauseIntent, PendingIntent.FLAG_IMMUTABLE)
                 )
             )
 
-            // next button
+            // Next button
             addAction(
-                NotificationCompat.Action(
-                    R.drawable.ic_next,
-                    getString(R.string.play_next),
+                NotificationCompat.Action(R.drawable.ic_next, getString(R.string.play_next),
                     PendingIntent.getService(applicationContext, 0, nextIntent, PendingIntent.FLAG_IMMUTABLE)
                 )
             )
