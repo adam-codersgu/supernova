@@ -2,8 +2,6 @@ package com.codersguidebook.supernova
 
 import android.app.PendingIntent
 import android.content.*
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -27,9 +25,6 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.media.MediaBrowserServiceCompat
 import kotlinx.coroutines.launch
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileNotFoundException
 import java.io.IOException
 
 class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorListener {
