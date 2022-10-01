@@ -7,10 +7,11 @@ import androidx.lifecycle.viewModelScope
 import com.codersguidebook.supernova.entities.Artist
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 // we use AndroidViewModel so we can request application context
-class MusicViewModel(application: Application) : AndroidViewModel(application) {
+class MusicLibraryViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: MusicRepository
     val allSongs: LiveData<List<Song>>
@@ -50,5 +51,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
     fun updatePlaylists(playlists: List<Playlist>) = viewModelScope.launch(Dispatchers.IO) {
         repository.updatePlaylist(playlists)
+    }
+
+    fun increaseSongPlaysBySongId(songId: Long) {
+        repository.increaseSongPlaysBySongId(songId)
     }
 }
