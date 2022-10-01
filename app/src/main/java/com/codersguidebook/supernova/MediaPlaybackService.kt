@@ -467,9 +467,17 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         startForeground(1, builder.build())
     }
 
+    /**
+     * Dispatch media playback state updates.
+     *
+     * @param state - An Integer representing the current playback status.
+     * @param position - The playback position in the currently playing song.
+     * @param playbackSpeed - The speed of playback.
+     * @param bundle - An option bundle of extras to be packaged with the playback status update.
+     */
     private fun setMediaPlaybackState(state: Int, position: Long, playbackSpeed: Float, bundle: Bundle?) {
         val playbackStateBuilder = PlaybackStateCompat.Builder()
-        playbackStateBuilder.setState(state, position, playbackSpeed)
+            .setState(state, position, playbackSpeed)
         if (bundle != null) playbackStateBuilder.setExtras(bundle)
         mediaSessionCompat.setPlaybackState(playbackStateBuilder.build())
     }
