@@ -16,12 +16,12 @@ interface PlaylistDao {
     fun updatePlaylist(playlist: Playlist)
 
     @Transaction
-    @Query("SELECT * from playlist_table ORDER BY playlist_name ASC")
+    @Query("SELECT * from playlists ORDER BY playlist_name ASC")
     fun getAllPlaylists(): LiveData<List<Playlist>>
 
-    @Query("SELECT * FROM playlist_table WHERE playlist_name = :playlistName")
+    @Query("SELECT * FROM playlists WHERE playlist_name = :playlistName")
     fun findPlaylist(playlistName: String): LiveData<Playlist?>
 
-    @Query("SELECT * FROM playlist_table WHERE playlist_name LIKE :search LIMIT 10")
+    @Query("SELECT * FROM playlists WHERE playlist_name LIKE :search LIMIT 10")
     suspend fun findBySearchPlaylists(search: String): List<Playlist>
 }
