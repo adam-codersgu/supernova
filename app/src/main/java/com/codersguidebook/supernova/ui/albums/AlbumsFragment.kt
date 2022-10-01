@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
-import com.codersguidebook.supernova.MusicViewModel
+import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.databinding.FragmentWithScrollBinding
 import com.codersguidebook.supernova.entities.Song
 import java.util.*
@@ -23,7 +23,7 @@ class AlbumsFragment : Fragment() {
     private var isProcessing = false
     private lateinit var albumsAdapter: AlbumsAdapter
     private lateinit var callingActivity: MainActivity
-    private lateinit var musicViewModel: MusicViewModel
+    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -39,8 +39,8 @@ class AlbumsFragment : Fragment() {
         binding.scrollRecyclerView.adapter = albumsAdapter
         albumsAdapter.stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
 
-        musicViewModel = ViewModelProvider(this)[MusicViewModel::class.java]
-        musicViewModel.allSongs.observe(viewLifecycleOwner, { songs ->
+        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
+        musicLibraryViewModel.allSongs.observe(viewLifecycleOwner, { songs ->
             songs?.let {
                 if (it.isNotEmpty() || albums.isNotEmpty()) processAlbums(it)
             }

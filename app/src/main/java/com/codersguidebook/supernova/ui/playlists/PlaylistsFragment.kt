@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
-import com.codersguidebook.supernova.MusicViewModel
+import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
 import java.util.*
 
@@ -18,7 +18,7 @@ class PlaylistsFragment : Fragment() {
 
     private var _binding: FragmentWithRecyclerViewBinding? = null
     private val binding get() = _binding!!
-    private lateinit var musicViewModel: MusicViewModel
+    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
     private lateinit var callingActivity: MainActivity
 
     override fun onCreateView(
@@ -28,7 +28,7 @@ class PlaylistsFragment : Fragment() {
     ): View {
         _binding = FragmentWithRecyclerViewBinding.inflate(inflater, container, false)
         callingActivity = activity as MainActivity
-        musicViewModel = ViewModelProvider(this).get(MusicViewModel::class.java)
+        musicLibraryViewModel = ViewModelProvider(this).get(MusicLibraryViewModel::class.java)
 
         return binding.root
     }
@@ -42,7 +42,7 @@ class PlaylistsFragment : Fragment() {
         binding.root.adapter = playlistsAdapter
         playlistsAdapter.stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
 
-        musicViewModel.allPlaylists.observe(viewLifecycleOwner, { playlists ->
+        musicLibraryViewModel.allPlaylists.observe(viewLifecycleOwner, { playlists ->
             playlists?.let {
                 var allPlaylists = it.toMutableList()
                 allPlaylists.removeIf { p ->

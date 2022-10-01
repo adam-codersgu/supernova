@@ -16,7 +16,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
 import com.bumptech.glide.Glide
 import com.codersguidebook.supernova.MainActivity
-import com.codersguidebook.supernova.MusicViewModel
+import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentEditAlbumBinding
 import com.codersguidebook.supernova.entities.Song
@@ -37,7 +37,7 @@ class EditAlbumFragment : Fragment() {
     private var selectedImageUri: Uri? = null
     private var albumSongs = emptyList<Song>()
     private lateinit var callingActivity: MainActivity
-    private lateinit var musicViewModel: MusicViewModel
+    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -54,8 +54,8 @@ class EditAlbumFragment : Fragment() {
         callingActivity = activity as MainActivity
         setHasOptionsMenu(true)
 
-        musicViewModel = ViewModelProvider(this)[MusicViewModel::class.java]
-        musicViewModel.allSongs.observe(viewLifecycleOwner, { songs ->
+        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
+        musicLibraryViewModel.allSongs.observe(viewLifecycleOwner, { songs ->
             songs?.let {
                 this.albumSongs = it.filter {song ->
                     song.albumId == albumID

@@ -26,7 +26,7 @@ class HomeFragment : Fragment() {
     private lateinit var favouritesAdapter: FavouritesAdapter
     private lateinit var mostPlayedAdapter: MostPlayedAdapter
     private lateinit var recentlyPlayedAdapter: RecentlyPlayedAdapter
-    private lateinit var musicViewModel: MusicViewModel
+    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -35,7 +35,7 @@ class HomeFragment : Fragment() {
     ): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         callingActivity = activity as MainActivity
-        musicViewModel = ViewModelProvider(this).get(MusicViewModel::class.java)
+        musicLibraryViewModel = ViewModelProvider(this).get(MusicLibraryViewModel::class.java)
 
         songOfTheDayAdapter = SongOfTheDayAdapter(callingActivity)
         favouritesAdapter = FavouritesAdapter(callingActivity)
@@ -74,7 +74,7 @@ class HomeFragment : Fragment() {
         binding.recentlyPlayedRecyclerView.adapter = recentlyPlayedAdapter
 
         var isLoaded = false
-        musicViewModel.allSongs.observe(viewLifecycleOwner, { songs ->
+        musicLibraryViewModel.allSongs.observe(viewLifecycleOwner, { songs ->
             songs?.let {
                 if (songs.isNotEmpty() && !isLoaded) {
                     loadPlaylists()

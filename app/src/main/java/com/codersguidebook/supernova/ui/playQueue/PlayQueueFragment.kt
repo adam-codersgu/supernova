@@ -14,6 +14,7 @@ import com.codersguidebook.supernova.*
 import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
 import com.codersguidebook.supernova.entities.Song
 
+// TODO: Need to instruct the play queue views to skip to play queue items based on their ID not index
 class PlayQueueFragment : Fragment() {
     private var _binding: FragmentWithRecyclerViewBinding? = null
     private val binding get() = _binding!!
@@ -92,7 +93,7 @@ class PlayQueueFragment : Fragment() {
             }
         })
 
-        playQueueViewModel.currentlyPlayingQueueID.observe(viewLifecycleOwner, { position ->
+        playQueueViewModel.currentQueueItemId.observe(viewLifecycleOwner, { position ->
             position?.let { playQueueAdapter.currentlyPlayingSongChanged(it) }
         })
 

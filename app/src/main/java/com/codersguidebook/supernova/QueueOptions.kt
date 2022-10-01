@@ -52,7 +52,7 @@ class QueueOptions(private val queueItem: QueueItem,
         if (currentlyPlaying) binding.option4.isGone = true
         else {
             binding.option4.setOnClickListener {
-                callingActivity.removeQueueItem(position)
+                callingActivity.removeQueueItemById(position)
                 dismiss()
             }
         }
