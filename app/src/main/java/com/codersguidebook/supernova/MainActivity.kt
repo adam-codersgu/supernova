@@ -67,7 +67,7 @@ class MainActivity : AppCompatActivity() {
     private val channelID = "supernova"
     private var currentPlaybackPosition = 0
     private var currentPlaybackDuration = 0
-    private var currentlyPlayingQueueItemId = 0L
+    private var currentlyPlayingQueueItemId = -1L
     // FIXME: Can we make the below private
     var playQueue = listOf<QueueItem>()
     private val playQueueViewModel: PlayQueueViewModel by viewModels()
@@ -97,11 +97,8 @@ class MainActivity : AppCompatActivity() {
 
             // Get the token for the MediaSession
             mediaBrowser.sessionToken.also { token ->
-
-                // Create a MediaControllerCompat
                 val mediaControllerCompat = MediaControllerCompat(this@MainActivity, token)
                 mediaControllerCompat.registerCallback(controllerCallback)
-                // FIXME: Can you change the below to access mediaControllerCompat variable?
                 MediaControllerCompat.setMediaController(this@MainActivity, mediaControllerCompat)
             }
 
@@ -109,43 +106,44 @@ class MainActivity : AppCompatActivity() {
             val mediaController = MediaControllerCompat.getMediaController(this@MainActivity)
             mediaController.registerCallback(controllerCallback)
 
-            // retrieve playback position and song
             retrievePlaybackState()
         }
     }
 
     private var controllerCallback = object : MediaControllerCompat.Callback() {
-
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
             super.onPlaybackStateChanged(state)
             refreshPlayQueue()
             when (state?.state) {
                 STATE_PLAYING -> {
                     playbackState = STATE_PLAYING
-                    val playbackPosition = state.position.toInt()
+                    currentPlaybackPosition = state.position.toInt()
                     state.extras?.let {
-                        val playbackDuration = it.getInt("duration")
-                        playQueueViewModel.currentPlaybackDuration.value = playbackDuration
+                        currentPlaybackDuration = it.getInt("duration")
+                        playQueueViewModel.currentPlaybackDuration.value = currentPlaybackDuration
                     }
-                    playQueueViewModel.currentPlaybackPosition.value = playbackPosition
+                    playQueueViewModel.currentPlaybackPosition.value = currentPlaybackPosition
                     playQueueViewModel.isPlaying.value = true
                 }
                 STATE_PAUSED -> {
                     playbackState = STATE_PAUSED
-                    val playbackPosition = state.position.toInt()
+                    currentPlaybackPosition = state.position.toInt()
                     state.extras?.let {
-                        val playbackDuration = it.getInt("duration")
-                        playQueueViewModel.currentPlaybackDuration.value = playbackDuration
+                        currentPlaybackDuration = it.getInt("duration")
+                        playQueueViewModel.currentPlaybackDuration.value = currentPlaybackDuration
                     }
-                    playQueueViewModel.currentPlaybackPosition.value = playbackPosition
+                    playQueueViewModel.currentPlaybackPosition.value = currentPlaybackPosition
                     playQueueViewModel.isPlaying.value = false
                 }
                 STATE_STOPPED -> {
                     playbackState = STATE_STOPPED
+                    currentlyPlayingQueueItemId = -1L
                     playQueueViewModel.isPlaying.value = false
                     savePlayQueueId(0)
                     playQueueViewModel.currentlyPlayingSong.value = null
+                    currentPlaybackDuration = 0
                     playQueueViewModel.currentPlaybackDuration.value = 0
+                    currentPlaybackPosition = 0
                     playQueueViewModel.currentPlaybackPosition.value = 0
                 }
                 // Called when playback of a song has completed.
@@ -174,7 +172,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
 
-        // Load user settings preferences
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         musicDatabase = MusicDatabase.getDatabase(this, lifecycleScope)
         musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
@@ -186,19 +183,16 @@ class MainActivity : AppCompatActivity() {
         val taskDescription = ActivityManager.TaskDescription("Supernova", R.drawable.no_album_artwork, getColor(R.color.nav_home))
         this.setTaskDescription(taskDescription)
 
-        mediaBrowser = MediaBrowserCompat(
-            this,
-            ComponentName(this, MediaPlaybackService::class.java),
-            connectionCallbacks,
-            intent.extras
-        )
+        mediaBrowser = MediaBrowserCompat(this, ComponentName(this, MediaPlaybackService::class.java),
+            connectionCallbacks, intent.extras)
         mediaBrowser.connect()
 
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
-        appBarConfiguration = AppBarConfiguration(setOf(R.id.nav_home, R.id.nav_queue, R.id.nav_library, R.id.nav_playlists, R.id.nav_playlist, R.id.nav_artists, R.id.nav_artist, R.id.nav_albums, R.id.nav_album, R.id.nav_songs), binding.drawerLayout)
+        appBarConfiguration = AppBarConfiguration(setOf(R.id.nav_home, R.id.nav_queue, R.id.nav_library, R.id.nav_playlists,
+            R.id.nav_playlist, R.id.nav_artists, R.id.nav_artist, R.id.nav_albums, R.id.nav_album, R.id.nav_songs), binding.drawerLayout)
 
         setupActionBarWithNavController(navController, appBarConfiguration)
         binding.navView.setupWithNavController(navController)
@@ -233,25 +227,11 @@ class MainActivity : AppCompatActivity() {
         }
         binding.navView.setNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
 
-        // prevent icon tints from being overwritten
+        // Prevent icon tints from being overwritten
         binding.navView.itemIconTintList = null
 
         musicLibraryViewModel.allSongs.observe(this) { songs ->
             songs.let { completeLibrary = it.toMutableList() }
-        }
-
-        // keep track of currently playing song position
-        playQueueViewModel.currentPlaybackPosition.observe(this) { position ->
-            position?.let {
-                currentPlaybackPosition = it
-            }
-        }
-
-        // keep track of currently playing song duration
-        playQueueViewModel.currentPlaybackDuration.observe(this) { duration ->
-            duration?.let {
-                currentPlaybackDuration = it
-            }
         }
 
         musicLibraryViewModel.allPlaylists.observe(this) { playlists ->
@@ -262,9 +242,8 @@ class MainActivity : AppCompatActivity() {
 
         musicLibraryViewModel.mostPlayed.observe(this) { songs ->
             songs.let {
-                // update most played playlist
                 val playlist = findPlaylist(getString(R.string.most_played))
-                if (playlist != null){
+                if (playlist != null) {
                     val mostPlayedSongs = convertSongsToSongIDJSON(it)
                     if (mostPlayedSongs != playlist.songs){
                         playlist.songs = mostPlayedSongs
@@ -311,23 +290,42 @@ class MainActivity : AppCompatActivity() {
             putInt("repeat", repeatMode)
             apply()
         }
+        val bundle = Bundle()
+        bundle.putInt("repeatMode", repeatMode)
+        // TODO: Could eventually have a result callback (instead of null)
+        // TODO: Also could we delegate command names to a static constant params class for consistency
+        mediaController.sendCommand("setRepeatMode", bundle, null)
     }
 
+    /**
+     * Commence playback.
+     *
+     */
+    private fun play() = mediaController.transportControls.play()
+
+    /**
+     * Skip back to the previous track in the play queue (or restart the current song if less that five seconds in).
+     *
+     */
     fun skipBack() = mediaController.transportControls.skipToPrevious()
 
+    /**
+     * Skip forward to the next song in the play queue.
+     *
+     */
     fun skipForward() = mediaController.transportControls.skipToNext()
 
-    fun fastRewind() {
-        val pos = currentPlaybackPosition - 5000
-        if (pos < 0) skipBack()
-        else mediaController.transportControls.seekTo(pos.toLong())
-    }
+    /**
+     * Rewind the playback of the current song.
+     *
+     */
+    fun fastRewind() = mediaController.transportControls.rewind()
 
-    fun fastForward() {
-        val pos = currentPlaybackPosition + 5000
-        if (pos > currentPlaybackDuration) skipForward()
-        else mediaController.transportControls.seekTo(pos.toLong())
-    }
+    /**
+     * Fast forward the playback of the current song.
+     *
+     */
+    fun fastForward() = mediaController.transportControls.fastForward()
 
     // Returns true if play queue has been shuffled, false if unshuffled
     fun shuffleCurrentPlayQueue(): Boolean {
@@ -429,8 +427,6 @@ class MainActivity : AppCompatActivity() {
             apply()
         }
     }
-
-    private fun play() = mediaController.transportControls.play()
 
     /**
      * Add a list of songs to the play queue. The songs can be added to the end of the play queue

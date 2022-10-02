@@ -1,7 +1,10 @@
 package com.codersguidebook.supernova
 
 import android.app.PendingIntent
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -10,6 +13,7 @@ import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.ResultReceiver
 import android.service.media.MediaBrowserService
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
@@ -17,20 +21,19 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat
+import android.support.v4.media.session.PlaybackStateCompat.*
 import android.text.TextUtils
 import android.view.KeyEvent
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.lifecycle.lifecycleScope
 import androidx.media.MediaBrowserServiceCompat
-import kotlinx.coroutines.launch
 import java.io.IOException
 
 class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorListener {
 
     private val channelID = "supernova"
-    private var currentlyPlayingQueueItemId = 0L
+    private var currentlyPlayingQueueItemId = -1L
     private val logTag = "AudioPlayer"
     private val handler = Handler(Looper.getMainLooper())
     private var mediaPlayer: MediaPlayer? = null
@@ -40,36 +43,26 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
 
     private val afChangeListener = OnAudioFocusChangeListener { focusChange ->
         when (focusChange) {
-            AUDIOFOCUS_LOSS -> {
-                mMediaSessionCallback.onPause()
+            AUDIOFOCUS_LOSS, AUDIOFOCUS_LOSS_TRANSIENT -> {
+                mediaSessionCompat.controller.transportControls.pause()
             }
-            AUDIOFOCUS_LOSS_TRANSIENT -> {
-                mMediaSessionCallback.onPause()
-            }
-            AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-                if (mediaPlayer!!.isPlaying) mediaPlayer!!.setVolume(0.3f, 0.3f)
-            }
-            AUDIOFOCUS_GAIN -> {
-                if (mediaPlayer != null) mediaPlayer!!.setVolume(1.0f, 1.0f)
-            }
+            AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> mediaPlayer?.setVolume(0.3f, 0.3f)
+            AUDIOFOCUS_GAIN -> mediaPlayer?.setVolume(1.0f, 1.0f)
         }
     }
 
-    private val mNoisyReceiver = object : BroadcastReceiver() {
-        override fun onReceive(
-            context: Context,
-            intent: Intent
-        ) {
-            if (mediaPlayer != null && mediaPlayer!!.isPlaying) mMediaSessionCallback.onPause()
+    private val noisyReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (mediaPlayer != null && mediaPlayer!!.isPlaying) mediaSessionCallback.onPause()
         }
     }
 
     private var playbackPositionChecker = object : Runnable {
         override fun run() {
             try {
-                if (mediaPlayer != null && mediaPlayer!!.isPlaying) {
+                if (mediaPlayer?.isPlaying == true) {
                     val playbackPosition = mediaPlayer!!.currentPosition.toLong()
-                    setMediaPlaybackState(PlaybackStateCompat.STATE_PLAYING, playbackPosition, 1f, null)
+                    setMediaPlaybackState(STATE_PLAYING, playbackPosition, 1f, null)
                 }
             } finally {
                 handler.postDelayed(this, 1000L)
@@ -77,7 +70,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         }
     }
 
-    private val mMediaSessionCallback: MediaSessionCompat.Callback = object : MediaSessionCompat.Callback() {
+    private val mediaSessionCallback: MediaSessionCompat.Callback = object : MediaSessionCompat.Callback() {
         override fun onMediaButtonEvent(mediaButtonEvent: Intent?): Boolean {
             val keyEvent: KeyEvent? = mediaButtonEvent?.getParcelableExtra(Intent.EXTRA_KEY_EVENT)
             if (keyEvent != null && mediaPlayer != null) {
@@ -110,8 +103,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
 
             val queueItem = QueueItem(description, highestQueueId + 1)
             playQueue.add(index, queueItem)
-            // TODO: Do we somehow need to update MainActivity here that a song has been added to the play queue e.g. through a state update
-            // TODO: Yes, send a STATE_NONE update
+            setMediaPlaybackState(STATE_NONE, 0, 0f, null)
         }
 
         /*
@@ -119,13 +111,14 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
          */
         override fun onPrepare() {
             super.onPrepare()
+
             if (playQueue.isEmpty()) {
                 error()
                 return
             }
 
             // If no alternative currently play queue item ID has been set, then play from the beginning of the queue
-            if (currentlyPlayingQueueItemId == 0L) currentlyPlayingQueueItemId = playQueue[0].queueId
+            if (currentlyPlayingQueueItemId == -1L) currentlyPlayingQueueItemId = playQueue[0].queueId
 
             setCurrentMetadata()
 
@@ -159,7 +152,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                 refreshNotification()
                 val bundle = Bundle()
                 bundle.putLong("currentQueueItemId", currentQueueItem.queueId)
-                setMediaPlaybackState(PlaybackStateCompat.STATE_SKIPPING_TO_QUEUE_ITEM, 0,
+                setMediaPlaybackState(STATE_SKIPPING_TO_QUEUE_ITEM, 0,
                     0f, bundle)
             } catch (e: IOException) {
                 error()
@@ -198,22 +191,20 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                                     if (currentlyPlayingSongId != null) {
                                         val bundle = Bundle()
                                         bundle.putLong("finishedSongId", currentlyPlayingSongId.toLong())
-                                        setMediaPlaybackState(PlaybackStateCompat.STATE_SKIPPING_TO_NEXT, 0,
+                                        setMediaPlaybackState(STATE_SKIPPING_TO_NEXT, 0,
                                             0f, bundle)
                                     }
                                 }
 
                                 val repeatMode = mediaSessionCompat.controller.repeatMode
                                 when {
-                                    repeatMode == PlaybackStateCompat.REPEAT_MODE_ONE -> {}
+                                    repeatMode == REPEAT_MODE_ONE -> {}
                                     playQueue.isNotEmpty() && playQueue[playQueue.size - 1].queueId != currentlyPlayingQueueItemId -> {
-                                        val indexOfCurrentQueueItem = playQueue.indexOfFirst {
-                                            it.queueId == currentlyPlayingQueueItemId
-                                        }
-                                        currentlyPlayingQueueItemId = playQueue[indexOfCurrentQueueItem + 1].queueId
+                                        onSkipToNext()
+                                        return@setOnCompletionListener
                                     }
                                     // We have reached the end of the queue. Check whether we should start over from the beginning
-                                    repeatMode == PlaybackStateCompat.REPEAT_MODE_ALL -> currentlyPlayingQueueItemId = playQueue[0].queueId
+                                    repeatMode == REPEAT_MODE_ALL -> currentlyPlayingQueueItemId = playQueue[0].queueId
                                     else -> {
                                         onStop()
                                         return@setOnCompletionListener
@@ -226,7 +217,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         }
                         refreshNotification()
                         val playbackPosition = mediaPlayer!!.currentPosition.toLong()
-                        setMediaPlaybackState(PlaybackStateCompat.STATE_PLAYING, playbackPosition,
+                        setMediaPlaybackState(STATE_PLAYING, playbackPosition,
                             1f, getBundleWithSongDuration())
                     } catch (e: IllegalStateException) {
                         error()
@@ -241,75 +232,109 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             super.onPause()
             mediaPlayer?.pause()
             val playbackPosition = mediaPlayer?.currentPosition?.toLong() ?: 0
-            setMediaPlaybackState(PlaybackStateCompat.STATE_PAUSED, playbackPosition,
-                0f, getBundleWithSongDuration())
+            setMediaPlaybackState(STATE_PAUSED, playbackPosition, 0f, getBundleWithSongDuration())
             refreshNotification()
         }
 
         override fun onFastForward() {
             super.onFastForward()
-            // TODO: Experiment using mediaPlayer!!.playbackParams
-            // TODO: Likewise for onFastRewind()
+
+            val newPlaybackPosition = mediaPlayer?.currentPosition?.plus(5000) ?: return
+            if (newPlaybackPosition > (mediaPlayer?.duration ?: return)) onSkipToNext()
+            else onSeekTo(newPlaybackPosition.toLong())
+        }
+
+        override fun onRewind() {
+            super.onRewind()
+
+            val newPlaybackPosition = mediaPlayer?.currentPosition?.minus(5000) ?: return
+            if (newPlaybackPosition < 0) onSkipToPrevious()
+            else onSeekTo(newPlaybackPosition.toLong())
         }
 
         override fun onSetRepeatMode(repeatMode: Int) {
             super.onSetRepeatMode(repeatMode)
-            // TODO: Implement
+
+            mediaSessionCompat.setRepeatMode(repeatMode)
         }
 
         override fun onSetShuffleMode(shuffleMode: Int) {
             super.onSetShuffleMode(shuffleMode)
-            // TODO: Implement
+
+            mediaSessionCompat.setShuffleMode(shuffleMode)
+
+            // TODO: Implement play queue changes
         }
 
-        override fun onSkipToNext() {
-            super.onSkipToNext()
+        override fun onCommand(command: String?, extras: Bundle?, cb: ResultReceiver?) {
+            super.onCommand(command, extras, cb)
 
-            if (mediaSessionCompat.mediaSession)
-                mediaSessionCompat.controller
-
-            val bundle = Bundle()
-            bundle.putBoolean("finished", false)
-            setMediaPlaybackState(PlaybackStateCompat.STATE_SKIPPING_TO_NEXT, 0, 0f, bundle)
+            when (command) {
+                "setRepeatMode" -> {
+                    extras?.let {
+                        val repeatMode = extras.getInt("repeatMode", REPEAT_MODE_NONE)
+                        onSetRepeatMode(repeatMode)
+                    }
+                }
+            }
         }
-
+        
         override fun onSkipToQueueItem(id: Long) {
             super.onSkipToQueueItem(id)
+            
             if (playQueue.find { it.queueId == id} != null) {
-                val isPlaying = mediaPlayer?.isPlaying ?: false
+                val wasPlaying = mediaPlayer?.isPlaying ?: false
                 currentlyPlayingQueueItemId = id
                 onPrepare()
-                if (isPlaying) onPlay()
+                if (wasPlaying) onPlay()
             }
         }
 
         override fun onSkipToPrevious() {
             super.onSkipToPrevious()
 
-            if (playQueue.isNotEmpty() && currentlyPlayingQueueItemId != playQueue[0].queueID) {
-                val index = playQueue.indexOfFirst {
-                    it.queueID == currentlyPlayingQueueItemId
-                }
-                currentlyPlayingQueueItemId = playQueue[index - 1].queueID
-                lifecycleScope.launch {
-                    updateCurrentlyPlaying()
-                    if (pbState == PlaybackStateCompat.STATE_PLAYING) play()
+            if (playQueue.isNotEmpty()) {
+                when {
+                    (mediaPlayer != null && mediaPlayer!!.currentPosition < 5000) ||
+                            currentlyPlayingQueueItemId == playQueue[0].queueId -> onSeekTo(0L)
+                    else -> {
+                        val indexOfCurrentQueueItem = playQueue.indexOfFirst {
+                            it.queueId == currentlyPlayingQueueItemId
+                        }
+                        currentlyPlayingQueueItemId = playQueue[indexOfCurrentQueueItem - 1].queueId
+                        onSkipToQueueItem(currentlyPlayingQueueItemId)
+                    }
                 }
             }
+        }
 
-            // currentPosition returns playback position in milliseconds
-            // if the media player is more than 5 seconds into song then restart song, otherwise, skip back to previous song (if possible)
-            if (mediaPlayer != null && mediaPlayer!!.currentPosition > 5000) onSeekTo(0)
-            else setMediaPlaybackState(PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS, 0, 0f, null)
+        override fun onSkipToNext() {
+            super.onSkipToNext()
+
+            val repeatMode = mediaSessionCompat.controller.repeatMode
+            currentlyPlayingQueueItemId = when {
+                playQueue.isNotEmpty() && playQueue[playQueue.size - 1].queueId != currentlyPlayingQueueItemId -> {
+                    val indexOfCurrentQueueItem = playQueue.indexOfFirst {
+                        it.queueId == currentlyPlayingQueueItemId
+                    }
+                    playQueue[indexOfCurrentQueueItem + 1].queueId
+                }
+                // We are at the end of the queue. Check whether we should start over from the beginning
+                repeatMode == REPEAT_MODE_ALL -> playQueue[0].queueId
+                else -> return
+            }
+
+            onSkipToQueueItem(currentlyPlayingQueueItemId)
         }
 
         override fun onStop() {
             super.onStop()
+
             playQueue.clear()
-            currentlyPlayingQueueItemId = 0
+            currentlyPlayingQueueItemId = -1L
             if (mediaPlayer != null) {
-                mediaPlayer!!.stop()
-                mediaPlayer!!.release()
+                mediaPlayer?.stop()
+                mediaPlayer?.release()
                 mediaPlayer = null
                 stopForeground(true)
                 try {
@@ -317,26 +342,26 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                     audioManager.abandonAudioFocusRequest(audioFocusRequest)
                 } catch (_: UninitializedPropertyAccessException){ }
             }
-            setMediaPlaybackState(PlaybackStateCompat.STATE_STOPPED, 0L, 0f, null)
+            setMediaPlaybackState(STATE_STOPPED, 0L, 0f, null)
             handler.removeCallbacks(playbackPositionChecker)
             stopSelf()
         }
 
         override fun onSeekTo(pos: Long) {
             super.onSeekTo(pos)
-            try {
-                if (mediaPlayer!!.isPlaying) {
-                    mediaPlayer!!.pause()
-                    mediaPlayer!!.seekTo(pos.toInt())
-                    mediaPlayer!!.start()
-                    val playbackPosition = mediaPlayer!!.currentPosition.toLong()
-                    setMediaPlaybackState(PlaybackStateCompat.STATE_PLAYING, playbackPosition, 1f, null)
-                } else {
-                    mediaPlayer!!.seekTo(pos.toInt())
-                    val playbackPosition = mediaPlayer!!.currentPosition.toLong()
-                    setMediaPlaybackState(PlaybackStateCompat.STATE_PAUSED, playbackPosition, 0f, null)
-                }
-            } catch (_: NullPointerException) { }
+
+            mediaPlayer?.apply {
+                val wasPlaying = this.isPlaying
+                if (wasPlaying) this.pause()
+
+                this.seekTo(pos.toInt())
+                val playbackPosition = this.currentPosition.toLong()
+
+                if (wasPlaying) {
+                    this.start()
+                    setMediaPlaybackState(STATE_PLAYING, playbackPosition, 1f, null)
+                } else setMediaPlaybackState(STATE_PAUSED, playbackPosition, 0f, null)
+            }
         }
     }
 
@@ -369,7 +394,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         super.onCreate()
 
         mediaSessionCompat = MediaSessionCompat(baseContext, logTag).apply {
-            setCallback(mMediaSessionCallback)
+            setCallback(mediaSessionCallback)
             setSessionToken(sessionToken)
             val builder: PlaybackStateCompat.Builder = PlaybackStateCompat.Builder()
                 .setActions(PlaybackStateCompat.ACTION_PLAY)
@@ -385,13 +410,13 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
      */
     private fun initNoisyReceiver() {
         val filter = IntentFilter(ACTION_AUDIO_BECOMING_NOISY)
-        registerReceiver(mNoisyReceiver, filter)
+        registerReceiver(noisyReceiver, filter)
     }
 
     override fun onDestroy() {
         super.onDestroy()
         mediaSessionCompat.controller.transportControls.stop()
-        unregisterReceiver(mNoisyReceiver)
+        unregisterReceiver(noisyReceiver)
         mediaSessionCompat.release()
         NotificationManagerCompat.from(this).cancel(1)
     }
@@ -513,10 +538,10 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         if (actionString != null) {
             when (actionString) {
                 // TODO: Are these actions stored as params anywhere? Would then need to update refreshNotification() also
-                "ACTION_PLAY" -> mMediaSessionCallback.onPlay()
-                "ACTION_PAUSE" -> mMediaSessionCallback.onPause()
-                "ACTION_NEXT" -> mMediaSessionCallback.onSkipToNext()
-                "ACTION_PREVIOUS" -> mMediaSessionCallback.onSkipToPrevious()
+                "ACTION_PLAY" -> mediaSessionCallback.onPlay()
+                "ACTION_PAUSE" -> mediaSessionCallback.onPause()
+                "ACTION_NEXT" -> mediaSessionCallback.onSkipToNext()
+                "ACTION_PREVIOUS" -> mediaSessionCallback.onSkipToPrevious()
             }
         }
         return super.onStartCommand(intent, flags, startId)
