@@ -285,16 +285,64 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun setRepeatMode(repeatMode: Int) {
+    /**
+     * Toggle the shuffle mode.
+     *
+     * @return An Integer representing the active shuffle mode preference.
+     */
+    fun toggleShuffleMode(): Int {
+        val newShuffleMode = if (sharedPreferences.getInt("shuffleMode", SHUFFLE_MODE_NONE) == SHUFFLE_MODE_NONE) {
+            SHUFFLE_MODE_ALL
+        } else SHUFFLE_MODE_NONE
+
         sharedPreferences.edit().apply {
-            putInt("repeat", repeatMode)
+            putInt("shuffleMode", newShuffleMode)
             apply()
         }
+
         val bundle = Bundle()
-        bundle.putInt("repeatMode", repeatMode)
+        bundle.putInt("shuffleMode", newShuffleMode)
+
+        mediaController.sendCommand("setShuffleMode", bundle, null)
+
+        if (newShuffleMode == SHUFFLE_MODE_NONE) {
+            Toast.makeText(this, "Play queue unshuffled", Toast.LENGTH_SHORT).show()
+        } else Toast.makeText(this, "Play queue shuffled", Toast.LENGTH_SHORT).show()
+
+        return newShuffleMode
+    }
+
+    /**
+     * Toggle the repeat mode.
+     *
+     * @return An Integer representing the active repeat mode preference.
+     */
+    fun toggleRepeatMode(): Int {
+        val newRepeatMode = when (sharedPreferences.getInt("repeatMode", REPEAT_MODE_NONE)) {
+            REPEAT_MODE_NONE -> REPEAT_MODE_ALL
+            REPEAT_MODE_ALL -> REPEAT_MODE_ONE
+            else -> REPEAT_MODE_NONE
+        }
+
+        sharedPreferences.edit().apply {
+            putInt("repeatMode", newRepeatMode)
+            apply()
+        }
+
+        val bundle = Bundle()
+        bundle.putInt("repeatMode", newRepeatMode)
         // TODO: Could eventually have a result callback (instead of null)
         // TODO: Also could we delegate command names to a static constant params class for consistency
         mediaController.sendCommand("setRepeatMode", bundle, null)
+
+        // TODO: Need a ticket to go through and replace all hardcoded strings with string resources
+        when (newRepeatMode) {
+            REPEAT_MODE_NONE -> Toast.makeText(this, "Repeat mode off", Toast.LENGTH_SHORT).show()
+            REPEAT_MODE_ALL -> Toast.makeText(this, "Repeat play queue", Toast.LENGTH_SHORT).show()
+            REPEAT_MODE_ONE -> Toast.makeText(this, "Repeat current song", Toast.LENGTH_SHORT).show()
+        }
+
+        return newRepeatMode
     }
 
     /**
@@ -326,35 +374,6 @@ class MainActivity : AppCompatActivity() {
      *
      */
     fun fastForward() = mediaController.transportControls.fastForward()
-
-    // Returns true if play queue has been shuffled, false if unshuffled
-    fun shuffleCurrentPlayQueue(): Boolean {
-        val isShuffled = sharedPreferences.getBoolean("shuffle", false)
-        if (playQueue.isNotEmpty()) {
-            if (isShuffled) {
-                playQueue.sortBy {
-                    it.queueID
-                }
-                Toast.makeText(applicationContext, "Play queue unshuffled", Toast.LENGTH_SHORT).show()
-            } else {
-                val currentQueueItem = playQueue.find {
-                    it.queueID == currentlyPlayingQueueItemId
-                }
-                if (currentQueueItem != null) {
-                    playQueue.remove(currentQueueItem)
-                    playQueue.shuffle()
-                    playQueue.add(0, currentQueueItem)
-                    Toast.makeText(applicationContext, "Play queue shuffled", Toast.LENGTH_SHORT).show()
-                }
-            }
-            playQueueViewModel.currentPlayQueue.value = playQueue
-        }
-        
-        val editor = sharedPreferences.edit()
-        editor.putBoolean("shuffle", !isShuffled)
-        editor.apply()
-        return !isShuffled
-    }
 
     fun playNewSongs(playlist: List<Song>, startSong: Int?, shuffle: Boolean) = lifecycleScope.launch(Dispatchers.Main) {
         if (playlist.isNotEmpty()) {

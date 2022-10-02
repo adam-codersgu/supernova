@@ -168,45 +168,18 @@ class CurrentlyPlayingFragment : Fragment() {
             return@setOnLongClickListener false
         }
 
-        val shuffleSetting = sharedPreferences.getBoolean("shuffle", false)
-        if (shuffleSetting) binding.currentButtonShuffle.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.accent))
+        val shuffleMode = sharedPreferences.getInt("shuffleMode", SHUFFLE_MODE_NONE)
+        setShuffleButtonAppearance(shuffleMode)
 
         binding.currentButtonShuffle.setOnClickListener{
-            if (callingActivity.shuffleCurrentPlayQueue()) binding.currentButtonShuffle.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.accent))
-            else binding.currentButtonShuffle.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.onSurface60))
+            setShuffleButtonAppearance(callingActivity.toggleShuffleMode())
         }
         
-        var repeatSetting = sharedPreferences.getInt("repeat", REPEAT_MODE_NONE)
-        when (repeatSetting) {
-            REPEAT_MODE_ALL -> binding.currentButtonRepeat.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.accent))
-            REPEAT_MODE_ONE -> {
-                binding.currentButtonRepeat.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.accent))
-                binding.currentButtonRepeat.setImageDrawable(ContextCompat.getDrawable(requireActivity(), R.drawable.ic_repeat_one))
-            }
-        }
+        val repeatMode = sharedPreferences.getInt("repeatMode", REPEAT_MODE_NONE)
+        setRepeatButtonAppearance(repeatMode)
 
-        binding.currentButtonRepeat.setOnClickListener{
-            when (repeatSetting) {
-                REPEAT_MODE_NONE -> {
-                    repeatSetting = REPEAT_MODE_ALL
-                    binding.currentButtonRepeat.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.accent))
-                    callingActivity.setRepeatMode(repeatSetting)
-                    Toast.makeText(requireActivity(), "Repeat play queue", Toast.LENGTH_SHORT).show()
-                }
-                REPEAT_MODE_ALL -> {
-                    repeatSetting = REPEAT_MODE_ONE
-                    binding.currentButtonRepeat.setImageDrawable(ContextCompat.getDrawable(requireActivity(), R.drawable.ic_repeat_one))
-                    callingActivity.setRepeatMode(repeatSetting)
-                    Toast.makeText(requireActivity(), "Repeat current song", Toast.LENGTH_SHORT).show()
-                }
-                REPEAT_MODE_ONE -> {
-                    repeatSetting = REPEAT_MODE_NONE
-                    binding.currentButtonRepeat.setImageDrawable(ContextCompat.getDrawable(requireActivity(), R.drawable.ic_repeat))
-                    binding.currentButtonRepeat.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.onSurface60))
-                    callingActivity.setRepeatMode(repeatSetting)
-                    Toast.makeText(requireActivity(), "Repeat mode off", Toast.LENGTH_SHORT).show()
-                }
-            }
+        binding.currentButtonRepeat.setOnClickListener {
+            setRepeatButtonAppearance(callingActivity.toggleRepeatMode())
         }
 
         binding.currentAddToPlaylist.setOnClickListener {
@@ -323,6 +296,39 @@ class CurrentlyPlayingFragment : Fragment() {
         super.onDestroyView()
         _binding = null
         callingActivity.hideSystemBars(false)
+    }
+
+    /**
+     * Set the tint of the shuffle button based on the active shuffle mode.
+     *
+     * @param shuffleMode - An Integer representing the active shuffle mode preference.
+     */
+    private fun setShuffleButtonAppearance(shuffleMode: Int) {
+        if (shuffleMode == SHUFFLE_MODE_ALL) {
+            binding.currentButtonShuffle.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.accent))
+        } else binding.currentButtonShuffle.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.onSurface60))
+    }
+
+    /**
+     * Set the tint and drawable of the repeat button based on the active repeat mode.
+     *
+     * @param repeatMode - An Integer representing the active repeat mode preference.
+     */
+    private fun setRepeatButtonAppearance(repeatMode: Int) {
+        when (repeatMode) {
+            REPEAT_MODE_NONE -> {
+                binding.currentButtonRepeat.setImageDrawable(ContextCompat.getDrawable(requireActivity(), R.drawable.ic_repeat))
+                binding.currentButtonRepeat.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.onSurface60))
+            }
+            REPEAT_MODE_ALL -> {
+                binding.currentButtonRepeat.setImageDrawable(ContextCompat.getDrawable(requireActivity(), R.drawable.ic_repeat))
+                binding.currentButtonRepeat.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.accent))
+            }
+            REPEAT_MODE_ONE -> {
+                binding.currentButtonRepeat.setImageDrawable(ContextCompat.getDrawable(requireActivity(), R.drawable.ic_repeat_one))
+                binding.currentButtonRepeat.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.accent))
+            }
+        }
     }
 
     @SuppressLint("DiscouragedPrivateApi")

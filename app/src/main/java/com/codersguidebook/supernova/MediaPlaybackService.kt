@@ -20,7 +20,6 @@ import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
-import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.media.session.PlaybackStateCompat.*
 import android.text.TextUtils
 import android.view.KeyEvent
@@ -103,6 +102,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
 
             val queueItem = QueueItem(description, highestQueueId + 1)
             playQueue.add(index, queueItem)
+            mediaSessionCompat.setQueue(playQueue)
             setMediaPlaybackState(STATE_NONE, 0, 0f, null)
         }
 
@@ -261,9 +261,26 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         override fun onSetShuffleMode(shuffleMode: Int) {
             super.onSetShuffleMode(shuffleMode)
 
-            mediaSessionCompat.setShuffleMode(shuffleMode)
+            if (playQueue.isNotEmpty()) {
+                if (shuffleMode == SHUFFLE_MODE_NONE) {
+                    playQueue.sortBy {
+                        it.queueId
+                    }
+                } else {
+                    val currentQueueItem = playQueue.find {
+                        it.queueId == currentlyPlayingQueueItemId
+                    }
+                    if (currentQueueItem != null) {
+                        playQueue.remove(currentQueueItem)
+                        playQueue.shuffle()
+                        playQueue.add(0, currentQueueItem)
+                    }
+                }
+            }
 
-            // TODO: Implement play queue changes
+            mediaSessionCompat.setShuffleMode(shuffleMode)
+            mediaSessionCompat.setQueue(playQueue)
+            setMediaPlaybackState(STATE_NONE, 0, 0f, null)
         }
 
         override fun onCommand(command: String?, extras: Bundle?, cb: ResultReceiver?) {
@@ -274,6 +291,12 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                     extras?.let {
                         val repeatMode = extras.getInt("repeatMode", REPEAT_MODE_NONE)
                         onSetRepeatMode(repeatMode)
+                    }
+                }
+                "setShuffleMode" -> {
+                    extras?.let {
+                        val shuffleMode = extras.getInt("shuffleMode", SHUFFLE_MODE_NONE)
+                        onSetShuffleMode(shuffleMode)
                     }
                 }
             }
@@ -331,6 +354,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             super.onStop()
 
             playQueue.clear()
+            mediaSessionCompat.setQueue(playQueue)
             currentlyPlayingQueueItemId = -1L
             if (mediaPlayer != null) {
                 mediaPlayer?.stop()
@@ -396,8 +420,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         mediaSessionCompat = MediaSessionCompat(baseContext, logTag).apply {
             setCallback(mediaSessionCallback)
             setSessionToken(sessionToken)
-            val builder: PlaybackStateCompat.Builder = PlaybackStateCompat.Builder()
-                .setActions(PlaybackStateCompat.ACTION_PLAY)
+            val builder = Builder().setActions(ACTION_PLAY)
             setPlaybackState(builder.build())
         }
         initNoisyReceiver()
@@ -497,8 +520,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
      * @param bundle - An option bundle of extras to be packaged with the playback status update.
      */
     private fun setMediaPlaybackState(state: Int, position: Long, playbackSpeed: Float, bundle: Bundle?) {
-        val playbackStateBuilder = PlaybackStateCompat.Builder()
-            .setState(state, position, playbackSpeed)
+        val playbackStateBuilder = Builder().setState(state, position, playbackSpeed)
         if (bundle != null) playbackStateBuilder.setExtras(bundle)
         mediaSessionCompat.setPlaybackState(playbackStateBuilder.build())
     }
