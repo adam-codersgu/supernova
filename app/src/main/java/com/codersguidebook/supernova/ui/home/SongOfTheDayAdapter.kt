@@ -32,7 +32,7 @@ class SongOfTheDayAdapter(private val mainActivity: MainActivity):
         }
 
         override fun onClick(view: View) {
-            mainActivity.playNewSongs(listOf(song!!), 0, false)
+            mainActivity.playListOfSongs(listOf(song!!), 0, false)
         }
     }
 

@@ -32,7 +32,7 @@ class FavouritesAdapter(private val mainActivity: MainActivity):
         }
 
         override fun onClick(view: View) {
-            mainActivity.playNewSongs(songs, layoutPosition, false)
+            mainActivity.playListOfSongs(songs, layoutPosition, false)
         }
     }
 

@@ -95,7 +95,7 @@ class PlaylistFragment : Fragment() {
         })
 
         binding.fab.setOnClickListener {
-            callingActivity.playNewSongs(playlistSongs, 0, true)
+            callingActivity.playListOfSongs(playlistSongs, 0, true)
         }
 
         binding.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {

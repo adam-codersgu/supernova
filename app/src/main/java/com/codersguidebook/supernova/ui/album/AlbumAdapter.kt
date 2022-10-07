@@ -98,7 +98,7 @@ class AlbumAdapter(private val mainActivity: MainActivity):
                 }
 
                 holder.songLayout.setOnClickListener {
-                    mainActivity.playNewSongs(songs, position - 1, false)
+                    mainActivity.playListOfSongs(songs, position - 1, false)
                 }
 
                 holder.songLayout.setOnLongClickListener {

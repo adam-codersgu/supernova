@@ -165,7 +165,8 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
 
         override fun onPlay() {
             super.onPlay()
-            if (mediaPlayer != null) {
+
+            if (mediaPlayer != null && !mediaPlayer!!.isPlaying) {
                 val audioManager = applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
                 audioFocusRequest = AudioFocusRequest.Builder(AUDIOFOCUS_GAIN).run {
@@ -260,6 +261,8 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
 
         override fun onSetShuffleMode(shuffleMode: Int) {
             super.onSetShuffleMode(shuffleMode)
+
+            if (shuffleMode == mediaSessionCompat.controller.shuffleMode) return
 
             if (playQueue.isNotEmpty()) {
                 if (shuffleMode == SHUFFLE_MODE_NONE) {

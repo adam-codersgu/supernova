@@ -64,7 +64,7 @@ class SearchAdapter(private val mainActivity: MainActivity):
                 }
 
                 holder.itemView.setOnClickListener {
-                    mainActivity.playNewSongs(listOf(current), 0, false)
+                    mainActivity.playListOfSongs(listOf(current), 0, false)
                 }
 
                 holder.itemView.setOnLongClickListener {

@@ -40,7 +40,7 @@ class SongsAdapter(private val activity: MainActivity):
         }
 
         override fun onClick(view: View) {
-            activity.playNewSongs(songs, layoutPosition, false)
+            activity.playListOfSongs(songs, layoutPosition, false)
         }
     }
 

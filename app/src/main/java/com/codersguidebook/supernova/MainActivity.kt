@@ -61,6 +61,7 @@ import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.random.Random
 
 class MainActivity : AppCompatActivity() {
 
@@ -273,7 +274,7 @@ class MainActivity : AppCompatActivity() {
             else -> {
                 // Play first song in library if the play queue is currently empty
                 // FIXME: Adding the entire music library to the play queue may be very slow -> if so need explore setQueue() for media session
-                if (playQueue.isNullOrEmpty()) playNewSongs(completeLibrary, 0, false)
+                if (playQueue.isNullOrEmpty()) playListOfSongs(completeLibrary, 0, false)
                 else {
                     // It's possible a queue has been built without ever pressing play. In which case, commence playback here
                     lifecycleScope.launch {
@@ -295,21 +296,32 @@ class MainActivity : AppCompatActivity() {
             SHUFFLE_MODE_ALL
         } else SHUFFLE_MODE_NONE
 
-        sharedPreferences.edit().apply {
-            putInt("shuffleMode", newShuffleMode)
-            apply()
-        }
-
-        val bundle = Bundle()
-        bundle.putInt("shuffleMode", newShuffleMode)
-
-        mediaController.sendCommand("setShuffleMode", bundle, null)
+        setShuffleMode(newShuffleMode)
 
         if (newShuffleMode == SHUFFLE_MODE_NONE) {
             Toast.makeText(this, "Play queue unshuffled", Toast.LENGTH_SHORT).show()
         } else Toast.makeText(this, "Play queue shuffled", Toast.LENGTH_SHORT).show()
 
         return newShuffleMode
+    }
+
+    /**
+     * Save the active shuffle mode and notify the media browser service.
+     * N.B. This functionality may be called independently of toggleShuffleMode() e.g. when an
+     * album is played on shuffle mode directly from the Album view.
+     *
+     * @param shuffleMode - An Integer representing the active shuffle mode preference.
+     */
+    private fun setShuffleMode(shuffleMode: Int) {
+        sharedPreferences.edit().apply {
+            putInt("shuffleMode", shuffleMode)
+            apply()
+        }
+
+        val bundle = Bundle()
+        bundle.putInt("shuffleMode", shuffleMode)
+
+        mediaController.sendCommand("setShuffleMode", bundle, null)
     }
 
     /**
@@ -375,49 +387,6 @@ class MainActivity : AppCompatActivity() {
      */
     fun fastForward() = mediaController.transportControls.fastForward()
 
-    fun playNewSongs(playlist: List<Song>, startSong: Int?, shuffle: Boolean) = lifecycleScope.launch(Dispatchers.Main) {
-        if (playlist.isNotEmpty()) {
-            playQueue = mutableListOf()
-            for ((i, s) in playlist.withIndex()) {
-                val queueItem = QueueItem(i, s)
-                playQueue.add(queueItem)
-            }
-            if (shuffle) playQueue.shuffle()
-
-            currentlyPlayingQueueItemId = if (shuffle) playQueue[0].queueID
-            else startSong ?: 0
-
-            val editor = sharedPreferences.edit()
-            editor.putBoolean("shuffle", shuffle)
-            editor.apply()
-            updateCurrentlyPlaying()
-            play()
-        }
-    }
-
-    @Deprecated("To be removed")
-    private suspend fun updateCurrentlyPlaying() {
-        val index = playQueue.indexOfFirst {
-            it.queueID == currentlyPlayingQueueItemId
-        }
-        val currentQueueItem = if (playQueue.isNotEmpty() && index != -1) playQueue[index]
-        else null
-        // need to retrieve up-to-date song info because properties may have changed since the play queue was created
-        val upToDateSong = if (currentQueueItem != null) completeLibrary.find { songs ->
-            songs.songId == currentQueueItem.song.songID
-        } else null
-        if (upToDateSong != null) withContext(Dispatchers.IO) {
-            playQueueViewModel.currentlyPlayingSong.postValue(upToDateSong)
-            playQueueViewModel.currentPlayQueue.postValue(playQueue)
-            playQueueViewModel.currentQueueItemId.postValue(currentlyPlayingQueueItemId)
-            val bundle = Bundle()
-            // convert the Song object for each song to JSON and store it in a bundle
-            val gPretty = GsonBuilder().setPrettyPrinting().create().toJson(upToDateSong)
-            bundle.putString("song", gPretty)
-            mediaController.transportControls.prepareFromUri(Uri.parse(upToDateSong.uri), bundle)
-        }
-    }
-
     /**
      * Convert the play queue to JSON and save it in the shared preferences file.
      *
@@ -447,6 +416,45 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /*
+    FIXME: May have massive performance issues here. Need to think of an asynchronous way of building long queues.
+        An alternative could be to use a coroutine to add the songs as fast as possible, and begin playback (if required) as soon as one song is added
+     */
+    /**
+     * Load a list of Song objects into the media player service and commence playback.
+     *
+     * @param songs - The list of songs to be played.
+     * @param startIndex - The index of the song where playback should start from.
+     * @param shuffle - Should the play queue be shuffled prior to commencing playback?
+     * @return
+     */
+    fun playListOfSongs(songs: List<Song>, startIndex: Int?, shuffle: Boolean) = lifecycleScope.launch(Dispatchers.Main) {
+        if (songs.isNotEmpty()) {
+            mediaController.transportControls.stop()
+
+            val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
+
+            for (song in songs) {
+                val mediaDescriptionCompat = mediaDescriptionCompatManager.buildDescription(song)
+                mediaControllerCompat.addQueueItem(mediaDescriptionCompat)
+            }
+
+            if (shuffle) {
+                val randomQueueItem = playQueue[Random.nextInt(0, playQueue.size)]
+                mediaController.transportControls.skipToQueueItem(randomQueueItem.queueId)
+                setShuffleMode(SHUFFLE_MODE_ALL)
+            } else {
+                setShuffleMode(SHUFFLE_MODE_NONE)
+                // FIXME: If the second half of the equation is false but the first half is true, there has been a lag/problem
+                if (startIndex != null && playQueue.size > startIndex) {
+                    mediaController.transportControls.skipToQueueItem(playQueue[startIndex].queueId)
+                } else mediaController.transportControls.prepare()
+            }
+
+            mediaController.transportControls.play()
+        }
+    }
+
     /**
      * Add a list of songs to the play queue. The songs can be added to the end of the play queue
      * or after the currently playing song.
@@ -457,8 +465,6 @@ class MainActivity : AppCompatActivity() {
      * @return
      */
     // TODO: WHEN CHANGING THE CURRENTLY PLAYING SONG, SEND THE ID OF THE CURRENTLY PLAYING QUEUE ITEM
-    // FIXME: As lots of metadata (incl image) are generated, this could be a very laggy method for large song volumes
-    //  An alternative could be to use a coroutine to add the songs as fast as possible, and begin playback (if required) as soon as one song is added
     fun addSongsToPlayQueue(songs: List<Song>, addSongsToEndOfQueue: Boolean) {
         val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
         for (song in songs) {
@@ -484,7 +490,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun removeQueueItemById(id: Int) {
-        // could use mediaControllerCompat.sendCommand to remove specific occurrence e.g. queue item. Use queue item ID ideally not index - in case of issues with play queue synchronisation
+        // TODO: could use mediaControllerCompat.sendCommand to remove specific occurrence e.g. queue item. Use queue item ID ideally not index - in case of issues with play queue synchronisation
         // Actually, maybe use sendCommand for all. You could have a const val REMOVE_ALL_OCCURRENCES_FROM_PLAY_QUEUE with value -1 which signals removeAll (e.g. song removed from library), otherwise, remove specific value
 
         if (playQueue.isNotEmpty()) {
