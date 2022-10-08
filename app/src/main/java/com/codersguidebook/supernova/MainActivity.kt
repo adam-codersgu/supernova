@@ -18,8 +18,9 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.Settings
 import android.support.v4.media.MediaBrowserCompat
+import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaControllerCompat
-import android.support.v4.media.session.MediaSessionCompat.*
+import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.media.session.PlaybackStateCompat.*
 import android.util.Size
@@ -34,7 +35,10 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.view.*
+import androidx.core.view.GravityCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -56,11 +60,13 @@ import com.google.android.material.navigation.NavigationView
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.random.Random
 
 class MainActivity : AppCompatActivity() {
@@ -86,8 +92,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mediaDescriptionCompatManager: MediaDescriptionCompatManager
 
     companion object {
-        private const val QUEUE = "queue"
-        private const val CURRENT_QUEUE_ITEM_ID = "queue_id"
+        private const val PLAY_QUEUE_MEDIA_DESCRIPTION_LIST = "play_queue_media_description_list"
+        private const val CURRENT_QUEUE_ITEM_INDEX = "current_queue_item_index"
         private const val PLAYBACK_POSITION = "playback_position"
         private const val PLAYBACK_DURATION = "playback_duration"
     }
@@ -107,7 +113,7 @@ class MainActivity : AppCompatActivity() {
             val mediaController = MediaControllerCompat.getMediaController(this@MainActivity)
             mediaController.registerCallback(controllerCallback)
 
-            retrievePlaybackState()
+            restorePlayQueue()
         }
     }
 
@@ -260,7 +266,6 @@ class MainActivity : AppCompatActivity() {
      *
      */
     private fun refreshPlayQueue() {
-        // TODO: Explore if it's possible to replace all definitions of mediaControllerCompat with direct actions like mediaController.queue (see playPauseControl())
         val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
         playQueue = mediaControllerCompat.queue
         playQueueViewModel.currentPlayQueue.value = playQueue
@@ -272,15 +277,12 @@ class MainActivity : AppCompatActivity() {
             STATE_PAUSED -> play()
             STATE_PLAYING -> mediaController.transportControls.pause()
             else -> {
-                // Play first song in library if the play queue is currently empty
-                // FIXME: Adding the entire music library to the play queue may be very slow -> if so need explore setQueue() for media session
-                if (playQueue.isNullOrEmpty()) playListOfSongs(completeLibrary, 0, false)
+                // Load and play the user's music library if the play queue is empty
+                if (playQueue.isEmpty()) playListOfSongs(completeLibrary, null, false)
                 else {
                     // It's possible a queue has been built without ever pressing play. In which case, commence playback here
-                    lifecycleScope.launch {
-                        updateCurrentlyPlaying()
-                        play()
-                    }
+                    mediaController.transportControls.prepare()
+                    mediaController.transportControls.play()
                 }
             }
         }
@@ -388,15 +390,18 @@ class MainActivity : AppCompatActivity() {
     fun fastForward() = mediaController.transportControls.fastForward()
 
     /**
-     * Convert the play queue to JSON and save it in the shared preferences file.
+     * Convert the list of MediaDescriptionCompat objects for each item in the play queue to JSON
+     * and save it in the shared preferences file.
      *
      * @return
      */
     private fun savePlayQueue() = lifecycleScope.launch(Dispatchers.IO) {
         try {
+            val listOfMediaDescriptions = mutableListOf<MediaDescriptionCompat>()
+            for (item in playQueue) listOfMediaDescriptions.add(item.description)
             sharedPreferences.edit().apply {
-                val playQueueJSON = GsonBuilder().setPrettyPrinting().create().toJson(playQueue)
-                putString(QUEUE, playQueueJSON)
+                val playQueueJSON = GsonBuilder().setPrettyPrinting().create().toJson(listOfMediaDescriptions)
+                putString(PLAY_QUEUE_MEDIA_DESCRIPTION_LIST, playQueueJSON)
                 apply()
             }
         } catch (_: ConcurrentModificationException) {}
@@ -410,8 +415,9 @@ class MainActivity : AppCompatActivity() {
     private fun savePlayQueueId(queueId: Long) = lifecycleScope.launch(Dispatchers.IO) {
         currentlyPlayingQueueItemId = queueId
         playQueueViewModel.currentQueueItemId.postValue(queueId)
+        val currentQueueItemIndex = playQueue.indexOfFirst { it.queueId == queueId }
         sharedPreferences.edit().apply {
-            putLong(CURRENT_QUEUE_ITEM_ID, currentlyPlayingQueueItemId)
+            putInt(CURRENT_QUEUE_ITEM_INDEX, currentQueueItemIndex)
             apply()
         }
     }
@@ -419,6 +425,8 @@ class MainActivity : AppCompatActivity() {
     /*
     FIXME: May have massive performance issues here. Need to think of an asynchronous way of building long queues.
         An alternative could be to use a coroutine to add the songs as fast as possible, and begin playback (if required) as soon as one song is added
+        Perhaps a custom action will be necessary if the media browser service is not really giving suitable tools
+        !!! Or perhaps just don't get an image for each item. Only load the image when required for notification and currently playing view?
      */
     /**
      * Load a list of Song objects into the media player service and commence playback.
@@ -464,7 +472,6 @@ class MainActivity : AppCompatActivity() {
      * the end of the play queue (true) or after the currently playing song (false).
      * @return
      */
-    // TODO: WHEN CHANGING THE CURRENTLY PLAYING SONG, SEND THE ID OF THE CURRENTLY PLAYING QUEUE ITEM
     fun addSongsToPlayQueue(songs: List<Song>, addSongsToEndOfQueue: Boolean) {
         val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
         for (song in songs) {
@@ -489,77 +496,48 @@ class MainActivity : AppCompatActivity() {
             songs[0].title + " has been added to the play queue", Toast.LENGTH_SHORT).show()
     }
 
-    fun removeQueueItemById(id: Int) {
-        // TODO: could use mediaControllerCompat.sendCommand to remove specific occurrence e.g. queue item. Use queue item ID ideally not index - in case of issues with play queue synchronisation
-        // Actually, maybe use sendCommand for all. You could have a const val REMOVE_ALL_OCCURRENCES_FROM_PLAY_QUEUE with value -1 which signals removeAll (e.g. song removed from library), otherwise, remove specific value
-
+    /**
+     * Remove a given QueueItem from the play queue based on its ID.
+     *
+     * @param queueItemId - The ID of the QueueItem to be removed.
+     */
+    fun removeQueueItemById(queueItemId: Long) {
         if (playQueue.isNotEmpty()) {
             val bundle = Bundle()
+            bundle.putLong("queueItemId", queueItemId)
 
             // TODO: Use the result receiver. Also, maybe try and link this method with the one below for simplicity
             val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
-            mediaControllerCompat.sendCommand()
-
-            /*
-            // Check if the currently playing song is being removed from the play queue
-            val currentlyPlayingSongRemoved = playQueue[id].queueID == currentlyPlayingQueueItemId
-
-            playQueue.removeAt(id)
-
-            if (currentlyPlayingSongRemoved) {
-                currentlyPlayingQueueItemId = when {
-                    playQueue.isEmpty() -> {
-                        val mediaController = MediaControllerCompat.getMediaController(this@MainActivity)
-                        mediaController.transportControls.stop()
-                        return
-                    }
-                    playQueue.size == id -> playQueue[0].queueID
-                    else -> playQueue[id].queueID
-                }
-
-                lifecycleScope.launch {
-                    updateCurrentlyPlaying()
-                    if (pbState == STATE_PLAYING) play()
-                }
-            }
-            playQueueViewModel.currentPlayQueue.postValue(playQueue)
-            */
+            mediaControllerCompat.sendCommand("removeQueueItemById", bundle, null)
         }
     }
 
+    /**
+     * Remove all instances of a given song from the play queue.
+     *
+     * @param song - The Song object to be removed from the play queue.
+     */
     private fun removeAllInstancesOfSongFromPlayQueue(song: Song) {
-        // TODO: Implement
-
         if (playQueue.isNotEmpty()) {
+            val mediaDescriptionCompat = mediaDescriptionCompatManager.buildDescription(song)
             val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
+            mediaControllerCompat.removeQueueItem(mediaDescriptionCompat)
         }
-
-
-        /*
-
-        try {
-                    do {
-                        val index = playQueue.indexOfFirst {
-                            it.song.songID == s.songId
-                        }
-
-                        // if song is found in current queue then request its removal
-                        if (index != -1) removeQueueItem(index)
-                    } while (index != -1)
-                } catch (_: ConcurrentModificationException) { }
-
-         */
     }
 
+    /**
+     * Set the playback position for the currently playing song to a specific location.
+     *
+     * @param position - An Integer representing the desired playback position.
+     */
     fun seekTo(position: Int) = mediaController.transportControls.seekTo(position.toLong())
 
-    fun skipToQueueItem(position: Int) {
-        currentlyPlayingQueueItemId = playQueue[position].queueID
-        lifecycleScope.launch {
-            updateCurrentlyPlaying()
-            play()
-        }
-    }
+    /**
+     * Skip to a specific item in the play queue based on its ID.
+     *
+     * @param queueItemId - The ID of the target QueueItem object.
+     */
+    fun skipToQueueItem(queueItemId: Long) = mediaController.transportControls.skipToQueueItem(queueItemId)
 
     fun hideSystemBars(hide: Boolean) {
         val windowInsetsController = ViewCompat.getWindowInsetsController(window.decorView) ?: return
@@ -717,7 +695,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun savePlaylistNewSongIDList(playlist: Playlist, songIDList: List<Long>) {
         if (songIDList.isNotEmpty()) {
-            val newSongListJSON = convertSongIDListToJSON(songIDList)
+            val newSongListJSON = convertSongIDListToJson(songIDList)
             playlist.songs = newSongListJSON
         } else playlist.songs = null
         musicLibraryViewModel.updatePlaylists(listOf(playlist))
@@ -728,7 +706,7 @@ class MainActivity : AppCompatActivity() {
         else {
             val songIDList = mutableListOf<Long>()
             for (s in songList) songIDList.add(s.songId)
-            val newSongListJSON = convertSongIDListToJSON(songIDList)
+            val newSongListJSON = convertSongIDListToJson(songIDList)
             playlist.songs = newSongListJSON
         }
         musicLibraryViewModel.updatePlaylists(listOf(playlist))
@@ -751,37 +729,29 @@ class MainActivity : AppCompatActivity() {
         if (path.exists()) path.delete()
     }
 
+    /**
+     * Save updates to song metadata to the database. Also update the play queue (if necessary)
+     *
+     * @param songs - The list of Song objects containing updated metadata.
+     * @return
+     */
     fun updateSongInfo(songs: List<Song>) = lifecycleScope.launch(Dispatchers.Default) {
         musicLibraryViewModel.updateMusicInfo(songs)
-        for (s in songs) {
-            // see if current play queue needs to be updated
-            if (playQueue.isNotEmpty()) {
-                val newQueue = playQueue
+        for (song in songs) {
+            // All occurrences of the song need to be updated in the play queue
+            if (playQueue.isNotEmpty() &&
+                playQueue.indexOfFirst { it.description.mediaId == song.songId.toString() } != -1) {
+                val mediaDescriptionCompat = mediaDescriptionCompatManager.buildDescription(song)
+                val gson = Gson()
+                val mediaDescriptionCompatJson = gson.toJson(mediaDescriptionCompat)
 
-                fun findIndex(): Int {
-                    return newQueue.indexOfFirst {
-                        it.song.songID == s.songId
-                    }
-                }
+                val bundle = Bundle()
+                bundle.putString("mediaDescriptionCompatJson", mediaDescriptionCompatJson)
 
-                // key = queue index, value = queue ID
-                val queueIndexQueueIDMap = HashMap<Int, Int>()
-                do {
-                    val index = findIndex()
-                    if (index != -1) {
-                        queueIndexQueueIDMap[index] = playQueue[index].queueID
-                        newQueue.removeAt(index)
-                    }
-                } while (index != -1)
-
-                for ((index, queueID) in queueIndexQueueIDMap) {
-                    val queueItem = QueueItem(queueID, s)
-                    newQueue.add(index, queueItem)
-                    playQueueViewModel.currentPlayQueue.postValue(newQueue)
-                }
+                val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
+                mediaControllerCompat.sendCommand("updateQueueItem", bundle, null)
             }
         }
-        savePlayQueue()
     }
 
     fun updateFavourites(song: Song): Boolean? {
@@ -806,7 +776,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (songIDList.isNotEmpty()) {
-                val newSongListJSON = convertSongIDListToJSON(songIDList)
+                val newSongListJSON = convertSongIDListToJson(songIDList)
                 favouritesPlaylist.songs = newSongListJSON
             } else favouritesPlaylist.songs = null
             musicLibraryViewModel.updatePlaylists(listOf(favouritesPlaylist))
@@ -832,7 +802,7 @@ class MainActivity : AppCompatActivity() {
                 songIDList.add(0, song.songId)
                 if (songIDList.size > 30) songIDList.removeAt(songIDList.size - 1)
             } else songIDList.add(song.songId)
-            recentlyPlayedPlaylist.songs = convertSongIDListToJSON(songIDList)
+            recentlyPlayedPlaylist.songs = convertSongIDListToJson(songIDList)
             musicLibraryViewModel.updatePlaylists(listOf(recentlyPlayedPlaylist))
         }
     }
@@ -857,10 +827,10 @@ class MainActivity : AppCompatActivity() {
     fun convertSongsToSongIDJSON(songs: List<Song>): String {
         val songIDs = mutableListOf<Long>()
         for (s in songs) songIDs.add(s.songId)
-        return convertSongIDListToJSON(songIDs)
+        return convertSongIDListToJson(songIDs)
     }
 
-    private fun convertSongIDListToJSON(songIDList: List<Long>): String {
+    private fun convertSongIDListToJson(songIDList: List<Long>): String {
         val gPretty = GsonBuilder().setPrettyPrinting().create()
         return gPretty.toJson(songIDList)
     }
@@ -874,7 +844,7 @@ class MainActivity : AppCompatActivity() {
 
     fun extractPlaylistSongs(json: String?): MutableList<Song> {
         val songIDList = extractPlaylistSongIDs(json)
-        return if (songIDList.isNullOrEmpty()) mutableListOf()
+        return if (songIDList.isEmpty()) mutableListOf()
         else {
             val playlistSongs = mutableListOf<Song>()
             for (i in songIDList) {
@@ -1118,38 +1088,41 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) { }
     }
 
-    private suspend fun tidyArtwork(songs: List<Song>) {
-        val cw = ContextWrapper(application)
-        val directory = cw.getDir("albumArt", Context.MODE_PRIVATE)
-        for (s in songs){
-            val artworkInUse = musicDatabase!!.musicDao().doesAlbumIDExist(s.albumId)
-            if (artworkInUse.isNullOrEmpty()){
-                val path = File(directory, s.albumId + ".jpg")
+    /**
+     * Check if the album artwork associated with songs that have been deleted from the music library
+     * is still required for other songs. If the artwork is no longer used elsewhere, then the image
+     * file can be deleted.
+     *
+     * @param songs - A list of Song objects that have been deleted from the music library.
+     */
+    private suspend fun deleteRedundantArtworkForDeletedSongs(songs: List<Song>) {
+        val contextWrapper = ContextWrapper(application)
+        val directory = contextWrapper.getDir("albumArt", Context.MODE_PRIVATE)
+        for (song in songs){
+            val songsWithAlbumId = musicDatabase!!.musicDao().getSongWithAlbumId(song.albumId)
+            if (songsWithAlbumId.isEmpty()){
+                val path = File(directory, song.albumId + ".jpg")
                 if (path.exists()) path.delete()
             }
         }
     }
 
-    // find songs that have been deleted from the device
-    private fun checkLibrarySongsExistAsync(): Deferred<List<Song>?> = lifecycleScope.async(
-        Dispatchers.IO
-    ) {
-        val projection = arrayOf(
-            MediaStore.Audio.Media._ID
-        )
+    /**
+     * Check if the audio file for each song in the user's music library still exists on the device.
+     * Any songs that no longer exist should be deleted.
+     *
+     * @return - A deferred list of Song objects for which the corresponding audio file could not be found.
+     * Such songs should be removed from the music library.
+     */
+    private fun checkLibrarySongsExistAsync(): Deferred<List<Song>?> = lifecycleScope.async(Dispatchers.IO) {
+        val projection = arrayOf(MediaStore.Audio.Media._ID)
         val libraryCursor = musicQueryAsync(projection).await()
         libraryCursor?.use { cursor ->
-            // Cache column indices.
             val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
             val songsToBeDeleted = completeLibrary.toMutableList()
 
             while (cursor.moveToNext()) {
-                // Get the song ID of each song on the device
                 val id = cursor.getLong(idColumn)
-
-                // run through all songs on the device and see if they match a song in the music library
-                // when a match is found, that song is removed from the library MutableList
-                // the remaining songs in the songsToBeDeleted MutableList will be songs where the music file no longer exists (because it was not found when searching the device)
                 val indexOfSong = songsToBeDeleted.indexOfFirst { song: Song ->
                     song.songId == id
                 }
@@ -1159,23 +1132,30 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Cleanup operations for when songs are to be deleted from the user's music library. The deleted songs must be
+     * removed from the play queue and any playlists they feature in. The saved artwork for those songs can also be
+     * deleted if no longer required. The Song objects should also be deleted from the application database.
+     *
+     * @param songs - The list of Song objects to be deleted.
+     * @return
+     */
     private suspend fun deleteSongs(songs: List<Song>) = lifecycleScope.launch(Dispatchers.Default) {
-        for (s in songs) {
-            // delete the song from any saved playlists it appears in
-            if (!allPlaylists.isNullOrEmpty()) {
+        for (song in songs) {
+            if (allPlaylists.isNotEmpty()) {
                 val updatedPlaylists = mutableListOf<Playlist>()
-                for (p in allPlaylists) {
-                    if (p.songs != null) {
-                        val newSongIDList = extractPlaylistSongIDs(p.songs)
+                for (playlist in allPlaylists) {
+                    if (playlist.songs != null) {
+                        val newSongIDList = extractPlaylistSongIDs(playlist.songs)
 
                         var playlistModified = false
                         fun findIndex(): Int {
                             return newSongIDList.indexOfFirst {
-                                it == s.songId
+                                it == song.songId
                             }
                         }
 
-                        // if song is found in playlist then remove it (and keep looping until all instances are removed)
+                        // Remove all instances of the song from the playlist
                         do {
                             val index = findIndex()
                             if (index != -1) {
@@ -1185,25 +1165,18 @@ class MainActivity : AppCompatActivity() {
                         } while (index != -1)
 
                         if (playlistModified) {
-                            // update playlist's songs
-                            p.songs = convertSongIDListToJSON(newSongIDList)
-                            updatedPlaylists.add(p)
+                            playlist.songs = convertSongIDListToJson(newSongIDList)
+                            updatedPlaylists.add(playlist)
                         }
                     }
                 }
-                // save updated playlists
                 if (updatedPlaylists.isNotEmpty()) musicLibraryViewModel.updatePlaylists(updatedPlaylists)
             }
 
-            if (playQueue.isNotEmpty()) {
-                removeAllInstancesOfSongFromPlayQueue(s)
-            }
-            // once a song has been removed from all playlists and the play queue it can be deleted from the Room database
-            musicLibraryViewModel.deleteSong(s)
+            removeAllInstancesOfSongFromPlayQueue(song)
+            musicLibraryViewModel.deleteSong(song)
         }
-        // also check to see if we can delete the artwork
-        tidyArtwork(songs)
-        savePlayQueue()
+        deleteRedundantArtworkForDeletedSongs(songs)
     }
 
     /**
@@ -1255,18 +1228,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>,
+                                            grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (!MusicPermissionHelper.hasReadPermission(this)) {
-            Toast.makeText(
-                this,
-                "Storage permission is needed to run this application",
-                Toast.LENGTH_LONG
-            ).show()
+            Toast.makeText(this, "Storage permission is needed to run this application",
+                Toast.LENGTH_LONG).show()
             if (!MusicPermissionHelper.shouldShowRequestPermissionRationale(this)) {
                 // Permission denied with checking "Do not ask again".
                 MusicPermissionHelper.launchPermissionSettings(this)
@@ -1283,24 +1250,32 @@ class MainActivity : AppCompatActivity() {
         else MusicPermissionHelper.requestPermissions(this)
     }
 
-    private fun retrievePlaybackState() = lifecycleScope.launch {
-        val queueJSON = sharedPreferences.getString(QUEUE, null)
+    /**
+     * Restore the play queue and playback state from the last save.
+     *
+     * @return
+     */
+    private fun restorePlayQueue() = lifecycleScope.launch {
+        val mediaDescriptionListJson = sharedPreferences.getString(PLAY_QUEUE_MEDIA_DESCRIPTION_LIST, null) ?: return@launch
 
-        playQueue = if (queueJSON != null) {
-            val listType = object : TypeToken<List<QueueItem>>() {}.type
-            Gson().fromJson(queueJSON, listType)
-        } else mutableListOf()
+        val gson = Gson()
+        val itemType = object : TypeToken<List<MediaDescriptionCompat>>() {}.type
+        val mediaDescriptionList = gson.fromJson<List<MediaDescriptionCompat>>(mediaDescriptionListJson, itemType)
 
-        playQueueViewModel.currentPlayQueue.value = playQueue
-        currentlyPlayingQueueItemId = sharedPreferences.getLong(CURRENT_QUEUE_ITEM_ID, 0L)
-        playQueueViewModel.currentQueueItemId.value = currentlyPlayingQueueItemId
-        updateCurrentlyPlaying()
+        val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
+        for (mediaDescription in mediaDescriptionList) {
+            mediaControllerCompat.addQueueItem(mediaDescription)
+        }
+
+        val currentlyQueueItemIndex = sharedPreferences.getInt(CURRENT_QUEUE_ITEM_INDEX, -1)
+        if (currentlyQueueItemIndex == -1) return@launch
+        if (playQueue.size > currentlyQueueItemIndex) {
+            currentlyPlayingQueueItemId = playQueue[currentlyQueueItemIndex].queueId
+            mediaController.transportControls.skipToQueueItem(currentlyPlayingQueueItemId)
+        }
 
         val position = sharedPreferences.getInt(PLAYBACK_POSITION, 0)
-        if (position != 0){
-            seekTo(position)
-            playQueueViewModel.currentPlaybackDuration.value = sharedPreferences.getInt(PLAYBACK_DURATION, 0)
-        }
+        if (position != 0) seekTo(position)
     }
 
     override fun onDestroy() {
@@ -1312,9 +1287,10 @@ class MainActivity : AppCompatActivity() {
         }
         mediaBrowser.disconnect()
 
-        val editor = sharedPreferences.edit()
-        editor.putInt(PLAYBACK_POSITION, currentPlaybackPosition)
-        editor.putInt(PLAYBACK_DURATION, currentPlaybackDuration)
-        editor.apply()
+        sharedPreferences.edit().apply {
+            putInt(PLAYBACK_POSITION, currentPlaybackPosition)
+            putInt(PLAYBACK_DURATION, currentPlaybackDuration)
+            apply()
+        }
     }
 }

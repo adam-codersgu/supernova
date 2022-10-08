@@ -18,7 +18,7 @@ interface MusicDao {
     suspend fun insert(song: Song)
 
     @Query("SELECT * from music_library WHERE song_album_id LIKE :albumID LIMIT 1")
-    suspend fun doesAlbumIDExist(albumID: String): List<Song>
+    suspend fun getSongWithAlbumId(albumID: String): List<Song>
 
     @Query("SELECT * FROM music_library WHERE song_title LIKE :search OR song_artist LIKE :search OR song_album_name LIKE :search LIMIT 100")
     suspend fun findBySearchSongs(search: String): List<Song>

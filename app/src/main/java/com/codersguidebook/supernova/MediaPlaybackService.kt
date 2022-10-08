@@ -27,6 +27,7 @@ import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.media.MediaBrowserServiceCompat
+import com.google.gson.Gson
 import java.io.IOException
 
 class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorListener {
@@ -102,13 +103,9 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
 
             val queueItem = QueueItem(description, highestQueueId + 1)
             playQueue.add(index, queueItem)
-            mediaSessionCompat.setQueue(playQueue)
-            setMediaPlaybackState(STATE_NONE, 0, 0f, null)
+            setPlayQueue()
         }
 
-        /*
-        TODO: Play new songs pathway should be add songs -> onPrepare -> onPlay
-         */
         override fun onPrepare() {
             super.onPrepare()
 
@@ -282,14 +279,24 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             }
 
             mediaSessionCompat.setShuffleMode(shuffleMode)
-            mediaSessionCompat.setQueue(playQueue)
-            setMediaPlaybackState(STATE_NONE, 0, 0f, null)
+            setPlayQueue()
         }
 
         override fun onCommand(command: String?, extras: Bundle?, cb: ResultReceiver?) {
             super.onCommand(command, extras, cb)
 
             when (command) {
+                "removeQueueItemById" -> {
+                    extras?.let {
+                        val queueItemId = extras.getLong("queueItemId", -1L)
+                        when (queueItemId) {
+                            -1L -> return@let
+                            currentlyPlayingQueueItemId -> onSkipToNext()
+                        }
+                        playQueue.removeIf { it.queueId == queueItemId }
+                        setPlayQueue()
+                    }
+                }
                 "setRepeatMode" -> {
                     extras?.let {
                         val repeatMode = extras.getInt("repeatMode", REPEAT_MODE_NONE)
@@ -302,6 +309,65 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         onSetShuffleMode(shuffleMode)
                     }
                 }
+                "updateQueueItem" -> {
+                    extras?.let {
+                        val mediaDescriptionCompatJson = extras.getString("mediaDescriptionCompatJson") ?: return@let
+                        val gson = Gson()
+                        val mediaDescriptionCompat = gson.fromJson(mediaDescriptionCompatJson, MediaDescriptionCompat::class.java)
+                        updateMetadataForASongInThePlayQueue(mediaDescriptionCompat)
+                    }
+                }
+            }
+        }
+
+        override fun onRemoveQueueItem(description: MediaDescriptionCompat?) {
+            super.onRemoveQueueItem(description)
+
+            if (playQueue.isNotEmpty() && description != null) {
+                /**
+                 * Helper function to determine whether it is appropraite to continue skipping through the play queue.
+                 *
+                 * @param originalQueueItem - The originating queue item (prior to any track skipping)
+                 * @param currentQueueItem - The current queue item
+                 * @return A Boolean indicating whether the parent method should continue skipping through the play queue.
+                 */
+                fun shouldContinueSkippingQueueItems(originalQueueItem: QueueItem?, currentQueueItem: QueueItem?): Boolean {
+                    // If we have returned to originating queue item, then stop skipping through the tracks
+                    if (originalQueueItem?.queueId == currentQueueItem?.queueId) return false
+
+                    // If we have reached a song different to the song being removed, then we can stop skipping
+                    if (currentQueueItem?.description?.mediaId != description.mediaId) return false
+
+                    // If the repeat mode is not equal to ALL and we have reached the end of the play queue,
+                    // then do not continue to skip through the play queue.
+                    if (mediaSessionCompat.controller.repeatMode != REPEAT_MODE_ALL &&
+                        currentQueueItem?.queueId == playQueue[playQueue.size - 1].queueId) return false
+
+                    return true
+                }
+
+                val originalQueueItem = getCurrentQueueItem()
+                var currentQueueItem = originalQueueItem
+
+                // If the currently playing song is being removed from the play queue, then we must
+                // continue to skip through the play queue until we find a different song (or exhaust
+                // the play queue)
+                do {
+                    if (currentQueueItem?.description?.mediaId == description.mediaId) {
+                        onSkipToNext()
+                    }
+
+                    currentQueueItem = getCurrentQueueItem()
+                } while (shouldContinueSkippingQueueItems(originalQueueItem, currentQueueItem))
+
+                playQueue.removeIf { it.description.mediaId == description.mediaId }
+
+                if (playQueue.isEmpty()) {
+                    onStop()
+                    return
+                }
+
+                setPlayQueue()
             }
         }
         
@@ -378,6 +444,8 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             super.onSeekTo(pos)
 
             mediaPlayer?.apply {
+                if (pos > this.duration.toLong()) return@apply
+
                 val wasPlaying = this.isPlaying
                 if (wasPlaying) this.pause()
 
@@ -415,6 +483,39 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         return playQueue.find {
             it.queueId == currentlyPlayingQueueItemId
         }
+    }
+
+    /**
+     * Update the metadata for all instances of a given song in the play queue.
+     *
+     * @param mediaDescription - A MediaDescriptionCompat object containing the updated metadata for a given song.
+     */
+    private fun updateMetadataForASongInThePlayQueue(mediaDescription: MediaDescriptionCompat) {
+        var index = 0
+        while (index < playQueue.size) {
+            val queueItem = playQueue[index]
+            if (queueItem.description.mediaId == mediaDescription.mediaId) {
+                playQueue.removeAt(index)
+                val updatedQueueItem = QueueItem(mediaDescription, queueItem.queueId)
+                playQueue.add(index, updatedQueueItem)
+
+                if (queueItem.queueId == currentlyPlayingQueueItemId) {
+                    setCurrentMetadata()
+                    refreshNotification()
+                }
+            }
+            ++index
+        }
+        setPlayQueue()
+    }
+
+    /**
+     * Set the play queue for the media session and notify all observers of the playback state.
+     *
+     */
+    private fun setPlayQueue() {
+        mediaSessionCompat.setQueue(playQueue)
+        setMediaPlaybackState(STATE_NONE, 0, 0f, null)
     }
 
     override fun onCreate() {
