@@ -32,8 +32,8 @@ interface MusicDao {
     @Query("SELECT * FROM music_library WHERE song_artist LIKE :artistName ORDER BY song_title ASC")
     fun findArtistsSongs(artistName: String): LiveData<List<Song>>
 
-    @Query("SELECT * FROM music_library WHERE song_plays > 0 ORDER BY song_plays DESC LIMIT 30")
-    fun findMostPlayed(): LiveData<List<Song>>
+    @Query("SELECT songId FROM music_library WHERE song_plays > 0 ORDER BY song_plays DESC LIMIT 30")
+    fun findMostPlayedSongsById(): LiveData<List<Long>>
 
     @Query("UPDATE music_library SET song_plays = song_plays + 1 WHERE songId = :songId")
     fun increaseSongPlaysBySongId(songId: Long)

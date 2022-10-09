@@ -9,7 +9,7 @@ class MusicRepository(private val musicDao: MusicDao, private val playlistDao: P
 
     val allSongs: LiveData<List<Song>> = musicDao.getAlphabetizedSongs()
     val allArtists: LiveData<List<Artist>> = musicDao.getAlphabetizedArtists()
-    val mostPlayed: LiveData<List<Song>> = musicDao.findMostPlayed()
+    val mostPlayedSongsById: LiveData<List<Long>> = musicDao.findMostPlayedSongsById()
     val allPlaylists: LiveData<List<Playlist>> = playlistDao.getAllPlaylists()
 
     suspend fun insertSongs(songs: List<Song>) {

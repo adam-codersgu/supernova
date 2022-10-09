@@ -238,25 +238,21 @@ class MainActivity : AppCompatActivity() {
         // Prevent icon tints from being overwritten
         binding.navView.itemIconTintList = null
 
-        musicLibraryViewModel.allSongs.observe(this) { songs ->
-            songs.let { completeLibrary = it.toMutableList() }
+        musicLibraryViewModel.allSongs.observe(this) {
+            completeLibrary = it.toMutableList()
         }
 
-        musicLibraryViewModel.allPlaylists.observe(this) { playlists ->
-            playlists.let {
-                this.allPlaylists = it
-            }
+        musicLibraryViewModel.allPlaylists.observe(this) {
+            this.allPlaylists = it
         }
 
-        musicLibraryViewModel.mostPlayed.observe(this) { songs ->
-            songs.let {
-                val playlist = findPlaylist(getString(R.string.most_played))
-                if (playlist != null) {
-                    val mostPlayedSongs = convertSongsToSongIDJSON(it)
-                    if (mostPlayedSongs != playlist.songs){
-                        playlist.songs = mostPlayedSongs
-                        musicLibraryViewModel.updatePlaylists(listOf(playlist))
-                    }
+        musicLibraryViewModel.mostPlayedSongsById.observe(this) {
+            val playlist = findPlaylist(getString(R.string.most_played))
+            if (playlist != null) {
+                val mostPlayedSongs = convertSongIDListToJson(it)
+                if (mostPlayedSongs != playlist.songs){
+                    playlist.songs = mostPlayedSongs
+                    musicLibraryViewModel.updatePlaylists(listOf(playlist))
                 }
             }
         }
@@ -814,13 +810,6 @@ class MainActivity : AppCompatActivity() {
         return completeLibrary.find {
             it.songId == songID
         }?.albumId
-    }
-
-    @Deprecated("Use convertSongIDListToJson()")
-    fun convertSongsToSongIDJSON(songs: List<Song>): String {
-        val songIDs = mutableListOf<Long>()
-        for (s in songs) songIDs.add(s.songId)
-        return convertSongIDListToJson(songIDs)
     }
 
     fun convertSongIDListToJson(songIDList: List<Long>): String {

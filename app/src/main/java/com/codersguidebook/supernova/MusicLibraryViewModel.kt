@@ -15,7 +15,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
 
     private val repository: MusicRepository
     val allSongs: LiveData<List<Song>>
-    val mostPlayed: LiveData<List<Song>>
+    val mostPlayedSongsById: LiveData<List<Long>>
     val allArtists: LiveData<List<Artist>>
     val allPlaylists: LiveData<List<Playlist>>
 
@@ -24,7 +24,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
         val playlistDao = MusicDatabase.getDatabase(application, viewModelScope).playlistDao()
         repository = MusicRepository(musicDao, playlistDao)
         allSongs = repository.allSongs
-        mostPlayed = repository.mostPlayed
+        mostPlayedSongsById = repository.mostPlayedSongsById
         allArtists = repository.allArtists
         allPlaylists = repository.allPlaylists
     }
