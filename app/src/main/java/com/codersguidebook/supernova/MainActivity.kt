@@ -102,14 +102,12 @@ class MainActivity : AppCompatActivity() {
         override fun onConnected() {
             super.onConnected()
 
-            // Get the token for the MediaSession
             mediaBrowser.sessionToken.also { token ->
                 val mediaControllerCompat = MediaControllerCompat(this@MainActivity, token)
                 mediaControllerCompat.registerCallback(controllerCallback)
                 MediaControllerCompat.setMediaController(this@MainActivity, mediaControllerCompat)
             }
 
-            // Register a Callback to stay in sync
             val mediaController = MediaControllerCompat.getMediaController(this@MainActivity)
             mediaController.registerCallback(controllerCallback)
 
@@ -126,7 +124,7 @@ class MainActivity : AppCompatActivity() {
                     playbackState = STATE_PLAYING
                     currentPlaybackPosition = state.position.toInt()
                     state.extras?.let {
-                        currentPlaybackDuration = it.getInt("duration")
+                        currentPlaybackDuration = it.getInt("duration", 0)
                         playQueueViewModel.currentPlaybackDuration.value = currentPlaybackDuration
                     }
                     playQueueViewModel.currentPlaybackPosition.value = currentPlaybackPosition
@@ -136,7 +134,7 @@ class MainActivity : AppCompatActivity() {
                     playbackState = STATE_PAUSED
                     currentPlaybackPosition = state.position.toInt()
                     state.extras?.let {
-                        currentPlaybackDuration = it.getInt("duration")
+                        currentPlaybackDuration = it.getInt("duration", 0)
                         playQueueViewModel.currentPlaybackDuration.value = currentPlaybackDuration
                     }
                     playQueueViewModel.currentPlaybackPosition.value = currentPlaybackPosition
@@ -157,13 +155,16 @@ class MainActivity : AppCompatActivity() {
                 // Need to increment the song_plays count for that Song object by 1.
                 STATE_SKIPPING_TO_NEXT -> {
                     state.extras?.let {
-                        val finishedSongId = it.getLong("finishedSongId")
+                        val finishedSongId = it.getLong("finishedSongId", -1L)
+                        if (finishedSongId == -1L) return@let
                         musicLibraryViewModel.increaseSongPlaysBySongId(finishedSongId)
+                        addSongByIdToRecentlyPlayedPlaylist(finishedSongId)
                     }
                 }
                 STATE_SKIPPING_TO_QUEUE_ITEM -> {
                     state.extras?.let {
-                        val currentQueueItemId = it.getLong("currentQueueItemId")
+                        val currentQueueItemId = it.getLong("currentQueueItemId", -1L)
+                        if (currentQueueItemId == -1L) return@let
                         savePlayQueueId(currentQueueItemId)
                     }
                 }
@@ -549,7 +550,7 @@ class MainActivity : AppCompatActivity() {
                 // Hide both the status bar and the navigation bar
                 windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
             } else {
-                // FIXME: TEST IF YOU CAN USE THE INITIAL IF EXPRESSION CONTENT FOR ALL API LEVELS
+                // TODO: TEST IF YOU CAN USE THE INITIAL IF EXPRESSION CONTENT FOR ALL API LEVELS
                 window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                         // Set the content to appear under the system bars so that the
                         // content doesn't resize when the system bars hide and show.
@@ -787,34 +788,25 @@ class MainActivity : AppCompatActivity() {
         return null
     }
 
-    private fun addSongToRecentlyPlayedPlaylist(song: Song) = lifecycleScope.launch(Dispatchers.Main) {
-
-
-
-        val recentlyPlayedPlaylist = findPlaylist(getString(R.string.recently_played))
-        if (recentlyPlayedPlaylist != null) {
-            val songIDList = extractPlaylistSongIDs(recentlyPlayedPlaylist.songs)
+    /**
+     * Add a song to the Recently Played playlist.
+     *
+     * @param songId - The media ID of the song.
+     * @return
+     */
+    private fun addSongByIdToRecentlyPlayedPlaylist(songId: Long) = lifecycleScope.launch(Dispatchers.Main) {
+        findPlaylist(getString(R.string.recently_played))?.apply {
+            val songIDList = extractPlaylistSongIDs(this.songs)
             if (songIDList.isNotEmpty()) {
                 val index = songIDList.indexOfFirst {
-                    it == song.songId
+                    it == songId
                 }
                 if (index != -1) songIDList.removeAt(index)
-                songIDList.add(0, song.songId)
+                songIDList.add(0, songId)
                 if (songIDList.size > 30) songIDList.removeAt(songIDList.size - 1)
-            } else songIDList.add(song.songId)
-            recentlyPlayedPlaylist.songs = convertSongIDListToJson(songIDList)
-            musicLibraryViewModel.updatePlaylists(listOf(recentlyPlayedPlaylist))
-        }
-    }
-
-    /**
-     * Retrieves the QueueItem object for the currently playing song.
-     *
-     * @return QueueItem or null if no currently playing song can be found.
-     */
-    private fun getCurrentlyPlayingQueueItem(): QueueItem? {
-        return playQueue.find {
-            it.queueId == currentlyPlayingQueueItemId
+            } else songIDList.add(songId)
+            this.songs = convertSongIDListToJson(songIDList)
+            musicLibraryViewModel.updatePlaylists(listOf(this))
         }
     }
 
@@ -928,11 +920,19 @@ class MainActivity : AppCompatActivity() {
         saveImage(newArtwork, path)
     }
 
+    /**
+     * Initiate music library maintenance tasks such as adding new songs, removing deleted
+     * songs, and refreshing the song of the day.
+     *
+     * @param checkForDeletedSongs - A Boolean value indicating whether the method should
+     * check whether songs have been deleted from the user's device.
+     * @return
+     */
     private fun libraryMaintenance(checkForDeletedSongs: Boolean) = lifecycleScope.launch(
         Dispatchers.Main
     ) {
         val libraryBuilt = libraryRefreshAsync().await()
-        if (libraryBuilt && !completeLibrary.isNullOrEmpty()) {
+        if (libraryBuilt && completeLibrary.isNotEmpty()) {
             if (checkForDeletedSongs) {
                 val songsToDelete = checkLibrarySongsExistAsync().await()
                 if (!songsToDelete.isNullOrEmpty()) deleteSongs(songsToDelete)
@@ -1079,13 +1079,18 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun saveImage(bitmapImage: Bitmap, path: File) {
+    /**
+     * Saves a bitmap representation of an image to a specified file path location.
+     *
+     * @param bitmap - The Bitmap instance to be saved.
+     * @param path - The location at which the image file should be saved.
+     */
+    private fun saveImage(bitmap: Bitmap, path: File) {
         try {
-            val fos = FileOutputStream(path)
-            // Use the compress method on the BitMap object to write image to the OutputStream
-            bitmapImage.compress(Bitmap.CompressFormat.PNG, 100, fos)
-            fos.close()
-        } catch (e: Exception) { }
+            val fileOutputStream = FileOutputStream(path)
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream)
+            fileOutputStream.close()
+        } catch (_: Exception) { }
     }
 
     /**
