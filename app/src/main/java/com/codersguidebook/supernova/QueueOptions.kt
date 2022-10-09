@@ -6,7 +6,7 @@ import androidx.core.view.isGone
 import androidx.fragment.app.DialogFragment
 import androidx.navigation.findNavController
 import com.codersguidebook.supernova.databinding.OptionsLayoutBinding
-import com.codersguidebook.supernova.entities.QueueItem
+import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 

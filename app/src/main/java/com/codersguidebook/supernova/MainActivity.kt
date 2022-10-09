@@ -816,13 +816,14 @@ class MainActivity : AppCompatActivity() {
         }?.albumId
     }
 
+    @Deprecated("Use convertSongIDListToJson()")
     fun convertSongsToSongIDJSON(songs: List<Song>): String {
         val songIDs = mutableListOf<Long>()
         for (s in songs) songIDs.add(s.songId)
         return convertSongIDListToJson(songIDs)
     }
 
-    private fun convertSongIDListToJson(songIDList: List<Long>): String {
+    fun convertSongIDListToJson(songIDList: List<Long>): String {
         val gPretty = GsonBuilder().setPrettyPrinting().create()
         return gPretty.toJson(songIDList)
     }

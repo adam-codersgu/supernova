@@ -1,6 +1,7 @@
 package com.codersguidebook.supernova.ui.playQueue
 
 import android.annotation.SuppressLint
+import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -10,12 +11,13 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.*
-import com.codersguidebook.supernova.entities.QueueItem
+import com.codersguidebook.supernova.MainActivity
+import com.codersguidebook.supernova.QueueOptions
+import com.codersguidebook.supernova.R
 
 class PlayQueueAdapter(private val fragment: PlayQueueFragment
 , private val activity: MainActivity): RecyclerView.Adapter<PlayQueueAdapter.PlayQueueViewHolder>() {
-    var currentlyPlayingQueueID = -1
+    var currentlyPlayingQueueId = -1L
     var playQueue = mutableListOf<QueueItem>()
 
     inner class PlayQueueViewHolder(itemView: View) :
@@ -31,13 +33,15 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
             itemView.isClickable = true
             itemView.setOnClickListener(this)
             mBtnSongMenu.setOnClickListener {
-                val isCurrentlyPlayingSelected = playQueue[layoutPosition].queueID == currentlyPlayingQueueID
-                activity.openDialog(QueueOptions(playQueue[layoutPosition], isCurrentlyPlayingSelected, layoutPosition))
+                val isCurrentlyPlayingSelected =
+                    playQueue[layoutPosition].queueId == currentlyPlayingQueueId
+                activity.openDialog(QueueOptions(playQueue[layoutPosition],
+                    isCurrentlyPlayingSelected, layoutPosition))
             }
         }
 
         override fun onClick(view: View) {
-            activity.skipToQueueItem(layoutPosition)
+            activity.skipToQueueItem(playQueue[layoutPosition].queueId)
         }
     }
 
@@ -47,11 +51,11 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onBindViewHolder(holder: PlayQueueViewHolder, position: Int) {
-        val currentSong = playQueue[position].song
+        val currentQueueItemDescription = playQueue[position].description
 
-        holder.mSongTitle.text = currentSong.title
-        holder.mSongArtist.text = currentSong.artist
-        if (playQueue[position].queueID == currentlyPlayingQueueID) {
+        holder.mSongTitle.text = currentQueueItemDescription.title
+        holder.mSongArtist.text = currentQueueItemDescription.subtitle
+        if (playQueue[position].queueId == currentlyPlayingQueueId) {
             holder.mSongTitle.setTextColor(ContextCompat.getColor(activity, R.color.accent))
             holder.mSongArtist.setTextColor(ContextCompat.getColor(activity, R.color.accent))
         } else {
@@ -65,19 +69,29 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
         }
     }
 
-    internal fun currentlyPlayingSongChanged(newQueueID: Int) {
+    internal fun changeCurrentlyPlayingQueueItemId(newQueueId: Long) {
         val oldCurrentlyPlayingIndex = playQueue.indexOfFirst {
-            it.queueID == currentlyPlayingQueueID
+            it.queueId == currentlyPlayingQueueId
         }
 
-        currentlyPlayingQueueID = newQueueID
+        currentlyPlayingQueueId = newQueueId
         if (oldCurrentlyPlayingIndex != -1) notifyItemChanged(oldCurrentlyPlayingIndex)
 
         val newCurrentlyPlayingIndex = playQueue.indexOfFirst {
-            it.queueID == currentlyPlayingQueueID
+            it.queueId == currentlyPlayingQueueId
         }
         notifyItemChanged(newCurrentlyPlayingIndex)
     }
 
     override fun getItemCount() = playQueue.size
+
+    fun removeQueueItemById(queueItemId: Long) {
+        val index = playQueue.indexOfFirst { item ->
+            item.queueId == queueItemId
+        }
+        if (index != -1) {
+            playQueue.removeAt(index)
+            notifyItemRemoved(index)
+        }
+    }
 }
