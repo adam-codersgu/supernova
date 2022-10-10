@@ -608,41 +608,44 @@ class MainActivity : AppCompatActivity() {
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 
+    /**
+     * Opens a dialog window allowing the user to add a list of songs to new and existing
+     * playlists.
+     *
+     * @param songs - The list of Song objects to be added to a playlist.
+     */
     fun openAddToPlaylistDialog(songs: List<Song>) {
+        val songIds = songs.map { it.songId }
+
         val positiveButtonClick = { _: DialogInterface, _: Int ->
-            openDialog(CreatePlaylist(songs))
+            openDialog(CreatePlaylist(songIds))
         }
 
-        // retrieving names of all user playlists
-        val userPlaylists = allPlaylists.toMutableList()
-        userPlaylists.removeAll { item: Playlist ->
-            item.isDefault
-        }
+        // Retrieving all the user-created playlists
+        val userPlaylists = allPlaylists.filterNot { it.isDefault }
 
-        // if user has not created a playlist before the skip straight to create new playlist dialog
-        if (userPlaylists.isEmpty()){
-            openDialog(CreatePlaylist(songs))
+        // If the user has not created any playlists then skip straight to the create new playlist dialog
+        if (userPlaylists.isEmpty()) {
+            openDialog(CreatePlaylist(songIds))
             return
         }
 
-        val list: ArrayList<String> = ArrayList()
-        for (p in userPlaylists) list.add(p.name)
-
-        var items = arrayOfNulls<String>(list.size)
-        items = list.toArray(items)
+        val userPlaylistNames = userPlaylists.map { it.name }.toTypedArray()
 
         AlertDialog.Builder(this).apply {
             setTitle("Select a playlist or create a new one")
-            setItems(items) { _, which ->
-                addSongsToSavedPlaylist(userPlaylists[which].name, songs)
-                if (songs.size == 1) Toast.makeText(
-                    applicationContext,
-                    songs[0].title + " has been added to " + userPlaylists[which].name,
+            setItems(userPlaylistNames) { _, index ->
+                val playlist = userPlaylists[index]
+                val playlistSongIds = extractPlaylistSongIds(playlist.songs)
+                playlistSongIds.addAll(songIds)
+                savePlaylistWithSongIds(playlist, playlistSongIds)
+
+                if (songs.size == 1) Toast.makeText(applicationContext,
+                    songs[0].title + " has been added to " + playlist.name,
                     Toast.LENGTH_SHORT
                 ).show()
-                else Toast.makeText(
-                    applicationContext,
-                    "Your songs have been added to " + userPlaylists[which].name,
+                else Toast.makeText(applicationContext,
+                    "Your songs have been added to " + playlist.name,
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -660,7 +663,7 @@ class MainActivity : AppCompatActivity() {
             null,
             false
         )
-        val songIDList = extractPlaylistSongIDs(playlist.songs)
+        val songIDList = extractPlaylistSongIds(playlist.songs)
         // updating the song of the day, if one has not already been set for today's date
         val date = SimpleDateFormat.getDateInstance().format(Date())
         val lastUpdate = sharedPreferences.getString("songOfTheDayDate", null)
@@ -669,7 +672,7 @@ class MainActivity : AppCompatActivity() {
                 val song = completeLibrary.random()
                 songIDList.add(0, song.songId)
                 if (songIDList.size > 30) songIDList.removeAt(songIDList.size - 1)
-                savePlaylistNewSongIDList(playlist, songIDList)
+                savePlaylistWithSongIds(playlist, songIDList)
                 val editor = sharedPreferences.edit()
                 editor.putString("songOfTheDayDate", date)
                 editor.apply()
@@ -679,43 +682,32 @@ class MainActivity : AppCompatActivity() {
                 if (songIDList.isNotEmpty()) songIDList.removeAt(0)
                 val song = completeLibrary.random()
                 songIDList.add(0, song.songId)
-                savePlaylistNewSongIDList(playlist, songIDList)
+                savePlaylistWithSongIds(playlist, songIDList)
             }
         }
     }
 
+    /**
+     * Find the Playlist object associated with a given name.
+     *
+     * @param playlistName - The playlist's name.
+     * @return The associated Playlist object or null if no match found.
+     */
     private fun findPlaylist(playlistName: String): Playlist? {
-        return allPlaylists.find { item: Playlist ->
-            item.name == playlistName
-        }
+        return allPlaylists.find { it.name == playlistName }
     }
 
-    private fun savePlaylistNewSongIDList(playlist: Playlist, songIDList: List<Long>) {
-        if (songIDList.isNotEmpty()) {
-            val newSongListJSON = convertSongIDListToJson(songIDList)
-            playlist.songs = newSongListJSON
+    /**
+     * Update the list of songs associated with a given playlist.
+     *
+     * @param playlist - The target playlist.
+     * @param songIds - The list of song IDs to be saved with the playlist.
+     */
+    fun savePlaylistWithSongIds(playlist: Playlist, songIds: List<Long>) {
+        if (songIds.isNotEmpty()) {
+            playlist.songs = convertSongIDListToJson(songIds)
         } else playlist.songs = null
         musicLibraryViewModel.updatePlaylists(listOf(playlist))
-    }
-
-    fun savePlaylistNewSongList(playlist: Playlist, songList: List<Song>?) {
-        if (songList.isNullOrEmpty()) playlist.songs = null
-        else {
-            val songIDList = mutableListOf<Long>()
-            for (s in songList) songIDList.add(s.songId)
-            val newSongListJSON = convertSongIDListToJson(songIDList)
-            playlist.songs = newSongListJSON
-        }
-        musicLibraryViewModel.updatePlaylists(listOf(playlist))
-    }
-
-    private fun addSongsToSavedPlaylist(playlistName: String, songs: List<Song>) {
-        val playlist = findPlaylist(playlistName)
-        if (playlist != null) {
-            val songIDList = extractPlaylistSongIDs(playlist.songs)
-            for (s in songs) songIDList.add(s.songId)
-            savePlaylistNewSongIDList(playlist, songIDList)
-        }
     }
 
     fun deletePlaylist(playlist: Playlist) {
@@ -755,7 +747,7 @@ class MainActivity : AppCompatActivity() {
         val added: Boolean?
         val favouritesPlaylist = findPlaylist(getString(R.string.favourites))
         if (favouritesPlaylist != null) {
-            val songIDList = extractPlaylistSongIDs(favouritesPlaylist.songs)
+            val songIDList = extractPlaylistSongIds(favouritesPlaylist.songs)
             val index = songIDList.indexOfFirst {
                 it == song.songId
             }
@@ -792,7 +784,7 @@ class MainActivity : AppCompatActivity() {
      */
     private fun addSongByIdToRecentlyPlayedPlaylist(songId: Long) = lifecycleScope.launch(Dispatchers.Main) {
         findPlaylist(getString(R.string.recently_played))?.apply {
-            val songIDList = extractPlaylistSongIDs(this.songs)
+            val songIDList = extractPlaylistSongIds(this.songs)
             if (songIDList.isNotEmpty()) {
                 val index = songIDList.indexOfFirst {
                     it == songId
@@ -817,7 +809,15 @@ class MainActivity : AppCompatActivity() {
         return gPretty.toJson(songIDList)
     }
 
-    fun extractPlaylistSongIDs(json: String?): MutableList<Long> {
+    // TODO: Revisit whether it is possible to have a many-to-many association between Playlist and Song
+    //  See https://www.oreilly.com/library/view/learning-mysql/0596008643/ch04s04.html
+    /**
+     * Convert a JSON String representing a playlist's songs to a list of song IDs.
+     *
+     * @param json - The JSON String representation of a playlist's songs.
+     * @return - A list of song IDs.
+     */
+    fun extractPlaylistSongIds(json: String?): MutableList<Long> {
         return if (json != null) {
             val listType = object : TypeToken<List<Long>>() {}.type
             Gson().fromJson(json, listType)
@@ -825,7 +825,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun extractPlaylistSongs(json: String?): MutableList<Song> {
-        val songIDList = extractPlaylistSongIDs(json)
+        val songIDList = extractPlaylistSongIds(json)
         return if (songIDList.isEmpty()) mutableListOf()
         else {
             val playlistSongs = mutableListOf<Song>()
@@ -1141,7 +1141,7 @@ class MainActivity : AppCompatActivity() {
                 val updatedPlaylists = mutableListOf<Playlist>()
                 for (playlist in allPlaylists) {
                     if (playlist.songs != null) {
-                        val newSongIDList = extractPlaylistSongIDs(playlist.songs)
+                        val newSongIDList = extractPlaylistSongIds(playlist.songs)
 
                         var playlistModified = false
                         fun findIndex(): Int {

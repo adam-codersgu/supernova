@@ -125,7 +125,7 @@ class SearchAdapter(private val mainActivity: MainActivity):
                 val current = playlists[position]
 
                 holder.mArtwork.isVisible = true
-                val playlistSongIDs= mainActivity.extractPlaylistSongIDs(current.songs)
+                val playlistSongIDs= mainActivity.extractPlaylistSongIds(current.songs)
                 if (playlistSongIDs.isNotEmpty()){
                     val firstSongArtwork = mainActivity.findFirstSongArtwork(playlistSongIDs[0])
                     mainActivity.insertArtwork(firstSongArtwork, holder.mArtwork)

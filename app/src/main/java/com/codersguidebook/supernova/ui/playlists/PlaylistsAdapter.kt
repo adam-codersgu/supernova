@@ -47,7 +47,7 @@ class PlaylistsAdapter(private val mainActivity: MainActivity):
 
         holder.mPlaylistName.text = current.name
 
-        val playlistSongIDs = mainActivity.extractPlaylistSongIDs(current.songs)
+        val playlistSongIDs = mainActivity.extractPlaylistSongIds(current.songs)
         // FIXME: Maybe find another way to handle artwork for playlists with no songs
         if (!mainActivity.insertPlaylistArtwork(current, holder.mArtwork) && playlistSongIDs.isNotEmpty()) {
             mainActivity.insertArtwork(mainActivity.findFirstSongArtwork(playlistSongIDs[0]), holder.mArtwork)

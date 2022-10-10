@@ -61,7 +61,7 @@ class EditPlaylistFragment : Fragment() {
                 binding.editPlaylistName.text = editable
 
                 if (!callingActivity.insertPlaylistArtwork(it, binding.artwork)) {
-                    val playlistSongIDs= callingActivity.extractPlaylistSongIDs(it.songs)
+                    val playlistSongIDs= callingActivity.extractPlaylistSongIds(it.songs)
                     callingActivity.insertArtwork(callingActivity.findFirstSongArtwork(playlistSongIDs[0]), binding.artwork)
                 }
             }

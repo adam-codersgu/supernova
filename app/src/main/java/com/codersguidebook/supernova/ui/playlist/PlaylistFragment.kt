@@ -10,7 +10,10 @@ import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.*
+import com.codersguidebook.supernova.MainActivity
+import com.codersguidebook.supernova.MusicDatabase
+import com.codersguidebook.supernova.PlaylistSongOptions
+import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
@@ -40,7 +43,10 @@ class PlaylistFragment : Fragment() {
                     super.clearView(recyclerView, viewHolder)
 
                     viewHolder.itemView.alpha = 1.0f
-                    if (playlist != null) callingActivity.savePlaylistNewSongList(playlist!!, playlistAdapter.songs)
+                    playlist?.let {
+                        val songIds = playlistAdapter.songs.map { song -> song.songId }
+                        callingActivity.savePlaylistWithSongIds(it, songIds)
+                    }
                 }
                 override fun onMove(recyclerView: RecyclerView,
                                     viewHolder: RecyclerView.ViewHolder,
