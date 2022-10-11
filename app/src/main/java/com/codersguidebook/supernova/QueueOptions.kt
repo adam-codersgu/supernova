@@ -2,17 +2,16 @@ package com.codersguidebook.supernova
 
 import android.app.Dialog
 import android.os.Bundle
+import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import androidx.core.view.isGone
 import androidx.fragment.app.DialogFragment
 import androidx.navigation.findNavController
 import com.codersguidebook.supernova.databinding.OptionsLayoutBinding
-import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 
 class QueueOptions(private val queueItem: QueueItem,
-                   private val currentlyPlaying: Boolean,
-                   private val position: Int) : DialogFragment() {
+                   private val currentlyPlaying: Boolean) : DialogFragment() {
 
     private var _binding: OptionsLayoutBinding? = null
     private val binding get() = _binding!!
@@ -22,37 +21,44 @@ class QueueOptions(private val queueItem: QueueItem,
         val inflater = callingActivity.layoutInflater
         _binding = OptionsLayoutBinding.inflate(inflater)
 
-        binding.optionsTitle.text = queueItem.song.title
+        val queueItemDescription = queueItem.description
 
-        // artist TextView
+        binding.optionsTitle.text = queueItemDescription.title
+
+        // Artist TextView
         binding.option1.text = getString(R.string.artist)
         binding.option1.setOnClickListener{
-            val action = ArtistsFragmentDirections.actionSelectArtist(queueItem.song.artist)
+            val action = ArtistsFragmentDirections
+                .actionSelectArtist(queueItemDescription.subtitle.toString())
             callingActivity.findNavController(R.id.nav_host_fragment).navigate(action)
             dismiss()
         }
 
-        // album TextView
+        // Album TextView
         binding.option2.text = getString(R.string.album)
         binding.option2.setOnClickListener{
-            val action = AlbumsFragmentDirections.actionSelectAlbum(queueItem.song.albumId)
-            callingActivity.findNavController(R.id.nav_host_fragment).navigate(action)
+            queueItemDescription.extras?.getString("album_id")?.let {
+                val action = AlbumsFragmentDirections.actionSelectAlbum(it)
+                callingActivity.findNavController(R.id.nav_host_fragment).navigate(action)
+            }
             dismiss()
         }
 
-        // add to playlist button
+        // Add to playlist button
         binding.option3.text = getString(R.string.add_playlist)
         binding.option3.setOnClickListener{
-            callingActivity.openAddToPlaylistDialog(listOf(queueItem.song))
+            queueItemDescription.mediaId?.let {
+                callingActivity.openAddToPlaylistDialogForSongById(it.toLong())
+            }
             dismiss()
         }
 
-        // remove from play queue button
+        // Remove from play queue button
         binding.option4.text = getString(R.string.remove_from_queue)
         if (currentlyPlaying) binding.option4.isGone = true
         else {
             binding.option4.setOnClickListener {
-                callingActivity.removeQueueItemById(position)
+                callingActivity.removeQueueItemById(queueItem.queueId)
                 dismiss()
             }
         }

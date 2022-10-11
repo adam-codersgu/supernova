@@ -609,6 +609,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
+     * Convenience method to open the 'Add to playlist' dialog when only the ID of
+     * the given song is available. For example, QueueItem objects may feature incomplete
+     * song metadata.
+     *
+     * @param songId
+     */
+    fun openAddToPlaylistDialogForSongById(songId: Long) {
+        val song = completeLibrary.find { it.songId == songId } ?: return
+        openAddToPlaylistDialog(listOf(song))
+    }
+
+    /**
      * Opens a dialog window allowing the user to add a list of songs to new and existing
      * playlists.
      *

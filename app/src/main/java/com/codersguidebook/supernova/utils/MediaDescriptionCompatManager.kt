@@ -36,6 +36,7 @@ class MediaDescriptionCompatManager(context: Context) {
     fun buildDescription(song: Song): MediaDescriptionCompat {
         val bundle = Bundle()
         bundle.putString("album", song.albumName)
+        bundle.putString("album_id", song.albumId)
 
         return MediaDescriptionCompat.Builder()
             .setExtras(bundle)
