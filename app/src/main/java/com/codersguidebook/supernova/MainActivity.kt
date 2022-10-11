@@ -79,6 +79,7 @@ class MainActivity : AppCompatActivity() {
     var playQueue = listOf<QueueItem>()
     private val playQueueViewModel: PlayQueueViewModel by viewModels()
     private var allPlaylists = listOf<Playlist>()
+    private val mediaDescriptionManager = MediaDescriptionCompatManager()
     private var musicDatabase: MusicDatabase? = null
     var completeLibrary = listOf<Song>()
     // FIXME: Is the below still required?
@@ -89,7 +90,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
-    private lateinit var mediaDescriptionCompatManager: MediaDescriptionCompatManager
 
     companion object {
         private const val PLAY_QUEUE_MEDIA_DESCRIPTION_LIST = "play_queue_media_description_list"
@@ -183,7 +183,6 @@ class MainActivity : AppCompatActivity() {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         musicDatabase = MusicDatabase.getDatabase(this, lifecycleScope)
         musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
-        mediaDescriptionCompatManager = MediaDescriptionCompatManager(this)
 
         // Set up a channel for the music player notification
         createChannel()
@@ -419,12 +418,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /*
-    FIXME: May have massive performance issues here. Need to think of an asynchronous way of building long queues.
-        An alternative could be to use a coroutine to add the songs as fast as possible, and begin playback (if required) as soon as one song is added
-        Perhaps a custom action will be necessary if the media browser service is not really giving suitable tools
-        !!! Or perhaps just don't get an image for each item. Only load the image when required for notification and currently playing view?
-     */
     /**
      * Load a list of Song objects into the media player service and commence playback.
      *
@@ -433,16 +426,12 @@ class MainActivity : AppCompatActivity() {
      * @param shuffle - Should the play queue be shuffled prior to commencing playback?
      * @return
      */
+    // FIXME: Do performance testing for initiating the playback of large lists of songs. Incl. when shuffled
     fun playListOfSongs(songs: List<Song>, startIndex: Int?, shuffle: Boolean) = lifecycleScope.launch(Dispatchers.Main) {
         if (songs.isNotEmpty()) {
             mediaController.transportControls.stop()
 
-            val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
-
-            for (song in songs) {
-                val mediaDescriptionCompat = mediaDescriptionCompatManager.buildDescription(song)
-                mediaControllerCompat.addQueueItem(mediaDescriptionCompat)
-            }
+            sendSongsToMediaServicePlayQueue(songs)
 
             if (shuffle) {
                 val randomQueueItem = playQueue[Random.nextInt(0, playQueue.size)]
@@ -467,12 +456,31 @@ class MainActivity : AppCompatActivity() {
      * @param songs - A list containing Song objects that should be added to the play queue.
      * @param addSongsToEndOfQueue - A Boolean indicating whether the songs should be added to
      * the end of the play queue (true) or after the currently playing song (false).
-     * @return
      */
     fun addSongsToPlayQueue(songs: List<Song>, addSongsToEndOfQueue: Boolean) {
+        sendSongsToMediaServicePlayQueue(songs, addSongsToEndOfQueue)
+
+        // TODO: In future, could add a parameter called message that provides a better description.
+        //  e.g. "Album Dilla Joints added to the play queue" or "Artist Gordon Lightfoot added to the play queue".
+        if (songs.size > 1) Toast.makeText(this@MainActivity,
+            "Your songs have been added to the play queue", Toast.LENGTH_SHORT).show()
+        else Toast.makeText(this@MainActivity,
+            songs[0].title + " has been added to the play queue", Toast.LENGTH_SHORT).show()
+    }
+
+    /**
+     * Create a MediaDescriptionCompat object for each song in a list. The MediaDescriptionCompat objects
+     * are then sent to the media browser service and added to the play queue.
+     *
+     * @param songs - A list containing Song objects that should be added to the play queue.
+     * @param addSongsToEndOfQueue - A Boolean indicating whether the songs should be added to
+     * the end of the play queue (true) or after the currently playing song/beginning of the
+     * play queue (if the play queue is empty; false). Default value = false.
+     */
+    private fun sendSongsToMediaServicePlayQueue(songs: List<Song>, addSongsToEndOfQueue: Boolean = false) {
         val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
         for (song in songs) {
-            val mediaDescriptionCompat = mediaDescriptionCompatManager.buildDescription(song)
+            val mediaDescriptionCompat = mediaDescriptionManager.buildDescription(song)
 
             if (addSongsToEndOfQueue || playQueue.isEmpty()) {
                 mediaControllerCompat.addQueueItem(mediaDescriptionCompat)
@@ -484,13 +492,6 @@ class MainActivity : AppCompatActivity() {
                     indexOfCurrentlyPlayingQueueItem + 1)
             }
         }
-
-        // TODO: In future, could add a parameter called message that provides a better description.
-        //  e.g. "Album Dilla Joints added to the play queue" or "Artist Gordon Lightfoot added to the play queue".
-        if (songs.size > 1) Toast.makeText(this@MainActivity,
-            "Your songs have been added to the play queue", Toast.LENGTH_SHORT).show()
-        else Toast.makeText(this@MainActivity,
-            songs[0].title + " has been added to the play queue", Toast.LENGTH_SHORT).show()
     }
 
     /**
@@ -516,7 +517,7 @@ class MainActivity : AppCompatActivity() {
      */
     private fun removeAllInstancesOfSongFromPlayQueue(song: Song) {
         if (playQueue.isNotEmpty()) {
-            val mediaDescriptionCompat = mediaDescriptionCompatManager.buildDescription(song)
+            val mediaDescriptionCompat = mediaDescriptionManager.buildDescription(song)
             val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
             mediaControllerCompat.removeQueueItem(mediaDescriptionCompat)
         }
@@ -742,7 +743,7 @@ class MainActivity : AppCompatActivity() {
             // All occurrences of the song need to be updated in the play queue
             if (playQueue.isNotEmpty() &&
                 playQueue.indexOfFirst { it.description.mediaId == song.songId.toString() } != -1) {
-                val mediaDescriptionCompat = mediaDescriptionCompatManager.buildDescription(song)
+                val mediaDescriptionCompat = mediaDescriptionManager.buildDescription(song)
                 val gson = Gson()
                 val mediaDescriptionCompatJson = gson.toJson(mediaDescriptionCompat)
 

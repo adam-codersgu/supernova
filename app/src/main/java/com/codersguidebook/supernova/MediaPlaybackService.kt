@@ -1,10 +1,9 @@
 package com.codersguidebook.supernova
 
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -28,6 +27,9 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.media.MediaBrowserServiceCompat
 import com.google.gson.Gson
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileNotFoundException
 import java.io.IOException
 
 class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorListener {
@@ -640,11 +642,65 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             putString(MediaMetadataCompat.METADATA_KEY_TITLE,currentQueueItemDescription.title.toString())
             putString(MediaMetadataCompat.METADATA_KEY_ARTIST, currentQueueItemDescription.subtitle.toString())
             val extras = currentQueueItemDescription.extras
-            val album = extras?.getString("album") ?: "Unknown album"
-            putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
-            putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, currentQueueItemDescription.iconBitmap)
+            val albumName = extras?.getString("album") ?: "Unknown album"
+            putString(MediaMetadataCompat.METADATA_KEY_ALBUM, albumName)
+            val albumId = extras?.getString("album")
+            putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, getArtworkAsBitmap(albumId))
         }
         mediaSessionCompat.setMetadata(metadataBuilder.build())
+    }
+
+    /**
+     * Retrieve the album artwork for a given album ID. If no artwork is found,
+     * then a default artwork image is returned instead.
+     *
+     * @param albumId - The ID of the album that artwork should be retrieved for.
+     * @return A Bitmap representation of the album artwork.
+     */
+    private fun getArtworkAsBitmap(albumId: String?) : Bitmap {
+        if (albumId != null) {
+            try {
+                return BitmapFactory.Options().run {
+                    inJustDecodeBounds = true
+                    val contextWrapper = ContextWrapper(applicationContext)
+                    val imageDirectory = contextWrapper.getDir("albumArt", Context.MODE_PRIVATE)
+                    val imageFile = File(imageDirectory, "$albumId.jpg")
+                    BitmapFactory.decodeStream(FileInputStream(imageFile))
+
+                    inSampleSize = calculateInSampleSize(this)
+                    inJustDecodeBounds = false
+                    BitmapFactory.decodeStream(FileInputStream(imageFile))
+                }
+            } catch (_: FileNotFoundException) { }
+        }
+        // If an error has occurred or the album ID is null, then return a default artwork image
+        return BitmapFactory.decodeResource(applicationContext.resources, R.drawable.no_album_artwork)
+    }
+
+    /**
+     * Calculate an inSampleSize value that can be used to scale the
+     * dimensions of a Bitmap image. Useful for compressing large images.
+     *
+     * @param options - The BitmapFactory.Options instance the should be used to
+     * calculate the inSampleSize value for.
+     * @return An integer inSampleSize value.
+     */
+    private fun calculateInSampleSize(options: BitmapFactory.Options): Int {
+        val reqWidth = 100; val reqHeight = 100
+        val (height: Int, width: Int) = options.run { outHeight to outWidth }
+        var inSampleSize = 1
+
+        if (height > reqHeight || width > reqWidth) {
+            val halfHeight = height / 2; val halfWidth = width / 2
+
+            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
+            // height and width larger than the requested height and width.
+            while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                inSampleSize *= 2
+            }
+        }
+
+        return inSampleSize
     }
 
     // Not important for general audio service, required for class
