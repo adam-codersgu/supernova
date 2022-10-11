@@ -125,9 +125,9 @@ class MainActivity : AppCompatActivity() {
                     currentPlaybackPosition = state.position.toInt()
                     state.extras?.let {
                         currentPlaybackDuration = it.getInt("duration", 0)
-                        playQueueViewModel.currentPlaybackDuration.value = currentPlaybackDuration
+                        playQueueViewModel.playbackDuration.value = currentPlaybackDuration
                     }
-                    playQueueViewModel.currentPlaybackPosition.value = currentPlaybackPosition
+                    playQueueViewModel.playbackPosition.value = currentPlaybackPosition
                     playQueueViewModel.isPlaying.value = true
                 }
                 STATE_PAUSED -> {
@@ -135,9 +135,9 @@ class MainActivity : AppCompatActivity() {
                     currentPlaybackPosition = state.position.toInt()
                     state.extras?.let {
                         currentPlaybackDuration = it.getInt("duration", 0)
-                        playQueueViewModel.currentPlaybackDuration.value = currentPlaybackDuration
+                        playQueueViewModel.playbackDuration.value = currentPlaybackDuration
                     }
-                    playQueueViewModel.currentPlaybackPosition.value = currentPlaybackPosition
+                    playQueueViewModel.playbackPosition.value = currentPlaybackPosition
                     playQueueViewModel.isPlaying.value = false
                 }
                 STATE_STOPPED -> {
@@ -147,9 +147,9 @@ class MainActivity : AppCompatActivity() {
                     savePlayQueueId(0)
                     playQueueViewModel.currentlyPlayingSong.value = null
                     currentPlaybackDuration = 0
-                    playQueueViewModel.currentPlaybackDuration.value = 0
+                    playQueueViewModel.playbackDuration.value = 0
                     currentPlaybackPosition = 0
-                    playQueueViewModel.currentPlaybackPosition.value = 0
+                    playQueueViewModel.playbackPosition.value = 0
                 }
                 // Called when playback of a song has completed.
                 // Need to increment the song_plays count for that Song object by 1.
@@ -264,7 +264,7 @@ class MainActivity : AppCompatActivity() {
     private fun refreshPlayQueue() {
         val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
         playQueue = mediaControllerCompat.queue
-        playQueueViewModel.currentPlayQueue.value = playQueue
+        playQueueViewModel.playQueue.value = playQueue
         savePlayQueue()
     }
 
@@ -485,11 +485,11 @@ class MainActivity : AppCompatActivity() {
             if (addSongsToEndOfQueue || playQueue.isEmpty()) {
                 mediaControllerCompat.addQueueItem(mediaDescriptionCompat)
             } else {
-                val indexOfCurrentlyPlayingQueueItem = playQueue.indexOfFirst {
+                val indexOfCurrentQueueItem = playQueue.indexOfFirst {
                     it.queueId == currentlyPlayingQueueItemId
                 }
                 mediaControllerCompat.addQueueItem(mediaDescriptionCompat,
-                    indexOfCurrentlyPlayingQueueItem + 1)
+                    indexOfCurrentQueueItem + 1)
             }
         }
     }
@@ -617,8 +617,18 @@ class MainActivity : AppCompatActivity() {
      * @param songId
      */
     fun openAddToPlaylistDialogForSongById(songId: Long) {
-        val song = completeLibrary.find { it.songId == songId } ?: return
+        val song = getSongById(songId) ?: return
         openAddToPlaylistDialog(listOf(song))
+    }
+
+    /**
+     * Retrieve the Song object associated with a given ID.
+     *
+     * @param songId - The ID of the song.
+     * @return The associated Song object, or null.
+     */
+    fun getSongById(songId: Long) : Song? {
+        return completeLibrary.find { it.songId == songId }
     }
 
     /**

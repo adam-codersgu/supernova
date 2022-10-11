@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat.*
 import android.transition.TransitionInflater
 import android.util.DisplayMetrics
@@ -40,7 +41,7 @@ import java.util.*
 class CurrentlyPlayingFragment : Fragment() {
 
     private val playQueueViewModel: PlayQueueViewModel by activityViewModels()
-    private var currentlyPlayingSong: Song? = null
+    private var currentSong: Song? = null
     private var _binding: FragmentCurrentlyPlayingBinding? = null
     private val binding get() = _binding!!
     private var isAnimationVisible = true
@@ -51,15 +52,14 @@ class CurrentlyPlayingFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        sharedElementEnterTransition = TransitionInflater.from(context).inflateTransition(android.R.transition.move)
-        sharedElementReturnTransition = TransitionInflater.from(context).inflateTransition(android.R.transition.move)
+        sharedElementEnterTransition = TransitionInflater.from(context)
+            .inflateTransition(android.R.transition.move)
+        sharedElementReturnTransition = TransitionInflater.from(context)
+            .inflateTransition(android.R.transition.move)
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
+                              savedInstanceState: Bundle?): View {
         _binding = FragmentCurrentlyPlayingBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -68,44 +68,14 @@ class CurrentlyPlayingFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.root.setOnTouchListener { _, _ ->
-            return@setOnTouchListener true
-        }
+        binding.root.setOnTouchListener { _, _ -> return@setOnTouchListener true }
 
         callingActivity = activity as MainActivity
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
         
-        // get information about the currently playing song
-        playQueueViewModel.currentlyPlayingSong.observe(viewLifecycleOwner, { song ->
-            song?.let {
-                currentlyPlayingSong = it
-                binding.title.text = it.title
-                binding.album.text = it.albumName
-                binding.artist.text = it.artist
-                callingActivity.insertArtwork(it.albumId, binding.artwork)
-
-                if (it.isFavourite) {
-                    binding.currentFavourite.setImageResource(R.drawable.ic_heart)
-                    binding.currentFavourite.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.accent))
-                } else {
-                    binding.currentFavourite.setImageResource(R.drawable.ic_heart_border)
-                    binding.currentFavourite.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.onSurface60))
-                }
-                binding.currentFavourite.setOnClickListener {
-                    val added = callingActivity.updateFavourites(song)
-                    when {
-                        added!! -> {
-                            binding.currentFavourite.setImageDrawable(ContextCompat.getDrawable(requireActivity(), R.drawable.ic_heart))
-                            binding.currentFavourite.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.accent))
-                        }
-                        !added -> {
-                            binding.currentFavourite.setImageDrawable(ContextCompat.getDrawable(requireActivity(), R.drawable.ic_heart_border))
-                            binding.currentFavourite.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.onSurface60))
-                        }
-                    }
-                }
-            }
-        })
+        playQueueViewModel.playQueue.observe(viewLifecycleOwner) {
+            updateCurrentlyDisplayedSong()
+        }
 
         // check whether a song is currently playing
         playQueueViewModel.isPlaying.observe(viewLifecycleOwner, { playing ->
@@ -116,7 +86,7 @@ class CurrentlyPlayingFragment : Fragment() {
         })
 
         // keep track of currently playing song duration
-        playQueueViewModel.currentPlaybackDuration.observe(viewLifecycleOwner, { duration ->
+        playQueueViewModel.playbackDuration.observe(viewLifecycleOwner, { duration ->
             duration?.let {
                 binding.currentSeekBar.max = it
                 binding.currentMax.text = SimpleDateFormat("mm:ss", Locale.UK).format(it)
@@ -124,7 +94,7 @@ class CurrentlyPlayingFragment : Fragment() {
         })
 
         // keep track of currently playing song position
-        playQueueViewModel.currentPlaybackPosition.observe(viewLifecycleOwner, { position ->
+        playQueueViewModel.playbackPosition.observe(viewLifecycleOwner, { position ->
             position?.let {
                 binding.currentSeekBar.progress = position
                 binding.currentPosition.text = SimpleDateFormat("mm:ss", Locale.UK).format(it)
@@ -252,6 +222,43 @@ class CurrentlyPlayingFragment : Fragment() {
         val numberAnimations = sharedPreferences.getInt("numberAnimations", 6)
         binding.animatedView.objectList = arrayOfNulls(numberAnimations)
         binding.animatedView.createObjects()
+    }
+
+    private fun updateCurrentlyDisplayedSong() {
+        val oldCurrentSong = currentSong
+        currentSong = callingActivity.getSongById(playQueueViewModel.currentQueueItemId.value
+            ?: return)
+
+        if (oldCurrentSong?.songId == currentSong?.songId) return
+
+        binding.title.text = currentQueueItemDescription?.title ?: ""
+        binding.artist.text = currentQueueItemDescription?.subtitle ?: ""
+
+        val extras = currentQueueItemDescription?.extras
+        binding.album.text = extras?.getString("album") ?: ""
+        val albumId = extras?.getString("album_id")
+        callingActivity.insertArtwork(albumId, binding.artwork)
+
+        if (it.isFavourite) {
+            binding.currentFavourite.setImageResource(R.drawable.ic_heart)
+            binding.currentFavourite.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.accent))
+        } else {
+            binding.currentFavourite.setImageResource(R.drawable.ic_heart_border)
+            binding.currentFavourite.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.onSurface60))
+        }
+        binding.currentFavourite.setOnClickListener {
+            val added = callingActivity.updateFavourites(song)
+            when {
+                added!! -> {
+                    binding.currentFavourite.setImageDrawable(ContextCompat.getDrawable(requireActivity(), R.drawable.ic_heart))
+                    binding.currentFavourite.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.accent))
+                }
+                !added -> {
+                    binding.currentFavourite.setImageDrawable(ContextCompat.getDrawable(requireActivity(), R.drawable.ic_heart_border))
+                    binding.currentFavourite.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.onSurface60))
+                }
+            }
+        }
     }
 
     private fun setCustomDrawable(uris: MutableList<Uri>): Boolean {

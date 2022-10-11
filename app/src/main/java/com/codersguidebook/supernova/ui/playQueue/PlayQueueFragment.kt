@@ -40,7 +40,7 @@ class PlayQueueFragment : Fragment() {
                 super.clearView(recyclerView, viewHolder)
 
                 viewHolder.itemView.alpha = 1.0f
-                playQueueViewModel.currentPlayQueue.value = playQueueAdapter.playQueue
+                playQueueViewModel.playQueue.value = playQueueAdapter.playQueue
             }
 
             override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
@@ -79,7 +79,7 @@ class PlayQueueFragment : Fragment() {
         binding.root.itemAnimator = DefaultItemAnimator()
         binding.root.adapter = playQueueAdapter
 
-        playQueueViewModel.currentPlayQueue.observe(viewLifecycleOwner) { queue ->
+        playQueueViewModel.playQueue.observe(viewLifecycleOwner) { queue ->
             queue?.let {
                 if (playQueueAdapter.playQueue.size > it.size) {
                     for (queueItem in playQueueAdapter.playQueue) {

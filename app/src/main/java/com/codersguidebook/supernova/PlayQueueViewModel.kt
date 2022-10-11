@@ -3,14 +3,16 @@ package com.codersguidebook.supernova
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.codersguidebook.supernova.entities.Song
 
 class PlayQueueViewModel : ViewModel() {
-    // TODO: Need to assess whether each property is still required
-    var currentPlayQueue = MutableLiveData<List<QueueItem>>()
-    var currentPlaybackDuration = MutableLiveData<Int>()
-    var currentPlaybackPosition = MutableLiveData<Int>()
+    var playQueue = MutableLiveData<List<QueueItem>>()
     var currentQueueItemId = MutableLiveData<Long>()
-    var currentlyPlayingSong = MutableLiveData<Song?>()
+    var playbackDuration = MutableLiveData<Int>()
+    var playbackPosition = MutableLiveData<Int>()
+    // TODO: Refactor to playback state PLAYBACK_STATE -> for consistency and easy updating
     var isPlaying = MutableLiveData<Boolean>()
+
+    fun getCurrentQueueItem(): QueueItem? {
+        return playQueue.value?.find { it.queueId == currentQueueItemId.value }
+    }
 }

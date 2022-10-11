@@ -72,14 +72,14 @@ class ControlsFragment : Fragment() {
             }
         })
 
-        playQueueViewModel.currentPlaybackPosition.observe(viewLifecycleOwner, { position ->
+        playQueueViewModel.playbackPosition.observe(viewLifecycleOwner, { position ->
             position?.let {
                 binding.songProgressBar.progress = position
             }
         })
 
         // keep track of currently playing song duration
-        playQueueViewModel.currentPlaybackDuration.observe(viewLifecycleOwner, { duration ->
+        playQueueViewModel.playbackDuration.observe(viewLifecycleOwner, { duration ->
             duration?.let {
                 binding.songProgressBar.max = it
             }
@@ -137,8 +137,8 @@ class ControlsFragment : Fragment() {
     override fun onResume() {
         super.onResume()
 
-        binding.songProgressBar.max = playQueueViewModel.currentPlaybackDuration.value ?: 0
-        binding.songProgressBar.progress = playQueueViewModel.currentPlaybackPosition.value ?: 0
+        binding.songProgressBar.max = playQueueViewModel.playbackDuration.value ?: 0
+        binding.songProgressBar.progress = playQueueViewModel.playbackPosition.value ?: 0
     }
 
     override fun onDestroyView() {
