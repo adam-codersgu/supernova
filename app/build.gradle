@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId "com.codersguidebook.supernova"
-        minSdk 28
+        minSdk 29
         targetSdk 32
         versionCode 13
         versionName "1.8"
@@ -60,7 +60,6 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-common-java8:$lifecycle_version"
 
-    // added implementations
     implementation "androidx.media:media:1.6.0"
     implementation 'androidx.preference:preference-ktx:1.2.0'
     implementation 'androidx.recyclerview:recyclerview:1.3.0-rc01'
