@@ -97,14 +97,22 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         override fun onAddQueueItem(description: MediaDescriptionCompat?, index: Int) {
             super.onAddQueueItem(description, index)
 
-            val sortedQueue = playQueue.sortedByDescending {
-                it.queueId
+            val presetQueueId = description?.extras?.getLong("queueId", -1L) ?: -1L
+            val queueId = if (presetQueueId != -1L) presetQueueId
+            else {
+                val sortedQueue = playQueue.sortedByDescending {
+                    it.queueId
+                }
+                if (sortedQueue.isNotEmpty()) sortedQueue[0].queueId + 1
+                else 0
             }
-            val highestQueueId = if (sortedQueue.isNotEmpty()) sortedQueue[0].queueId
-            else -1
 
-            val queueItem = QueueItem(description, highestQueueId + 1)
-            playQueue.add(index, queueItem)
+            val queueItem = QueueItem(description, queueId)
+            try {
+                playQueue.add(index, queueItem)
+            } catch (exception: IndexOutOfBoundsException) {
+                playQueue.add(playQueue.size, queueItem)
+            }
             setPlayQueue()
         }
 
@@ -121,13 +129,9 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
 
             setCurrentMetadata()
 
-            if (mediaPlayer == null) {
-                mediaPlayer = MediaPlayer.create(applicationContext, 1)
-            } else {
-                mediaPlayer!!.apply {
-                    stop()
-                    release()
-                }
+            mediaPlayer?.apply {
+                stop()
+                release()
             }
 
             try {
@@ -149,10 +153,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                 }
                 // Refresh the notification so user can see the song has changed
                 refreshNotification()
-                val bundle = Bundle()
-                bundle.putLong("currentQueueItemId", currentQueueItem.queueId)
-                setMediaPlaybackState(STATE_SKIPPING_TO_QUEUE_ITEM, 0,
-                    0f, bundle)
+                setMediaPlaybackState(STATE_NONE, 0, 0f, null)
             } catch (e: IOException) {
                 error()
             } catch (e: IllegalStateException) {
@@ -438,7 +439,6 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                 } catch (_: UninitializedPropertyAccessException){ }
             }
             setMediaPlaybackState(STATE_STOPPED, 0L, 0f, null)
-            handler.removeCallbacks(playbackPositionChecker)
             stopSelf()
         }
 
@@ -524,6 +524,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         super.onCreate()
 
         mediaSessionCompat = MediaSessionCompat(baseContext, logTag).apply {
+            setFlags(MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS)
             setCallback(mediaSessionCallback)
             setSessionToken(sessionToken)
             val builder = Builder().setActions(ACTION_PLAY)
@@ -545,6 +546,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
     override fun onDestroy() {
         super.onDestroy()
         mediaSessionCompat.controller.transportControls.stop()
+        handler.removeCallbacks(playbackPositionChecker)
         unregisterReceiver(noisyReceiver)
         mediaSessionCompat.release()
         NotificationManagerCompat.from(this).cancel(1)
@@ -626,7 +628,9 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
      * @param bundle - An option bundle of extras to be packaged with the playback status update.
      */
     private fun setMediaPlaybackState(state: Int, position: Long, playbackSpeed: Float, bundle: Bundle?) {
-        val playbackStateBuilder = Builder().setState(state, position, playbackSpeed)
+        val playbackStateBuilder = Builder()
+            .setState(state, position, playbackSpeed)
+            .setActiveQueueItemId(currentlyPlayingQueueItemId)
         if (bundle != null) playbackStateBuilder.setExtras(bundle)
         mediaSessionCompat.setPlaybackState(playbackStateBuilder.build())
     }

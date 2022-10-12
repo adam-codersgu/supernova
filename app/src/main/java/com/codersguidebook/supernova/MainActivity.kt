@@ -9,16 +9,13 @@ import android.content.*
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.media.AudioManager
-import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.Settings
 import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat
@@ -64,7 +61,9 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import java.io.*
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.random.Random
@@ -74,7 +73,7 @@ class MainActivity : AppCompatActivity() {
     private val channelID = "supernova"
     private var currentPlaybackPosition = 0
     private var currentPlaybackDuration = 0
-    private var currentlyPlayingQueueItemId = -1L
+    private var currentQueueItemId = -1L
     // FIXME: Can we make the below private
     var playQueue = listOf<QueueItem>()
     private val playQueueViewModel: PlayQueueViewModel by viewModels()
@@ -104,21 +103,26 @@ class MainActivity : AppCompatActivity() {
 
             mediaBrowser.sessionToken.also { token ->
                 val mediaControllerCompat = MediaControllerCompat(this@MainActivity, token)
-                mediaControllerCompat.registerCallback(controllerCallback)
                 MediaControllerCompat.setMediaController(this@MainActivity, mediaControllerCompat)
             }
 
             val mediaController = MediaControllerCompat.getMediaController(this@MainActivity)
             mediaController.registerCallback(controllerCallback)
 
-            restorePlayQueue()
+            restoreMediaSession()
         }
     }
 
+    // TODO: Could implement onMetadataChanged for some functionality? e.g. change currently playing song?
+    //  https://developer.android.com/guide/topics/media-apps/audio-app/building-a-mediabrowser-client#sync-with-mediasession
     private var controllerCallback = object : MediaControllerCompat.Callback() {
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
             super.onPlaybackStateChanged(state)
             refreshPlayQueue()
+            if (state?.activeQueueItemId != currentQueueItemId) {
+                currentQueueItemId = state?.activeQueueItemId ?: -1
+                savePlayQueueId(currentQueueItemId)
+            }
             when (state?.state) {
                 STATE_PLAYING -> {
                     playbackState = STATE_PLAYING
@@ -142,9 +146,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 STATE_STOPPED -> {
                     playbackState = STATE_STOPPED
-                    currentlyPlayingQueueItemId = -1L
                     playQueueViewModel.isPlaying.value = false
-                    savePlayQueueId(0)
                     currentPlaybackDuration = 0
                     playQueueViewModel.playbackDuration.value = 0
                     currentPlaybackPosition = 0
@@ -158,13 +160,6 @@ class MainActivity : AppCompatActivity() {
                         if (finishedSongId == -1L) return@let
                         musicLibraryViewModel.increaseSongPlaysBySongId(finishedSongId)
                         addSongByIdToRecentlyPlayedPlaylist(finishedSongId)
-                    }
-                }
-                STATE_SKIPPING_TO_QUEUE_ITEM -> {
-                    state.extras?.let {
-                        val currentQueueItemId = it.getLong("currentQueueItemId", -1L)
-                        if (currentQueueItemId == -1L) return@let
-                        savePlayQueueId(currentQueueItemId)
                     }
                 }
                 else -> return
@@ -354,34 +349,19 @@ class MainActivity : AppCompatActivity() {
         return newRepeatMode
     }
 
-    /**
-     * Commence playback.
-     *
-     */
+    /** Commence playback of the currently loaded song. */
     private fun play() = mediaController.transportControls.play()
 
-    /**
-     * Skip back to the previous track in the play queue (or restart the current song if less that five seconds in).
-     *
-     */
+    /** Skip back to the previous track in the play queue (or restart the current song if less that five seconds in). */
     fun skipBack() = mediaController.transportControls.skipToPrevious()
 
-    /**
-     * Skip forward to the next song in the play queue.
-     *
-     */
+    /** Skip forward to the next song in the play queue. */
     fun skipForward() = mediaController.transportControls.skipToNext()
 
-    /**
-     * Rewind the playback of the current song.
-     *
-     */
+    /** Rewind the playback of the current song. */
     fun fastRewind() = mediaController.transportControls.rewind()
 
-    /**
-     * Fast forward the playback of the current song.
-     *
-     */
+    /** Fast forward the playback of the current song. */
     fun fastForward() = mediaController.transportControls.fastForward()
 
     /**
@@ -392,10 +372,15 @@ class MainActivity : AppCompatActivity() {
      */
     private fun savePlayQueue() = lifecycleScope.launch(Dispatchers.IO) {
         try {
-            val listOfMediaDescriptions = mutableListOf<MediaDescriptionCompat>()
-            for (item in playQueue) listOfMediaDescriptions.add(item.description)
+            // Pair mapping is <Long, Long> -> <QueueId, songId>
+            val queueItemPairs = mutableListOf<Pair<Long, Long>>()
+            for (item in playQueue) {
+                item.description.mediaId?.let {
+                    queueItemPairs.add(Pair(item.queueId, it.toLong()))
+                }
+            }
             sharedPreferences.edit().apply {
-                val playQueueJSON = GsonBuilder().setPrettyPrinting().create().toJson(listOfMediaDescriptions)
+                val playQueueJSON = GsonBuilder().setPrettyPrinting().create().toJson(queueItemPairs)
                 putString(PLAY_QUEUE_MEDIA_DESCRIPTION_LIST, playQueueJSON)
                 apply()
             }
@@ -408,7 +393,7 @@ class MainActivity : AppCompatActivity() {
      * @return
      */
     private fun savePlayQueueId(queueId: Long) = lifecycleScope.launch(Dispatchers.IO) {
-        currentlyPlayingQueueItemId = queueId
+        currentQueueItemId = queueId
         playQueueViewModel.currentQueueItemId.postValue(queueId)
         val currentQueueItemIndex = playQueue.indexOfFirst { it.queueId == queueId }
         sharedPreferences.edit().apply {
@@ -432,6 +417,8 @@ class MainActivity : AppCompatActivity() {
 
             sendSongsToMediaServicePlayQueue(songs)
 
+            // RESUME - FIX SHUFFLE FEATURE. MAYBE SETSHUFFLEMODE SHOULD DO JUST THAT
+            // HAVE AN EXTRA FEATURE FOR SHUFFLE PLAY QUEUE
             if (shuffle) {
                 val randomQueueItem = playQueue[Random.nextInt(0, playQueue.size)]
                 mediaController.transportControls.skipToQueueItem(randomQueueItem.queueId)
@@ -476,6 +463,8 @@ class MainActivity : AppCompatActivity() {
      * the end of the play queue (true) or after the currently playing song/beginning of the
      * play queue (if the play queue is empty; false). Default value = false.
      */
+    // FIXME: Refactor addSongsToEndOfQueue to addSongsAfterCurrentlyPlaying because I want the default behaviour
+    //  to be to add songs to the end of the play queue (next available position in the queue)
     private fun sendSongsToMediaServicePlayQueue(songs: List<Song>, addSongsToEndOfQueue: Boolean = false) {
         val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
         for (song in songs) {
@@ -485,7 +474,7 @@ class MainActivity : AppCompatActivity() {
                 mediaControllerCompat.addQueueItem(mediaDescriptionCompat)
             } else {
                 val indexOfCurrentQueueItem = playQueue.indexOfFirst {
-                    it.queueId == currentlyPlayingQueueItemId
+                    it.queueId == currentQueueItemId
                 }
                 mediaControllerCompat.addQueueItem(mediaDescriptionCompat,
                     indexOfCurrentQueueItem + 1)
@@ -1031,33 +1020,12 @@ class MainActivity : AppCompatActivity() {
                     val directory = cw.getDir("albumArt", Context.MODE_PRIVATE)
                     // Create imageDir
                     val path = File(directory, "$albumID.jpg")
-                    // if artwork is not saved then try and find some
+                    // If artwork is not saved then try and find some
                     if (!path.exists()) {
-                        val albumArt: Bitmap? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                            try {
-                                application.contentResolver.loadThumbnail(
-                                    uri,
-                                    Size(640, 640),
-                                    null
-                                )
-                            } catch (e: FileNotFoundException) {
-                                null
-                            }
-                        } else {
-                            try {
-                                val mmr = MediaMetadataRetriever()
-                                mmr.setDataSource(this@MainActivity, uri)
-                                var inputStream: InputStream? = null
-                                if (mmr.embeddedPicture != null) inputStream = ByteArrayInputStream(
-                                    mmr.embeddedPicture
-                                )
-                                mmr.release()
-                                BitmapFactory.decodeStream(inputStream)
-                            } catch (e: FileNotFoundException) {
-                                null
-                            }
-                        }
-                        if (albumArt != null) saveImage(albumArt, path)
+                        val albumArt = try {
+                            application.contentResolver.loadThumbnail(uri, Size(640, 640), null)
+                        } catch (_: FileNotFoundException) { null }
+                        albumArt?.let { saveImage(it, path) }
                     }
 
                     // Stores column values and the contentUri in a local object
@@ -1279,23 +1247,40 @@ class MainActivity : AppCompatActivity() {
      *
      * @return
      */
-    private fun restorePlayQueue() = lifecycleScope.launch {
-        val mediaDescriptionListJson = sharedPreferences.getString(PLAY_QUEUE_MEDIA_DESCRIPTION_LIST, null) ?: return@launch
+    private fun restoreMediaSession() = lifecycleScope.launch {
+        val repeatMode = sharedPreferences.getInt("repeatMode", REPEAT_MODE_NONE)
+        val repeatBundle = Bundle()
+        repeatBundle.putInt("repeatMode", repeatMode)
+        mediaController.sendCommand("setRepeatMode", repeatBundle, null)
 
+        val shuffleMode = sharedPreferences.getInt("shuffleMode", SHUFFLE_MODE_NONE)
+        val shuffleBundle = Bundle()
+        shuffleBundle.putInt("shuffleMode", shuffleMode)
+        mediaController.sendCommand("setShuffleMode", repeatBundle, null)
+
+        val queueItemPairsJson = sharedPreferences.getString(PLAY_QUEUE_MEDIA_DESCRIPTION_LIST, null) ?: return@launch
         val gson = Gson()
-        val itemType = object : TypeToken<List<MediaDescriptionCompat>>() {}.type
-        val mediaDescriptionList = gson.fromJson<List<MediaDescriptionCompat>>(mediaDescriptionListJson, itemType)
+        val itemType = object : TypeToken<List<Pair<Long, Long>>>() {}.type
+        val queueItemPairs = gson.fromJson<List<Pair<Long, Long>>>(queueItemPairsJson, itemType)
 
         val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
-        for (mediaDescription in mediaDescriptionList) {
-            mediaControllerCompat.addQueueItem(mediaDescription)
+
+        // Pair mapping is <Long, Long> -> <QueueId, songId>
+        for (queueItemPair in queueItemPairs) {
+            val song = getSongById(queueItemPair.second)
+            song?.let {
+                val mediaDescription = mediaDescriptionManager.buildDescription(it)
+                mediaDescription.extras?.putLong("queueItemId", queueItemPair.first)
+                mediaControllerCompat.addQueueItem(mediaDescription)
+            }
         }
 
+        // TODO: I think it would be better to store and retrieve queue item ID instead
         val currentlyQueueItemIndex = sharedPreferences.getInt(CURRENT_QUEUE_ITEM_INDEX, -1)
         if (currentlyQueueItemIndex == -1) return@launch
         if (playQueue.size > currentlyQueueItemIndex) {
-            currentlyPlayingQueueItemId = playQueue[currentlyQueueItemIndex].queueId
-            mediaController.transportControls.skipToQueueItem(currentlyPlayingQueueItemId)
+            currentQueueItemId = playQueue[currentlyQueueItemIndex].queueId
+            mediaController.transportControls.skipToQueueItem(currentQueueItemId)
         }
 
         val position = sharedPreferences.getInt(PLAYBACK_POSITION, 0)
