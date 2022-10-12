@@ -75,6 +75,10 @@ class CurrentlyPlayingFragment : Fragment() {
             updateCurrentlyDisplayedSong()
         }
 
+        playQueueViewModel.currentQueueItemId.observe(viewLifecycleOwner) {
+            updateCurrentlyDisplayedSong()
+        }
+
         playQueueViewModel.isPlaying.observe(viewLifecycleOwner) {
             if (it) binding.btnPlay.setImageResource(R.drawable.ic_pause)
             else binding.btnPlay.setImageResource(R.drawable.ic_play)
@@ -161,6 +165,8 @@ class CurrentlyPlayingFragment : Fragment() {
                 if (fromUser) callingActivity.seekTo(progress)
             }
         })
+
+        updateCurrentlyDisplayedSong()
     }
 
     override fun onStart() {
@@ -220,10 +226,9 @@ class CurrentlyPlayingFragment : Fragment() {
 
         if (oldCurrentSong?.songId == currentSong?.songId) return
 
-        binding.title.text = currentSong?.title ?: ""
-        binding.artist.text = currentSong?.artist ?: ""
-
-        binding.album.text = currentSong?.albumName ?: ""
+        binding.title.text = currentSong?.title
+        binding.artist.text = currentSong?.artist
+        binding.album.text = currentSong?.albumName
         callingActivity.insertArtwork(currentSong?.albumId, binding.artwork)
 
         if (currentSong?.isFavourite == true) setFavouriteButtonStyle(true)
