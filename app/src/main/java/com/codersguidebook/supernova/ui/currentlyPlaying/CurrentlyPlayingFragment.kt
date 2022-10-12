@@ -8,7 +8,6 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat.*
 import android.transition.TransitionInflater
 import android.util.DisplayMetrics
@@ -33,8 +32,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.FileNotFoundException
-import java.lang.reflect.InvocationTargetException
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -77,35 +75,24 @@ class CurrentlyPlayingFragment : Fragment() {
             updateCurrentlyDisplayedSong()
         }
 
-        // check whether a song is currently playing
-        playQueueViewModel.isPlaying.observe(viewLifecycleOwner, { playing ->
-            playing?.let {
-                if (it) binding.btnPlay.setImageResource(R.drawable.ic_pause)
-                else binding.btnPlay.setImageResource(R.drawable.ic_play)
-            }
-        })
+        playQueueViewModel.isPlaying.observe(viewLifecycleOwner) {
+            if (it) binding.btnPlay.setImageResource(R.drawable.ic_pause)
+            else binding.btnPlay.setImageResource(R.drawable.ic_play)
+        }
 
-        // keep track of currently playing song duration
-        playQueueViewModel.playbackDuration.observe(viewLifecycleOwner, { duration ->
-            duration?.let {
-                binding.currentSeekBar.max = it
-                binding.currentMax.text = SimpleDateFormat("mm:ss", Locale.UK).format(it)
-            }
-        })
+        playQueueViewModel.playbackDuration.observe(viewLifecycleOwner) {
+            binding.currentSeekBar.max = it
+            binding.currentMax.text = SimpleDateFormat("mm:ss", Locale.UK).format(it)
+        }
 
-        // keep track of currently playing song position
-        playQueueViewModel.playbackPosition.observe(viewLifecycleOwner, { position ->
-            position?.let {
-                binding.currentSeekBar.progress = position
-                binding.currentPosition.text = SimpleDateFormat("mm:ss", Locale.UK).format(it)
-            }
-        })
+        playQueueViewModel.playbackPosition.observe(viewLifecycleOwner) {
+            binding.currentSeekBar.progress = it
+            binding.currentPosition.text = SimpleDateFormat("mm:ss", Locale.UK).format(it)
+        }
 
-        // toggle play/pause
         binding.btnPlay.setOnClickListener{ callingActivity.playPauseControl() }
 
-        // restart or play previous song when backward button is clicked
-        binding.btnBackward.setOnClickListener{
+        binding.btnBackward.setOnClickListener {
             if (fastRewinding) fastRewinding = false
             else callingActivity.skipBack()
         }
@@ -121,7 +108,6 @@ class CurrentlyPlayingFragment : Fragment() {
             return@setOnLongClickListener false
         }
 
-        // skip to next song when forward button is pressed
         binding.btnForward.setOnClickListener{
             if (fastForwarding) fastForwarding = false
             else callingActivity.skipForward()
@@ -136,6 +122,10 @@ class CurrentlyPlayingFragment : Fragment() {
                 } while (fastForwarding)
             }
             return@setOnLongClickListener false
+        }
+
+        binding.currentFavourite.setOnClickListener {
+            setFavouriteButtonStyle(callingActivity.toggleSongFavouriteStatus(currentSong))
         }
 
         val shuffleMode = sharedPreferences.getInt("shuffleMode", SHUFFLE_MODE_NONE)
@@ -153,20 +143,16 @@ class CurrentlyPlayingFragment : Fragment() {
         }
 
         binding.currentAddToPlaylist.setOnClickListener {
-            if (currentlyPlayingSong != null) callingActivity.openAddToPlaylistDialog(listOf(currentlyPlayingSong!!))
+            currentSong?.let {
+                callingActivity.openAddToPlaylistDialog(listOf(it))
+            }
         }
 
-        binding.currentClose.setOnClickListener {
-            findNavController().popBackStack()
-        }
+        binding.currentClose.setOnClickListener { findNavController().popBackStack() }
 
-        binding.currentSettings.setOnClickListener {
-            showPopup(it)
-        }
+        binding.currentSettings.setOnClickListener { showSettingsPopup() }
 
-        binding.artwork.setOnClickListener {
-            showPopup(binding.currentSettings)
-        }
+        binding.artwork.setOnClickListener { showSettingsPopup() }
 
         binding.currentSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onStopTrackingTouch(seekBar: SeekBar) {}
@@ -179,6 +165,7 @@ class CurrentlyPlayingFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
+
         binding.animatedView.viewWidth = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             callingActivity.windowManager.currentWindowMetrics.bounds.width()
         } else {
@@ -186,15 +173,11 @@ class CurrentlyPlayingFragment : Fragment() {
             callingActivity.windowManager.defaultDisplay.getMetrics(displayMetrics)
             displayMetrics.widthPixels
         }
-        
-        val playAnimations = sharedPreferences.getBoolean("playAnimations", true)
-        if (playAnimations) {
-            binding.animatedView.visibility = View.VISIBLE
-            isAnimationVisible = true
-        } else {
-            binding.animatedView.visibility = View.GONE
-            isAnimationVisible = false
-        }
+
+        isAnimationVisible = sharedPreferences.getBoolean("playAnimations", true)
+        if (isAnimationVisible) binding.animatedView.visibility = View.VISIBLE
+        else binding.animatedView.visibility = View.GONE
+
         val customDrawableString = sharedPreferences.getString("customAnimationUri", null)
         val animationPreference = sharedPreferences.getString("drawableAnimations", getString(R.string.leaves))
         when {
@@ -206,9 +189,10 @@ class CurrentlyPlayingFragment : Fragment() {
                 setCustomDrawable(list)
             }
             animationPreference == getString(R.string.custom_image) -> {
-                val editor = sharedPreferences.edit()
-                editor.putString("drawableAnimations", getString(R.string.leaves))
-                editor.apply()
+                sharedPreferences.edit().apply {
+                    putString("drawableAnimations", getString(R.string.leaves))
+                    apply()
+                }
                 Toast.makeText(activity, getString(R.string.no_custom_image), Toast.LENGTH_LONG).show()
                 binding.animatedView.changeDrawable(getString(R.string.leaves), false)
             }
@@ -224,74 +208,75 @@ class CurrentlyPlayingFragment : Fragment() {
         binding.animatedView.createObjects()
     }
 
+    /**
+     * Use the currently playing song's metadata to update the user interface.
+     *
+     */
     private fun updateCurrentlyDisplayedSong() {
         val oldCurrentSong = currentSong
-        currentSong = callingActivity.getSongById(playQueueViewModel.currentQueueItemId.value
-            ?: return)
+        val currentQueueItemId = playQueueViewModel.currentQueueItemId.value
+        currentSong = if (currentQueueItemId == null) null
+        else callingActivity.getSongById(currentQueueItemId)
 
         if (oldCurrentSong?.songId == currentSong?.songId) return
 
-        binding.title.text = currentQueueItemDescription?.title ?: ""
-        binding.artist.text = currentQueueItemDescription?.subtitle ?: ""
+        binding.title.text = currentSong?.title ?: ""
+        binding.artist.text = currentSong?.artist ?: ""
 
-        val extras = currentQueueItemDescription?.extras
-        binding.album.text = extras?.getString("album") ?: ""
-        val albumId = extras?.getString("album_id")
-        callingActivity.insertArtwork(albumId, binding.artwork)
+        binding.album.text = currentSong?.albumName ?: ""
+        callingActivity.insertArtwork(currentSong?.albumId, binding.artwork)
 
-        if (it.isFavourite) {
+        if (currentSong?.isFavourite == true) setFavouriteButtonStyle(true)
+        else setFavouriteButtonStyle(false)
+    }
+
+    /**
+     * Set the style of the favourite button based on whether the currently playing
+     * song is a favourite.
+     *
+     * @param isFavourite - A Boolean indicating whether the currently playing song is
+     * a favourite.
+     */
+    private fun setFavouriteButtonStyle(isFavourite: Boolean) {
+        if (isFavourite) {
             binding.currentFavourite.setImageResource(R.drawable.ic_heart)
             binding.currentFavourite.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.accent))
         } else {
             binding.currentFavourite.setImageResource(R.drawable.ic_heart_border)
             binding.currentFavourite.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.onSurface60))
         }
-        binding.currentFavourite.setOnClickListener {
-            val added = callingActivity.updateFavourites(song)
-            when {
-                added!! -> {
-                    binding.currentFavourite.setImageDrawable(ContextCompat.getDrawable(requireActivity(), R.drawable.ic_heart))
-                    binding.currentFavourite.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.accent))
-                }
-                !added -> {
-                    binding.currentFavourite.setImageDrawable(ContextCompat.getDrawable(requireActivity(), R.drawable.ic_heart_border))
-                    binding.currentFavourite.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.onSurface60))
-                }
-            }
-        }
     }
 
-    private fun setCustomDrawable(uris: MutableList<Uri>): Boolean {
-        fun error(position: Int) {
-            uris.removeAt(position)
+    /**
+     * Set a list of custom image URIs as the animation images.
+     *
+     * @param uris - The URIs leading to the user's custom animation images.
+     */
+    private fun setCustomDrawable(uris: MutableList<Uri>) {
+        fun removeUri(uri: Uri) {
+            uris.remove(uri)
             val editor = sharedPreferences.edit()
             if (uris.isEmpty()) {
                 editor.putString("drawableAnimations", getString(R.string.leaves))
                 editor.putString("customAnimationUri", null)
                 binding.animatedView.usingCustomDrawable = false
-                Toast.makeText(activity, getString(R.string.custom_image_not_found), Toast.LENGTH_LONG).show()
             } else {
                 val gPretty = GsonBuilder().setPrettyPrinting().create().toJson(uris)
                 editor.putString("customAnimationUri", gPretty)
             }
             editor.apply()
+            // TODO: Improve error reporting and handling for URIs that cannot be found
+            Toast.makeText(activity, getString(R.string.custom_image_not_found), Toast.LENGTH_LONG).show()
         }
         val drawables = arrayListOf<Drawable?>()
-        for ((index, u) in uris.withIndex()) {
-            try {
-                val source = ImageDecoder.createSource(requireActivity().contentResolver, u)
+        for (uri in uris) {
+            if (uri.path?.let { File(it).isFile } == true) {
+                val source = ImageDecoder.createSource(requireActivity().contentResolver, uri)
                 drawables.add(ImageDecoder.decodeDrawable(source))
-            } catch (e: InvocationTargetException) {
-                error(index)
-            } catch (e: FileNotFoundException) {
-                error(index)
-            } catch (e: SecurityException) {
-                error(index)
-            }
+            } else removeUri(uri)
         }
         binding.animatedView.drawableList = drawables
         binding.animatedView.usingCustomDrawable = true
-        return true
     }
 
     override fun onResume() {
@@ -338,28 +323,17 @@ class CurrentlyPlayingFragment : Fragment() {
         }
     }
 
-    @SuppressLint("DiscouragedPrivateApi")
-    private fun showPopup(view: View) {
-        PopupMenu(requireContext(), view).apply {
+    private fun showSettingsPopup() {
+        PopupMenu(requireContext(), binding.currentSettings).apply {
             inflate(R.menu.currently_playing_menu)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                setForceShowIcon(true)
-            } else {
-                val fMenuHelper = PopupMenu::class.java.getDeclaredField("mPopup")
-                fMenuHelper.isAccessible = true
-                val menuHelper = fMenuHelper.get(this)
-                val argTypes: Array<Class<*>?> = arrayOf(Boolean::class.javaPrimitiveType)
-                menuHelper.javaClass.getDeclaredMethod("setForceShowIcon", *argTypes)
-                    .invoke(menuHelper, true)
-            }
+            setForceShowIcon(true)
 
-            setOnDismissListener {
-                callingActivity.hideSystemBars(true)
-            }
-            setOnMenuItemClickListener {
+            setOnDismissListener { callingActivity.hideSystemBars(true) }
+
+            setOnMenuItemClickListener { menuItem ->
                 val editor = sharedPreferences.edit()
-                when (it.itemId) {
+                when (menuItem.itemId) {
                     R.id.search -> {
                         findNavController().popBackStack()
                         callingActivity.findNavController(R.id.nav_host_fragment).navigate(R.id.nav_search)
@@ -369,16 +343,16 @@ class CurrentlyPlayingFragment : Fragment() {
                         callingActivity.findNavController(R.id.nav_host_fragment).navigate(R.id.nav_queue)
                     }
                     R.id.artist -> {
-                        if (currentlyPlayingSong != null) {
+                        currentSong?.let {
                             findNavController().popBackStack()
-                            val action = MobileNavigationDirections.actionSelectArtist(currentlyPlayingSong?.artist!!)
+                            val action = MobileNavigationDirections.actionSelectArtist(it.artist)
                             callingActivity.findNavController(R.id.nav_host_fragment).navigate(action)
                         }
                     }
                     R.id.album -> {
-                        if (currentlyPlayingSong != null) {
+                        currentSong?.let {
                             findNavController().popBackStack()
-                            val action = MobileNavigationDirections.actionSelectAlbum(currentlyPlayingSong?.albumId!!)
+                            val action = MobileNavigationDirections.actionSelectAlbum(it.albumId)
                             callingActivity.findNavController(R.id.nav_host_fragment).navigate(action)
                         }
                     }
@@ -415,7 +389,9 @@ class CurrentlyPlayingFragment : Fragment() {
                             val imageStrings: List<String> = Gson().fromJson(customDrawableString, listType)
                             val list = mutableListOf<Uri>()
                             for (s in imageStrings)  list.add(Uri.parse(s))
-                            if (setCustomDrawable(list)) Toast.makeText(activity, getString(R.string.changes_applied), Toast.LENGTH_SHORT).show()
+                            setCustomDrawable(list)
+                            Toast.makeText(callingActivity, getString(R.string.changes_applied),
+                                Toast.LENGTH_SHORT).show()
                         } else {
                             findNavController().popBackStack()
                             callingActivity.findNavController(R.id.nav_host_fragment).navigate(R.id.nav_custom_animation)

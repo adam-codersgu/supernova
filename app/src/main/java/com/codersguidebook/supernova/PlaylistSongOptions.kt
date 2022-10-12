@@ -64,7 +64,7 @@ class PlaylistSongOptions(private val songs: MutableList<Song>,
         else txtAddFavourites.text = getString(R.string.add_to_favourites)
 
         txtAddFavourites.setOnClickListener {
-            callingActivity.updateFavourites(updatedSong!!)
+            callingActivity.toggleSongFavouriteStatus(updatedSong!!)
             dismiss()
         }
 

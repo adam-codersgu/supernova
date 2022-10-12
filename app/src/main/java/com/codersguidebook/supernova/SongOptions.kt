@@ -50,7 +50,7 @@ class SongOptions(private val song: Song) : DialogFragment() {
         else  binding.option3.text = getString(R.string.add_to_favourites)
 
         binding.option3.setOnClickListener {
-            callingActivity.updateFavourites(updatedSong!!)
+            callingActivity.toggleSongFavouriteStatus(updatedSong!!)
             dismiss()
         }
 

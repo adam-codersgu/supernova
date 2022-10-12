@@ -145,7 +145,6 @@ class MainActivity : AppCompatActivity() {
                     currentlyPlayingQueueItemId = -1L
                     playQueueViewModel.isPlaying.value = false
                     savePlayQueueId(0)
-                    playQueueViewModel.currentlyPlayingSong.value = null
                     currentPlaybackDuration = 0
                     playQueueViewModel.playbackDuration.value = 0
                     currentPlaybackPosition = 0
@@ -766,37 +765,44 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun updateFavourites(song: Song): Boolean? {
-        val added: Boolean?
+    /**
+     * Toggle the isFavourite field for a given Song object. Also update the favourites
+     * playlist accordingly.
+     *
+     * @param song - The target Song object.
+     * @return A Boolean indicating the new value of the isFavourite field.
+     */
+    fun toggleSongFavouriteStatus(song: Song?): Boolean {
+        if (song == null) return false
+
         val favouritesPlaylist = findPlaylist(getString(R.string.favourites))
         if (favouritesPlaylist != null) {
-            val songIDList = extractPlaylistSongIds(favouritesPlaylist.songs)
-            val index = songIDList.indexOfFirst {
-                it == song.songId
-            }
-            val message: String
-            if (index == -1) {
+            val songIdList = extractPlaylistSongIds(favouritesPlaylist.songs)
+            val matchingSong = songIdList.firstOrNull { it == song.songId }
+
+            if (matchingSong == null) {
                 song.isFavourite = true
-                songIDList.add(song.songId)
-                message = "Added to"
-                added = true
+                songIdList.add(song.songId)
             } else {
                 song.isFavourite = false
-                songIDList.removeAt(index)
-                message = "Removed from"
-                added = false
+                songIdList.remove(matchingSong)
             }
 
-            if (songIDList.isNotEmpty()) {
-                val newSongListJSON = convertSongIDListToJson(songIDList)
+            if (songIdList.isNotEmpty()) {
+                val newSongListJSON = convertSongIDListToJson(songIdList)
                 favouritesPlaylist.songs = newSongListJSON
             } else favouritesPlaylist.songs = null
             musicLibraryViewModel.updatePlaylists(listOf(favouritesPlaylist))
             updateSongInfo(listOf(song))
-            Toast.makeText(this@MainActivity, "$message favourites", Toast.LENGTH_SHORT).show()
-            return added
+            if (song.isFavourite) {
+                Toast.makeText(this@MainActivity, "Added to favourites",
+                    Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this@MainActivity, "Removed from favourites",
+                    Toast.LENGTH_SHORT).show()
+            }
         }
-        return null
+        return song.isFavourite
     }
 
     /**
