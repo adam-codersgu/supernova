@@ -310,8 +310,9 @@ class MainActivity : AppCompatActivity() {
             apply()
         }
 
-        val bundle = Bundle()
-        bundle.putInt("shuffleMode", shuffleMode)
+        val bundle = Bundle().apply {
+            putInt("shuffleMode", shuffleMode)
+        }
 
         mediaController.sendCommand("setShuffleMode", bundle, null)
     }
@@ -333,10 +334,10 @@ class MainActivity : AppCompatActivity() {
             apply()
         }
 
-        val bundle = Bundle()
-        bundle.putInt("repeatMode", newRepeatMode)
-        // TODO: Could eventually have a result callback (instead of null)
-        // TODO: Also could we delegate command names to a static constant params class for consistency
+        val bundle = Bundle().apply {
+            putInt("repeatMode", newRepeatMode)
+        }
+        // TODO: Could we delegate command names to a static constant params class for consistency
         mediaController.sendCommand("setRepeatMode", bundle, null)
 
         // TODO: Need a ticket to go through and replace all hardcoded strings with string resources
@@ -531,9 +532,9 @@ class MainActivity : AppCompatActivity() {
      */
     fun removeQueueItemById(queueItemId: Long) {
         if (playQueue.isNotEmpty()) {
-            // FIXME: Can you set all bundles to use apply {} to add data to bundle
-            val bundle = Bundle()
-            bundle.putLong("queueItemId", queueItemId)
+            val bundle = Bundle().apply {
+                putLong("queueItemId", queueItemId)
+            }
 
             // TODO: Use the result receiver. Also, maybe try and link this method with the one below for simplicity
             val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)

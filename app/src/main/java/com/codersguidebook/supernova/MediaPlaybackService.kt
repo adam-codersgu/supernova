@@ -193,8 +193,9 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                                 currentlyPlayingQueueItem?.let {
                                     val currentlyPlayingSongId = it.description.mediaId
                                     if (currentlyPlayingSongId != null) {
-                                        val bundle = Bundle()
-                                        bundle.putLong("finishedSongId", currentlyPlayingSongId.toLong())
+                                        val bundle = Bundle().apply {
+                                            putLong("finishedSongId", currentlyPlayingSongId.toLong())
+                                        }
                                         setMediaPlaybackState(STATE_SKIPPING_TO_NEXT, 0,
                                             0f, bundle)
                                     }
@@ -521,9 +522,9 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
      */
     private fun getBundleWithSongDuration(): Bundle {
         val playbackDuration = mediaPlayer?.duration ?: 0
-        val bundle = Bundle()
-        bundle.putInt("duration", playbackDuration)
-        return bundle
+        return Bundle().apply {
+            putInt("duration", playbackDuration)
+        }
     }
 
     /**
