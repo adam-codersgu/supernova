@@ -11,8 +11,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
+import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 
 class AlbumFragment : Fragment() {
@@ -43,7 +43,7 @@ class AlbumFragment : Fragment() {
         setHasOptionsMenu(true)
 
         binding.fab.setOnClickListener {
-            callingActivity.playListOfSongs(albumSongs, 0, true)
+            callingActivity.playSongs(albumSongs)
         }
 
         binding.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {

@@ -9,8 +9,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.SongOptions
+import com.codersguidebook.supernova.entities.Song
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
 
 class SongsAdapter(private val activity: MainActivity):
@@ -40,7 +40,7 @@ class SongsAdapter(private val activity: MainActivity):
         }
 
         override fun onClick(view: View) {
-            activity.playListOfSongs(songs, layoutPosition, false)
+            activity.playSongs(songs, layoutPosition)
         }
     }
 

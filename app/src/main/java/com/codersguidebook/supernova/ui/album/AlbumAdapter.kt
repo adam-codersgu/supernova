@@ -12,8 +12,8 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.SongOptions
+import com.codersguidebook.supernova.entities.Song
 
 class AlbumAdapter(private val mainActivity: MainActivity):
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -98,7 +98,7 @@ class AlbumAdapter(private val mainActivity: MainActivity):
                 }
 
                 holder.songLayout.setOnClickListener {
-                    mainActivity.playListOfSongs(songs, position - 1, false)
+                    mainActivity.playSongs(songs, position - 1)
                 }
 
                 holder.songLayout.setOnLongClickListener {

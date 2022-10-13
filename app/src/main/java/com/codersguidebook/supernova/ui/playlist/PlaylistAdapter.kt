@@ -15,8 +15,8 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.codersguidebook.supernova.MainActivity
-import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.R
+import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 
 class PlaylistAdapter(private val fragment: PlaylistFragment,
@@ -62,7 +62,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
         }
 
         override fun onClick(view: View) {
-            mainActivity.playListOfSongs(songs, layoutPosition -1, false)
+            mainActivity.playSongs(songs, layoutPosition - 1)
         }
     }
 

@@ -10,8 +10,8 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.SongOptions
+import com.codersguidebook.supernova.entities.Song
 
 class MostPlayedAdapter(private val mainActivity: MainActivity):
     RecyclerView.Adapter<MostPlayedAdapter.SongsViewHolder>() {
@@ -37,7 +37,7 @@ class MostPlayedAdapter(private val mainActivity: MainActivity):
         }
 
         override fun onClick(view: View) {
-            mainActivity.playListOfSongs(songs, layoutPosition, false)
+            mainActivity.playSongs(songs, layoutPosition)
         }
     }
 

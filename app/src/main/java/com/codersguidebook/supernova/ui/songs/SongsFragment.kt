@@ -11,8 +11,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.MusicLibraryViewModel
-import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
+import com.codersguidebook.supernova.entities.Song
 import java.util.*
 
 class SongsFragment : Fragment() {
@@ -47,7 +47,7 @@ class SongsFragment : Fragment() {
 
         // Shuffle the music library then play it
         binding.fab.setOnClickListener {
-            callingActivity.playListOfSongs(completeLibrary, 0, true)
+            callingActivity.playSongsShuffled(completeLibrary)
         }
 
         binding.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {

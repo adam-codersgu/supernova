@@ -6,7 +6,9 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.*
+import com.codersguidebook.supernova.MainActivity
+import com.codersguidebook.supernova.R
+import com.codersguidebook.supernova.SongOptions
 import com.codersguidebook.supernova.entities.Song
 
 class FavouritesAdapter(private val mainActivity: MainActivity):
@@ -32,7 +34,7 @@ class FavouritesAdapter(private val mainActivity: MainActivity):
         }
 
         override fun onClick(view: View) {
-            mainActivity.playListOfSongs(songs, layoutPosition, false)
+            mainActivity.playSongs(songs, layoutPosition)
         }
     }
 

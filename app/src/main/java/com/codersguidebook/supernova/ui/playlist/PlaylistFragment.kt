@@ -101,7 +101,7 @@ class PlaylistFragment : Fragment() {
         })
 
         binding.fab.setOnClickListener {
-            callingActivity.playListOfSongs(playlistSongs, 0, true)
+            callingActivity.playSongsShuffled(playlistSongs)
         }
 
         binding.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
