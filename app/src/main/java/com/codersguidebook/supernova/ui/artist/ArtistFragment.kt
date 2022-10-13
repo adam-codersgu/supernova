@@ -10,8 +10,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
+import com.codersguidebook.supernova.entities.Song
 
 class ArtistFragment : Fragment() {
     private var artistName: String? = null
@@ -83,8 +83,8 @@ class ArtistFragment : Fragment() {
             it.title
         }
         when (item.itemId) {
-            R.id.artist_play_next -> callingActivity.addSongsToPlayQueue(songList, false)
-            R.id.artist_add_queue -> callingActivity.addSongsToPlayQueue(songList, true)
+            R.id.artist_play_next -> callingActivity.addSongsToPlayQueue(songList, true)
+            R.id.artist_add_queue -> callingActivity.addSongsToPlayQueue(songList)
             R.id.artist_add_playlist -> callingActivity.openAddToPlaylistDialog(songList)
             R.id.artist_edit_artist_info -> {
                 val action = artistName?.let { ArtistFragmentDirections.actionEditArtist(it) }

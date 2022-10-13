@@ -143,11 +143,11 @@ class PlaylistFragment : Fragment() {
         when (item.itemId) {
             R.id.playPlaylistNext -> {
                 if (playlistSongs.isNotEmpty()){
-                    callingActivity.addSongsToPlayQueue(playlistSongs, false)
+                    callingActivity.addSongsToPlayQueue(playlistSongs, true)
                 } else Toast.makeText(activity, "There are no songs in that playlist.", Toast.LENGTH_SHORT).show()
             }
             R.id.queuePlaylist -> {
-                if (playlistSongs.isNotEmpty()) callingActivity.addSongsToPlayQueue(playlistSongs, true)
+                if (playlistSongs.isNotEmpty()) callingActivity.addSongsToPlayQueue(playlistSongs)
                 else Toast.makeText(activity, "There are no songs in that playlist.", Toast.LENGTH_SHORT).show()
             }
             R.id.reorderPlaylist -> {

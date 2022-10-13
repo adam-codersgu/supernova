@@ -258,7 +258,7 @@ class MainActivity : AppCompatActivity() {
     private fun refreshPlayQueue(savePlayQueue: Boolean = false) {
         val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
         playQueue = mediaControllerCompat.queue
-        playQueueViewModel.playQueue.value = playQueue
+        playQueueViewModel.playQueue.postValue(playQueue)
         if (savePlayQueue) savePlayQueue()
     }
 
@@ -443,11 +443,11 @@ class MainActivity : AppCompatActivity() {
      * or after the currently playing song.
      *
      * @param songs - A list containing Song objects that should be added to the play queue.
-     * @param addSongsToEndOfQueue - A Boolean indicating whether the songs should be added to
-     * the end of the play queue (true) or after the currently playing song (false).
+     * @param addSongsAfterCurrentQueueItem - A Boolean indicating whether the songs should be added to
+     * after the currently playing queue item. Default value = false.
      */
-    fun addSongsToPlayQueue(songs: List<Song>, addSongsToEndOfQueue: Boolean) {
-        sendSongsToPlayQueue(songs, addSongsToEndOfQueue = addSongsToEndOfQueue)
+    fun addSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false) {
+        sendSongsToPlayQueue(songs, addSongsAfterCurrentQueueItem = addSongsAfterCurrentQueueItem)
 
         // TODO: In future, could add a parameter called message that provides a better description.
         //  e.g. "Album Dilla Joints added to the play queue" or "Artist Gordon Lightfoot added to the play queue".
@@ -467,25 +467,22 @@ class MainActivity : AppCompatActivity() {
      * lists of songs.
      *
      * @param songs - A list containing Song objects that should be added to the play queue.
-     * @param addSongsToEndOfQueue - A Boolean indicating whether the songs should be added to
-     * the end of the play queue (true) or after the currently playing song/beginning of the
-     * play queue (if the play queue is empty; false). Default value = false.
+     * @param addSongsAfterCurrentQueueItem - A Boolean indicating whether the songs should be added to
+     * after the currently playing queue item. Default value = false.
      * @param shuffle - A Boolean indicating whether the list of songs should be shuffled.
      * Default value = false.
      * @param startIndex - If playback should begin once the songs have been added to the play queue,
      * then specify an index. Enter 0 if playback should begin from the start of the play queue.
      * Default value = null.
      */
-    // FIXME: Refactor addSongsToEndOfQueue to addSongsAfterCurrentlyPlaying because I want the default behaviour
-    //  to be to add songs to the end of the play queue (next available position in the queue)
-    private fun sendSongsToPlayQueue(songs: List<Song>, addSongsToEndOfQueue: Boolean = false,
+    private fun sendSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false,
                                      shuffle: Boolean = false, startIndex: Int? = null) {
         val songIds = songs.map { it.songId }
         val gson = Gson()
         val songIdsJson = gson.toJson(songIds)
         val bundle = Bundle().apply {
             putString("songIds", songIdsJson)
-            putBoolean("addSongsToEndOfQueue", addSongsToEndOfQueue)
+            putBoolean("addSongsAfterCurrentQueueItem", addSongsAfterCurrentQueueItem)
             putBoolean("shuffle", shuffle)
         }
 
@@ -510,6 +507,10 @@ class MainActivity : AppCompatActivity() {
         mediaController.sendCommand("loadSongs", bundle, resultReceiver)
     }
 
+    /**
+     * Provide up-to-date metadata for each song in the play queue. This method uses a coroutine
+     * because the process could be time consuming depending on the size of the play queue.
+     */
     private fun populatePlayQueueData() = lifecycleScope.launch(Dispatchers.Default) {
         refreshPlayQueue()
 
@@ -1051,13 +1052,7 @@ class MainActivity : AppCompatActivity() {
                     val album = cursor.getString(albumColumn) ?: "Unknown album"
                     val year = cursor.getString(yearColumn) ?: "2000"
                     val albumID = cursor.getString(albumIDColumn) ?: "unknown_album_ID"
-
-                    val uri = ContentUris.withAppendedId(
-                        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                        id
-                    )
-                    // uri needs to be converted to a string for storage
-                    val songUri = uri.toString()
+                    val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
 
                     val cw = ContextWrapper(application)
                     // path to /data/data/yourapp/app_data/albumArt
@@ -1067,7 +1062,8 @@ class MainActivity : AppCompatActivity() {
                     // If artwork is not saved then try and find some
                     if (!path.exists()) {
                         val albumArt = try {
-                            application.contentResolver.loadThumbnail(uri, Size(640, 640), null)
+                            application.contentResolver.loadThumbnail(uri,
+                                Size(640, 640), null)
                         } catch (_: FileNotFoundException) { null }
                         albumArt?.let { saveImage(it, path) }
                     }
@@ -1081,7 +1077,6 @@ class MainActivity : AppCompatActivity() {
                         artist,
                         album,
                         albumID,
-                        songUri,
                         year,
                         false,
                         0

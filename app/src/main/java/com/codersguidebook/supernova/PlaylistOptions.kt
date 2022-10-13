@@ -42,7 +42,7 @@ class PlaylistOptions(private val playlist: Playlist) : DialogFragment() {
         binding.option1.setOnClickListener{
             if (playlist.songs != null){
                 val playlistSongs = callingActivity.extractPlaylistSongs(playlist.songs)
-                callingActivity.addSongsToPlayQueue(playlistSongs, false)
+                callingActivity.addSongsToPlayQueue(playlistSongs, true)
             } else Toast.makeText(activity, "There are no songs in that playlist.", Toast.LENGTH_SHORT).show()
             dismiss()
         }
@@ -50,7 +50,7 @@ class PlaylistOptions(private val playlist: Playlist) : DialogFragment() {
         binding.option2.setOnClickListener{
             if (playlist.songs != null){
                 val playlistSongs = callingActivity.extractPlaylistSongs(playlist.songs)
-                callingActivity.addSongsToPlayQueue(playlistSongs, true)
+                callingActivity.addSongsToPlayQueue(playlistSongs)
             } else Toast.makeText(activity, "There are no songs in that playlist.", Toast.LENGTH_SHORT).show()
             dismiss()
         }

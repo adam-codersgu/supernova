@@ -37,12 +37,12 @@ class SongOptions(private val song: Song) : DialogFragment() {
         }
 
         binding.option1.setOnClickListener{
-            callingActivity.addSongsToPlayQueue(listOf(song), false)
+            callingActivity.addSongsToPlayQueue(listOf(song), true)
             dismiss()
         }
 
         binding.option2.setOnClickListener{
-            callingActivity.addSongsToPlayQueue(listOf(song), true)
+            callingActivity.addSongsToPlayQueue(listOf(song))
             dismiss()
         }
 

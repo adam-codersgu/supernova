@@ -18,7 +18,6 @@ data class Song(
     @ColumnInfo(name = "song_artist") var artist: String,
     @ColumnInfo(name = "song_album_name") var albumName: String,
     @ColumnInfo(name = "song_album_id") val albumId: String,
-    @ColumnInfo(name = "song_uri") val uri: String,
     @ColumnInfo(name = "song_year") var year: String,
     @ColumnInfo(name = "song_favourite") var isFavourite: Boolean,
     @ColumnInfo(name = "song_plays") var plays: Int

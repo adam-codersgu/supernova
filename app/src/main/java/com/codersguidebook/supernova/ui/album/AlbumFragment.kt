@@ -92,11 +92,11 @@ class AlbumFragment : Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.album_play_next -> {
-                callingActivity.addSongsToPlayQueue(albumSongs, false)
+                callingActivity.addSongsToPlayQueue(albumSongs, true)
                 true
             }
             R.id.album_add_queue -> {
-                callingActivity.addSongsToPlayQueue(albumSongs, true)
+                callingActivity.addSongsToPlayQueue(albumSongs)
                 true
             }
             R.id.album_add_playlist -> {

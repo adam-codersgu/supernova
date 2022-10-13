@@ -51,12 +51,12 @@ class PlaylistSongOptions(private val songs: MutableList<Song>,
         txtTitle.text = updatedSong?.title
 
         txtPlayNext.setOnClickListener{
-            callingActivity.addSongsToPlayQueue(listOf(songs[position]), false)
+            callingActivity.addSongsToPlayQueue(listOf(songs[position]), true)
             dismiss()
         }
 
         txtAddQueue.setOnClickListener{
-            callingActivity.addSongsToPlayQueue(listOf(songs[position]), true)
+            callingActivity.addSongsToPlayQueue(listOf(songs[position]))
             dismiss()
         }
 

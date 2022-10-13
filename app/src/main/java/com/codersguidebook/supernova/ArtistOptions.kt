@@ -53,13 +53,13 @@ class ArtistOptions(private val artistName: String) : DialogFragment() {
         builder.setView(dialogView)
 
         txtPlayNext.setOnClickListener{
-            if (!songList.isNullOrEmpty()) callingActivity.addSongsToPlayQueue(songList!!, false)
+            if (!songList.isNullOrEmpty()) callingActivity.addSongsToPlayQueue(songList!!, true)
             else Toast.makeText(activity, "No songs were found for this $artistName.", Toast.LENGTH_SHORT).show()
             dismiss()
         }
 
         txtAddQueue.setOnClickListener{
-            if (!songList.isNullOrEmpty()) callingActivity.addSongsToPlayQueue(songList!!, true)
+            if (!songList.isNullOrEmpty()) callingActivity.addSongsToPlayQueue(songList!!)
             else Toast.makeText(activity, "No songs were found for this $artistName.", Toast.LENGTH_SHORT).show()
             dismiss()
         }

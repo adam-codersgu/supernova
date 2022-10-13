@@ -9,11 +9,11 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.AudioManager.*
 import android.media.MediaPlayer
-import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.ResultReceiver
+import android.provider.MediaStore
 import android.service.media.MediaBrowserService
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
@@ -133,9 +133,15 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
 
             try {
                 val currentQueueItem = getCurrentQueueItem()
-                val currentQueueItemUri = currentQueueItem?.description?.mediaUri
+                val currentQueueItemUri = currentQueueItem?.description?.mediaId?.let {
+                    ContentUris.withAppendedId(
+                        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                        it.toLong())
+                }
                 if (currentQueueItemUri == null) {
-                    error()
+                    Toast.makeText(application,
+                        "The URI for the currently loaded song could not be found.",
+                        Toast.LENGTH_LONG).show()
                     return
                 }
                 mediaPlayer = MediaPlayer().apply {
@@ -278,6 +284,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
 
                         // Pair mapping is <Long, Long> -> <QueueId, songId>
                         for (pair in queueItemPairs) {
+
                             val mediaDescription = MediaDescriptionCompat.Builder()
                                 .setMediaId(pair.second.toString())
                                 .build()
@@ -299,20 +306,18 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         playQueue.clear()
                         currentlyPlayingQueueItemId = -1L
 
-                        val addSongsToEndOfQueue = it.getBoolean("addSongsToEndOfQueue")
-                        if (!addSongsToEndOfQueue) songIds = songIds.reversed()
+                        val addSongsAfterCurrentQueueItem = it.getBoolean("addSongsAfterCurrentQueueItem")
+                        if (addSongsAfterCurrentQueueItem) songIds = songIds.reversed()
                         for (id in songIds) {
                             val mediaDescription = MediaDescriptionCompat.Builder()
                                 .setMediaId(id.toString())
                                 .build()
-                            if (addSongsToEndOfQueue) {
-                                onAddQueueItem(mediaDescription)
-                            } else {
+                            if (addSongsAfterCurrentQueueItem) {
                                 val targetIndex = playQueue.indexOfFirst { queueItem ->
                                     queueItem.queueId == currentlyPlayingQueueItemId
                                 } + 1
                                 onAddQueueItem(mediaDescription, targetIndex)
-                            }
+                            } else onAddQueueItem(mediaDescription)
                         }
 
                         val shuffle = it.getBoolean("shuffle")
@@ -365,7 +370,6 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         val mediaDescription = MediaDescriptionCompat.Builder()
                             .setExtras(it.getBundle("extras"))
                             .setMediaId(it.getString("mediaId"))
-                            .setMediaUri(Uri.parse(it.getString("mediaUri")))
                             .setSubtitle(it.getString("subtitle"))
                             .setTitle(it.getString("title"))
                             .build()

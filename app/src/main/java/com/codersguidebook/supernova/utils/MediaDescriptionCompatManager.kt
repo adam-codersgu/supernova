@@ -1,6 +1,5 @@
 package com.codersguidebook.supernova.utils
 
-import android.net.Uri
 import android.os.Bundle
 import android.support.v4.media.MediaDescriptionCompat
 import com.codersguidebook.supernova.entities.Song
@@ -25,7 +24,6 @@ class MediaDescriptionCompatManager {
         return MediaDescriptionCompat.Builder()
             .setExtras(extrasBundle)
             .setMediaId(song.songId.toString())
-            .setMediaUri(Uri.parse(song.uri))
             .setSubtitle(song.artist)
             .setTitle(song.title)
             .build()
@@ -47,7 +45,6 @@ class MediaDescriptionCompatManager {
         return Bundle().apply {
             putBundle("extras", extrasBundle)
             putString("mediaId", song.songId.toString())
-            putString("mediaUri", song.uri)
             putString("subtitle", song.artist)
             putString("title", song.title)
         }

@@ -35,12 +35,12 @@ class AlbumOptions(private val songs: List<Song>) : DialogFragment() {
         binding.option7.isGone = true
 
         binding.option1.setOnClickListener{
-            callingActivity.addSongsToPlayQueue(songs, false)
+            callingActivity.addSongsToPlayQueue(songs, true)
             dismiss()
         }
 
         binding.option2.setOnClickListener{
-            callingActivity.addSongsToPlayQueue(songs, true)
+            callingActivity.addSongsToPlayQueue(songs)
             dismiss()
         }
 
