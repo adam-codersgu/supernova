@@ -414,10 +414,8 @@ class MainActivity : AppCompatActivity() {
         if (songs.isNotEmpty()) {
             mediaController.transportControls.stop()
 
-            sendSongsToPlayQueue(songs, startIndex = startIndex)
+            sendSongsToPlayQueue(songs, startPlaybackAtIndex = startIndex)
             setShuffleMode(SHUFFLE_MODE_NONE)
-
-            mediaController.transportControls.play()
         }
     }
 
@@ -431,10 +429,8 @@ class MainActivity : AppCompatActivity() {
         if (songs.isNotEmpty()) {
             mediaController.transportControls.stop()
 
-            sendSongsToPlayQueue(songs, shuffle = true)
+            sendSongsToPlayQueue(songs, shuffle = true, startPlaybackAtIndex = 0)
             setShuffleMode(SHUFFLE_MODE_ALL)
-
-            mediaController.transportControls.play()
         }
     }
 
@@ -471,12 +467,12 @@ class MainActivity : AppCompatActivity() {
      * after the currently playing queue item. Default value = false.
      * @param shuffle - A Boolean indicating whether the list of songs should be shuffled.
      * Default value = false.
-     * @param startIndex - If playback should begin once the songs have been added to the play queue,
+     * @param startPlaybackAtIndex - If playback should begin once the songs have been added to the play queue,
      * then specify an index. Enter 0 if playback should begin from the start of the play queue.
      * Default value = null.
      */
     private fun sendSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false,
-                                     shuffle: Boolean = false, startIndex: Int? = null) {
+                                     shuffle: Boolean = false, startPlaybackAtIndex: Int? = null) {
         val songIds = songs.map { it.songId }
         val gson = Gson()
         val songIdsJson = gson.toJson(songIds)
@@ -490,7 +486,7 @@ class MainActivity : AppCompatActivity() {
             override fun onReceiveResult(resultCode: Int, resultData: Bundle) {
                 // TODO: Need to have a constant param for successful results
                 if (resultCode == 1) {
-                    startIndex?.let {
+                    startPlaybackAtIndex?.let {
                         refreshPlayQueue(true)
                         if (playQueue.size > it) {
                             val queueId = playQueue[it].queueId
@@ -1281,11 +1277,7 @@ class MainActivity : AppCompatActivity() {
         else MusicPermissionHelper.requestPermissions(this)
     }
 
-    /**
-     * Restore the play queue and playback state from the last save.
-     *
-     * @return
-     */
+    /** Restore the play queue and playback state from the last save. */
     private fun restoreMediaSession() = lifecycleScope.launch {
         val repeatMode = sharedPreferences.getInt("repeatMode", REPEAT_MODE_NONE)
         val repeatBundle = Bundle()

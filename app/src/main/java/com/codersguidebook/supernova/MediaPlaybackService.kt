@@ -303,9 +303,6 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         val listType = object : TypeToken<List<Long>>() {}.type
                         var songIds = gson.fromJson<List<Long>>(songIdsJson, listType)
 
-                        playQueue.clear()
-                        currentlyPlayingQueueItemId = -1L
-
                         val addSongsAfterCurrentQueueItem = it.getBoolean("addSongsAfterCurrentQueueItem")
                         if (addSongsAfterCurrentQueueItem) songIds = songIds.reversed()
                         for (id in songIds) {
@@ -320,11 +317,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                             } else onAddQueueItem(mediaDescription)
                         }
 
-                        val shuffle = it.getBoolean("shuffle")
-                        if (shuffle) {
-                            playQueue.shuffle()
-                            onSetShuffleMode(SHUFFLE_MODE_ALL)
-                        }
+                        if (it.getBoolean("shuffle")) playQueue.shuffle()
 
                         mediaSessionCompat.setQueue(playQueue)
                         cb?.send(1, Bundle())

@@ -43,7 +43,7 @@ class AlbumFragment : Fragment() {
         setHasOptionsMenu(true)
 
         binding.fab.setOnClickListener {
-            callingActivity.playSongs(albumSongs)
+            callingActivity.playSongsShuffled(albumSongs)
         }
 
         binding.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
