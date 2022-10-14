@@ -47,7 +47,7 @@ class PlaylistsAdapter(private val mainActivity: MainActivity):
 
         holder.mPlaylistName.text = current.name
 
-        val playlistSongIDs = mainActivity.extractPlaylistSongIDs(current.songs)
+        val playlistSongIDs = mainActivity.extractPlaylistSongIds(current.songs)
         // FIXME: Maybe find another way to handle artwork for playlists with no songs
         if (!mainActivity.insertPlaylistArtwork(current, holder.mArtwork) && playlistSongIDs.isNotEmpty()) {
             mainActivity.insertArtwork(mainActivity.findFirstSongArtwork(playlistSongIDs[0]), holder.mArtwork)
@@ -73,7 +73,7 @@ class PlaylistsAdapter(private val mainActivity: MainActivity):
                         song.name.toUpperCase(Locale.ROOT)
                     }.toMutableList()
                     val index = playlists.indexOfFirst {
-                        it.playlistID== p.playlistID
+                        it.playlistId== p.playlistId
                     }
                     if (index != -1) {
                         notifyItemInserted(index)
@@ -87,7 +87,7 @@ class PlaylistsAdapter(private val mainActivity: MainActivity):
                 }
                 for (s in difference) {
                     val index = playlists.indexOfFirst {
-                        it.playlistID == s.playlistID
+                        it.playlistId == s.playlistId
                     }
                     if (index != -1) {
                         playlists.removeAt(index)

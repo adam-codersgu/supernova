@@ -6,7 +6,9 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.*
+import com.codersguidebook.supernova.MainActivity
+import com.codersguidebook.supernova.R
+import com.codersguidebook.supernova.SongOptions
 import com.codersguidebook.supernova.entities.Song
 
 class RecentlyPlayedAdapter(private val mainActivity: MainActivity):
@@ -31,7 +33,7 @@ class RecentlyPlayedAdapter(private val mainActivity: MainActivity):
         }
 
         override fun onClick(view: View) {
-            mainActivity.playNewSongs(songs, layoutPosition, false)
+            mainActivity.playSongs(songs, layoutPosition)
         }
     }
 
@@ -41,7 +43,7 @@ class RecentlyPlayedAdapter(private val mainActivity: MainActivity):
 
     override fun onBindViewHolder(holder: SongsViewHolder, position: Int) {
         val current = songs[position]
-        mainActivity.insertArtwork(current.albumID, holder.mArtwork)
+        mainActivity.insertArtwork(current.albumId, holder.mArtwork)
         holder.mTitle.text = current.title
         holder.mArtist.text = current.artist
     }
@@ -49,9 +51,9 @@ class RecentlyPlayedAdapter(private val mainActivity: MainActivity):
     internal fun processSongs(songList: List<Song>) {
         try {
             for ((i, s) in songList.withIndex()) {
-                if (s.songID != songs[i].songID) {
+                if (s.songId != songs[i].songId) {
                     val index = songs.indexOfFirst {
-                        it.songID == s.songID
+                        it.songId == s.songId
                     }
                     if (index != -1) {
                         songs.removeAt(index)

@@ -7,14 +7,15 @@ import androidx.lifecycle.viewModelScope
 import com.codersguidebook.supernova.entities.Artist
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 // we use AndroidViewModel so we can request application context
-class MusicViewModel(application: Application) : AndroidViewModel(application) {
+class MusicLibraryViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: MusicRepository
     val allSongs: LiveData<List<Song>>
-    val mostPlayed: LiveData<List<Song>>
+    val mostPlayedSongsById: LiveData<List<Long>>
     val allArtists: LiveData<List<Artist>>
     val allPlaylists: LiveData<List<Playlist>>
 
@@ -23,7 +24,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         val playlistDao = MusicDatabase.getDatabase(application, viewModelScope).playlistDao()
         repository = MusicRepository(musicDao, playlistDao)
         allSongs = repository.allSongs
-        mostPlayed = repository.mostPlayed
+        mostPlayedSongsById = repository.mostPlayedSongsById
         allArtists = repository.allArtists
         allPlaylists = repository.allPlaylists
     }
@@ -50,5 +51,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
     fun updatePlaylists(playlists: List<Playlist>) = viewModelScope.launch(Dispatchers.IO) {
         repository.updatePlaylist(playlists)
+    }
+
+    fun increaseSongPlaysBySongId(songId: Long) = viewModelScope.launch(Dispatchers.IO) {
+        repository.increaseSongPlaysBySongId(songId)
     }
 }

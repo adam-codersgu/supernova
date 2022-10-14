@@ -3,7 +3,9 @@ package com.codersguidebook.supernova.ui.search
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.navigation.findNavController
@@ -56,7 +58,7 @@ class SearchAdapter(private val mainActivity: MainActivity):
                 val current = songs[position]
 
                 holder.mArtwork.isVisible = true
-                mainActivity.insertArtwork(current.albumID, holder.mArtwork)
+                mainActivity.insertArtwork(current.albumId, holder.mArtwork)
                 holder.mTitle.text = current.title
                 holder.mSubtitle.text = current.artist
                 holder.mMenu.setOnClickListener {
@@ -64,7 +66,7 @@ class SearchAdapter(private val mainActivity: MainActivity):
                 }
 
                 holder.itemView.setOnClickListener {
-                    mainActivity.playNewSongs(listOf(current), 0, false)
+                    mainActivity.playSongs(listOf(current))
                 }
 
                 holder.itemView.setOnLongClickListener {
@@ -77,20 +79,20 @@ class SearchAdapter(private val mainActivity: MainActivity):
                 val current = albums[position]
 
                 holder.mArtwork.isVisible = true
-                mainActivity.insertArtwork(current.albumID, holder.mArtwork)
-                holder.mTitle.text = current.album
+                mainActivity.insertArtwork(current.albumId, holder.mArtwork)
+                holder.mTitle.text = current.albumName
                 holder.mSubtitle.text = current.artist
                 holder.mMenu.setOnClickListener {
-                    mainActivity.openAlbumDialog(current.albumID)
+                    mainActivity.openAlbumDialog(current.albumId)
                 }
 
                 holder.itemView.setOnClickListener {
-                    val action = AlbumsFragmentDirections.actionSelectAlbum(current.albumID)
+                    val action = AlbumsFragmentDirections.actionSelectAlbum(current.albumId)
                     it.findNavController().navigate(action)
                 }
 
                 holder.itemView.setOnLongClickListener{
-                    mainActivity.openAlbumDialog(current.albumID)
+                    mainActivity.openAlbumDialog(current.albumId)
                     return@setOnLongClickListener true
                 }
             }
@@ -125,7 +127,7 @@ class SearchAdapter(private val mainActivity: MainActivity):
                 val current = playlists[position]
 
                 holder.mArtwork.isVisible = true
-                val playlistSongIDs= mainActivity.extractPlaylistSongIDs(current.songs)
+                val playlistSongIDs= mainActivity.extractPlaylistSongIds(current.songs)
                 if (playlistSongIDs.isNotEmpty()){
                     val firstSongArtwork = mainActivity.findFirstSongArtwork(playlistSongIDs[0])
                     mainActivity.insertArtwork(firstSongArtwork, holder.mArtwork)

@@ -43,7 +43,7 @@ class PlaylistSongOptions(private val songs: MutableList<Song>,
 
         val callingActivity = activity as MainActivity
         val updatedSong = callingActivity.completeLibrary.find {
-            it.songID == songs[position].songID
+            it.songId == songs[position].songId
         }
 
         builder.setView(dialogView)
@@ -51,12 +51,12 @@ class PlaylistSongOptions(private val songs: MutableList<Song>,
         txtTitle.text = updatedSong?.title
 
         txtPlayNext.setOnClickListener{
-            callingActivity.addSongsToPlayQueue(listOf(songs[position]), false)
+            callingActivity.addSongsToPlayQueue(listOf(songs[position]), true)
             dismiss()
         }
 
         txtAddQueue.setOnClickListener{
-            callingActivity.addSongsToPlayQueue(listOf(songs[position]), true)
+            callingActivity.addSongsToPlayQueue(listOf(songs[position]))
             dismiss()
         }
 
@@ -64,7 +64,7 @@ class PlaylistSongOptions(private val songs: MutableList<Song>,
         else txtAddFavourites.text = getString(R.string.add_to_favourites)
 
         txtAddFavourites.setOnClickListener {
-            callingActivity.updateFavourites(updatedSong!!)
+            callingActivity.toggleSongFavouriteStatus(updatedSong!!)
             dismiss()
         }
 
@@ -75,7 +75,7 @@ class PlaylistSongOptions(private val songs: MutableList<Song>,
         }
 
         txtViewAlbum.setOnClickListener{
-            val action = AlbumsFragmentDirections.actionSelectAlbum(songs[position].albumID)
+            val action = AlbumsFragmentDirections.actionSelectAlbum(songs[position].albumId)
             callingActivity.findNavController(R.id.nav_host_fragment).navigate(action)
             dismiss()
         }
@@ -90,7 +90,8 @@ class PlaylistSongOptions(private val songs: MutableList<Song>,
         } else {
             txtRemovePlaylist.setOnClickListener{
                 songs.removeAt(position)
-                callingActivity.savePlaylistNewSongList(playlist, songs)
+                val songIds = songs.map { song -> song.songId }
+                callingActivity.savePlaylistWithSongIds(playlist, songIds)
                 dismiss()
             }
         }

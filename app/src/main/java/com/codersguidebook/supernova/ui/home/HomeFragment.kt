@@ -26,7 +26,7 @@ class HomeFragment : Fragment() {
     private lateinit var favouritesAdapter: FavouritesAdapter
     private lateinit var mostPlayedAdapter: MostPlayedAdapter
     private lateinit var recentlyPlayedAdapter: RecentlyPlayedAdapter
-    private lateinit var musicViewModel: MusicViewModel
+    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -35,7 +35,7 @@ class HomeFragment : Fragment() {
     ): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         callingActivity = activity as MainActivity
-        musicViewModel = ViewModelProvider(this).get(MusicViewModel::class.java)
+        musicLibraryViewModel = ViewModelProvider(this).get(MusicLibraryViewModel::class.java)
 
         songOfTheDayAdapter = SongOfTheDayAdapter(callingActivity)
         favouritesAdapter = FavouritesAdapter(callingActivity)
@@ -74,7 +74,7 @@ class HomeFragment : Fragment() {
         binding.recentlyPlayedRecyclerView.adapter = recentlyPlayedAdapter
 
         var isLoaded = false
-        musicViewModel.allSongs.observe(viewLifecycleOwner, { songs ->
+        musicLibraryViewModel.allSongs.observe(viewLifecycleOwner, { songs ->
             songs?.let {
                 if (songs.isNotEmpty() && !isLoaded) {
                     loadPlaylists()
@@ -91,7 +91,7 @@ class HomeFragment : Fragment() {
                 if (songs.isEmpty()) binding.songOfTheDayNoContent.isVisible = true
                 else {
                     binding.songOfTheDayNoContent.isGone = true
-                    if (songOfTheDayAdapter.song == null || songOfTheDayAdapter.song?.songID != songs[0].songID) songOfTheDayAdapter.changeItem(songs[0])
+                    if (songOfTheDayAdapter.song == null || songOfTheDayAdapter.song?.songId != songs[0].songId) songOfTheDayAdapter.changeItem(songs[0])
                     binding.textViewSongOfTheDay.setOnClickListener{
                         val action = PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.song_day))
                         findNavController().navigate(action)

@@ -25,7 +25,7 @@ class AlbumOptions(private val songs: List<Song>) : DialogFragment() {
         val builder = AlertDialog.Builder(callingActivity)
             .setView(binding.root)
 
-        binding.optionsTitle.text = songs[0].album
+        binding.optionsTitle.text = songs[0].albumName
         binding.option1.text = getString(R.string.play_next)
         binding.option2.text = getString(R.string.add_que)
         binding.option3.text = getString(R.string.artist)
@@ -35,12 +35,12 @@ class AlbumOptions(private val songs: List<Song>) : DialogFragment() {
         binding.option7.isGone = true
 
         binding.option1.setOnClickListener{
-            callingActivity.addSongsToPlayQueue(songs, false)
+            callingActivity.addSongsToPlayQueue(songs, true)
             dismiss()
         }
 
         binding.option2.setOnClickListener{
-            callingActivity.addSongsToPlayQueue(songs, true)
+            callingActivity.addSongsToPlayQueue(songs)
             dismiss()
         }
 
@@ -56,7 +56,7 @@ class AlbumOptions(private val songs: List<Song>) : DialogFragment() {
         }
 
         binding.option5.setOnClickListener{
-            val action = AlbumFragmentDirections.actionEditAlbum(songs[0].albumID)
+            val action = AlbumFragmentDirections.actionEditAlbum(songs[0].albumId)
             callingActivity.findNavController(R.id.nav_host_fragment).navigate(action)
             dismiss()
         }

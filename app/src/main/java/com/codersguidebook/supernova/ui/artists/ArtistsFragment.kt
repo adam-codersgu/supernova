@@ -19,7 +19,7 @@ class ArtistsFragment : Fragment() {
     private var isProcessing = false
     private lateinit var artistsAdapter: ArtistsAdapter
     private lateinit var callingActivity: MainActivity
-    private lateinit var musicViewModel: MusicViewModel
+    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
     private lateinit var recyclerView: RecyclerView
 
     override fun onCreateView(
@@ -36,8 +36,8 @@ class ArtistsFragment : Fragment() {
         recyclerView.adapter = artistsAdapter
         artistsAdapter.stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
 
-        musicViewModel = ViewModelProvider(this).get(MusicViewModel::class.java)
-        musicViewModel.allArtists.observe(viewLifecycleOwner, { a ->
+        musicLibraryViewModel = ViewModelProvider(this).get(MusicLibraryViewModel::class.java)
+        musicLibraryViewModel.allArtists.observe(viewLifecycleOwner, { a ->
             a?.let {
                 if (it.isNotEmpty() || artists.isNotEmpty()) processArtists(it)
             }

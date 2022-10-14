@@ -39,7 +39,7 @@ abstract class MusicDatabase : RoomDatabase() {
 
     private class MusicDatabaseCallback(
         private val scope: CoroutineScope
-    ) : RoomDatabase.Callback() {
+    ) : Callback() {
 
         override fun onCreate(db: SupportSQLiteDatabase) {
             super.onOpen(db)

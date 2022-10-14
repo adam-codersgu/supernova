@@ -12,7 +12,7 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 @Entity(tableName = "playlists")
 data class Playlist(
-    @PrimaryKey(autoGenerate = true) val playlistID: Int,
+    @PrimaryKey(autoGenerate = true) val playlistId: Int,
     @ColumnInfo(name = "playlist_name") var name: String,
     @ColumnInfo(name = "playlist_songs") var songs: String?,
     @ColumnInfo(name = "is_default_playlist") var isDefault: Boolean

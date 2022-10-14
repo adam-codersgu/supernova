@@ -11,8 +11,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
+import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 
 class AlbumFragment : Fragment() {
@@ -43,7 +43,7 @@ class AlbumFragment : Fragment() {
         setHasOptionsMenu(true)
 
         binding.fab.setOnClickListener {
-            callingActivity.playNewSongs(albumSongs, 0, true)
+            callingActivity.playSongsShuffled(albumSongs)
         }
 
         binding.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
@@ -92,11 +92,11 @@ class AlbumFragment : Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.album_play_next -> {
-                callingActivity.addSongsToPlayQueue(albumSongs, false)
+                callingActivity.addSongsToPlayQueue(albumSongs, true)
                 true
             }
             R.id.album_add_queue -> {
-                callingActivity.addSongsToPlayQueue(albumSongs, true)
+                callingActivity.addSongsToPlayQueue(albumSongs)
                 true
             }
             R.id.album_add_playlist -> {
@@ -109,7 +109,7 @@ class AlbumFragment : Fragment() {
                 true
             }
             R.id.album_edit_album_info -> {
-                val action = AlbumFragmentDirections.actionEditAlbum(albumSongs[0].albumID)
+                val action = AlbumFragmentDirections.actionEditAlbum(albumSongs[0].albumId)
                 findNavController().navigate(action)
                 true
             }

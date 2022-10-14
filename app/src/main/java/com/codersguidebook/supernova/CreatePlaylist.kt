@@ -9,9 +9,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import com.codersguidebook.supernova.entities.Playlist
-import com.codersguidebook.supernova.entities.Song
 
-class CreatePlaylist (private val songs: List<Song>) : DialogFragment() {
+class CreatePlaylist (private val songIds: List<Long>) : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
@@ -30,7 +29,7 @@ class CreatePlaylist (private val songs: List<Song>) : DialogFragment() {
         btnOK.setOnClickListener{
             val playlistName = txtCreatePlaylist.text.toString()
             if (playlistName.isNotEmpty()) {
-                val songListJSON = callingActivity.convertSongsToSongIDJSON(songs)
+                val songListJSON = callingActivity.convertSongIDListToJson(songIds)
 
                 // playlist ID should be automatically assigned
                 val newPlaylist = Playlist(0, playlistName, songListJSON, false)

@@ -10,8 +10,8 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.SongOptions
+import com.codersguidebook.supernova.entities.Song
 
 class MostPlayedAdapter(private val mainActivity: MainActivity):
     RecyclerView.Adapter<MostPlayedAdapter.SongsViewHolder>() {
@@ -37,7 +37,7 @@ class MostPlayedAdapter(private val mainActivity: MainActivity):
         }
 
         override fun onClick(view: View) {
-            mainActivity.playNewSongs(songs, layoutPosition, false)
+            mainActivity.playSongs(songs, layoutPosition)
         }
     }
 
@@ -72,7 +72,7 @@ class MostPlayedAdapter(private val mainActivity: MainActivity):
             }
         }
 
-        mainActivity.insertArtwork(current.albumID, holder.mArtwork)
+        mainActivity.insertArtwork(current.albumId, holder.mArtwork)
 
         holder.mTitle.text = current.title
         holder.mArtist.text = current.artist
@@ -86,9 +86,9 @@ class MostPlayedAdapter(private val mainActivity: MainActivity):
     internal fun processSongs(songList: List<Song>) {
         try {
             for ((i, s) in songList.withIndex()) {
-                if (s.songID != songs[i].songID) {
+                if (s.songId != songs[i].songId) {
                     val index = songs.indexOfFirst {
-                        it.songID == s.songID
+                        it.songId == s.songId
                     }
                     if (index != -1) {
                         songs.removeAt(index)

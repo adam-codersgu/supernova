@@ -16,7 +16,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
 import com.bumptech.glide.Glide
 import com.codersguidebook.supernova.MainActivity
-import com.codersguidebook.supernova.MusicViewModel
+import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentEditAlbumBinding
 import com.codersguidebook.supernova.entities.Song
@@ -37,7 +37,7 @@ class EditAlbumFragment : Fragment() {
     private var selectedImageUri: Uri? = null
     private var albumSongs = emptyList<Song>()
     private lateinit var callingActivity: MainActivity
-    private lateinit var musicViewModel: MusicViewModel
+    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -54,13 +54,13 @@ class EditAlbumFragment : Fragment() {
         callingActivity = activity as MainActivity
         setHasOptionsMenu(true)
 
-        musicViewModel = ViewModelProvider(this)[MusicViewModel::class.java]
-        musicViewModel.allSongs.observe(viewLifecycleOwner, { songs ->
+        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
+        musicLibraryViewModel.allSongs.observe(viewLifecycleOwner, { songs ->
             songs?.let {
                 this.albumSongs = it.filter {song ->
-                    song.albumID == albumID
+                    song.albumId == albumID
                 }
-                var editable: Editable = SpannableStringBuilder(albumSongs[0].album)
+                var editable: Editable = SpannableStringBuilder(albumSongs[0].albumName)
                 binding.editAlbumTitle.text = editable
 
                 editable = SpannableStringBuilder(albumSongs[0].year)
@@ -122,14 +122,14 @@ class EditAlbumFragment : Fragment() {
                     // check no fields are blank
                     if (newAlbum.isNotEmpty() && newYear.isNotEmpty()) {
                         // check something has actually been changed
-                        if (newAlbum != albumSongs[0].album || newYear != albumSongs[0].year || newArtwork != null) {
+                        if (newAlbum != albumSongs[0].albumName || newYear != albumSongs[0].year || newArtwork != null) {
 
                             // artwork has been changed
                             if (newArtwork != null) callingActivity.changeArtwork("albumArt", newArtwork!!, albumID!!)
 
                             val updatedAlbumSongs = mutableListOf<Song>()
                             for (s in albumSongs) {
-                                s.album = newAlbum
+                                s.albumName = newAlbum
                                 s.year = newYear
                                 updatedAlbumSongs.add(s)
                             }

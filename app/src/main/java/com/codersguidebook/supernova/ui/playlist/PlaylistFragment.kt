@@ -10,7 +10,10 @@ import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.*
+import com.codersguidebook.supernova.MainActivity
+import com.codersguidebook.supernova.MusicDatabase
+import com.codersguidebook.supernova.PlaylistSongOptions
+import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
@@ -40,7 +43,10 @@ class PlaylistFragment : Fragment() {
                     super.clearView(recyclerView, viewHolder)
 
                     viewHolder.itemView.alpha = 1.0f
-                    if (playlist != null) callingActivity.savePlaylistNewSongList(playlist!!, playlistAdapter.songs)
+                    playlist?.let {
+                        val songIds = playlistAdapter.songs.map { song -> song.songId }
+                        callingActivity.savePlaylistWithSongIds(it, songIds)
+                    }
                 }
                 override fun onMove(recyclerView: RecyclerView,
                                     viewHolder: RecyclerView.ViewHolder,
@@ -95,7 +101,7 @@ class PlaylistFragment : Fragment() {
         })
 
         binding.fab.setOnClickListener {
-            callingActivity.playNewSongs(playlistSongs, 0, true)
+            callingActivity.playSongsShuffled(playlistSongs)
         }
 
         binding.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
@@ -137,11 +143,11 @@ class PlaylistFragment : Fragment() {
         when (item.itemId) {
             R.id.playPlaylistNext -> {
                 if (playlistSongs.isNotEmpty()){
-                    callingActivity.addSongsToPlayQueue(playlistSongs, false)
+                    callingActivity.addSongsToPlayQueue(playlistSongs, true)
                 } else Toast.makeText(activity, "There are no songs in that playlist.", Toast.LENGTH_SHORT).show()
             }
             R.id.queuePlaylist -> {
-                if (playlistSongs.isNotEmpty()) callingActivity.addSongsToPlayQueue(playlistSongs, true)
+                if (playlistSongs.isNotEmpty()) callingActivity.addSongsToPlayQueue(playlistSongs)
                 else Toast.makeText(activity, "There are no songs in that playlist.", Toast.LENGTH_SHORT).show()
             }
             R.id.reorderPlaylist -> {

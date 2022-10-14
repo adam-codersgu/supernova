@@ -33,7 +33,7 @@ class EditPlaylistFragment : Fragment() {
     private var newArtwork: Bitmap? = null
     private var selectedImageUri: Uri? = null
     private lateinit var callingActivity: MainActivity
-    private lateinit var musicViewModel: MusicViewModel
+    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
     private var playlist: Playlist? = null
     private var playlistName: String? = null
 
@@ -50,7 +50,7 @@ class EditPlaylistFragment : Fragment() {
         _binding = FragmentEditPlaylistBinding.inflate(inflater, container, false)
 
         callingActivity = activity as MainActivity
-        musicViewModel = ViewModelProvider(this).get(MusicViewModel::class.java)
+        musicLibraryViewModel = ViewModelProvider(this).get(MusicLibraryViewModel::class.java)
         setHasOptionsMenu(true)
 
         val musicDatabase = MusicDatabase.getDatabase(requireContext(), lifecycleScope)
@@ -61,7 +61,7 @@ class EditPlaylistFragment : Fragment() {
                 binding.editPlaylistName.text = editable
 
                 if (!callingActivity.insertPlaylistArtwork(it, binding.artwork)) {
-                    val playlistSongIDs= callingActivity.extractPlaylistSongIDs(it.songs)
+                    val playlistSongIDs= callingActivity.extractPlaylistSongIds(it.songs)
                     callingActivity.insertArtwork(callingActivity.findFirstSongArtwork(playlistSongIDs[0]), binding.artwork)
                 }
             }
@@ -121,9 +121,9 @@ class EditPlaylistFragment : Fragment() {
                         if (newName != playlist!!.name || newArtwork != null) {
                             playlist!!.name = newName
                             // artwork has been changed
-                            if (newArtwork != null) callingActivity.changeArtwork("playlistArt", newArtwork!!, playlist!!.playlistID.toString())
+                            if (newArtwork != null) callingActivity.changeArtwork("playlistArt", newArtwork!!, playlist!!.playlistId.toString())
 
-                            musicViewModel.updatePlaylists(listOf(playlist!!))
+                            musicLibraryViewModel.updatePlaylists(listOf(playlist!!))
                         }
 
                         val action = EditPlaylistFragmentDirections.actionFinishEditPlaylist(newName)

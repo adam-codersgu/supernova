@@ -10,9 +10,9 @@ import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
-import com.codersguidebook.supernova.MusicViewModel
-import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
+import com.codersguidebook.supernova.entities.Song
 import java.util.*
 
 class SongsFragment : Fragment() {
@@ -21,7 +21,7 @@ class SongsFragment : Fragment() {
     private val binding get() = _binding!!
     private var completeLibrary = mutableListOf<Song>()
     private var isProcessing = false
-    private lateinit var musicViewModel: MusicViewModel
+    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
     private lateinit var callingActivity: MainActivity
     private lateinit var songsAdapter: SongsAdapter
 
@@ -38,8 +38,8 @@ class SongsFragment : Fragment() {
         binding.recyclerView.adapter = songsAdapter
         songsAdapter.stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
 
-        musicViewModel = ViewModelProvider(this).get(MusicViewModel::class.java)
-        musicViewModel.allSongs.observe(viewLifecycleOwner, { songs ->
+        musicLibraryViewModel = ViewModelProvider(this).get(MusicLibraryViewModel::class.java)
+        musicLibraryViewModel.allSongs.observe(viewLifecycleOwner, { songs ->
             songs?.let {
                 if (it.isNotEmpty() || completeLibrary.isNotEmpty()) processSongs(it)
             }
@@ -47,7 +47,7 @@ class SongsFragment : Fragment() {
 
         // Shuffle the music library then play it
         binding.fab.setOnClickListener {
-            callingActivity.playNewSongs(completeLibrary, 0, true)
+            callingActivity.playSongsShuffled(completeLibrary)
         }
 
         binding.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
@@ -77,7 +77,7 @@ class SongsFragment : Fragment() {
                     val difference = completeLibrary - songs
                     for (s in difference) {
                         val index = completeLibrary.indexOfFirst {
-                            it.songID == s.songID
+                            it.songId == s.songId
                         }
                         if (index != -1) songsAdapter.notifyItemInserted(index)
                     }
@@ -86,7 +86,7 @@ class SongsFragment : Fragment() {
                     val difference = songs - completeLibrary
                     for (s in difference) {
                         val index = songs.indexOfFirst {
-                            it.songID == s.songID
+                            it.songId == s.songId
                         }
                         if (index != -1) songsAdapter.notifyItemRemoved(index)
                     }

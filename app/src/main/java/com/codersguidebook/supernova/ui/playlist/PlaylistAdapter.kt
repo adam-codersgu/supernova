@@ -15,8 +15,8 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.codersguidebook.supernova.MainActivity
-import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.R
+import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 
 class PlaylistAdapter(private val fragment: PlaylistFragment,
@@ -62,7 +62,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
         }
 
         override fun onClick(view: View) {
-            mainActivity.playNewSongs(songs, layoutPosition -1, false)
+            mainActivity.playSongs(songs, layoutPosition - 1)
         }
     }
 
@@ -87,7 +87,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
 
                 if (!mainActivity.insertPlaylistArtwork(playlist ?: return, holder.mArtwork)) {
                     val uniqueArtworks = songs.distinctBy {
-                        it.albumID
+                        it.albumId
                     }
 
                     when {
@@ -95,12 +95,12 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                             holder.mArtwork.isGone = true
                             holder.mArtworkGrid.isVisible = true
                             val shuffledArtworks = uniqueArtworks.shuffled()
-                            mainActivity.insertArtwork(shuffledArtworks[0].albumID, holder.mArtwork1)
-                            mainActivity.insertArtwork(shuffledArtworks[1].albumID, holder.mArtwork2)
-                            if (uniqueArtworks.size > 2) mainActivity.insertArtwork(shuffledArtworks[2].albumID, holder.mArtwork3)
-                            if (uniqueArtworks.size > 3)  mainActivity.insertArtwork(shuffledArtworks[3].albumID, holder.mArtwork4)
+                            mainActivity.insertArtwork(shuffledArtworks[0].albumId, holder.mArtwork1)
+                            mainActivity.insertArtwork(shuffledArtworks[1].albumId, holder.mArtwork2)
+                            if (uniqueArtworks.size > 2) mainActivity.insertArtwork(shuffledArtworks[2].albumId, holder.mArtwork3)
+                            if (uniqueArtworks.size > 3)  mainActivity.insertArtwork(shuffledArtworks[3].albumId, holder.mArtwork4)
                         }
-                        songs.isNotEmpty() -> mainActivity.insertArtwork(songs[0].albumID, holder.mArtwork)
+                        songs.isNotEmpty() -> mainActivity.insertArtwork(songs[0].albumId, holder.mArtwork)
                     }
                 }
 
@@ -134,7 +134,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                     holder.mArtwork.setOnTouchListener { _, _ ->
                         return@setOnTouchListener true
                     }
-                    mainActivity.insertArtwork(current.albumID, holder.mArtwork)
+                    mainActivity.insertArtwork(current.albumId, holder.mArtwork)
                     holder.itemView.setOnLongClickListener {
                         fragment.openDialog(songs.toMutableList(), position -1, playlist!!)
                         return@setOnLongClickListener true
@@ -207,7 +207,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                     var i = 0
                     outer@ while (i < difference) {
                         for ((index, _) in songs.withIndex()) {
-                            if (songs[index].songID != newSongs[index].songID) {
+                            if (songs[index].songId != newSongs[index].songId) {
                                 songs.removeAt(index)
                                 notifyItemRemoved(index + 1)
                                 notifyItemChanged(index + 1)
@@ -218,7 +218,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                         }
                     }
                 } catch (e: IndexOutOfBoundsException) {
-                    if (songs[songs.size - 1].songID != newSongs[newSongs.size - 1].songID) {
+                    if (songs[songs.size - 1].songId != newSongs[newSongs.size - 1].songId) {
                         val index = songs.size - 1
                         songs.removeAt(index)
                         notifyItemRemoved(index + 1)

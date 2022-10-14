@@ -33,16 +33,16 @@ class SongOptions(private val song: Song) : DialogFragment() {
         binding.option7.text = getString(R.string.edit_music)
 
         val updatedSong = callingActivity.completeLibrary.find {
-            it.songID == song.songID
+            it.songId == song.songId
         }
 
         binding.option1.setOnClickListener{
-            callingActivity.addSongsToPlayQueue(listOf(song), false)
+            callingActivity.addSongsToPlayQueue(listOf(song), true)
             dismiss()
         }
 
         binding.option2.setOnClickListener{
-            callingActivity.addSongsToPlayQueue(listOf(song), true)
+            callingActivity.addSongsToPlayQueue(listOf(song))
             dismiss()
         }
 
@@ -50,7 +50,7 @@ class SongOptions(private val song: Song) : DialogFragment() {
         else  binding.option3.text = getString(R.string.add_to_favourites)
 
         binding.option3.setOnClickListener {
-            callingActivity.updateFavourites(updatedSong!!)
+            callingActivity.toggleSongFavouriteStatus(updatedSong!!)
             dismiss()
         }
 
@@ -61,7 +61,7 @@ class SongOptions(private val song: Song) : DialogFragment() {
         }
 
         binding.option5.setOnClickListener{
-            val action = AlbumsFragmentDirections.actionSelectAlbum(song.albumID)
+            val action = AlbumsFragmentDirections.actionSelectAlbum(song.albumId)
             callingActivity.findNavController(R.id.nav_host_fragment).navigate(action)
             dismiss()
         }
