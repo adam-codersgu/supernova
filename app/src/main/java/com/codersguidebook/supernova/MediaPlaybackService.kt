@@ -204,12 +204,11 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                                 val repeatMode = mediaSessionCompat.controller.repeatMode
                                 when {
                                     repeatMode == REPEAT_MODE_ONE -> {}
+                                    repeatMode == REPEAT_MODE_ALL ||
                                     playQueue.isNotEmpty() && playQueue[playQueue.size - 1].queueId != currentlyPlayingQueueItemId -> {
                                         onSkipToNext()
                                         return@setOnCompletionListener
                                     }
-                                    // We have reached the end of the queue. Check whether we should start over from the beginning
-                                    repeatMode == REPEAT_MODE_ALL -> currentlyPlayingQueueItemId = playQueue[0].queueId
                                     else -> {
                                         onStop()
                                         return@setOnCompletionListener
@@ -273,7 +272,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             super.onCommand(command, extras, cb)
 
             when (command) {
-                "loadPlayQueue" -> {
+                "restorePlayQueue" -> {
                     extras?.let {
                         val queueItemsJson = it.getString("queueItemPairs") ?: return@let
                         val gson = Gson()
@@ -285,7 +284,6 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
 
                         // Pair mapping is <Long, Long> -> <QueueId, songId>
                         for (pair in queueItemPairs) {
-
                             val mediaDescription = MediaDescriptionCompat.Builder()
                                 .setMediaId(pair.second.toString())
                                 .build()
@@ -294,6 +292,12 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         }
 
                         mediaSessionCompat.setQueue(playQueue)
+
+                        currentlyPlayingQueueItemId = it.getLong("queueItemId", -1L)
+                        if (currentlyPlayingQueueItemId != -1L) {
+                            onSkipToQueueItem(currentlyPlayingQueueItemId)
+                        }
+
                         cb?.send(1, Bundle())
                     }
                 }
@@ -429,10 +433,12 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             super.onSkipToQueueItem(id)
             
             if (playQueue.find { it.queueId == id} != null) {
-                val wasPlaying = mediaPlayer?.isPlaying ?: false
+                val playbackState = mediaSessionCompat.controller.playbackState.state
                 currentlyPlayingQueueItemId = id
                 onPrepare()
-                if (wasPlaying) onPlay()
+                if (playbackState == STATE_PLAYING || playbackState == STATE_SKIPPING_TO_NEXT) {
+                    onPlay()
+                }
             }
         }
 
@@ -507,8 +513,10 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
 
                 if (wasPlaying) {
                     this.start()
-                    setMediaPlaybackState(STATE_PLAYING, playbackPosition, 1f, null)
-                } else setMediaPlaybackState(STATE_PAUSED, playbackPosition, 0f, null)
+                    setMediaPlaybackState(STATE_PLAYING, playbackPosition,
+                        1f, getBundleWithSongDuration())
+                } else setMediaPlaybackState(STATE_PAUSED, playbackPosition,
+                    0f, getBundleWithSongDuration())
             }
         }
     }
@@ -696,7 +704,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             val extras = currentQueueItemDescription.extras
             val albumName = extras?.getString("album") ?: "Unknown album"
             putString(MediaMetadataCompat.METADATA_KEY_ALBUM, albumName)
-            val albumId = extras?.getString("album")
+            val albumId = extras?.getString("album_id")
             putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, getArtworkAsBitmap(albumId))
         }
         mediaSessionCompat.setMetadata(metadataBuilder.build())

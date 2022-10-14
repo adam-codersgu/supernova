@@ -53,7 +53,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
         repository.updatePlaylist(playlists)
     }
 
-    fun increaseSongPlaysBySongId(songId: Long) {
+    fun increaseSongPlaysBySongId(songId: Long) = viewModelScope.launch(Dispatchers.IO) {
         repository.increaseSongPlaysBySongId(songId)
     }
 }

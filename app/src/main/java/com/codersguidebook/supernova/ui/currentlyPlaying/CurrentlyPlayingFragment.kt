@@ -24,6 +24,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
+import com.bumptech.glide.Glide
 import com.codersguidebook.supernova.*
 import com.codersguidebook.supernova.databinding.FragmentCurrentlyPlayingBinding
 import com.codersguidebook.supernova.entities.Song
@@ -214,25 +215,33 @@ class CurrentlyPlayingFragment : Fragment() {
         binding.animatedView.createObjects()
     }
 
-    /**
-     * Use the currently playing song's metadata to update the user interface.
-     *
-     */
+    /** Use the currently playing song's metadata to update the user interface. */
     private fun updateCurrentlyDisplayedSong() {
         val oldCurrentSong = currentSong
-        val currentQueueItemId = playQueueViewModel.currentQueueItemId.value
-        currentSong = if (currentQueueItemId == null) null
-        else callingActivity.getSongById(currentQueueItemId)
+        val currentMediaId = playQueueViewModel.getCurrentQueueItem()?.description?.mediaId?.toLong()
+        if (currentSong?.songId != currentMediaId) {
+            currentSong = if (currentMediaId == null) null
+            else callingActivity.getSongById(currentMediaId)
+        }
 
-        if (oldCurrentSong?.songId == currentSong?.songId) return
+        if (binding.title.text != currentSong?.title || binding.artist.text != currentSong?.artist
+            || binding.album.text != currentSong?.albumName) {
+            binding.title.text = currentSong?.title
+            binding.artist.text = currentSong?.artist
+            binding.album.text = currentSong?.albumName
+            callingActivity.insertArtwork(currentSong?.albumId, binding.artwork)
+        }
 
-        binding.title.text = currentSong?.title
-        binding.artist.text = currentSong?.artist
-        binding.album.text = currentSong?.albumName
-        callingActivity.insertArtwork(currentSong?.albumId, binding.artwork)
+        if (currentSong == null) {
+            Glide.with(callingActivity)
+                .clear(binding.artwork)
+        }
 
-        if (currentSong?.isFavourite == true) setFavouriteButtonStyle(true)
-        else setFavouriteButtonStyle(false)
+        currentSong?.let {
+            if (oldCurrentSong?.isFavourite != currentSong?.isFavourite) {
+                setFavouriteButtonStyle(currentSong?.isFavourite ?: false)
+            }
+        }
     }
 
     /**

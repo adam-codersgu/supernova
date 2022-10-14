@@ -126,26 +126,23 @@ class ControlsFragment : Fragment() {
         _binding = null
     }
 
-    /**
-     * Use the currently playing song's metadata to update the user interface.
-     *
-     */
+    /** Use the currently playing song's metadata to update the user interface. */
     private fun updateCurrentlyDisplayedSong() {
-        val oldCurrentSong = currentSong
-        val currentQueueItemId = playQueueViewModel.currentQueueItemId.value
-        currentSong = if (currentQueueItemId == null) null
-        else callingActivity.getSongById(currentQueueItemId)
+        val currentMediaId = playQueueViewModel.getCurrentQueueItem()?.description?.mediaId?.toLong()
+        if (currentSong?.songId != currentMediaId) {
+            currentSong = if (currentMediaId == null) null
+            else callingActivity.getSongById(currentMediaId)
+        }
 
-        if (oldCurrentSong?.songId == currentSong?.songId) return
-
-        binding.title.text = currentSong?.title
-        binding.artist.text = currentSong?.artist
-        binding.album.text = currentSong?.albumName
-        callingActivity.insertArtwork(currentSong?.albumId, binding.artwork)
-
-        if (currentSong != null) {
+        if (binding.title.text != currentSong?.title || binding.artist.text != currentSong?.artist
+            || binding.album.text != currentSong?.albumName) {
+            binding.title.text = currentSong?.title
+            binding.artist.text = currentSong?.artist
+            binding.album.text = currentSong?.albumName
             callingActivity.insertArtwork(currentSong?.albumId, binding.artwork)
-        } else {
+        }
+
+        if (currentSong == null) {
             Glide.with(callingActivity)
                 .clear(binding.artwork)
         }

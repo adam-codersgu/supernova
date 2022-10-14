@@ -90,7 +90,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val PLAY_QUEUE_MEDIA_DESCRIPTION_LIST = "play_queue_media_description_list"
-        private const val CURRENT_QUEUE_ITEM_INDEX = "current_queue_item_index"
+        private const val CURRENT_QUEUE_ITEM_ID = "current_queue_item_id"
         private const val PLAYBACK_POSITION = "playback_position"
         private const val PLAYBACK_DURATION = "playback_duration"
     }
@@ -368,8 +368,6 @@ class MainActivity : AppCompatActivity() {
     /**
      * Convert the list of MediaDescriptionCompat objects for each item in the play queue to JSON
      * and save it in the shared preferences file.
-     *
-     * @return
      */
     private fun savePlayQueue() = lifecycleScope.launch(Dispatchers.IO) {
         try {
@@ -388,17 +386,12 @@ class MainActivity : AppCompatActivity() {
         } catch (_: ConcurrentModificationException) {}
     }
 
-    /**
-     * Save the queueId of the currently playing queue item to the shared preferences file.
-     *
-     * @return
-     */
+    /** Save the queueId of the currently playing queue item to the shared preferences file. */
     private fun savePlayQueueId(queueId: Long) = lifecycleScope.launch(Dispatchers.IO) {
         currentQueueItemId = queueId
         playQueueViewModel.currentQueueItemId.postValue(queueId)
-        val currentQueueItemIndex = playQueue.indexOfFirst { it.queueId == queueId }
         sharedPreferences.edit().apply {
-            putInt(CURRENT_QUEUE_ITEM_INDEX, currentQueueItemIndex)
+            putLong(CURRENT_QUEUE_ITEM_ID, currentQueueItemId)
             apply()
         }
     }
@@ -567,7 +560,10 @@ class MainActivity : AppCompatActivity() {
      *
      * @param queueItemId - The ID of the target QueueItem object.
      */
-    fun skipToQueueItem(queueItemId: Long) = mediaController.transportControls.skipToQueueItem(queueItemId)
+    fun skipToQueueItem(queueItemId: Long) {
+        mediaController.transportControls.skipToQueueItem(queueItemId)
+        mediaController.transportControls.play()
+    }
 
     fun hideSystemBars(hide: Boolean) {
         val windowInsetsController = ViewCompat.getWindowInsetsController(window.decorView) ?: return
@@ -659,9 +655,7 @@ class MainActivity : AppCompatActivity() {
      * @param songId - The ID of the song.
      * @return The associated Song object, or null.
      */
-    fun getSongById(songId: Long) : Song? {
-        return completeLibrary.find { it.songId == songId }
-    }
+    fun getSongById(songId: Long) : Song? = completeLibrary.find { it.songId == songId }
 
     /**
      * Opens a dialog window allowing the user to add a list of songs to new and existing
@@ -1291,33 +1285,25 @@ class MainActivity : AppCompatActivity() {
         mediaController.sendCommand("setShuffleMode", repeatBundle, null)
 
         val queueItemPairsJson = sharedPreferences.getString(PLAY_QUEUE_MEDIA_DESCRIPTION_LIST, null) ?: return@launch
+        val queueItemId = sharedPreferences.getLong(CURRENT_QUEUE_ITEM_ID, -1L)
         val bundle = Bundle().apply {
             putString("queueItemPairs", queueItemPairsJson)
+            putLong("queueItemId", queueItemId)
         }
 
         val resultReceiver = object : ResultReceiver(Handler(Looper.getMainLooper())) {
             override fun onReceiveResult(resultCode: Int, resultData: Bundle) {
                 // TODO: Need to have a constant param for successful results
                 if (resultCode == 1) {
-                    refreshPlayQueue()
-
-                    // TODO: I think it would be better to store and retrieve queue item ID instead
-                    val currentlyQueueItemIndex = sharedPreferences.getInt(CURRENT_QUEUE_ITEM_INDEX, -1)
-                    if (currentlyQueueItemIndex != -1 && playQueue.size > currentlyQueueItemIndex) {
-                        currentQueueItemId = playQueue[currentlyQueueItemIndex].queueId
-                        mediaController.transportControls.skipToQueueItem(currentQueueItemId)
-
-                        val position = sharedPreferences.getInt(PLAYBACK_POSITION, 0)
-                        if (position != 0) seekTo(position)
-                    }
-
+                    val playbackPosition = sharedPreferences.getInt(PLAYBACK_POSITION, 0)
+                    if (playbackPosition != 0) seekTo(playbackPosition)
                     populatePlayQueueData()
                 }
             }
         }
 
         val mediaController = MediaControllerCompat.getMediaController(this@MainActivity)
-        mediaController.sendCommand("loadPlayQueue", bundle, resultReceiver)
+        mediaController.sendCommand("restorePlayQueue", bundle, resultReceiver)
     }
 
     override fun onDestroy() {
