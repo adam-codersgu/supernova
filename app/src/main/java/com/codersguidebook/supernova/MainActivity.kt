@@ -863,8 +863,6 @@ class MainActivity : AppCompatActivity() {
         return gPretty.toJson(songIDList)
     }
 
-    // TODO: Revisit whether it is possible to have a many-to-many association between Playlist and Song
-    //  See https://www.oreilly.com/library/view/learning-mysql/0596008643/ch04s04.html
     /**
      * Convert a JSON String representing a playlist's songs to a list of song IDs.
      *
