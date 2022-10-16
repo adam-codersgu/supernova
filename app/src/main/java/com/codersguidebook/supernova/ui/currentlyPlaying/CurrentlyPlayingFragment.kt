@@ -28,6 +28,8 @@ import com.bumptech.glide.Glide
 import com.codersguidebook.supernova.*
 import com.codersguidebook.supernova.databinding.FragmentCurrentlyPlayingBinding
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
@@ -133,14 +135,14 @@ class CurrentlyPlayingFragment : Fragment() {
             setFavouriteButtonStyle(callingActivity.toggleSongFavouriteStatus(currentSong))
         }
 
-        val shuffleMode = sharedPreferences.getInt("shuffleMode", SHUFFLE_MODE_NONE)
+        val shuffleMode = sharedPreferences.getInt(SHUFFLE_MODE, SHUFFLE_MODE_NONE)
         setShuffleButtonAppearance(shuffleMode)
 
         binding.currentButtonShuffle.setOnClickListener{
             setShuffleButtonAppearance(callingActivity.toggleShuffleMode())
         }
         
-        val repeatMode = sharedPreferences.getInt("repeatMode", REPEAT_MODE_NONE)
+        val repeatMode = sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_NONE)
         setRepeatButtonAppearance(repeatMode)
 
         binding.currentButtonRepeat.setOnClickListener {

@@ -51,6 +51,8 @@ import com.bumptech.glide.signature.ObjectKey
 import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.codersguidebook.supernova.utils.MediaDescriptionCompatManager
 import com.google.android.material.navigation.NavigationView
 import com.google.gson.Gson
@@ -284,7 +286,7 @@ class MainActivity : AppCompatActivity() {
      * @return An Integer representing the active shuffle mode preference.
      */
     fun toggleShuffleMode(): Int {
-        val newShuffleMode = if (sharedPreferences.getInt("shuffleMode", SHUFFLE_MODE_NONE) == SHUFFLE_MODE_NONE) {
+        val newShuffleMode = if (sharedPreferences.getInt(SHUFFLE_MODE, SHUFFLE_MODE_NONE) == SHUFFLE_MODE_NONE) {
             SHUFFLE_MODE_ALL
         } else SHUFFLE_MODE_NONE
 
@@ -306,12 +308,12 @@ class MainActivity : AppCompatActivity() {
      */
     private fun setShuffleMode(shuffleMode: Int) {
         sharedPreferences.edit().apply {
-            putInt("shuffleMode", shuffleMode)
+            putInt(SHUFFLE_MODE, shuffleMode)
             apply()
         }
 
         val bundle = Bundle().apply {
-            putInt("shuffleMode", shuffleMode)
+            putInt(SHUFFLE_MODE, shuffleMode)
         }
 
         mediaController.sendCommand("setShuffleMode", bundle, null)
@@ -323,19 +325,19 @@ class MainActivity : AppCompatActivity() {
      * @return An Integer representing the active repeat mode preference.
      */
     fun toggleRepeatMode(): Int {
-        val newRepeatMode = when (sharedPreferences.getInt("repeatMode", REPEAT_MODE_NONE)) {
+        val newRepeatMode = when (sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_NONE)) {
             REPEAT_MODE_NONE -> REPEAT_MODE_ALL
             REPEAT_MODE_ALL -> REPEAT_MODE_ONE
             else -> REPEAT_MODE_NONE
         }
 
         sharedPreferences.edit().apply {
-            putInt("repeatMode", newRepeatMode)
+            putInt(REPEAT_MODE, newRepeatMode)
             apply()
         }
 
         val bundle = Bundle().apply {
-            putInt("repeatMode", newRepeatMode)
+            putInt(REPEAT_MODE, newRepeatMode)
         }
         // TODO: Could we delegate command names to a static constant params class for consistency
         mediaController.sendCommand("setRepeatMode", bundle, null)
@@ -1272,14 +1274,14 @@ class MainActivity : AppCompatActivity() {
 
     /** Restore the play queue and playback state from the last save. */
     private fun restoreMediaSession() = lifecycleScope.launch {
-        val repeatMode = sharedPreferences.getInt("repeatMode", REPEAT_MODE_NONE)
+        val repeatMode = sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_NONE)
         val repeatBundle = Bundle()
-        repeatBundle.putInt("repeatMode", repeatMode)
+        repeatBundle.putInt(REPEAT_MODE, repeatMode)
         mediaController.sendCommand("setRepeatMode", repeatBundle, null)
 
-        val shuffleMode = sharedPreferences.getInt("shuffleMode", SHUFFLE_MODE_NONE)
+        val shuffleMode = sharedPreferences.getInt(SHUFFLE_MODE, SHUFFLE_MODE_NONE)
         val shuffleBundle = Bundle()
-        shuffleBundle.putInt("shuffleMode", shuffleMode)
+        shuffleBundle.putInt(SHUFFLE_MODE, shuffleMode)
         mediaController.sendCommand("setShuffleMode", repeatBundle, null)
 
         val queueItemPairsJson = sharedPreferences.getString(PLAY_QUEUE_MEDIA_DESCRIPTION_LIST, null) ?: return@launch

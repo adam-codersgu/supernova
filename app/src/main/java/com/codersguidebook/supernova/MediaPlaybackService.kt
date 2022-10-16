@@ -27,6 +27,8 @@ import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.media.MediaBrowserServiceCompat
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.File
@@ -341,13 +343,13 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                 }
                 "setRepeatMode" -> {
                     extras?.let {
-                        val repeatMode = extras.getInt("repeatMode", REPEAT_MODE_NONE)
+                        val repeatMode = extras.getInt(REPEAT_MODE, REPEAT_MODE_NONE)
                         onSetRepeatMode(repeatMode)
                     }
                 }
                 "setShuffleMode" -> {
                     extras?.let {
-                        val shuffleMode = extras.getInt("shuffleMode", SHUFFLE_MODE_NONE)
+                        val shuffleMode = extras.getInt(SHUFFLE_MODE, SHUFFLE_MODE_NONE)
                         onSetShuffleMode(shuffleMode)
 
                         if (shuffleMode == SHUFFLE_MODE_ALL) {
