@@ -1275,14 +1275,16 @@ class MainActivity : AppCompatActivity() {
     /** Restore the play queue and playback state from the last save. */
     private fun restoreMediaSession() = lifecycleScope.launch {
         val repeatMode = sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_NONE)
-        val repeatBundle = Bundle()
-        repeatBundle.putInt(REPEAT_MODE, repeatMode)
+        val repeatBundle = Bundle().apply {
+            putInt(REPEAT_MODE, repeatMode)
+        }
         mediaController.sendCommand("setRepeatMode", repeatBundle, null)
 
         val shuffleMode = sharedPreferences.getInt(SHUFFLE_MODE, SHUFFLE_MODE_NONE)
-        val shuffleBundle = Bundle()
-        shuffleBundle.putInt(SHUFFLE_MODE, shuffleMode)
-        mediaController.sendCommand("setShuffleMode", repeatBundle, null)
+        val shuffleBundle = Bundle().apply {
+            putInt(SHUFFLE_MODE, shuffleMode)
+        }
+        mediaController.sendCommand("setShuffleMode", shuffleBundle, null)
 
         val queueItemPairsJson = sharedPreferences.getString(PLAY_QUEUE_MEDIA_DESCRIPTION_LIST, null) ?: return@launch
         val queueItemId = sharedPreferences.getLong(CURRENT_QUEUE_ITEM_ID, -1L)
