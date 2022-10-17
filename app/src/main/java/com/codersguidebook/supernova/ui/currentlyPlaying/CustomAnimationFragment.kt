@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.GridLayoutManager
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_TYPE
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
@@ -86,12 +87,12 @@ class CustomAnimationFragment : Fragment() {
                         animationAdapter.notifyItemChanged(reqCode)
                     }
                     val editor = sharedPreferences.edit()
-                    editor.putString("drawableAnimations", getString(R.string.custom_image))
+                    editor.putString(ANIMATION_TYPE, getString(R.string.custom_image))
                     editor.apply()
                     saveChanges()
                 }
-            } catch (e: FileNotFoundException) { }
-            catch (e: IOException) {  }
+            } catch (_: FileNotFoundException) { }
+            catch (_: IOException) {  }
         }
 
         super.onActivityResult(reqCode, resultCode, data)

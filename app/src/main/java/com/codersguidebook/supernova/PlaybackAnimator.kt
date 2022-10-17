@@ -12,6 +12,9 @@ import android.view.View
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_QUANTITY
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_SPIN
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_TYPE
 import java.util.*
 import kotlin.math.roundToInt
 
@@ -54,14 +57,14 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
     private val animalDrawables = listOf(R.drawable.cat, R.drawable.dolphin, R.drawable.elephant, R.drawable.peacock, R.drawable.wolf)
     private val flowerDrawables = listOf(R.drawable.flower, R.drawable.poppy, R.drawable.rose1, R.drawable.rose2)
     private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-    private val count = sharedPreferences.getInt("numberAnimations", 6)
+    private val count = sharedPreferences.getInt(ANIMATION_QUANTITY, 6)
     var objectList = arrayOfNulls<MovingObject>(count)
     private val mRnd: Random = Random(SEED)
     private var mTimeAnimator: TimeAnimator? = null
     var usingCustomDrawable = false
     // default drawable
     var drawableList = drawableListGenerator(leavesDrawables)
-    var spinSpeed = sharedPreferences.getInt("spinAnimations", 20)
+    var spinSpeed = sharedPreferences.getInt(ANIMATION_SPIN, 20)
     var viewWidth = width
     private var mBaseSize = 0f
     private var mCurrentPlayTime: Long = 0
@@ -234,9 +237,10 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
         }
         usingCustomDrawable = false
         if (updatePreferences){
-            val editor = sharedPreferences.edit()
-            editor.putString("drawableAnimations", drawable)
-            editor.apply()
+            sharedPreferences.edit().apply {
+                putString(ANIMATION_TYPE, drawable)
+                apply()
+            }
             Toast.makeText(context, resources.getString(R.string.changes_applied), Toast.LENGTH_SHORT).show()
         }
     }

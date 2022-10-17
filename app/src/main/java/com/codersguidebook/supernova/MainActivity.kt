@@ -51,8 +51,13 @@ import com.bumptech.glide.signature.ObjectKey
 import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_ID
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_DURATION
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_POSITION
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAY_QUEUE_ITEM_PAIRS
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SONG_OF_THE_DAY_LAST_UPDATED
 import com.codersguidebook.supernova.utils.MediaDescriptionCompatManager
 import com.google.android.material.navigation.NavigationView
 import com.google.gson.Gson
@@ -89,13 +94,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
-
-    companion object {
-        private const val PLAY_QUEUE_MEDIA_DESCRIPTION_LIST = "play_queue_media_description_list"
-        private const val CURRENT_QUEUE_ITEM_ID = "current_queue_item_id"
-        private const val PLAYBACK_POSITION = "playback_position"
-        private const val PLAYBACK_DURATION = "playback_duration"
-    }
 
     private val connectionCallbacks = object : MediaBrowserCompat.ConnectionCallback() {
         override fun onConnected() {
@@ -380,9 +378,9 @@ class MainActivity : AppCompatActivity() {
                     queueItemPairs.add(Pair(item.queueId, it.toLong()))
                 }
             }
+            val playQueueJson = GsonBuilder().setPrettyPrinting().create().toJson(queueItemPairs)
             sharedPreferences.edit().apply {
-                val playQueueJSON = GsonBuilder().setPrettyPrinting().create().toJson(queueItemPairs)
-                putString(PLAY_QUEUE_MEDIA_DESCRIPTION_LIST, playQueueJSON)
+                putString(PLAY_QUEUE_ITEM_PAIRS, playQueueJson)
                 apply()
             }
         } catch (_: ConcurrentModificationException) {}
@@ -717,16 +715,17 @@ class MainActivity : AppCompatActivity() {
         val songIDList = extractPlaylistSongIds(playlist.songs)
         // updating the song of the day, if one has not already been set for today's date
         val date = SimpleDateFormat.getDateInstance().format(Date())
-        val lastUpdate = sharedPreferences.getString("songOfTheDayDate", null)
+        val lastUpdate = sharedPreferences.getString(SONG_OF_THE_DAY_LAST_UPDATED, null)
         when {
             date != lastUpdate -> {
                 val song = completeLibrary.random()
                 songIDList.add(0, song.songId)
                 if (songIDList.size > 30) songIDList.removeAt(songIDList.size - 1)
                 savePlaylistWithSongIds(playlist, songIDList)
-                val editor = sharedPreferences.edit()
-                editor.putString("songOfTheDayDate", date)
-                editor.apply()
+                sharedPreferences.edit().apply {
+                    putString(SONG_OF_THE_DAY_LAST_UPDATED, date)
+                    apply()
+                }
             }
             forceUpdate -> {
                 // could use removeLast but that command is still experimental at the moment
@@ -1286,7 +1285,7 @@ class MainActivity : AppCompatActivity() {
         }
         mediaController.sendCommand("setShuffleMode", shuffleBundle, null)
 
-        val queueItemPairsJson = sharedPreferences.getString(PLAY_QUEUE_MEDIA_DESCRIPTION_LIST, null) ?: return@launch
+        val queueItemPairsJson = sharedPreferences.getString(PLAY_QUEUE_ITEM_PAIRS, null) ?: return@launch
         val queueItemId = sharedPreferences.getLong(CURRENT_QUEUE_ITEM_ID, -1L)
         val bundle = Bundle().apply {
             putString("queueItemPairs", queueItemPairsJson)

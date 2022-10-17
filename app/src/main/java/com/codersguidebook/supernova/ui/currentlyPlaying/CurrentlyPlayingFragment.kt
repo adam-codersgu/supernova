@@ -28,6 +28,11 @@ import com.bumptech.glide.Glide
 import com.codersguidebook.supernova.*
 import com.codersguidebook.supernova.databinding.FragmentCurrentlyPlayingBinding
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_COLOUR
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_QUANTITY
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_SPEED
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_SPIN
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_TYPE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.google.gson.Gson
@@ -188,7 +193,7 @@ class CurrentlyPlayingFragment : Fragment() {
         else binding.animatedView.visibility = View.GONE
 
         val customDrawableString = sharedPreferences.getString("customAnimationUri", null)
-        val animationPreference = sharedPreferences.getString("drawableAnimations", getString(R.string.leaves))
+        val animationPreference = sharedPreferences.getString(ANIMATION_TYPE, getString(R.string.leaves))
         when {
             customDrawableString != null && animationPreference == getString(R.string.custom_image) -> {
                 val listType = object : TypeToken<List<String>>() {}.type
@@ -199,7 +204,7 @@ class CurrentlyPlayingFragment : Fragment() {
             }
             animationPreference == getString(R.string.custom_image) -> {
                 sharedPreferences.edit().apply {
-                    putString("drawableAnimations", getString(R.string.leaves))
+                    putString(ANIMATION_TYPE, getString(R.string.leaves))
                     apply()
                 }
                 Toast.makeText(activity, getString(R.string.no_custom_image), Toast.LENGTH_LONG).show()
@@ -207,13 +212,13 @@ class CurrentlyPlayingFragment : Fragment() {
             }
             else -> binding.animatedView.changeDrawable(animationPreference!!, false)
         }
-        val colourAnimations = sharedPreferences.getString("colourAnimations", getString(R.string.red))
-        binding.animatedView.changeColour(colourAnimations!!, false)
-        val speedAnimations = sharedPreferences.getString("speedAnimations", getString(R.string.normal))
-        binding.animatedView.changeSpeed(speedAnimations!!, false)
-        binding.animatedView.spinSpeed = sharedPreferences.getInt("spinAnimations", 20)
-        val numberAnimations = sharedPreferences.getInt("numberAnimations", 6)
-        binding.animatedView.objectList = arrayOfNulls(numberAnimations)
+        val animationColour = sharedPreferences.getString(ANIMATION_COLOUR, getString(R.string.red))
+        binding.animatedView.changeColour(animationColour!!, false)
+        val animationSpeed = sharedPreferences.getString(ANIMATION_SPEED, getString(R.string.normal))
+        binding.animatedView.changeSpeed(animationSpeed!!, false)
+        binding.animatedView.spinSpeed = sharedPreferences.getInt(ANIMATION_SPIN, 20)
+        val animationQuantity = sharedPreferences.getInt(ANIMATION_QUANTITY, 6)
+        binding.animatedView.objectList = arrayOfNulls(animationQuantity)
         binding.animatedView.createObjects()
     }
 
@@ -273,7 +278,7 @@ class CurrentlyPlayingFragment : Fragment() {
             uris.remove(uri)
             val editor = sharedPreferences.edit()
             if (uris.isEmpty()) {
-                editor.putString("drawableAnimations", getString(R.string.leaves))
+                editor.putString(ANIMATION_TYPE, getString(R.string.leaves))
                 editor.putString("customAnimationUri", null)
                 binding.animatedView.usingCustomDrawable = false
             } else {
@@ -399,7 +404,7 @@ class CurrentlyPlayingFragment : Fragment() {
                     R.id.animation_custom -> {
                         val customDrawableString = sharedPreferences.getString("customAnimationUri", null)
                         if (customDrawableString != null) {
-                            editor.putString("drawableAnimations", getString(R.string.custom_image))
+                            editor.putString(ANIMATION_TYPE, getString(R.string.custom_image))
                             editor.apply()
                             val listType = object : TypeToken<List<String>>() {}.type
                             val imageStrings: List<String> = Gson().fromJson(customDrawableString, listType)

@@ -53,7 +53,7 @@ class SettingsActivity : AppCompatActivity() {
         ) {
             sharedPreferences?.run {
                 when (key) {
-                    "drawableAnimations" -> {
+                    "animation_type" -> {
                         if (sharedPreferences.getString(key, getString(R.string.leaves)) == getString(R.string.custom_image)) {
                             if (sharedPreferences.getString("customAnimationUri", null) == null) {
                                 requireActivity().supportFragmentManager

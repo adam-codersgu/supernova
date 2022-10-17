@@ -12,7 +12,7 @@
             app:defaultValue="@string/red"
             app:entries="@array/colour_entries"
             app:entryValues="@array/colour_entries"
-            app:key="colourAnimations"
+            app:key="animation_colour"
             app:title="@string/animation_colour"
             app:useSimpleSummaryProvider="true" />
 
@@ -20,7 +20,7 @@
             app:defaultValue="@string/leaves"
             app:entries="@array/drawable_entries"
             app:entryValues="@array/drawable_entries"
-            app:key="drawableAnimations"
+            app:key="animation_type"
             app:title="@string/animation_images"
             app:useSimpleSummaryProvider="true" />
 
@@ -32,12 +32,12 @@
             app:defaultValue="@string/normal"
             app:entries="@array/drawable_speeds"
             app:entryValues="@array/drawable_speeds"
-            app:key="speedAnimations"
+            app:key="animation_speed"
             app:title="@string/animation_speed"
             app:useSimpleSummaryProvider="true" />
 
         <SeekBarPreference
-            app:key="numberAnimations"
+            app:key="animation_quantity"
             app:defaultValue="6"
             app:title="Number of animation objects"
             app:showSeekBarValue="true"
@@ -45,7 +45,7 @@
             android:max="10" />
 
         <SeekBarPreference
-            app:key="spinAnimations"
+            app:key="animation_spin"
             app:defaultValue="20"
             app:title="Spin speed"
             app:min="1"
