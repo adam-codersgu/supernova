@@ -28,11 +28,13 @@ import com.bumptech.glide.Glide
 import com.codersguidebook.supernova.*
 import com.codersguidebook.supernova.databinding.FragmentCurrentlyPlayingBinding
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_ACTIVE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_COLOUR
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_QUANTITY
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_SPEED
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_SPIN
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_TYPE
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_URI
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.google.gson.Gson
@@ -188,11 +190,11 @@ class CurrentlyPlayingFragment : Fragment() {
             displayMetrics.widthPixels
         }
 
-        isAnimationVisible = sharedPreferences.getBoolean("playAnimations", true)
+        isAnimationVisible = sharedPreferences.getBoolean(ANIMATION_ACTIVE, true)
         if (isAnimationVisible) binding.animatedView.visibility = View.VISIBLE
         else binding.animatedView.visibility = View.GONE
 
-        val customDrawableString = sharedPreferences.getString("customAnimationUri", null)
+        val customDrawableString = sharedPreferences.getString(ANIMATION_URI, null)
         val animationPreference = sharedPreferences.getString(ANIMATION_TYPE, getString(R.string.leaves))
         when {
             customDrawableString != null && animationPreference == getString(R.string.custom_image) -> {
@@ -279,11 +281,11 @@ class CurrentlyPlayingFragment : Fragment() {
             val editor = sharedPreferences.edit()
             if (uris.isEmpty()) {
                 editor.putString(ANIMATION_TYPE, getString(R.string.leaves))
-                editor.putString("customAnimationUri", null)
+                editor.putString(ANIMATION_URI, null)
                 binding.animatedView.usingCustomDrawable = false
             } else {
                 val gPretty = GsonBuilder().setPrettyPrinting().create().toJson(uris)
-                editor.putString("customAnimationUri", gPretty)
+                editor.putString(ANIMATION_URI, gPretty)
             }
             editor.apply()
             // TODO: Improve error reporting and handling for URIs that cannot be found
@@ -382,12 +384,12 @@ class CurrentlyPlayingFragment : Fragment() {
                             binding.animatedView.pause()
                             binding.animatedView.visibility = View.GONE
                             isAnimationVisible = false
-                            editor.putBoolean("playAnimations", false)
+                            editor.putBoolean(ANIMATION_ACTIVE, false)
                         } else {
                             binding.animatedView.start()
                             binding.animatedView.visibility = View.VISIBLE
                             isAnimationVisible = true
-                            editor.putBoolean("playAnimations", true)
+                            editor.putBoolean(ANIMATION_ACTIVE, true)
                         }
                         editor.apply()
                     }
@@ -402,7 +404,7 @@ class CurrentlyPlayingFragment : Fragment() {
                     R.id.animation_flower -> binding.animatedView.changeDrawable(getString(R.string.flowers), true)
                     R.id.animation_instruments -> binding.animatedView.changeDrawable(getString(R.string.instruments), true)
                     R.id.animation_custom -> {
-                        val customDrawableString = sharedPreferences.getString("customAnimationUri", null)
+                        val customDrawableString = sharedPreferences.getString(ANIMATION_URI, null)
                         if (customDrawableString != null) {
                             editor.putString(ANIMATION_TYPE, getString(R.string.custom_image))
                             editor.apply()

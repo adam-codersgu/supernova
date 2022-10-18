@@ -3,11 +3,13 @@ package com.codersguidebook.supernova.params
 /** Class containing identifying values for keys in the shared preferences **/
 class SharedPreferencesConstants {
     companion object {
+        const val ANIMATION_ACTIVE = "animation_active"
         const val ANIMATION_COLOUR = "animation_colour"
         const val ANIMATION_QUANTITY = "animation_quantity"
         const val ANIMATION_SPEED = "animation_speed"
         const val ANIMATION_SPIN = "animation_spin"
         const val ANIMATION_TYPE = "animation_type"
+        const val ANIMATION_URI = "animation_uri"
         const val CURRENT_QUEUE_ITEM_ID = "current_queue_item_id"
         const val PLAY_QUEUE_ITEM_PAIRS = "play_queue"
         const val PLAYBACK_DURATION = "playback_duration"

@@ -12,7 +12,9 @@ import android.view.View
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_COLOUR
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_QUANTITY
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_SPEED
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_SPIN
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_TYPE
 import java.util.*
@@ -253,9 +255,10 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
             else -> colourListGenerator(redColours)
         }
         if (updatePreferences){
-            val editor = sharedPreferences.edit()
-            editor.putString("colourAnimations", colour)
-            editor.apply()
+            sharedPreferences.edit().apply {
+                putString(ANIMATION_COLOUR, colour)
+                apply()
+            }
             Toast.makeText(context, resources.getString(R.string.changes_applied), Toast.LENGTH_SHORT).show()
         }
     }
@@ -267,9 +270,10 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
             else -> 70
         }
         if (updatePreferences){
-            val editor = sharedPreferences.edit()
-            editor.putString("speedAnimations", speed)
-            editor.apply()
+            sharedPreferences.edit().apply {
+                putString(ANIMATION_SPEED, speed)
+                apply()
+            }
             Toast.makeText(context, resources.getString(R.string.changes_applied), Toast.LENGTH_SHORT).show()
         }
     }

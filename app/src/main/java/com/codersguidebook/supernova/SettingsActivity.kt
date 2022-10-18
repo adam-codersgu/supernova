@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceFragmentCompat
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_TYPE
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_URI
 import com.codersguidebook.supernova.ui.currentlyPlaying.CustomAnimationFragment
 
 class SettingsActivity : AppCompatActivity() {
@@ -53,9 +55,9 @@ class SettingsActivity : AppCompatActivity() {
         ) {
             sharedPreferences?.run {
                 when (key) {
-                    "animation_type" -> {
+                    ANIMATION_TYPE -> {
                         if (sharedPreferences.getString(key, getString(R.string.leaves)) == getString(R.string.custom_image)) {
-                            if (sharedPreferences.getString("customAnimationUri", null) == null) {
+                            if (sharedPreferences.getString(ANIMATION_URI, null) == null) {
                                 requireActivity().supportFragmentManager
                                     .beginTransaction()
                                     .replace(R.id.settings, CustomAnimationFragment())

@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_TYPE
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_URI
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
@@ -44,7 +45,7 @@ class CustomAnimationFragment : Fragment() {
         binding.root.itemAnimator = DefaultItemAnimator()
         binding.root.adapter = animationAdapter
 
-        val customDrawableString = sharedPreferences.getString("customAnimationUri", null)
+        val customDrawableString = sharedPreferences.getString(ANIMATION_URI, null)
         if (customDrawableString != null) {
             val listType = object : TypeToken<MutableList<String>>() {}.type
             imageStrings = Gson().fromJson(customDrawableString, listType)
@@ -120,10 +121,10 @@ class CustomAnimationFragment : Fragment() {
 
     fun saveChanges() {
         val editor = sharedPreferences.edit()
-        if (imageStrings.isEmpty()) editor.putString("customAnimationUri", null)
+        if (imageStrings.isEmpty()) editor.putString(ANIMATION_URI, null)
         else {
             val gPretty = GsonBuilder().setPrettyPrinting().create().toJson(imageStrings)
-            editor.putString("customAnimationUri", gPretty)
+            editor.putString(ANIMATION_URI, gPretty)
         }
         editor.apply()
     }

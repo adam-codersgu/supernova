@@ -4,7 +4,7 @@
     <PreferenceCategory app:title="@string/playback_animations">
 
         <SwitchPreferenceCompat
-            app:key="playAnimations"
+            app:key="animation_active"
             app:defaultValue="true"
             app:title="@string/show_animations" />
 
