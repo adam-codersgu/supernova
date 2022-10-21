@@ -10,6 +10,7 @@ import android.content.pm.PackageManager
 import android.database.Cursor
 import android.graphics.Bitmap
 import android.media.AudioManager
+import android.media.session.PlaybackState
 import android.net.Uri
 import android.os.*
 import android.provider.MediaStore
@@ -86,15 +87,12 @@ class MainActivity : AppCompatActivity() {
     private var currentPlaybackPosition = 0
     private var currentPlaybackDuration = 0
     private var currentQueueItemId = -1L
-    // FIXME: Can we make the below private
-    var playQueue = listOf<QueueItem>()
+    private var playQueue = listOf<QueueItem>()
     private val playQueueViewModel: PlayQueueViewModel by viewModels()
     private var allPlaylists = listOf<Playlist>()
     private val mediaDescriptionManager = MediaDescriptionCompatManager()
     private var musicDatabase: MusicDatabase? = null
     var completeLibrary = listOf<Song>()
-    // FIXME: Is the below still required?
-    private var playbackState = STATE_STOPPED
     private lateinit var mediaBrowser: MediaBrowserCompat
     private lateinit var musicLibraryViewModel: MusicLibraryViewModel
     private lateinit var searchView: SearchView
@@ -130,7 +128,6 @@ class MainActivity : AppCompatActivity() {
             }
             when (state?.state) {
                 STATE_PLAYING -> {
-                    playbackState = STATE_PLAYING
                     currentPlaybackPosition = state.position.toInt()
                     state.extras?.let {
                         currentPlaybackDuration = it.getInt("duration", 0)
@@ -140,7 +137,6 @@ class MainActivity : AppCompatActivity() {
                     playQueueViewModel.isPlaying.value = true
                 }
                 STATE_PAUSED -> {
-                    playbackState = STATE_PAUSED
                     currentPlaybackPosition = state.position.toInt()
                     state.extras?.let {
                         currentPlaybackDuration = it.getInt("duration", 0)
@@ -150,7 +146,6 @@ class MainActivity : AppCompatActivity() {
                     playQueueViewModel.isPlaying.value = false
                 }
                 STATE_STOPPED -> {
-                    playbackState = STATE_STOPPED
                     playQueueViewModel.isPlaying.value = false
                     currentPlaybackDuration = 0
                     playQueueViewModel.playbackDuration.value = 0
@@ -269,15 +264,17 @@ class MainActivity : AppCompatActivity() {
         if (savePlayQueue) savePlayQueue()
     }
 
+    /** Respond to clicks on the play/pause button **/
     fun playPauseControl() {
-        when (playbackState) {
-            STATE_PAUSED -> play()
-            STATE_PLAYING -> mediaController.transportControls.pause()
+        when (mediaController.playbackState?.state) {
+            PlaybackState.STATE_PAUSED -> play()
+            PlaybackState.STATE_PLAYING -> mediaController.transportControls.pause()
             else -> {
                 // Load and play the user's music library if the play queue is empty
                 if (playQueue.isEmpty()) playSongs(completeLibrary)
                 else {
-                    // It's possible a queue has been built without ever pressing play. In which case, commence playback here
+                    // It's possible a queue has been built without ever pressing play.
+                    // In which case, commence playback
                     mediaController.transportControls.prepare()
                     mediaController.transportControls.play()
                 }
