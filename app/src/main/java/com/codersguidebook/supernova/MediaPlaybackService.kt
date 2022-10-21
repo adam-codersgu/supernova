@@ -27,6 +27,12 @@ import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.media.MediaBrowserServiceCompat
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_SONGS
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.RESTORE_PLAY_QUEUE
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_REPEAT_MODE
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_SHUFFLE_MODE
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.UPDATE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.ResultReceiverConstants.Companion.SUCCESS
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
@@ -275,7 +281,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             super.onCommand(command, extras, cb)
 
             when (command) {
-                "restorePlayQueue" -> {
+                RESTORE_PLAY_QUEUE -> {
                     extras?.let {
                         val queueItemsJson = it.getString("queueItemPairs") ?: return@let
                         val gson = Gson()
@@ -304,7 +310,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         cb?.send(SUCCESS, Bundle())
                     }
                 }
-                "loadSongs" -> {
+                LOAD_SONGS -> {
                     extras?.let {
                         val songIdsJson = it.getString("songIds") ?: return@let
                         val gson = Gson()
@@ -331,7 +337,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         cb?.send(SUCCESS, Bundle())
                     }
                 }
-                "removeQueueItemById" -> {
+                REMOVE_QUEUE_ITEM_BY_ID -> {
                     extras?.let {
                         val queueItemId = extras.getLong("queueItemId", -1L)
                         when (queueItemId) {
@@ -342,13 +348,13 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         setPlayQueue()
                     }
                 }
-                "setRepeatMode" -> {
+                SET_REPEAT_MODE -> {
                     extras?.let {
                         val repeatMode = extras.getInt(REPEAT_MODE, REPEAT_MODE_NONE)
                         onSetRepeatMode(repeatMode)
                     }
                 }
-                "setShuffleMode" -> {
+                SET_SHUFFLE_MODE -> {
                     extras?.let {
                         val shuffleMode = extras.getInt(SHUFFLE_MODE, SHUFFLE_MODE_NONE)
                         onSetShuffleMode(shuffleMode)
@@ -366,7 +372,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         setPlayQueue()
                     }
                 }
-                "updateQueueItem" -> {
+                UPDATE_QUEUE_ITEM -> {
                     extras?.let {
                         val mediaDescription = MediaDescriptionCompat.Builder()
                             .setExtras(it.getBundle("extras"))

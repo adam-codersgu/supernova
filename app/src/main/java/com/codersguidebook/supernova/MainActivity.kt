@@ -51,6 +51,12 @@ import com.bumptech.glide.signature.ObjectKey
 import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_SONGS
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.RESTORE_PLAY_QUEUE
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_REPEAT_MODE
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_SHUFFLE_MODE
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.UPDATE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.ResultReceiverConstants.Companion.SUCCESS
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_ID
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_DURATION
@@ -315,7 +321,7 @@ class MainActivity : AppCompatActivity() {
             putInt(SHUFFLE_MODE, shuffleMode)
         }
 
-        mediaController.sendCommand("setShuffleMode", bundle, null)
+        mediaController.sendCommand(SET_SHUFFLE_MODE, bundle, null)
     }
 
     /**
@@ -338,8 +344,7 @@ class MainActivity : AppCompatActivity() {
         val bundle = Bundle().apply {
             putInt(REPEAT_MODE, newRepeatMode)
         }
-        // TODO: Could we delegate command names to a static constant params class for consistency
-        mediaController.sendCommand("setRepeatMode", bundle, null)
+        mediaController.sendCommand(SET_REPEAT_MODE, bundle, null)
 
         // TODO: Need a ticket to go through and replace all hardcoded strings with string resources
         when (newRepeatMode) {
@@ -494,7 +499,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val mediaController = MediaControllerCompat.getMediaController(this@MainActivity)
-        mediaController.sendCommand("loadSongs", bundle, resultReceiver)
+        mediaController.sendCommand(LOAD_SONGS, bundle, resultReceiver)
     }
 
     /**
@@ -511,7 +516,7 @@ class MainActivity : AppCompatActivity() {
                 val song = getSongById(songId) ?: continue
                 val mediaDescriptionBundle = mediaDescriptionManager.getDescriptionAsBundle(song)
                 mediaDescriptionBundle.putLong("queueItemId", queueItem.queueId)
-                mediaController.sendCommand("updateQueueItem", mediaDescriptionBundle, null)
+                mediaController.sendCommand(UPDATE_QUEUE_ITEM, mediaDescriptionBundle, null)
             }
         }
 
@@ -531,7 +536,7 @@ class MainActivity : AppCompatActivity() {
 
             // TODO: Use the result receiver. Also, maybe try and link this method with the one below for simplicity
             val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
-            mediaControllerCompat.sendCommand("removeQueueItemById", bundle, null)
+            mediaControllerCompat.sendCommand(REMOVE_QUEUE_ITEM_BY_ID, bundle, null)
         }
     }
 
@@ -786,7 +791,7 @@ class MainActivity : AppCompatActivity() {
             val mediaDescriptionBundle = mediaDescriptionManager.getDescriptionAsBundle(song)
             for (queueItem in affectedQueueItems) {
                 mediaDescriptionBundle.putLong("queueItemId", queueItem.queueId)
-                mediaController.sendCommand("updateQueueItem", mediaDescriptionBundle, null)
+                mediaController.sendCommand(UPDATE_QUEUE_ITEM, mediaDescriptionBundle, null)
             }
         }
     }
@@ -1277,13 +1282,13 @@ class MainActivity : AppCompatActivity() {
         val repeatBundle = Bundle().apply {
             putInt(REPEAT_MODE, repeatMode)
         }
-        mediaController.sendCommand("setRepeatMode", repeatBundle, null)
+        mediaController.sendCommand(SET_REPEAT_MODE, repeatBundle, null)
 
         val shuffleMode = sharedPreferences.getInt(SHUFFLE_MODE, SHUFFLE_MODE_NONE)
         val shuffleBundle = Bundle().apply {
             putInt(SHUFFLE_MODE, shuffleMode)
         }
-        mediaController.sendCommand("setShuffleMode", shuffleBundle, null)
+        mediaController.sendCommand(SET_SHUFFLE_MODE, shuffleBundle, null)
 
         val queueItemPairsJson = sharedPreferences.getString(PLAY_QUEUE_ITEM_PAIRS, null) ?: return@launch
         val queueItemId = sharedPreferences.getLong(CURRENT_QUEUE_ITEM_ID, -1L)
@@ -1303,7 +1308,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val mediaController = MediaControllerCompat.getMediaController(this@MainActivity)
-        mediaController.sendCommand("restorePlayQueue", bundle, resultReceiver)
+        mediaController.sendCommand(RESTORE_PLAY_QUEUE, bundle, resultReceiver)
     }
 
     override fun onDestroy() {
