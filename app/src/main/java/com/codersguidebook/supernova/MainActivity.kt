@@ -179,7 +179,20 @@ class MainActivity : AppCompatActivity() {
         // Set up a channel for the music player notification
         createChannel()
 
-        val taskDescription = ActivityManager.TaskDescription("Supernova", R.drawable.no_album_artwork, getColor(R.color.nav_home))
+        val taskDescription = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            // Pre-SDK 33
+            @Suppress("DEPRECATION")
+            ActivityManager.TaskDescription("Supernova", R.drawable.no_album_artwork,
+                getColor(R.color.nav_home))
+        }else {
+            // SDK 33 and up
+            ActivityManager.TaskDescription.Builder()
+                .setLabel("Supernova")
+                .setIcon(R.drawable.no_album_artwork)
+                .setPrimaryColor(getColor(R.color.nav_home))
+                .build()
+        }
+
         this.setTaskDescription(taskDescription)
 
         mediaBrowser = MediaBrowserCompat(this, ComponentName(this, MediaPlaybackService::class.java),
