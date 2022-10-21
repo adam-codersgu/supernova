@@ -116,8 +116,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // TODO: Could implement onMetadataChanged for some functionality? e.g. change currently playing song?
-    //  https://developer.android.com/guide/topics/media-apps/audio-app/building-a-mediabrowser-client#sync-with-mediasession
     private var controllerCallback = object : MediaControllerCompat.Callback() {
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
             super.onPlaybackStateChanged(state)
@@ -343,7 +341,6 @@ class MainActivity : AppCompatActivity() {
         }
         mediaController.sendCommand(SET_REPEAT_MODE, bundle, null)
 
-        // TODO: Need a ticket to go through and replace all hardcoded strings with string resources
         when (newRepeatMode) {
             REPEAT_MODE_NONE -> Toast.makeText(this, "Repeat mode off", Toast.LENGTH_SHORT).show()
             REPEAT_MODE_ALL -> Toast.makeText(this, "Repeat play queue", Toast.LENGTH_SHORT).show()
