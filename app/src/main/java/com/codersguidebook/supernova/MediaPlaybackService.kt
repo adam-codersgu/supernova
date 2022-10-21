@@ -27,6 +27,7 @@ import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.media.MediaBrowserServiceCompat
+import com.codersguidebook.supernova.params.ResultReceiverConstants.Companion.SUCCESS
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.google.gson.Gson
@@ -300,7 +301,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                             onSkipToQueueItem(currentlyPlayingQueueItemId)
                         }
 
-                        cb?.send(1, Bundle())
+                        cb?.send(SUCCESS, Bundle())
                     }
                 }
                 "loadSongs" -> {
@@ -327,7 +328,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         if (it.getBoolean("shuffle")) playQueue.shuffle()
 
                         mediaSessionCompat.setQueue(playQueue)
-                        cb?.send(1, Bundle())
+                        cb?.send(SUCCESS, Bundle())
                     }
                 }
                 "removeQueueItemById" -> {

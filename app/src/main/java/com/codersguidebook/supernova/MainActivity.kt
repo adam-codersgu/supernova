@@ -51,6 +51,7 @@ import com.bumptech.glide.signature.ObjectKey
 import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.params.ResultReceiverConstants.Companion.SUCCESS
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_ID
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_DURATION
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_POSITION
@@ -478,8 +479,7 @@ class MainActivity : AppCompatActivity() {
 
         val resultReceiver = object : ResultReceiver(Handler(Looper.getMainLooper())) {
             override fun onReceiveResult(resultCode: Int, resultData: Bundle) {
-                // TODO: Need to have a constant param for successful results
-                if (resultCode == 1) {
+                if (resultCode == SUCCESS) {
                     startPlaybackAtIndex?.let {
                         refreshPlayQueue(true)
                         if (playQueue.size > it) {
@@ -1294,8 +1294,7 @@ class MainActivity : AppCompatActivity() {
 
         val resultReceiver = object : ResultReceiver(Handler(Looper.getMainLooper())) {
             override fun onReceiveResult(resultCode: Int, resultData: Bundle) {
-                // TODO: Need to have a constant param for successful results
-                if (resultCode == 1) {
+                if (resultCode == SUCCESS) {
                     val playbackPosition = sharedPreferences.getInt(PLAYBACK_POSITION, 0)
                     if (playbackPosition != 0) seekTo(playbackPosition)
                     populatePlayQueueData()
