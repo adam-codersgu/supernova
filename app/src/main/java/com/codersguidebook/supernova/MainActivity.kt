@@ -184,7 +184,7 @@ class MainActivity : AppCompatActivity() {
             @Suppress("DEPRECATION")
             ActivityManager.TaskDescription("Supernova", R.drawable.no_album_artwork,
                 getColor(R.color.nav_home))
-        }else {
+        } else {
             // SDK 33 and up
             ActivityManager.TaskDescription.Builder()
                 .setLabel("Supernova")
@@ -452,8 +452,6 @@ class MainActivity : AppCompatActivity() {
     fun addSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false) {
         sendSongsToPlayQueue(songs, addSongsAfterCurrentQueueItem = addSongsAfterCurrentQueueItem)
 
-        // TODO: In future, could add a parameter called message that provides a better description.
-        //  e.g. "Album Dilla Joints added to the play queue" or "Artist Gordon Lightfoot added to the play queue".
         if (songs.size > 1) Toast.makeText(this@MainActivity,
             "Your songs have been added to the play queue", Toast.LENGTH_SHORT).show()
         else Toast.makeText(this@MainActivity,
@@ -542,6 +540,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             // TODO: Use the result receiver. Also, maybe try and link this method with the one below for simplicity
+            //  The removeQueueItem method in the media browser service is complex. See if there's some way of still using that code
             val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
             mediaControllerCompat.sendCommand(REMOVE_QUEUE_ITEM_BY_ID, bundle, null)
         }
