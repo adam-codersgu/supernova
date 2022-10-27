@@ -20,6 +20,7 @@ import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
+import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.media.session.PlaybackStateCompat.*
 import android.text.TextUtils
 import android.view.KeyEvent
@@ -27,6 +28,10 @@ import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.media.MediaBrowserServiceCompat
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_NEXT
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PAUSE
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PLAY
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PREVIOUS
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_SONGS
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.RESTORE_PLAY_QUEUE
@@ -544,17 +549,14 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             setFlags(MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS)
             setCallback(mediaSessionCallback)
             setSessionToken(sessionToken)
-            val builder = Builder().setActions(ACTION_PLAY)
+            val builder = Builder().setActions(PlaybackStateCompat.ACTION_PLAY)
             setPlaybackState(builder.build())
         }
         initNoisyReceiver()
         playbackPositionChecker.run()
     }
 
-    /**
-     * Handles playback becoming 'noisy' i.e. headphones being unplugged.
-     *
-     */
+    /** Handles playback becoming 'noisy' i.e. headphones being unplugged. */
     private fun initNoisyReceiver() {
         val filter = IntentFilter(ACTION_AUDIO_BECOMING_NOISY)
         registerReceiver(noisyReceiver, filter)
@@ -575,10 +577,11 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
      */
     private fun refreshNotification() {
         val isPlaying = mediaPlayer?.isPlaying ?: false
-        val playPauseIntent = if (isPlaying) Intent(applicationContext, MediaPlaybackService::class.java).setAction("ACTION_PAUSE")
-        else Intent(applicationContext, MediaPlaybackService::class.java).setAction("ACTION_PLAY")
-        val nextIntent = Intent(applicationContext, MediaPlaybackService::class.java).setAction("ACTION_NEXT")
-        val prevIntent = Intent(applicationContext, MediaPlaybackService::class.java).setAction("ACTION_PREVIOUS")
+        val playPauseIntent = if (isPlaying) {
+            Intent(applicationContext, MediaPlaybackService::class.java).setAction(ACTION_PAUSE)
+        } else Intent(applicationContext, MediaPlaybackService::class.java).setAction(ACTION_PLAY)
+        val nextIntent = Intent(applicationContext, MediaPlaybackService::class.java).setAction(ACTION_NEXT)
+        val prevIntent = Intent(applicationContext, MediaPlaybackService::class.java).setAction(ACTION_PREVIOUS)
 
         val intent = packageManager
             .getLaunchIntentForPackage(packageName)
@@ -737,11 +740,10 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         val actionString = intent.action
         if (actionString != null) {
             when (actionString) {
-                // TODO: Are these actions stored as params anywhere? Would then need to update refreshNotification() also
-                "ACTION_PLAY" -> mediaSessionCallback.onPlay()
-                "ACTION_PAUSE" -> mediaSessionCallback.onPause()
-                "ACTION_NEXT" -> mediaSessionCallback.onSkipToNext()
-                "ACTION_PREVIOUS" -> mediaSessionCallback.onSkipToPrevious()
+                ACTION_PLAY -> mediaSessionCallback.onPlay()
+                ACTION_PAUSE -> mediaSessionCallback.onPause()
+                ACTION_NEXT -> mediaSessionCallback.onSkipToNext()
+                ACTION_PREVIOUS -> mediaSessionCallback.onSkipToPrevious()
             }
         }
         return super.onStartCommand(intent, flags, startId)
