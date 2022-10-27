@@ -1,6 +1,9 @@
 package com.codersguidebook.supernova.params
 
-/** Class containing identifying values for custom commands sent to the media browser service **/
+/**
+ * Class containing identifying values for custom commands, actions and messages
+ * regarding the media browser service
+ **/
 class MediaServiceConstants {
     companion object {
         const val ACTION_PLAY = "play"
