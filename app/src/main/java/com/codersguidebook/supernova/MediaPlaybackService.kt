@@ -387,57 +387,6 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             }
         }
 
-        override fun onRemoveQueueItem(description: MediaDescriptionCompat?) {
-            super.onRemoveQueueItem(description)
-
-            if (playQueue.isNotEmpty() && description != null) {
-                /**
-                 * Helper function to determine whether it is appropriate to continue skipping through the play queue.
-                 *
-                 * @param originalQueueItem - The originating queue item (prior to any track skipping)
-                 * @param currentQueueItem - The current queue item
-                 * @return A Boolean indicating whether the parent method should continue skipping through the play queue.
-                 */
-                fun shouldContinueSkippingQueueItems(originalQueueItem: QueueItem?, currentQueueItem: QueueItem?): Boolean {
-                    // If we have returned to originating queue item, then stop skipping through the tracks
-                    if (originalQueueItem?.queueId == currentQueueItem?.queueId) return false
-
-                    // If we have reached a song different to the song being removed, then we can stop skipping
-                    if (currentQueueItem?.description?.mediaId != description.mediaId) return false
-
-                    // If the repeat mode is not equal to ALL and we have reached the end of the play queue,
-                    // then do not continue to skip through the play queue.
-                    if (mediaSessionCompat.controller.repeatMode != REPEAT_MODE_ALL &&
-                        currentQueueItem?.queueId == playQueue[playQueue.size - 1].queueId) return false
-
-                    return true
-                }
-
-                val originalQueueItem = getCurrentQueueItem()
-                var currentQueueItem = originalQueueItem
-
-                // If the currently playing song is being removed from the play queue, then we must
-                // continue to skip through the play queue until we find a different song (or exhaust
-                // the play queue)
-                do {
-                    if (currentQueueItem?.description?.mediaId == description.mediaId) {
-                        onSkipToNext()
-                    }
-
-                    currentQueueItem = getCurrentQueueItem()
-                } while (shouldContinueSkippingQueueItems(originalQueueItem, currentQueueItem))
-
-                playQueue.removeIf { it.description.mediaId == description.mediaId }
-
-                if (playQueue.isEmpty()) {
-                    onStop()
-                    return
-                }
-
-                setPlayQueue()
-            }
-        }
-        
         override fun onSkipToQueueItem(id: Long) {
             super.onSkipToQueueItem(id)
             
@@ -798,11 +747,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         return super.onStartCommand(intent, flags, startId)
     }
 
-    /**
-     * Handle errors that occur during playback
-     *
-     * TODO - Could include a parameter that gives a description for different errors. This could be printed in the Toast.
-     */
+    /** Handle errors that occur during playback */
     private fun error() {
         mediaSessionCompat.controller.transportControls.stop()
         stopForeground(true)

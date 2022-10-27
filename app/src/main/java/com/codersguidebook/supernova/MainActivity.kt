@@ -539,23 +539,8 @@ class MainActivity : AppCompatActivity() {
                 putLong("queueItemId", queueItemId)
             }
 
-            // TODO: Use the result receiver. Also, maybe try and link this method with the one below for simplicity
-            //  The removeQueueItem method in the media browser service is complex. See if there's some way of still using that code
             val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
             mediaControllerCompat.sendCommand(REMOVE_QUEUE_ITEM_BY_ID, bundle, null)
-        }
-    }
-
-    /**
-     * Remove all instances of a given song from the play queue.
-     *
-     * @param song - The Song object to be removed from the play queue.
-     */
-    private fun removeAllInstancesOfSongFromPlayQueue(song: Song) {
-        if (playQueue.isNotEmpty()) {
-            val mediaDescriptionCompat = mediaDescriptionManager.buildDescription(song)
-            val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
-            mediaControllerCompat.removeQueueItem(mediaDescriptionCompat)
         }
     }
 
@@ -1205,7 +1190,9 @@ class MainActivity : AppCompatActivity() {
                 if (updatedPlaylists.isNotEmpty()) musicLibraryViewModel.updatePlaylists(updatedPlaylists)
             }
 
-            removeAllInstancesOfSongFromPlayQueue(song)
+            val queueItemsToRemove = playQueue.filter { it.description.mediaId == song.songId.toString() }
+            for (item in queueItemsToRemove) removeQueueItemById(item.queueId)
+
             musicLibraryViewModel.deleteSong(song)
         }
         deleteRedundantArtworkForDeletedSongs(songs)
