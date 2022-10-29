@@ -18,7 +18,7 @@ import com.codersguidebook.supernova.R
 class PlayQueueAdapter(private val fragment: PlayQueueFragment
 , private val activity: MainActivity): RecyclerView.Adapter<PlayQueueAdapter.PlayQueueViewHolder>() {
     var currentlyPlayingQueueId = -1L
-    var playQueue = mutableListOf<QueueItem>()
+    val playQueue = mutableListOf<QueueItem>()
 
     inner class PlayQueueViewHolder(itemView: View) :
         RecyclerView.ViewHolder(itemView),

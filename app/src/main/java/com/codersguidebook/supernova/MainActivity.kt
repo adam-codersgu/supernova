@@ -53,6 +53,7 @@ import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_SONGS
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.RESTORE_PLAY_QUEUE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_REPEAT_MODE
@@ -275,6 +276,21 @@ class MainActivity : AppCompatActivity() {
         if (savePlayQueue) savePlayQueue()
     }
 
+    /**
+     * Notify the media browser service that a queue item has been moved.
+     *
+     * @param queueId - The queue ID of the item to be moved.
+     * @param newIndex - The new index in the play queue that the item should occupy.
+     */
+    fun notifyQueueItemMoved(queueId: Long, newIndex: Int) {
+        val bundle = Bundle().apply {
+            putLong("queueItemId", queueId)
+            putInt("newIndex", newIndex)
+        }
+
+        mediaController.sendCommand(MOVE_QUEUE_ITEM, bundle, null)
+    }
+
     /** Respond to clicks on the play/pause button **/
     fun playPauseControl() {
         when (mediaController.playbackState?.state) {
@@ -330,6 +346,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         mediaController.sendCommand(SET_SHUFFLE_MODE, bundle, null)
+        playQueueViewModel.refreshPlayQueue.postValue(true)
     }
 
     /**

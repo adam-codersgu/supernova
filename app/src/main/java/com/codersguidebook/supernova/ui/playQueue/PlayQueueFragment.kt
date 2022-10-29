@@ -1,7 +1,7 @@
 package com.codersguidebook.supernova.ui.playQueue
 
-import android.annotation.SuppressLint
 import android.os.Bundle
+import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.view.*
 import android.widget.Toast
 import androidx.core.view.MenuHost
@@ -20,7 +20,6 @@ import com.codersguidebook.supernova.PlayQueueViewModel
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
 
-// TODO: Need to instruct the play queue views to skip to play queue items based on their ID not index
 class PlayQueueFragment : Fragment() {
     private var _binding: FragmentWithRecyclerViewBinding? = null
     private val binding get() = _binding!!
@@ -30,6 +29,9 @@ class PlayQueueFragment : Fragment() {
 
     private val itemTouchHelper by lazy {
         val simpleItemTouchCallback = object : SimpleCallback(UP or DOWN, 0) {
+            var to: Int? = null
+            var queueItem: QueueItem? = null
+
             override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
                 super.onSelectedChanged(viewHolder, actionState)
 
@@ -40,17 +42,22 @@ class PlayQueueFragment : Fragment() {
                 super.clearView(recyclerView, viewHolder)
 
                 viewHolder.itemView.alpha = 1.0f
-                playQueueViewModel.playQueue.value = playQueueAdapter.playQueue
+
+                if (to != null && queueItem != null) {
+                    callingActivity.notifyQueueItemMoved(queueItem!!.queueId, to!!)
+                    to = null
+                    queueItem = null
+                }
             }
 
             override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
                 val from = viewHolder.layoutPosition
-                val to = target.layoutPosition
+                to = target.layoutPosition
                 if (from != to) {
-                    val song = playQueueAdapter.playQueue[from]
+                    queueItem = playQueueAdapter.playQueue[from]
                     playQueueAdapter.playQueue.removeAt(from)
-                    playQueueAdapter.playQueue.add(to, song)
-                    playQueueAdapter.notifyItemMoved(from, to)
+                    playQueueAdapter.playQueue.add(to!!, queueItem!!)
+                    playQueueAdapter.notifyItemMoved(from, to!!)
                 }
 
                 return true
@@ -69,7 +76,6 @@ class PlayQueueFragment : Fragment() {
         return binding.root
     }
 
-    @SuppressLint("NotifyDataSetChanged")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupMenu()
@@ -79,24 +85,23 @@ class PlayQueueFragment : Fragment() {
         binding.root.itemAnimator = DefaultItemAnimator()
         binding.root.adapter = playQueueAdapter
 
-        playQueueViewModel.playQueue.observe(viewLifecycleOwner) { queue ->
-            queue?.let {
-                if (playQueueAdapter.playQueue.size > it.size) {
-                    for (queueItem in playQueueAdapter.playQueue) {
-                        val matchingQueueItem = it.firstOrNull { item ->
-                            queueItem.queueId == item.queueId
-                        }
-                        // The QueueItem is no longer present in the new play queue
-                        if (matchingQueueItem == null) {
-                            playQueueAdapter.removeQueueItemById(queueItem.queueId)
-                        }
+        playQueueViewModel.playQueue.observe(viewLifecycleOwner) {
+            when {
+                it.size > playQueueAdapter.playQueue.size -> refreshPlayQueue()
+                playQueueAdapter.playQueue.size > it.size -> {
+                    val queueItemsToRemove = playQueueAdapter.playQueue.filter { queueItem ->
+                        it.find { item -> item.queueId == queueItem.queueId } == null
                     }
-                } else {
-                    // Adapter loaded for first time or play queue shuffled
-                    playQueueAdapter.playQueue = it.toMutableList()
-                    playQueueAdapter.notifyDataSetChanged()
+                    for (queueItem in queueItemsToRemove) {
+                        playQueueAdapter.removeQueueItemById(queueItem.queueId)
+                    }
                 }
             }
+        }
+
+        playQueueViewModel.refreshPlayQueue.observe(viewLifecycleOwner) {
+            // TODO: This feature isn't working when the play queue is shuffled
+            if (it) refreshPlayQueue()
         }
 
         playQueueViewModel.currentQueueItemId.observe(viewLifecycleOwner) { position ->
@@ -104,6 +109,22 @@ class PlayQueueFragment : Fragment() {
         }
 
         itemTouchHelper.attachToRecyclerView(binding.root)
+    }
+
+    /** Refresh the currently displayed play queue */
+    private fun refreshPlayQueue() {
+        if (playQueueAdapter.playQueue.isNotEmpty()) {
+            val numberItemsRemoved = playQueueAdapter.playQueue.size
+            playQueueAdapter.playQueue.clear()
+            playQueueAdapter.notifyItemRangeRemoved(0, numberItemsRemoved)
+        }
+        playQueueViewModel.playQueue.value?.let {
+            if (it.isNotEmpty()) {
+                playQueueAdapter.playQueue.addAll(it)
+                playQueueAdapter.notifyItemRangeInserted(0, it.size)
+            }
+        }
+        playQueueViewModel.refreshPlayQueue.postValue(false)
     }
 
     private fun setupMenu() {
