@@ -533,10 +533,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         mediaSessionCompat.setQueue(playQueue)
     }
 
-    /**
-     * Set the play queue for the media session and notify all observers of the playback state.
-     *
-     */
+    /** Set the play queue for the media session and notify all observers of the playback state. */
     private fun setPlayQueue() {
         mediaSessionCompat.setQueue(playQueue)
         setMediaPlaybackState(STATE_NONE, 0, 0f, null)
@@ -571,10 +568,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         NotificationManagerCompat.from(this).cancel(1)
     }
 
-    /**
-     * Refresh the metadata displayed in the media player notification and handle user interactions.
-     *
-     */
+    /** Refresh the metadata displayed in the media player notification and handle user interactions. */
     private fun refreshNotification() {
         val isPlaying = mediaPlayer?.isPlaying ?: false
         val playPauseIntent = if (isPlaying) {
