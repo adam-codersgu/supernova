@@ -685,9 +685,8 @@ class MainActivity : AppCompatActivity() {
                 playlistSongIds.addAll(songIds)
                 savePlaylistWithSongIds(playlist, playlistSongIds)
 
-                if (songs.size == 1) Toast.makeText(applicationContext,
-                    songs[0].title + " has been added to " + playlist.name,
-                    Toast.LENGTH_SHORT
+                if (songs.size == 1) Toast.makeText(applicationContext, getString(R.string.song_added_to_playlist,
+                    songs[0].title, playlist.name), Toast.LENGTH_SHORT
                 ).show()
                 else Toast.makeText(applicationContext,
                     "Your songs have been added to " + playlist.name,
