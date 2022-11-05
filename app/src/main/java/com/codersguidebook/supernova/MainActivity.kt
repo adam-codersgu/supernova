@@ -689,8 +689,7 @@ class MainActivity : AppCompatActivity() {
                     songs[0].title, playlist.name), Toast.LENGTH_SHORT
                 ).show()
                 else Toast.makeText(applicationContext,
-                    "Your songs have been added to " + playlist.name,
-                    Toast.LENGTH_SHORT
+                    getString(R.string.songs_added_to_playlist, playlist.name), Toast.LENGTH_SHORT
                 ).show()
             }
             setNegativeButton(R.string.cancel) { _, _ -> return@setNegativeButton }

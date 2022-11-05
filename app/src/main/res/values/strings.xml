@@ -137,6 +137,7 @@
     <string name="queue">Queue</string>
     <string name="restrictions_may_apply">Restrictions may apply - click here to learn more.</string>
     <string name="song_added_to_playlist">%1$s has been added to %2$s</string>
+    <string name="songs_added_to_playlist">Your songs have been added to %1$s</string>
 
     <string name="account_type">Spotify account type: %s</string>
     <string name="restrictions_body">Some Spotify account types restrict your access to certain features. For example, free/open account users may notice they cannot play specific songs on request, queue songs, fast forward through tracks, skip back to previous tracks etc.. Users may also have to listen to adverts between songs.
