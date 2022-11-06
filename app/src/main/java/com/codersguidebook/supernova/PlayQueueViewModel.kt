@@ -9,6 +9,7 @@ class PlayQueueViewModel : ViewModel() {
     var currentQueueItemId = MutableLiveData<Long>()
     var playbackDuration = MutableLiveData<Int>()
     var playbackPosition = MutableLiveData<Int>()
+    var refreshPlayQueue = MutableLiveData(false)
     // TODO: Refactor to playback state PLAYBACK_STATE -> for consistency and easy updating
     var isPlaying = MutableLiveData<Boolean>()
 

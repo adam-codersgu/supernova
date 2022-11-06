@@ -33,6 +33,7 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTI
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PLAY
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PREVIOUS
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_SONGS
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.RESTORE_PLAY_QUEUE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_REPEAT_MODE
@@ -342,6 +343,20 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         cb?.send(SUCCESS, Bundle())
                     }
                 }
+                MOVE_QUEUE_ITEM -> {
+                    extras?.let {
+                        val queueItemId = it.getLong("queueItemId", -1L)
+                        val newIndex = it.getInt("newIndex", -1)
+                        if (queueItemId == -1L || newIndex == -1 || newIndex >= playQueue.size) return@let
+
+                        val oldIndex = playQueue.indexOfFirst { queueItem -> queueItem.queueId == queueItemId }
+                        if (oldIndex == -1) return@let
+                        val queueItem = playQueue[oldIndex]
+                        playQueue.removeAt(oldIndex)
+                        playQueue.add(newIndex, queueItem)
+                        setPlayQueue()
+                    }
+                }
                 REMOVE_QUEUE_ITEM_BY_ID -> {
                     extras?.let {
                         val queueItemId = extras.getLong("queueItemId", -1L)
@@ -351,6 +366,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         }
                         playQueue.removeIf { it.queueId == queueItemId }
                         setPlayQueue()
+                        cb?.send(SUCCESS, Bundle())
                     }
                 }
                 SET_REPEAT_MODE -> {
@@ -375,6 +391,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         }
 
                         setPlayQueue()
+                        cb?.send(SUCCESS, Bundle())
                     }
                 }
                 UPDATE_QUEUE_ITEM -> {
@@ -409,16 +426,14 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             super.onSkipToPrevious()
 
             if (playQueue.isNotEmpty()) {
-                when {
-                    (mediaPlayer != null && mediaPlayer!!.currentPosition < 5000) ||
-                            currentlyPlayingQueueItemId == playQueue[0].queueId -> onSeekTo(0L)
-                    else -> {
-                        val indexOfCurrentQueueItem = playQueue.indexOfFirst {
-                            it.queueId == currentlyPlayingQueueItemId
-                        }
-                        currentlyPlayingQueueItemId = playQueue[indexOfCurrentQueueItem - 1].queueId
-                        onSkipToQueueItem(currentlyPlayingQueueItemId)
+                if (mediaPlayer != null && mediaPlayer!!.currentPosition > 5000 ||
+                            currentlyPlayingQueueItemId == playQueue[0].queueId) onSeekTo(0L)
+                else {
+                    val indexOfCurrentQueueItem = playQueue.indexOfFirst {
+                        it.queueId == currentlyPlayingQueueItemId
                     }
+                    currentlyPlayingQueueItemId = playQueue[indexOfCurrentQueueItem - 1].queueId
+                    onSkipToQueueItem(currentlyPlayingQueueItemId)
                 }
             }
         }
@@ -530,13 +545,10 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             setCurrentMetadata()
             refreshNotification()
         }
-        mediaSessionCompat.setQueue(playQueue)
+        setPlayQueue()
     }
 
-    /**
-     * Set the play queue for the media session and notify all observers of the playback state.
-     *
-     */
+    /** Set the play queue for the media session and notify all observers of the playback state. */
     private fun setPlayQueue() {
         mediaSessionCompat.setQueue(playQueue)
         setMediaPlaybackState(STATE_NONE, 0, 0f, null)
@@ -571,10 +583,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         NotificationManagerCompat.from(this).cancel(1)
     }
 
-    /**
-     * Refresh the metadata displayed in the media player notification and handle user interactions.
-     *
-     */
+    /** Refresh the metadata displayed in the media player notification and handle user interactions. */
     private fun refreshNotification() {
         val isPlaying = mediaPlayer?.isPlaying ?: false
         val playPauseIntent = if (isPlaying) {
