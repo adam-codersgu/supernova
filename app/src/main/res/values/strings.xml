@@ -136,6 +136,8 @@
     <string name="artist_information">Artist information</string>
     <string name="queue">Queue</string>
     <string name="restrictions_may_apply">Restrictions may apply - click here to learn more.</string>
+
+    <string name="select_playlist">Select a playlist or create a new one</string>
     <string name="song_added_to_playlist">%1$s has been added to %2$s</string>
     <string name="songs_added_to_playlist">Your songs have been added to %1$s</string>
 

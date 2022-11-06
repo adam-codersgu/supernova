@@ -678,7 +678,7 @@ class MainActivity : AppCompatActivity() {
         val userPlaylistNames = userPlaylists.map { it.name }.toTypedArray()
 
         AlertDialog.Builder(this).apply {
-            setTitle("Select a playlist or create a new one")
+            setTitle(getString(R.string.select_playlist))
             setItems(userPlaylistNames) { _, index ->
                 val playlist = userPlaylists[index]
                 val playlistSongIds = extractPlaylistSongIds(playlist.songs)
