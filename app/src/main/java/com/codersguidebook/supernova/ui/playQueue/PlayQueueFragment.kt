@@ -2,6 +2,7 @@ package com.codersguidebook.supernova.ui.playQueue
 
 import android.os.Bundle
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
+import android.util.Log
 import android.view.*
 import android.widget.Toast
 import androidx.core.view.MenuHost
@@ -101,6 +102,7 @@ class PlayQueueFragment : Fragment() {
 
         playQueueViewModel.refreshPlayQueue.observe(viewLifecycleOwner) {
             // TODO: This feature isn't working when the play queue is shuffled
+            Log.e("DEBUGGING", "The value of it is $it")
             if (it) refreshPlayQueue()
         }
 
@@ -117,11 +119,13 @@ class PlayQueueFragment : Fragment() {
             val numberItemsRemoved = playQueueAdapter.playQueue.size
             playQueueAdapter.playQueue.clear()
             playQueueAdapter.notifyItemRangeRemoved(0, numberItemsRemoved)
+            Log.e("DEBUGGING", "$numberItemsRemoved items removed")
         }
         playQueueViewModel.playQueue.value?.let {
             if (it.isNotEmpty()) {
                 playQueueAdapter.playQueue.addAll(it)
                 playQueueAdapter.notifyItemRangeInserted(0, it.size)
+                Log.e("DEBUGGING", "The first item added was " + it[0].description.title)
             }
         }
         playQueueViewModel.refreshPlayQueue.postValue(false)

@@ -366,6 +366,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         }
                         playQueue.removeIf { it.queueId == queueItemId }
                         setPlayQueue()
+                        cb?.send(SUCCESS, Bundle())
                     }
                 }
                 SET_REPEAT_MODE -> {
@@ -390,6 +391,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         }
 
                         setPlayQueue()
+                        cb?.send(SUCCESS, Bundle())
                     }
                 }
                 UPDATE_QUEUE_ITEM -> {
