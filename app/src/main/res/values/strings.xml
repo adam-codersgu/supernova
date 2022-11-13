@@ -141,6 +141,23 @@
     <string name="song_added_to_playlist">%1$s has been added to %2$s</string>
     <string name="songs_added_to_playlist">Your songs have been added to %1$s</string>
 
+    <string name="empty_play_queue">The play queue is empty.</string>
+    <string name="play_queue_shuffled">Play queue shuffled</string>
+    <string name="play_queue_unshuffled">Play queue unshuffled</string>
+    <string name="no_songs_found">No songs were found for %1$s</string>
+
+    <string name="storage_permission_needed">Storage access is required to load your music library</string>
+
+    <string name="added_to_favourites">Added to favourites</string>
+    <string name="removed_from_favourites">Removed from favourites</string>
+
+    <string name="item_added_play_queue">%1$s has been added to the play queue</string>
+    <string name="songs_added_play_queue">Your songs have been added to the play queue</string>
+
+    <string name="repeat_mode_none">Repeat mode off</string>
+    <string name="repeat_mode_all">Repeat the play queue</string>
+    <string name="repeat_mode_one">Repeat the current song</string>
+
     <string name="account_type">Spotify account type: %s</string>
     <string name="restrictions_body">Some Spotify account types restrict your access to certain features. For example, free/open account users may notice they cannot play specific songs on request, queue songs, fast forward through tracks, skip back to previous tracks etc.. Users may also have to listen to adverts between songs.
     \n

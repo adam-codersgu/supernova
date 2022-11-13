@@ -143,7 +143,7 @@ class PlayQueueFragment : Fragment() {
                         }
 
                         if (songIds.isNotEmpty()) callingActivity.openDialog(CreatePlaylist(songIds))
-                        else Toast.makeText(callingActivity, "The play queue is empty.", Toast.LENGTH_SHORT).show()
+                        else Toast.makeText(callingActivity, getString(R.string.empty_play_queue), Toast.LENGTH_SHORT).show()
 
                         true
                     }

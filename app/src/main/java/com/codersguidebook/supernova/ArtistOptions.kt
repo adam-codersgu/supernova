@@ -44,23 +44,23 @@ class ArtistOptions(private val artistName: String) : DialogFragment() {
 
         musicDatabase = MusicDatabase.getDatabase(requireContext(), lifecycleScope)
         musicDatabase!!.musicDao().findArtistsSongs(artistName)
-            .observe(this, { songs ->
+            .observe(this) { songs ->
                 songs?.let {
                     this.songList = it
                 }
-            })
+            }
 
         builder.setView(dialogView)
 
         txtPlayNext.setOnClickListener{
             if (!songList.isNullOrEmpty()) callingActivity.addSongsToPlayQueue(songList!!, true)
-            else Toast.makeText(activity, "No songs were found for this $artistName.", Toast.LENGTH_SHORT).show()
+            else Toast.makeText(activity, getString(R.string.no_songs_found, artistName), Toast.LENGTH_SHORT).show()
             dismiss()
         }
 
         txtAddQueue.setOnClickListener{
             if (!songList.isNullOrEmpty()) callingActivity.addSongsToPlayQueue(songList!!)
-            else Toast.makeText(activity, "No songs were found for this $artistName.", Toast.LENGTH_SHORT).show()
+            else Toast.makeText(activity, getString(R.string.no_songs_found, artistName), Toast.LENGTH_SHORT).show()
             dismiss()
         }
 
