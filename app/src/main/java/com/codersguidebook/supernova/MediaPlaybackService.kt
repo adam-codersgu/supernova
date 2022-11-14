@@ -669,12 +669,14 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         val currentQueueItem = getCurrentQueueItem() ?: return
         val currentQueueItemDescription = currentQueueItem.description
         val metadataBuilder= MediaMetadataCompat.Builder().apply {
+            putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, currentQueueItemDescription.mediaId)
             putString(MediaMetadataCompat.METADATA_KEY_TITLE, currentQueueItemDescription.title.toString())
             putString(MediaMetadataCompat.METADATA_KEY_ARTIST, currentQueueItemDescription.subtitle.toString())
             val extras = currentQueueItemDescription.extras
             val albumName = extras?.getString("album") ?: "Unknown album"
             putString(MediaMetadataCompat.METADATA_KEY_ALBUM, albumName)
             val albumId = extras?.getString("album_id")
+            putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, albumId)
             putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, getArtworkAsBitmap(albumId))
         }
         mediaSessionCompat.setMetadata(metadataBuilder.build())

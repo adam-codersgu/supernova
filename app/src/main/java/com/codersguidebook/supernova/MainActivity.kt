@@ -16,6 +16,7 @@ import android.os.*
 import android.provider.MediaStore
 import android.provider.Settings
 import android.support.v4.media.MediaBrowserCompat
+import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat
@@ -118,6 +119,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private var controllerCallback = object : MediaControllerCompat.Callback() {
+
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
             super.onPlaybackStateChanged(state)
             refreshPlayQueue(true)
@@ -164,6 +166,12 @@ class MainActivity : AppCompatActivity() {
                 else -> return
             }
         }
+
+        override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
+            super.onMetadataChanged(metadata)
+
+            playQueueViewModel.currentlyPlayingSongMetadata.postValue(metadata)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -177,8 +185,7 @@ class MainActivity : AppCompatActivity() {
         musicDatabase = MusicDatabase.getDatabase(this, lifecycleScope)
         musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
 
-        // Set up a channel for the music player notification
-        createChannel()
+        createChannelForMediaPlayerNotification()
 
         val taskDescription = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             // Pre-SDK 33
@@ -934,7 +941,7 @@ class MainActivity : AppCompatActivity() {
         (AlbumOptions(albumSongs).show(supportFragmentManager, ""))
     }
 
-    private fun createChannel() {
+    private fun createChannelForMediaPlayerNotification() {
         val channel = NotificationChannel(
             channelID, "Notifications",
             NotificationManager.IMPORTANCE_DEFAULT
