@@ -7,13 +7,11 @@ import android.view.*
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.findNavController
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.databinding.FragmentEditArtistBinding
-import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
+import com.codersguidebook.supernova.entities.Song
 
 class EditArtistFragment : Fragment() {
 
@@ -41,9 +39,9 @@ class EditArtistFragment : Fragment() {
         
         musicDatabase = MusicDatabase.getDatabase(requireContext(), lifecycleScope)
         musicDatabase!!.musicDao().findArtistsSongs(artistName!!)
-            .observe(viewLifecycleOwner, { songs ->
-                if (songs != null) artistsSongs = songs
-            })
+            .observe(viewLifecycleOwner) {
+                artistsSongs = it
+            }
 
         val editable: Editable = SpannableStringBuilder(artistName)
         binding.editArtistName.text = editable
@@ -64,20 +62,19 @@ class EditArtistFragment : Fragment() {
             R.id.save -> {
                 val newName = binding.editArtistName.text.toString()
 
-                // check the artist name field is not blank and that it has been changed
-                if (newName.isNotEmpty() && newName != artistName) {
-                    val updatedArtistSongs = mutableListOf<Song>()
-                    for (s in artistsSongs) {
-                        s.artist = newName
-                        updatedArtistSongs.add(s)
+                when {
+                    newName.isEmpty() -> Toast.makeText(activity, getString(R.string.artist_name_cannot_be_empty),
+                        Toast.LENGTH_SHORT).show()
+                    newName == artistName -> Toast.makeText(activity, getString(R.string.artist_name_not_changed),
+                        Toast.LENGTH_SHORT).show()
+                    else -> {
+                        for (song in artistsSongs) song.artist = newName
+                        callingActivity.updateSongInfo(artistsSongs)
+                        Toast.makeText(activity, getString(R.string.artist_updated),
+                            Toast.LENGTH_SHORT).show()
                     }
+                }
 
-                    callingActivity.updateSongInfo(updatedArtistSongs)
-                    val action = ArtistsFragmentDirections.actionFinishEditArtist(newName)
-                    requireView().findNavController().navigate(action)
-
-                    Toast.makeText(activity, "Details saved.", Toast.LENGTH_SHORT).show()
-                } else Toast.makeText(activity, "Check none of the fields are empty and that the artist name has been changed.", Toast.LENGTH_LONG).show()
                 true
             }
 

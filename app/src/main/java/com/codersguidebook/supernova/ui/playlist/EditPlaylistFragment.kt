@@ -16,7 +16,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import com.bumptech.glide.Glide
-import com.codersguidebook.supernova.*
+import com.codersguidebook.supernova.MainActivity
+import com.codersguidebook.supernova.MusicDatabase
+import com.codersguidebook.supernova.MusicLibraryViewModel
+import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentEditPlaylistBinding
 import com.codersguidebook.supernova.entities.Playlist
 import java.io.FileNotFoundException
@@ -54,18 +57,22 @@ class EditPlaylistFragment : Fragment() {
         setHasOptionsMenu(true)
 
         val musicDatabase = MusicDatabase.getDatabase(requireContext(), lifecycleScope)
-        musicDatabase.playlistDao().findPlaylist(playlistName ?: "").observe(viewLifecycleOwner, { p ->
+        musicDatabase.playlistDao().findPlaylist(playlistName ?: "").observe(viewLifecycleOwner) { p ->
             p?.let {
                 playlist = it
                 val editable: Editable = SpannableStringBuilder(it.name)
                 binding.editPlaylistName.text = editable
 
                 if (!callingActivity.insertPlaylistArtwork(it, binding.artwork)) {
-                    val playlistSongIDs= callingActivity.extractPlaylistSongIds(it.songs)
-                    callingActivity.insertArtwork(callingActivity.findFirstSongArtwork(playlistSongIDs[0]), binding.artwork)
+                    val playlistSongIDs = callingActivity.extractPlaylistSongIds(it.songs)
+                    callingActivity.insertArtwork(
+                        callingActivity.findFirstSongArtwork(
+                            playlistSongIDs[0]
+                        ), binding.artwork
+                    )
                 }
             }
-        })
+        }
 
         binding.artwork.setOnClickListener {
             startActivityForResult(
@@ -93,8 +100,8 @@ class EditPlaylistFragment : Fragment() {
                     .load(selectedImageUri)
                     .centerCrop()
                     .into(binding.artwork)
-            } catch (e: FileNotFoundException) { }
-            catch (e: IOException) { }
+            } catch (_: FileNotFoundException) { }
+            catch (_: IOException) { }
         }
 
         super.onActivityResult(reqCode, resultCode, data)
@@ -111,27 +118,29 @@ class EditPlaylistFragment : Fragment() {
 
         return when (item.itemId) {
             R.id.save -> {
-                if (playlist != null) {
-                    // take user submission for album title or year, or use default values if submission is blank
-                    val newName = binding.editPlaylistName.text.toString()
+                playlist?.apply {
+                    val newPlaylistName = binding.editPlaylistName.text.toString()
 
-                    // check no fields are blank
-                    if (newName.isNotEmpty()) {
-                        // check something has actually been changed
-                        if (newName != playlist!!.name || newArtwork != null) {
-                            playlist!!.name = newName
-                            // artwork has been changed
-                            if (newArtwork != null) callingActivity.changeArtwork("playlistArt", newArtwork!!, playlist!!.playlistId.toString())
+                    if (newPlaylistName.isEmpty()) {
+                        Toast.makeText(activity, getString(R.string.playlist_name_cannot_be_empty),
+                            Toast.LENGTH_SHORT).show()
+                    } else {
+                        this.name = newPlaylistName
 
-                            musicLibraryViewModel.updatePlaylists(listOf(playlist!!))
+                        newArtwork?.let {
+                            callingActivity.changeArtwork("playlistArt", it,
+                                this.playlistId.toString())
                         }
 
-                        val action = EditPlaylistFragmentDirections.actionFinishEditPlaylist(newName)
+                        musicLibraryViewModel.updatePlaylists(listOf(this))
+
+                        val action = EditPlaylistFragmentDirections.actionFinishEditPlaylist(newPlaylistName)
                         requireView().findNavController().navigate(action)
 
-                        Toast.makeText(activity, "Details saved.", Toast.LENGTH_SHORT).show()
-                    } else Toast.makeText(activity, "Check none of the fields are empty.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(activity, getString(R.string.playlist_updated), Toast.LENGTH_SHORT).show()
+                    }
                 }
+
                 true
             }
             else -> super.onOptionsItemSelected(item)

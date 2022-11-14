@@ -158,6 +158,16 @@
     <string name="repeat_mode_all">Repeat the play queue</string>
     <string name="repeat_mode_one">Repeat the current song</string>
 
+    <string name="item_saved">%1$s saved</string>
+    <string name="playlist_already_exists">A playlist with that name already exists</string>
+    <string name="playlist_name_cannot_be_empty">The playlist name field cannot be empty</string>
+    <string name="playlist_contains_zero_songs">There are no songs in this playlist</string>
+    <string name="playlist_updated">Playlist updated!</string>
+
+    <string name="artist_name_cannot_be_empty">The artist name field cannot be empty</string>
+    <string name="artist_name_not_changed">The artist name has not been changed</string>
+    <string name="artist_updated">Artist updated!</string>
+
     <string name="account_type">Spotify account type: %s</string>
     <string name="restrictions_body">Some Spotify account types restrict your access to certain features. For example, free/open account users may notice they cannot play specific songs on request, queue songs, fast forward through tracks, skip back to previous tracks etc.. Users may also have to listen to adverts between songs.
     \n
