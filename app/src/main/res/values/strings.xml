@@ -141,22 +141,39 @@
     <string name="song_added_to_playlist">%1$s has been added to %2$s</string>
     <string name="songs_added_to_playlist">Your songs have been added to %1$s</string>
 
-    <string name="account_type">Spotify account type: %s</string>
-    <string name="restrictions_body">Some Spotify account types restrict your access to certain features. For example, free/open account users may notice they cannot play specific songs on request, queue songs, fast forward through tracks, skip back to previous tracks etc.. Users may also have to listen to adverts between songs.
-    \n
-    \nPlease be aware these restrictions can also interfere with the playlists that Supernova generates (e.g. playlists based on mood). While Supernova can prepare a list of suitable songs, if your account does not permit the playback of songs on command then you may hear different music instead.
-    \n
-    \nPremium account users will not experience any restrictions. You can manage your Spotify account through Spotify\'s website and app.</string>
-    <string name="spotify_not_installed">It seems Spotify is not installed on this device!
-        \n
-        \nDownload Spotify from the app store and create a Spotify account to enjoy more features. For example, through your Spotify account, Supernova can play songs with animations over the album artwork, create playlists based on your mood, help you discover new music and more!</string>
+    <string name="empty_play_queue">The play queue is empty.</string>
+    <string name="play_queue_shuffled">Play queue shuffled</string>
+    <string name="play_queue_unshuffled">Play queue unshuffled</string>
+    <string name="no_songs_found">No songs were found for %1$s</string>
+
+    <string name="storage_permission_needed">Storage access is required to load your music library</string>
+
+    <string name="added_to_favourites">Added to favourites</string>
+    <string name="removed_from_favourites">Removed from favourites</string>
+
+    <string name="item_added_play_queue">%1$s has been added to the play queue</string>
+    <string name="songs_added_play_queue">Your songs have been added to the play queue</string>
+
+    <string name="repeat_mode_none">Repeat mode off</string>
+    <string name="repeat_mode_all">Repeat the play queue</string>
+    <string name="repeat_mode_one">Repeat the current song</string>
+
+    <string name="item_saved">%1$s saved</string>
+    <string name="playlist_already_exists">A playlist with that name already exists</string>
+    <string name="playlist_name_cannot_be_empty">The playlist name field cannot be empty</string>
+    <string name="playlist_contains_zero_songs">There are no songs in this playlist</string>
+    <string name="playlist_updated">Playlist updated!</string>
+
+    <string name="artist_name_cannot_be_empty">The artist name field cannot be empty</string>
+    <string name="artist_name_not_changed">The artist name has not been changed</string>
+    <string name="artist_updated">Artist updated!</string>
+
+    <string name="album_name_cannot_be_empty">The album name field cannot be empty</string>
+    <string name="album_year_cannot_be_empty">The album year field cannot be empty</string>
+    <string name="album_updated">Album updated!</string>
+
     <string name="app_preferences">App preferences</string>
-    <string name="launch_preference">Launch app in Spotify mode?</string>
-    <string name="launch_preference_invitation">How would you like the app to launch?
-    \n
-    \nYou can change your mind whenever you like in your Settings.</string>
-    <string name="spotify_mode">Spotify mode</string>
-    <string name="normal_mode">Normal mode</string>
+
     <string name="no">No</string>
     <string name="yes">Yes</string>
     <string name="save_play_queue">Save play queue as playlist</string>

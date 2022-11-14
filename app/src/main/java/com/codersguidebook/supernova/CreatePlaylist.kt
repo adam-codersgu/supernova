@@ -31,14 +31,13 @@ class CreatePlaylist (private val songIds: List<Long>) : DialogFragment() {
             if (playlistName.isNotEmpty()) {
                 val songListJSON = callingActivity.convertSongIDListToJson(songIds)
 
-                // playlist ID should be automatically assigned
                 val newPlaylist = Playlist(0, playlistName, songListJSON, false)
 
                 if (callingActivity.saveNewPlaylist(newPlaylist)) {
-                    Toast.makeText(activity, "Playlist called $playlistName is saved.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(activity, getString(R.string.item_saved, playlistName), Toast.LENGTH_SHORT).show()
                     dismiss()
-                } else Toast.makeText(activity, "A playlist with that name already exists", Toast.LENGTH_SHORT).show()
-            } else Toast.makeText(activity, "Playlist name cannot be empty", Toast.LENGTH_SHORT).show()
+                } else Toast.makeText(activity, getString(R.string.playlist_already_exists), Toast.LENGTH_SHORT).show()
+            } else Toast.makeText(activity, getString(R.string.playlist_name_cannot_be_empty), Toast.LENGTH_SHORT).show()
         }
 
         builder.setView(dialogView)

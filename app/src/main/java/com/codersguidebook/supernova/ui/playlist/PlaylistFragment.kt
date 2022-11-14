@@ -87,7 +87,7 @@ class PlaylistFragment : Fragment() {
         binding.recyclerView.adapter = playlistAdapter
 
         val musicDatabase = MusicDatabase.getDatabase(requireContext(), lifecycleScope)
-        musicDatabase.playlistDao().findPlaylist(playlistName ?: "").observe(viewLifecycleOwner, { p ->
+        musicDatabase.playlistDao().findPlaylist(playlistName ?: "").observe(viewLifecycleOwner) { p ->
             p?.let {
                 playlist = it
                 if (playlistAdapter.playlist == null) playlistAdapter.playlist = it
@@ -98,7 +98,7 @@ class PlaylistFragment : Fragment() {
                     playlistAdapter.notifyDataSetChanged()
                 } else playlistAdapter.processSongs(newSongs)
             }
-        })
+        }
 
         binding.fab.setOnClickListener {
             callingActivity.playSongsShuffled(playlistSongs)
@@ -144,11 +144,11 @@ class PlaylistFragment : Fragment() {
             R.id.playPlaylistNext -> {
                 if (playlistSongs.isNotEmpty()){
                     callingActivity.addSongsToPlayQueue(playlistSongs, true)
-                } else Toast.makeText(activity, "There are no songs in that playlist.", Toast.LENGTH_SHORT).show()
+                } else Toast.makeText(activity, getString(R.string.playlist_contains_zero_songs), Toast.LENGTH_SHORT).show()
             }
             R.id.queuePlaylist -> {
                 if (playlistSongs.isNotEmpty()) callingActivity.addSongsToPlayQueue(playlistSongs)
-                else Toast.makeText(activity, "There are no songs in that playlist.", Toast.LENGTH_SHORT).show()
+                else Toast.makeText(activity, getString(R.string.playlist_contains_zero_songs), Toast.LENGTH_SHORT).show()
             }
             R.id.reorderPlaylist -> {
                 itemTouchHelper.attachToRecyclerView(binding.recyclerView)

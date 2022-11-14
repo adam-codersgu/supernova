@@ -322,8 +322,8 @@ class MainActivity : AppCompatActivity() {
         setShuffleMode(newShuffleMode)
 
         if (newShuffleMode == SHUFFLE_MODE_NONE) {
-            Toast.makeText(this, "Play queue unshuffled", Toast.LENGTH_SHORT).show()
-        } else Toast.makeText(this, "Play queue shuffled", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.play_queue_unshuffled), Toast.LENGTH_SHORT).show()
+        } else Toast.makeText(this, getString(R.string.play_queue_shuffled), Toast.LENGTH_SHORT).show()
 
         return newShuffleMode
     }
@@ -379,9 +379,9 @@ class MainActivity : AppCompatActivity() {
         mediaController.sendCommand(SET_REPEAT_MODE, bundle, null)
 
         when (newRepeatMode) {
-            REPEAT_MODE_NONE -> Toast.makeText(this, "Repeat mode off", Toast.LENGTH_SHORT).show()
-            REPEAT_MODE_ALL -> Toast.makeText(this, "Repeat play queue", Toast.LENGTH_SHORT).show()
-            REPEAT_MODE_ONE -> Toast.makeText(this, "Repeat current song", Toast.LENGTH_SHORT).show()
+            REPEAT_MODE_NONE -> Toast.makeText(this, getString(R.string.repeat_mode_none), Toast.LENGTH_SHORT).show()
+            REPEAT_MODE_ALL -> Toast.makeText(this, getString(R.string.repeat_mode_all), Toast.LENGTH_SHORT).show()
+            REPEAT_MODE_ONE -> Toast.makeText(this, getString(R.string.repeat_mode_one), Toast.LENGTH_SHORT).show()
         }
 
         return newRepeatMode
@@ -477,9 +477,9 @@ class MainActivity : AppCompatActivity() {
         sendSongsToPlayQueue(songs, addSongsAfterCurrentQueueItem = addSongsAfterCurrentQueueItem)
 
         if (songs.size > 1) Toast.makeText(this@MainActivity,
-            "Your songs have been added to the play queue", Toast.LENGTH_SHORT).show()
+            getString(R.string.songs_added_play_queue), Toast.LENGTH_SHORT).show()
         else Toast.makeText(this@MainActivity,
-            songs[0].title + " has been added to the play queue", Toast.LENGTH_SHORT).show()
+            getString(R.string.item_added_play_queue, songs[0].title), Toast.LENGTH_SHORT).show()
     }
 
     /**
@@ -843,10 +843,10 @@ class MainActivity : AppCompatActivity() {
             musicLibraryViewModel.updatePlaylists(listOf(favouritesPlaylist))
             updateSongInfo(listOf(song))
             if (song.isFavourite) {
-                Toast.makeText(this@MainActivity, "Added to favourites",
+                Toast.makeText(this@MainActivity, getString(R.string.added_to_favourites),
                     Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this@MainActivity, "Removed from favourites",
+                Toast.makeText(this@MainActivity, getString(R.string.removed_from_favourites),
                     Toast.LENGTH_SHORT).show()
             }
         }
@@ -1277,7 +1277,7 @@ class MainActivity : AppCompatActivity() {
                                             grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (!MusicPermissionHelper.hasReadPermission(this)) {
-            Toast.makeText(this, "Storage permission is needed to run this application",
+            Toast.makeText(this, getString(R.string.storage_permission_needed),
                 Toast.LENGTH_LONG).show()
             if (!MusicPermissionHelper.shouldShowRequestPermissionRationale(this)) {
                 // Permission denied with checking "Do not ask again".

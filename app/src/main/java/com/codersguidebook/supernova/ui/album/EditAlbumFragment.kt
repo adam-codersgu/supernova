@@ -33,7 +33,7 @@ class EditAlbumFragment : Fragment() {
     private var albumID: String? = null
     private var _binding: FragmentEditAlbumBinding? = null
     private val binding get() = _binding!!
-    private var newArtwork: Bitmap? = null
+    private var newAlbumArtwork: Bitmap? = null
     private var selectedImageUri: Uri? = null
     private var albumSongs = emptyList<Song>()
     private lateinit var callingActivity: MainActivity
@@ -55,20 +55,17 @@ class EditAlbumFragment : Fragment() {
         setHasOptionsMenu(true)
 
         musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
-        musicLibraryViewModel.allSongs.observe(viewLifecycleOwner, { songs ->
-            songs?.let {
-                this.albumSongs = it.filter {song ->
-                    song.albumId == albumID
-                }
-                var editable: Editable = SpannableStringBuilder(albumSongs[0].albumName)
-                binding.editAlbumTitle.text = editable
-
-                editable = SpannableStringBuilder(albumSongs[0].year)
-                binding.editAlbumYear.text = editable
+        musicLibraryViewModel.allSongs.observe(viewLifecycleOwner) {
+            this.albumSongs = it.filter { song ->
+                song.albumId == albumID
             }
-        })
+            var editable: Editable = SpannableStringBuilder(albumSongs[0].albumName)
+            binding.editAlbumTitle.text = editable
 
-        // retrieve artwork of first song
+            editable = SpannableStringBuilder(albumSongs[0].year)
+            binding.editAlbumYear.text = editable
+        }
+
         callingActivity.insertArtwork(albumID, binding.editAlbumArtwork)
         binding.editAlbumArtwork.setOnClickListener {
             startActivityForResult(
@@ -90,7 +87,7 @@ class EditAlbumFragment : Fragment() {
             try {
                 selectedImageUri = data!!.data
                 val source = ImageDecoder.createSource(requireActivity().contentResolver, selectedImageUri!!)
-                newArtwork = ImageDecoder.decodeBitmap(source)
+                newAlbumArtwork = ImageDecoder.decodeBitmap(source)
 
                 Glide.with(this)
                     .load(selectedImageUri)
@@ -114,34 +111,34 @@ class EditAlbumFragment : Fragment() {
 
         return when (item.itemId) {
             R.id.save -> {
-                if (!albumSongs.isNullOrEmpty()) {
-                    // take user submission for album title or year, or use default values if submission is blank
-                    val newAlbum = binding.editAlbumTitle.text.toString()
-                    val newYear = binding.editAlbumYear.text.toString()
+                if (albumSongs.isNotEmpty()) {
+                    val newAlbumTitle = binding.editAlbumTitle.text.toString()
+                    val newAlbumYear = binding.editAlbumYear.text.toString()
 
-                    // check no fields are blank
-                    if (newAlbum.isNotEmpty() && newYear.isNotEmpty()) {
-                        // check something has actually been changed
-                        if (newAlbum != albumSongs[0].albumName || newYear != albumSongs[0].year || newArtwork != null) {
-
-                            // artwork has been changed
-                            if (newArtwork != null) callingActivity.changeArtwork("albumArt", newArtwork!!, albumID!!)
-
-                            val updatedAlbumSongs = mutableListOf<Song>()
-                            for (s in albumSongs) {
-                                s.albumName = newAlbum
-                                s.year = newYear
-                                updatedAlbumSongs.add(s)
+                    when {
+                        newAlbumTitle.isEmpty() -> Toast.makeText(activity,
+                            getString(R.string.album_name_cannot_be_empty), Toast.LENGTH_SHORT).show()
+                        newAlbumYear.isEmpty() -> Toast.makeText(activity,
+                            getString(R.string.album_year_cannot_be_empty), Toast.LENGTH_SHORT).show()
+                        else -> {
+                            newAlbumArtwork?.let {
+                                callingActivity.changeArtwork("albumArt", it, albumID!!)
                             }
 
-                            callingActivity.updateSongInfo(updatedAlbumSongs)
+                            if (newAlbumTitle != albumSongs[0].title || newAlbumYear != albumSongs[0].year) {
+                                for (song in albumSongs) {
+                                    song.albumName = newAlbumTitle
+                                    song.year = newAlbumYear
+                                }
+                                callingActivity.updateSongInfo(albumSongs)
+                            }
+
+                            val action = AlbumsFragmentDirections.actionFinishEditAlbum(albumID!!)
+                            requireView().findNavController().navigate(action)
+
+                            Toast.makeText(activity, getString(R.string.album_updated), Toast.LENGTH_SHORT).show()
                         }
-
-                        val action = AlbumsFragmentDirections.actionFinishEditAlbum(albumID!!)
-                        requireView().findNavController().navigate(action)
-
-                        Toast.makeText(activity, "Details saved.", Toast.LENGTH_SHORT).show()
-                    } else Toast.makeText(activity, "Check none of the fields are empty.", Toast.LENGTH_SHORT).show()
+                    }
                 }
                 true
             }
