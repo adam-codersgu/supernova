@@ -168,22 +168,12 @@
     <string name="artist_name_not_changed">The artist name has not been changed</string>
     <string name="artist_updated">Artist updated!</string>
 
-    <string name="account_type">Spotify account type: %s</string>
-    <string name="restrictions_body">Some Spotify account types restrict your access to certain features. For example, free/open account users may notice they cannot play specific songs on request, queue songs, fast forward through tracks, skip back to previous tracks etc.. Users may also have to listen to adverts between songs.
-    \n
-    \nPlease be aware these restrictions can also interfere with the playlists that Supernova generates (e.g. playlists based on mood). While Supernova can prepare a list of suitable songs, if your account does not permit the playback of songs on command then you may hear different music instead.
-    \n
-    \nPremium account users will not experience any restrictions. You can manage your Spotify account through Spotify\'s website and app.</string>
-    <string name="spotify_not_installed">It seems Spotify is not installed on this device!
-        \n
-        \nDownload Spotify from the app store and create a Spotify account to enjoy more features. For example, through your Spotify account, Supernova can play songs with animations over the album artwork, create playlists based on your mood, help you discover new music and more!</string>
+    <string name="album_name_cannot_be_empty">The album name field cannot be empty</string>
+    <string name="album_year_cannot_be_empty">The album year field cannot be empty</string>
+    <string name="album_updated">Album updated!</string>
+
     <string name="app_preferences">App preferences</string>
-    <string name="launch_preference">Launch app in Spotify mode?</string>
-    <string name="launch_preference_invitation">How would you like the app to launch?
-    \n
-    \nYou can change your mind whenever you like in your Settings.</string>
-    <string name="spotify_mode">Spotify mode</string>
-    <string name="normal_mode">Normal mode</string>
+
     <string name="no">No</string>
     <string name="yes">Yes</string>
     <string name="save_play_queue">Save play queue as playlist</string>
