@@ -152,6 +152,7 @@ class MainActivity : AppCompatActivity() {
                     playQueueViewModel.playbackDuration.value = 0
                     currentPlaybackPosition = 0
                     playQueueViewModel.playbackPosition.value = 0
+                    playQueueViewModel.currentlyPlayingSongMetadata.value = null
                 }
                 // Called when playback of a song has completed.
                 // Need to increment the song_plays count for that Song object by 1.
@@ -170,7 +171,7 @@ class MainActivity : AppCompatActivity() {
         override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
             super.onMetadataChanged(metadata)
 
-            playQueueViewModel.currentlyPlayingSongMetadata.postValue(metadata)
+            playQueueViewModel.currentlyPlayingSongMetadata.value = metadata
         }
     }
 
