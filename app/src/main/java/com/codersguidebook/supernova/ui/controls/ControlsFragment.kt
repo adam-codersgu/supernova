@@ -1,6 +1,7 @@
 package com.codersguidebook.supernova.ui.controls
 
 import android.os.Bundle
+import android.support.v4.media.MediaMetadataCompat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,7 +15,6 @@ import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.PlayQueueViewModel
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.PlayerControlsBinding
-import com.codersguidebook.supernova.entities.Song
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -22,7 +22,6 @@ class ControlsFragment : Fragment() {
 
     private var _binding: PlayerControlsBinding? = null
     private val binding get() = _binding!!
-    private var currentSong: Song? = null
     private var fastForwarding = false
     private var fastRewinding = false
     private val playQueueViewModel: PlayQueueViewModel by activityViewModels()
@@ -39,12 +38,8 @@ class ControlsFragment : Fragment() {
 
         callingActivity = activity as MainActivity
 
-        playQueueViewModel.playQueue.observe(viewLifecycleOwner) {
-            updateCurrentlyDisplayedSong()
-        }
-
-        playQueueViewModel.currentQueueItemId.observe(viewLifecycleOwner) {
-            updateCurrentlyDisplayedSong()
+        playQueueViewModel.currentlyPlayingSongMetadata.observe(viewLifecycleOwner) {
+            updateCurrentlyDisplayedMetadata(it)
         }
 
         playQueueViewModel.isPlaying.observe(viewLifecycleOwner) { isPlaying ->
@@ -97,7 +92,7 @@ class ControlsFragment : Fragment() {
         }
 
         binding.songInfo.setOnClickListener {
-            currentSong?.let {
+            playQueueViewModel.currentlyPlayingSongMetadata.value?.let {
                 val extras = FragmentNavigatorExtras(
                     binding.artwork to binding.artwork.transitionName,
                     binding.title to binding.title.transitionName,
@@ -110,8 +105,6 @@ class ControlsFragment : Fragment() {
                 findNavController().navigate(R.id.nav_currently_playing, null, null, extras)
             }
         }
-
-        updateCurrentlyDisplayedSong()
     }
 
     override fun onResume() {
@@ -126,23 +119,21 @@ class ControlsFragment : Fragment() {
         _binding = null
     }
 
-    /** Use the currently playing song's metadata to update the user interface. */
-    private fun updateCurrentlyDisplayedSong() {
-        val currentMediaId = playQueueViewModel.getCurrentQueueItem()?.description?.mediaId?.toLong()
-        if (currentSong?.songId != currentMediaId) {
-            currentSong = if (currentMediaId == null) null
-            else callingActivity.getSongById(currentMediaId)
-        }
+    /**
+     * Use the currently playing song's metadata to update the user interface.
+     *
+     * @param metadata - MediaMetadataCompat object detailing the currently playing song's metadata, or null
+     * if playback has stopped and any loaded metadata should be cleared.
+     */
+    private fun updateCurrentlyDisplayedMetadata(metadata: MediaMetadataCompat?) {
+        binding.title.text = metadata?.getString(MediaMetadataCompat.METADATA_KEY_TITLE)
+        binding.artist.text = metadata?.getString(MediaMetadataCompat.METADATA_KEY_ARTIST)
+        binding.album.text = metadata?.getString(MediaMetadataCompat.METADATA_KEY_ALBUM)
 
-        if (binding.title.text != currentSong?.title || binding.artist.text != currentSong?.artist
-            || binding.album.text != currentSong?.albumName) {
-            binding.title.text = currentSong?.title
-            binding.artist.text = currentSong?.artist
-            binding.album.text = currentSong?.albumName
-            callingActivity.insertArtwork(currentSong?.albumId, binding.artwork)
-        }
-
-        if (currentSong == null) {
+        if (metadata != null) {
+            callingActivity.insertArtwork(metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI),
+                binding.artwork)
+        } else {
             Glide.with(callingActivity)
                 .clear(binding.artwork)
         }

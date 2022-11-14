@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat.*
 import android.transition.TransitionInflater
 import android.util.DisplayMetrics
@@ -80,13 +81,9 @@ class CurrentlyPlayingFragment : Fragment() {
 
         callingActivity = activity as MainActivity
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
-        
-        playQueueViewModel.playQueue.observe(viewLifecycleOwner) {
-            updateCurrentlyDisplayedSong()
-        }
 
-        playQueueViewModel.currentQueueItemId.observe(viewLifecycleOwner) {
-            updateCurrentlyDisplayedSong()
+        playQueueViewModel.currentlyPlayingSongMetadata.observe(viewLifecycleOwner) {
+            updateCurrentlyDisplayedMetadata(it)
         }
 
         playQueueViewModel.isPlaying.observe(viewLifecycleOwner) {
@@ -175,8 +172,6 @@ class CurrentlyPlayingFragment : Fragment() {
                 if (fromUser) callingActivity.seekTo(progress)
             }
         })
-
-        updateCurrentlyDisplayedSong()
     }
 
     override fun onStart() {
@@ -224,32 +219,29 @@ class CurrentlyPlayingFragment : Fragment() {
         binding.animatedView.createObjects()
     }
 
-    /** Use the currently playing song's metadata to update the user interface. */
-    private fun updateCurrentlyDisplayedSong() {
-        val oldCurrentSong = currentSong
-        val currentMediaId = playQueueViewModel.getCurrentQueueItem()?.description?.mediaId?.toLong()
-        if (currentSong?.songId != currentMediaId) {
-            currentSong = if (currentMediaId == null) null
-            else callingActivity.getSongById(currentMediaId)
-        }
+    /**
+     * Use the currently playing song's metadata to update the user interface.
+     *
+     * @param metadata - MediaMetadataCompat object detailing the currently playing song's metadata, or null
+     * if playback has stopped and any loaded metadata should be cleared.
+     */
+    private fun updateCurrentlyDisplayedMetadata(metadata: MediaMetadataCompat?) {
+        val currentMediaId = metadata?.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)?.toLong()
+        currentSong = if (currentMediaId != null) callingActivity.getSongById(currentMediaId)
+        else null
 
-        if (binding.title.text != currentSong?.title || binding.artist.text != currentSong?.artist
-            || binding.album.text != currentSong?.albumName) {
-            binding.title.text = currentSong?.title
-            binding.artist.text = currentSong?.artist
-            binding.album.text = currentSong?.albumName
-            callingActivity.insertArtwork(currentSong?.albumId, binding.artwork)
-        }
+        setFavouriteButtonStyle(currentSong?.isFavourite ?: false)
 
-        if (currentSong == null) {
+        binding.title.text = metadata?.getString(MediaMetadataCompat.METADATA_KEY_TITLE)
+        binding.artist.text = metadata?.getString(MediaMetadataCompat.METADATA_KEY_ARTIST)
+        binding.album.text = metadata?.getString(MediaMetadataCompat.METADATA_KEY_ALBUM)
+
+        if (metadata != null) {
+            callingActivity.insertArtwork(metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI),
+                binding.artwork)
+        } else {
             Glide.with(callingActivity)
                 .clear(binding.artwork)
-        }
-
-        currentSong?.let {
-            if (oldCurrentSong?.isFavourite != currentSong?.isFavourite) {
-                setFavouriteButtonStyle(currentSong?.isFavourite ?: false)
-            }
         }
     }
 
@@ -288,7 +280,6 @@ class CurrentlyPlayingFragment : Fragment() {
                 editor.putString(ANIMATION_URI, gPretty)
             }
             editor.apply()
-            // TODO: Improve error reporting and handling for URIs that cannot be found
             Toast.makeText(activity, getString(R.string.custom_image_not_found), Toast.LENGTH_LONG).show()
         }
         val drawables = arrayListOf<Drawable?>()
