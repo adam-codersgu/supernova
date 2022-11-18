@@ -1,6 +1,5 @@
 package com.codersguidebook.supernova.ui.currentlyPlaying
 
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.ImageDecoder
@@ -38,6 +37,7 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_URI
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
+import com.codersguidebook.supernova.views.PullToCloseLayout
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
@@ -47,7 +47,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
-class CurrentlyPlayingFragment : Fragment() {
+class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
 
     private val playQueueViewModel: PlayQueueViewModel by activityViewModels()
     private var currentSong: Song? = null
@@ -70,14 +70,12 @@ class CurrentlyPlayingFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
         _binding = FragmentCurrentlyPlayingBinding.inflate(inflater, container, false)
+        binding.root.setListener(this)
         return binding.root
     }
 
-    @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        binding.root.setOnTouchListener { _, _ -> return@setOnTouchListener true }
 
         callingActivity = activity as MainActivity
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
@@ -159,7 +157,7 @@ class CurrentlyPlayingFragment : Fragment() {
             }
         }
 
-        binding.currentClose.setOnClickListener { findNavController().popBackStack() }
+        binding.currentClose.setOnClickListener { this.onDismissed() }
 
         binding.currentSettings.setOnClickListener { showSettingsPopup() }
 
@@ -338,12 +336,10 @@ class CurrentlyPlayingFragment : Fragment() {
     }
 
     private fun showSettingsPopup() {
-        PopupMenu(requireContext(), binding.currentSettings).apply {
+        PopupMenu(this.context, binding.currentSettings).apply {
             inflate(R.menu.currently_playing_menu)
 
             setForceShowIcon(true)
-
-            setOnDismissListener { callingActivity.hideSystemBars(true) }
 
             setOnMenuItemClickListener { menuItem ->
                 val editor = sharedPreferences.edit()
@@ -428,5 +424,9 @@ class CurrentlyPlayingFragment : Fragment() {
             }
             show()
         }
+    }
+
+    override fun onDismissed() {
+        findNavController().popBackStack()
     }
 }
