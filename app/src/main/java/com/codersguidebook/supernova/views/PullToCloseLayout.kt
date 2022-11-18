@@ -1,24 +1,87 @@
 package com.codersguidebook.supernova.views
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.widget.FrameLayout
+import androidx.core.view.MotionEventCompat
+import androidx.core.view.ViewCompat
 import androidx.customview.widget.ViewDragHelper
 import androidx.customview.widget.ViewDragHelper.Callback
 import kotlin.math.abs
 
-class PullToCloseLayout(context: Context) : FrameLayout(context) {
-    private val listener: PullToCloseLayout.Listener? = null
+
+class PullToCloseLayout(context: Context, attributeSet: AttributeSet?) : FrameLayout(context, attributeSet) {
+    private var listener: Listener? = null
     private val dragHelper: ViewDragHelper
     private var minFlingVelocity = 0f
-    private val verticalTouchSlop = 0f
-    private val animateAlpha = false
+    private var verticalTouchSlop = 0f
+    private var animateAlpha = false
 
     init {
         val viewConfiguration = ViewConfiguration.get(context)
         minFlingVelocity = viewConfiguration.scaledMinimumFlingVelocity.toFloat()
         dragHelper = ViewDragHelper.create(this, ViewDragCallback(this))
+    }
+
+    override fun computeScroll() {
+        super.computeScroll()
+        if (dragHelper.continueSettling(true)) {
+            ViewCompat.postInvalidateOnAnimation(this)
+        }
+    }
+
+    override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
+        val action = MotionEventCompat.getActionMasked(event)
+        var pullingDown = false
+        when (action) {
+            MotionEvent.ACTION_DOWN -> {
+                verticalTouchSlop = event.y
+                val dy = event.y - verticalTouchSlop
+                if (dy > dragHelper.touchSlop) {
+                    pullingDown = true
+                }
+            }
+            MotionEvent.ACTION_MOVE -> {
+                val dy = event.y - verticalTouchSlop
+                if (dy > dragHelper.touchSlop) {
+                    pullingDown = true
+                }
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> verticalTouchSlop = 0.0f
+        }
+        if (!dragHelper.shouldInterceptTouchEvent(event) && pullingDown) {
+            if (dragHelper.viewDragState == ViewDragHelper.STATE_IDLE &&
+                dragHelper.checkTouchSlop(ViewDragHelper.DIRECTION_VERTICAL)
+            ) {
+                getChildAt(0)?.let {
+                    dragHelper.captureChildView(it, event.getPointerId(0))
+                    return dragHelper.viewDragState == ViewDragHelper.STATE_DRAGGING
+                }
+            }
+        }
+        return false
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        dragHelper.processTouchEvent(event!!)
+        return dragHelper.capturedView != null
+    }
+
+    fun setMinFlingVelocity(velocity: Float) {
+        minFlingVelocity = velocity
+    }
+
+    fun setAnimateAlpha(b: Boolean) {
+        animateAlpha = b
+    }
+
+    fun setListener(l: Listener) {
+        listener = l
     }
 
     inner class ViewDragCallback(layout: PullToCloseLayout) : Callback() {
@@ -62,9 +125,7 @@ class PullToCloseLayout(context: Context) : FrameLayout(context) {
         override fun onViewDragStateChanged(state: Int) {
             if (capturedView != null && dismissed && state == ViewDragHelper.STATE_IDLE) {
                 pullToCloseLayout.removeView(capturedView)
-                if (pullToCloseLayout.listener != null) {
-                    pullToCloseLayout.listener.onDismissed()
-                }
+                pullToCloseLayout.listener?.onDismissed()
             }
         }
 
@@ -75,5 +136,10 @@ class PullToCloseLayout(context: Context) : FrameLayout(context) {
             pullToCloseLayout.dragHelper.settleCapturedViewAt(0, finalTop)
             pullToCloseLayout.invalidate()
         }
+    }
+
+    interface Listener {
+        /** Layout is pulled down to dismiss */
+        fun onDismissed()
     }
 }

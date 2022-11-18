@@ -18,6 +18,7 @@ import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.SeekBar
 import android.widget.Toast
+import androidx.core.app.ActivityCompat.finishAfterTransition
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -38,6 +39,7 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_URI
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
+import com.codersguidebook.supernova.views.PullToCloseLayout
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
@@ -47,7 +49,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
-class CurrentlyPlayingFragment : Fragment() {
+class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
 
     private val playQueueViewModel: PlayQueueViewModel by activityViewModels()
     private var currentSong: Song? = null
@@ -70,6 +72,7 @@ class CurrentlyPlayingFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
         _binding = FragmentCurrentlyPlayingBinding.inflate(inflater, container, false)
+        binding.root.setListener(this)
         return binding.root
     }
 
@@ -428,5 +431,10 @@ class CurrentlyPlayingFragment : Fragment() {
             }
             show()
         }
+    }
+
+    override fun onDismissed() {
+        // FIXME: May potentially need to handle a more fragment-specific exit transition here
+        finishAfterTransition(callingActivity)
     }
 }
