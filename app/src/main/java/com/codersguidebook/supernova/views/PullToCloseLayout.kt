@@ -12,7 +12,6 @@ import androidx.customview.widget.ViewDragHelper
 import androidx.customview.widget.ViewDragHelper.Callback
 import kotlin.math.abs
 
-
 class PullToCloseLayout(context: Context, attributeSet: AttributeSet?) : FrameLayout(context, attributeSet) {
     private var listener: Listener? = null
     private val dragHelper: ViewDragHelper

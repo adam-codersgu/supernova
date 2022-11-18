@@ -1,6 +1,5 @@
 package com.codersguidebook.supernova.ui.currentlyPlaying
 
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.ImageDecoder
@@ -75,11 +74,8 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
         return binding.root
     }
 
-    @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        binding.constraintLayout.setOnTouchListener { _, _ -> return@setOnTouchListener true }
 
         callingActivity = activity as MainActivity
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
