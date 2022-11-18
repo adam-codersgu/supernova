@@ -77,15 +77,14 @@ class PullToCloseLayout(context: Context, attributeSet: AttributeSet?) : FrameLa
         private val pullToCloseLayout: PullToCloseLayout
         private var startTop = 0
         private var dragPercent = 0.0f
-        private var capturedView: View? = null
-        private var dismissed = false
+        private var isDismissed = false
 
         init {
             pullToCloseLayout = layout
         }
 
         override fun tryCaptureView(child: View, pointerId: Int): Boolean {
-            return capturedView == null
+            return true
         }
 
         override fun clampViewPositionVertical(child: View, top: Int, dy: Int): Int {
@@ -93,14 +92,13 @@ class PullToCloseLayout(context: Context, attributeSet: AttributeSet?) : FrameLa
         }
 
         override fun onViewCaptured(view: View, activePointerId: Int) {
-            capturedView = view
             startTop = view.top
             dragPercent = 0.0f
-            dismissed = false
+            isDismissed = false
         }
 
         override fun onViewPositionChanged(view: View, left: Int, top: Int, dx: Int, dy: Int) {
-            val range: Int = pullToCloseLayout.height
+            val range = pullToCloseLayout.height
             val moved = abs(top - startTop)
             if (range > 0) {
                 dragPercent = moved.toFloat() / range.toFloat()
@@ -108,17 +106,15 @@ class PullToCloseLayout(context: Context, attributeSet: AttributeSet?) : FrameLa
         }
 
         override fun onViewDragStateChanged(state: Int) {
-            if (capturedView != null && dismissed && state == ViewDragHelper.STATE_IDLE) {
-                pullToCloseLayout.removeView(capturedView)
+            if (isDismissed && state == ViewDragHelper.STATE_IDLE) {
                 pullToCloseLayout.listener?.onDismissed()
             }
         }
 
         override fun onViewReleased(releasedChild: View, xvel: Float, yvel: Float) {
-            dismissed = dragPercent >= 0.50f ||
+            isDismissed = dragPercent >= 0.50f ||
                     abs(xvel) > pullToCloseLayout.minFlingVelocity && dragPercent > 0.20f
-            val finalTop = if (dismissed) pullToCloseLayout.height else startTop
-            pullToCloseLayout.dragHelper.settleCapturedViewAt(0, finalTop)
+            if (!isDismissed) pullToCloseLayout.dragHelper.settleCapturedViewAt(0, startTop)
             pullToCloseLayout.invalidate()
         }
     }
