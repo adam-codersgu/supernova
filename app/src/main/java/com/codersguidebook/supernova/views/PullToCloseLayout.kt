@@ -7,7 +7,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.widget.FrameLayout
-import androidx.core.view.MotionEventCompat
 import androidx.core.view.ViewCompat
 import androidx.customview.widget.ViewDragHelper
 import androidx.customview.widget.ViewDragHelper.Callback
@@ -19,7 +18,6 @@ class PullToCloseLayout(context: Context, attributeSet: AttributeSet?) : FrameLa
     private val dragHelper: ViewDragHelper
     private var minFlingVelocity = 0f
     private var verticalTouchSlop = 0f
-    private var animateAlpha = false
 
     init {
         val viewConfiguration = ViewConfiguration.get(context)
@@ -35,9 +33,8 @@ class PullToCloseLayout(context: Context, attributeSet: AttributeSet?) : FrameLa
     }
 
     override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
-        val action = MotionEventCompat.getActionMasked(event)
         var pullingDown = false
-        when (action) {
+        when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 verticalTouchSlop = event.y
                 val dy = event.y - verticalTouchSlop
@@ -70,14 +67,6 @@ class PullToCloseLayout(context: Context, attributeSet: AttributeSet?) : FrameLa
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         dragHelper.processTouchEvent(event!!)
         return dragHelper.capturedView != null
-    }
-
-    fun setMinFlingVelocity(velocity: Float) {
-        minFlingVelocity = velocity
-    }
-
-    fun setAnimateAlpha(b: Boolean) {
-        animateAlpha = b
     }
 
     fun setListener(l: Listener) {
@@ -115,10 +104,6 @@ class PullToCloseLayout(context: Context, attributeSet: AttributeSet?) : FrameLa
             val moved = abs(top - startTop)
             if (range > 0) {
                 dragPercent = moved.toFloat() / range.toFloat()
-            }
-            if (pullToCloseLayout.animateAlpha) {
-                view.alpha = 1.0f - dragPercent
-                pullToCloseLayout.invalidate()
             }
         }
 

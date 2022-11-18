@@ -18,7 +18,6 @@ import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.SeekBar
 import android.widget.Toast
-import androidx.core.app.ActivityCompat.finishAfterTransition
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -162,7 +161,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
             }
         }
 
-        binding.currentClose.setOnClickListener { findNavController().popBackStack() }
+        binding.currentClose.setOnClickListener { this.onDismissed() }
 
         binding.currentSettings.setOnClickListener { showSettingsPopup() }
 
@@ -434,7 +433,6 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
     }
 
     override fun onDismissed() {
-        // FIXME: May potentially need to handle a more fragment-specific exit transition here
-        finishAfterTransition(callingActivity)
+        findNavController().popBackStack()
     }
 }
