@@ -336,12 +336,10 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
     }
 
     private fun showSettingsPopup() {
-        PopupMenu(requireContext(), binding.currentSettings).apply {
+        PopupMenu(this.context, binding.currentSettings).apply {
             inflate(R.menu.currently_playing_menu)
 
             setForceShowIcon(true)
-
-            setOnDismissListener { callingActivity.hideSystemBars(true) }
 
             setOnMenuItemClickListener { menuItem ->
                 val editor = sharedPreferences.edit()
