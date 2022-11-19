@@ -47,7 +47,7 @@ class PullToCloseLayout(context: Context, attributeSet: AttributeSet?) : FrameLa
                     pullingDown = true
                 }
             }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> verticalTouchSlop = 0.0f
+            MotionEvent.ACTION_UP -> verticalTouchSlop = 0f
         }
         if (!dragHelper.shouldInterceptTouchEvent(event) && pullingDown) {
             if (dragHelper.viewDragState == ViewDragHelper.STATE_IDLE &&
