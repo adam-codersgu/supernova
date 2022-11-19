@@ -34,7 +34,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
-import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.DialogFragment
@@ -606,7 +606,7 @@ class MainActivity : AppCompatActivity() {
      * revealed (false)
      */
     fun hideStatusBars(hide: Boolean) {
-        val windowInsetsController = ViewCompat.getWindowInsetsController(window.decorView) ?: return
+        val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
         if (hide) {
             supportActionBar?.setDisplayShowTitleEnabled(false)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
