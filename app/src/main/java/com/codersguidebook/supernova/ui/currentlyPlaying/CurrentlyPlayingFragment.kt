@@ -293,13 +293,13 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
 
     override fun onResume() {
         super.onResume()
-        callingActivity.hideSystemBars(true)
+        callingActivity.hideStatusBars(true)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-        callingActivity.hideSystemBars(false)
+        callingActivity.hideStatusBars(false)
     }
 
     /**
