@@ -46,7 +46,6 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.File
 import java.io.FileInputStream
-import java.io.FileNotFoundException
 import java.io.IOException
 
 class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorListener {
@@ -690,20 +689,20 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
      * @return A Bitmap representation of the album artwork.
      */
     private fun getArtworkAsBitmap(albumId: String?) : Bitmap {
-        if (albumId != null) {
+        albumId?.let {
             try {
                 return BitmapFactory.Options().run {
                     inJustDecodeBounds = true
                     val contextWrapper = ContextWrapper(applicationContext)
                     val imageDirectory = contextWrapper.getDir("albumArt", Context.MODE_PRIVATE)
-                    val imageFile = File(imageDirectory, "$albumId.jpg")
+                    val imageFile = File(imageDirectory, "$it.jpg")
                     BitmapFactory.decodeStream(FileInputStream(imageFile))
 
                     inSampleSize = calculateInSampleSize(this)
                     inJustDecodeBounds = false
                     BitmapFactory.decodeStream(FileInputStream(imageFile))
                 }
-            } catch (_: FileNotFoundException) { }
+            } catch (_: Exception) { }
         }
         // If an error has occurred or the album ID is null, then return a default artwork image
         return BitmapFactory.decodeResource(applicationContext.resources, R.drawable.no_album_artwork)
