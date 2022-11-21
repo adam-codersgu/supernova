@@ -637,27 +637,18 @@ class MainActivity : AppCompatActivity() {
         return super.onCreateOptionsMenu(menu)
     }
 
-    override fun onBackPressed() {
-        if (!searchView.isIconified) {
-            searchView.isIconified = true
-            searchView.onActionViewCollapsed()
-        }
-
-        val id = findNavController(R.id.nav_controls_fragment).currentDestination?.id ?: 0
-        if (id == R.id.nav_currently_playing) {
-            findNavController(R.id.nav_controls_fragment).popBackStack()
-            hideStatusBars(false)
-        }
-        else super.onBackPressed()
+    override fun onSupportNavigateUp(): Boolean {
+        iconifySearchView()
+        val navController = findNavController(R.id.nav_host_fragment)
+        return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment)
+    /** Restore an expanded SearchView to its iconified state. */
+    fun iconifySearchView() {
         if (!searchView.isIconified) {
             searchView.isIconified = true
             searchView.onActionViewCollapsed()
         }
-        return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 
     /**

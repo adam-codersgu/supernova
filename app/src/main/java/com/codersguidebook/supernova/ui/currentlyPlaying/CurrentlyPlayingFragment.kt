@@ -17,6 +17,7 @@ import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.SeekBar
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -57,6 +58,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
     private var fastForwarding = false
     private var fastRewinding = false
     private lateinit var callingActivity: MainActivity
+    private lateinit var onBackPressedCallback: OnBackPressedCallback
     private lateinit var sharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,13 +73,22 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
                               savedInstanceState: Bundle?): View {
         _binding = FragmentCurrentlyPlayingBinding.inflate(inflater, container, false)
         binding.root.setListener(this)
+        callingActivity = activity as MainActivity
+
+        onBackPressedCallback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                this@CurrentlyPlayingFragment.onDismissed()
+            }
+        }
+
+        callingActivity.onBackPressedDispatcher.addCallback(viewLifecycleOwner, onBackPressedCallback)
+
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        callingActivity = activity as MainActivity
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
 
         playQueueViewModel.currentlyPlayingSongMetadata.observe(viewLifecycleOwner) {
@@ -300,6 +311,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
         super.onDestroyView()
         _binding = null
         callingActivity.hideStatusBars(false)
+        onBackPressedCallback.remove()
     }
 
     /**

@@ -3,10 +3,12 @@ package com.codersguidebook.supernova.ui.search
 import android.os.Bundle
 import android.view.*
 import android.widget.SearchView
+import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.codersguidebook.supernova.MainActivity
@@ -26,6 +28,7 @@ class SearchFragment : Fragment() {
     private var searchView: SearchView? = null
     private lateinit var adapter: SearchAdapter
     private lateinit var callingActivity: MainActivity
+    private lateinit var onBackPressedCallback: OnBackPressedCallback
 
     companion object {
         const val TRACK = 0
@@ -84,8 +87,17 @@ class SearchFragment : Fragment() {
                 }
             }
 
-            if (query != "") search()
+            if (query.isNotEmpty()) search()
         }
+
+        onBackPressedCallback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                callingActivity.iconifySearchView()
+                findNavController().popBackStack()
+            }
+        }
+
+        callingActivity.onBackPressedDispatcher.addCallback(viewLifecycleOwner, onBackPressedCallback)
         
         return binding.root
     }
@@ -304,5 +316,6 @@ class SearchFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        onBackPressedCallback.remove()
     }
 }

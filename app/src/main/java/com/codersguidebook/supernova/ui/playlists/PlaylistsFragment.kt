@@ -42,13 +42,13 @@ class PlaylistsFragment : Fragment() {
         binding.root.adapter = playlistsAdapter
         playlistsAdapter.stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
 
-        musicLibraryViewModel.allPlaylists.observe(viewLifecycleOwner, { playlists ->
+        musicLibraryViewModel.allPlaylists.observe(viewLifecycleOwner) { playlists ->
             playlists?.let {
                 var allPlaylists = it.toMutableList()
                 allPlaylists.removeIf { p ->
                     p.isDefault && p.songs.isNullOrBlank()
                 }
-                allPlaylists = allPlaylists.sortedBy {p ->
+                allPlaylists = allPlaylists.sortedBy { p ->
                     p.name.uppercase(Locale.ROOT)
                 }.toMutableList()
 
@@ -60,7 +60,7 @@ class PlaylistsFragment : Fragment() {
                     else -> playlistsAdapter.updatePlaylists(allPlaylists)
                 }
             }
-        })
+        }
     }
 
     override fun onDestroyView() {
