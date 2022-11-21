@@ -34,7 +34,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
-import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.DialogFragment
@@ -598,39 +598,29 @@ class MainActivity : AppCompatActivity() {
         mediaController.transportControls.play()
     }
 
-    fun hideSystemBars(hide: Boolean) {
-        val windowInsetsController = ViewCompat.getWindowInsetsController(window.decorView) ?: return
+    /**
+     * Hide/reveal the status bars. If the status bars are hidden, then they can be transiently
+     * revealed using a swipe motion.
+     *
+     * @param hide - A Boolean indicating whether the status bars should be hidden (true) or
+     * revealed (false)
+     */
+    fun hideStatusBars(hide: Boolean) {
+        val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
         if (hide) {
             supportActionBar?.setDisplayShowTitleEnabled(false)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                // Configure the behavior of the hidden system bars
-                windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                // Hide both the status bar and the navigation bar
-                windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
-            } else {
-                // TODO: TEST IF YOU CAN USE THE INITIAL IF EXPRESSION CONTENT FOR ALL API LEVELS
-                window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                        // Set the content to appear under the system bars so that the
-                        // content doesn't resize when the system bars hide and show.
-                        or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        // Hide the nav bar and status bar
-                        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        or View.SYSTEM_UI_FLAG_FULLSCREEN)
-            }
+            windowInsetsController.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            windowInsetsController.hide(WindowInsetsCompat.Type.statusBars())
 
             // Hide the toolbar to prevent the SearchView keyboard inadvertently popping up
             binding.toolbar.visibility = View.GONE
         } else {
             supportActionBar?.setDisplayShowTitleEnabled(true)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE
-                windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
-            } else {
-                window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
-            }
+            windowInsetsController.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE
+            windowInsetsController.show(WindowInsetsCompat.Type.statusBars())
+
             binding.toolbar.visibility = View.VISIBLE
         }
     }
@@ -656,7 +646,7 @@ class MainActivity : AppCompatActivity() {
         val id = findNavController(R.id.nav_controls_fragment).currentDestination?.id ?: 0
         if (id == R.id.nav_currently_playing) {
             findNavController(R.id.nav_controls_fragment).popBackStack()
-            hideSystemBars(false)
+            hideStatusBars(false)
         }
         else super.onBackPressed()
     }
