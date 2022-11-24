@@ -35,7 +35,7 @@ class HomeFragment : Fragment() {
     ): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         callingActivity = activity as MainActivity
-        musicLibraryViewModel = ViewModelProvider(this).get(MusicLibraryViewModel::class.java)
+        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
 
         songOfTheDayAdapter = SongOfTheDayAdapter(callingActivity)
         favouritesAdapter = FavouritesAdapter(callingActivity)
@@ -74,33 +74,37 @@ class HomeFragment : Fragment() {
         binding.recentlyPlayedRecyclerView.adapter = recentlyPlayedAdapter
 
         var isLoaded = false
-        musicLibraryViewModel.allSongs.observe(viewLifecycleOwner, { songs ->
+        musicLibraryViewModel.allSongs.observe(viewLifecycleOwner) { songs ->
             songs?.let {
                 if (songs.isNotEmpty() && !isLoaded) {
                     loadPlaylists()
                     isLoaded = true
                 }
-            }})
+            }
+        }
     }
 
     private fun loadPlaylists() {
         val musicDatabase = MusicDatabase.getDatabase(callingActivity, lifecycleScope)
-        musicDatabase.playlistDao().findPlaylist(getString(R.string.song_day)).observe(viewLifecycleOwner, { playlist ->
+        musicDatabase.playlistDao().findPlaylist(getString(R.string.song_day)).observe(viewLifecycleOwner) { playlist ->
             playlist?.let {
                 val songs = callingActivity.extractPlaylistSongs(it.songs)
                 if (songs.isEmpty()) binding.songOfTheDayNoContent.isVisible = true
                 else {
                     binding.songOfTheDayNoContent.isGone = true
-                    if (songOfTheDayAdapter.song == null || songOfTheDayAdapter.song?.songId != songs[0].songId) songOfTheDayAdapter.changeItem(songs[0])
-                    binding.textViewSongOfTheDay.setOnClickListener{
-                        val action = PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.song_day))
+                    if (songOfTheDayAdapter.song == null || songOfTheDayAdapter.song?.songId != songs[0].songId) songOfTheDayAdapter.changeItem(
+                        songs[0]
+                    )
+                    binding.textViewSongOfTheDay.setOnClickListener {
+                        val action =
+                            PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.song_day))
                         findNavController().navigate(action)
                     }
                 }
             }
-        })
+        }
 
-        musicDatabase.playlistDao().findPlaylist(getString(R.string.favourites)).observe(viewLifecycleOwner, { playlist ->
+        musicDatabase.playlistDao().findPlaylist(getString(R.string.favourites)).observe(viewLifecycleOwner) { playlist ->
             playlist?.let {
                 val previousSongs = favouritesAdapter.previousSongs
                 val songs = callingActivity.extractPlaylistSongs(it.songs)
@@ -108,8 +112,9 @@ class HomeFragment : Fragment() {
                 if (songs.isEmpty()) binding.homeFavourites.isGone = true
                 else {
                     binding.homeFavourites.isVisible = true
-                    binding.textViewFavourites.setOnClickListener{
-                        val action = PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.favourites))
+                    binding.textViewFavourites.setOnClickListener {
+                        val action =
+                            PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.favourites))
                         findNavController().navigate(action)
                     }
                 }
@@ -121,22 +126,26 @@ class HomeFragment : Fragment() {
                     favouritesAdapter.previousSongs.size != songs.size -> {
                         if (songs.size > previousSongs.size) {
                             favouritesAdapter.processSongs(adapterSongs, true)
-                            (binding.favouritesRecyclerView.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(0, 0)
+                            (binding.favouritesRecyclerView.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
+                                0,
+                                0
+                            )
                         } else favouritesAdapter.processSongs(adapterSongs, false)
                     }
                 }
                 favouritesAdapter.previousSongs = songs
             }
-        })
+        }
 
-        musicDatabase.playlistDao().findPlaylist(getString(R.string.most_played)).observe(viewLifecycleOwner, { playlist ->
+        musicDatabase.playlistDao().findPlaylist(getString(R.string.most_played)).observe(viewLifecycleOwner) { playlist ->
             playlist?.let {
                 val songs = callingActivity.extractPlaylistSongs(it.songs)
                 if (songs.isEmpty()) binding.homeMostPlayed.isGone = true
                 else {
                     binding.homeMostPlayed.isVisible = true
-                    binding.textViewMostPlayed.setOnClickListener{
-                        val action = PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.most_played))
+                    binding.textViewMostPlayed.setOnClickListener {
+                        val action =
+                            PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.most_played))
                         findNavController().navigate(action)
                     }
                 }
@@ -148,31 +157,37 @@ class HomeFragment : Fragment() {
                     else -> mostPlayedAdapter.processSongs(songs.take(10))
                 }
             }
-        })
+        }
 
-        musicDatabase.playlistDao().findPlaylist(getString(R.string.recently_played)).observe(viewLifecycleOwner, { playlist ->
+        musicDatabase.playlistDao().findPlaylist(getString(R.string.recently_played)).observe(viewLifecycleOwner) { playlist ->
             playlist?.let {
                 val songs = callingActivity.extractPlaylistSongs(it.songs)
                 if (songs.isEmpty()) binding.homeRecentlyPlayed.isGone = true
                 else {
                     binding.homeRecentlyPlayed.isVisible = true
-                    binding.textViewRecentlyPlayed.setOnClickListener{
-                        val action = PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.recently_played))
+                    binding.textViewRecentlyPlayed.setOnClickListener {
+                        val action =
+                            PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.recently_played))
                         findNavController().navigate(action)
                     }
                 }
                 when {
                     recentlyPlayedAdapter.songs.isEmpty() -> {
                         recentlyPlayedAdapter.songs = songs.take(10).toMutableList()
-                        recentlyPlayedAdapter.notifyItemRangeInserted(0, recentlyPlayedAdapter.songs.size)
+                        recentlyPlayedAdapter.notifyItemRangeInserted(
+                            0,
+                            recentlyPlayedAdapter.songs.size
+                        )
                     }
                     else -> {
                         recentlyPlayedAdapter.processSongs(songs.take(10))
-                        (binding.recentlyPlayedRecyclerView.layoutManager as LinearLayoutManager).scrollToPosition(0)
+                        (binding.recentlyPlayedRecyclerView.layoutManager as LinearLayoutManager).scrollToPosition(
+                            0
+                        )
                     }
                 }
             }
-        })
+        }
     }
 
     override fun onDestroyView() {
