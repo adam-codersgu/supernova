@@ -12,7 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
 import com.codersguidebook.supernova.*
 import com.codersguidebook.supernova.databinding.FragmentHomeBinding
 import com.codersguidebook.supernova.ui.playlists.PlaylistsFragmentDirections
@@ -42,10 +42,10 @@ class HomeFragment : Fragment() {
         mostPlayedAdapter = MostPlayedAdapter(callingActivity)
         recentlyPlayedAdapter = RecentlyPlayedAdapter(callingActivity)
 
-        songOfTheDayAdapter.stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
-        favouritesAdapter.stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
-        mostPlayedAdapter.stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
-        recentlyPlayedAdapter.stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
+        songOfTheDayAdapter.stateRestorationPolicy = PREVENT_WHEN_EMPTY
+        favouritesAdapter.stateRestorationPolicy = PREVENT_WHEN_EMPTY
+        mostPlayedAdapter.stateRestorationPolicy = PREVENT_WHEN_EMPTY
+        recentlyPlayedAdapter.stateRestorationPolicy = PREVENT_WHEN_EMPTY
 
         binding.refreshSongOfTheDay.setOnClickListener {
             callingActivity.refreshSongOfTheDay(true)
@@ -74,12 +74,10 @@ class HomeFragment : Fragment() {
         binding.recentlyPlayedRecyclerView.adapter = recentlyPlayedAdapter
 
         var isLoaded = false
-        musicLibraryViewModel.allSongs.observe(viewLifecycleOwner) { songs ->
-            songs?.let {
-                if (songs.isNotEmpty() && !isLoaded) {
-                    loadPlaylists()
-                    isLoaded = true
-                }
+        musicLibraryViewModel.allSongs.observe(viewLifecycleOwner) {
+            if (it.isNotEmpty() && !isLoaded) {
+                loadPlaylists()
+                isLoaded = true
             }
         }
     }
@@ -92,9 +90,10 @@ class HomeFragment : Fragment() {
                 if (songs.isEmpty()) binding.songOfTheDayNoContent.isVisible = true
                 else {
                     binding.songOfTheDayNoContent.isGone = true
-                    if (songOfTheDayAdapter.song == null || songOfTheDayAdapter.song?.songId != songs[0].songId) songOfTheDayAdapter.changeItem(
-                        songs[0]
-                    )
+                    if (songOfTheDayAdapter.song == null ||
+                        songOfTheDayAdapter.song?.songId != songs[0].songId) {
+                        songOfTheDayAdapter.changeItem(songs[0])
+                    }
                     binding.textViewSongOfTheDay.setOnClickListener {
                         val action =
                             PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.song_day))
