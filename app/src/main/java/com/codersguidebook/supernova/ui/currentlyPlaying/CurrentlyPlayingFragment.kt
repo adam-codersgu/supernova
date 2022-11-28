@@ -55,6 +55,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
     private var _binding: FragmentCurrentlyPlayingBinding? = null
     private val binding get() = _binding!!
     private var isAnimationVisible = true
+    private var isDragging = false
     private var fastForwarding = false
     private var fastRewinding = false
     private lateinit var callingActivity: MainActivity
@@ -106,6 +107,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
         }
 
         playQueueViewModel.playbackPosition.observe(viewLifecycleOwner) {
+            if (isDragging) return@observe
             binding.currentSeekBar.progress = it
             binding.currentPosition.text = SimpleDateFormat("mm:ss", Locale.UK).format(it)
         }
@@ -190,6 +192,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
             callingActivity.windowManager.currentWindowMetrics.bounds.width()
         } else {
             val displayMetrics = DisplayMetrics()
+            @Suppress("DEPRECATION")
             callingActivity.windowManager.defaultDisplay.getMetrics(displayMetrics)
             displayMetrics.widthPixels
         }
@@ -436,6 +439,10 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
             }
             show()
         }
+    }
+
+    override fun isDragging(dragging: Boolean) {
+        isDragging = dragging
     }
 
     override fun onDismissed() {
