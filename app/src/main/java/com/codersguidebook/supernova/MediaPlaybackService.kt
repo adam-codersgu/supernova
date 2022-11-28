@@ -96,10 +96,10 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                 mediaButtonEvent?.getParcelableExtra(Intent.EXTRA_KEY_EVENT, KeyEvent::class.java)
             }
 
-            if (keyEvent != null && mediaPlayer != null) {
-                when (keyEvent.keyCode) {
+            keyEvent?.let { event ->
+                when (event.keyCode) {
                     KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
-                        if (mediaPlayer!!.isPlaying) onPause()
+                        if (mediaPlayer?.isPlaying == true) onPause()
                         else onPlay()
                     }
                     KeyEvent.KEYCODE_MEDIA_PLAY -> onPlay()
