@@ -466,7 +466,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                 mediaPlayer?.stop()
                 mediaPlayer?.release()
                 mediaPlayer = null
-                stopForeground(true)
+                stopForeground(STOP_FOREGROUND_REMOVE)
                 try {
                     val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
                     audioManager.abandonAudioFocusRequest(audioFocusRequest)
@@ -762,7 +762,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
     /** Handle errors that occur during playback */
     private fun error() {
         mediaSessionCompat.controller.transportControls.stop()
-        stopForeground(true)
+        stopForeground(STOP_FOREGROUND_REMOVE)
         Toast.makeText(application, getString(R.string.error), Toast.LENGTH_LONG).show()
     }
 
