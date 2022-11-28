@@ -127,6 +127,8 @@ class MainActivity : AppCompatActivity() {
                 currentQueueItemId = state?.activeQueueItemId ?: -1
                 savePlayQueueId(currentQueueItemId)
             }
+
+            playQueueViewModel.playbackState.value = state?.state ?: STATE_NONE
             when (state?.state) {
                 STATE_PLAYING -> {
                     currentPlaybackPosition = state.position.toInt()
@@ -135,7 +137,6 @@ class MainActivity : AppCompatActivity() {
                         playQueueViewModel.playbackDuration.value = currentPlaybackDuration
                     }
                     playQueueViewModel.playbackPosition.value = currentPlaybackPosition
-                    playQueueViewModel.isPlaying.value = true
                 }
                 STATE_PAUSED -> {
                     currentPlaybackPosition = state.position.toInt()
@@ -144,10 +145,8 @@ class MainActivity : AppCompatActivity() {
                         playQueueViewModel.playbackDuration.value = currentPlaybackDuration
                     }
                     playQueueViewModel.playbackPosition.value = currentPlaybackPosition
-                    playQueueViewModel.isPlaying.value = false
                 }
                 STATE_STOPPED -> {
-                    playQueueViewModel.isPlaying.value = false
                     currentPlaybackDuration = 0
                     playQueueViewModel.playbackDuration.value = 0
                     currentPlaybackPosition = 0

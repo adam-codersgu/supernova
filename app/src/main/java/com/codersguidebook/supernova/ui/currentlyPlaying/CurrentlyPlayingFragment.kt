@@ -95,8 +95,8 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
             updateCurrentlyDisplayedMetadata(it)
         }
 
-        playQueueViewModel.isPlaying.observe(viewLifecycleOwner) {
-            if (it) binding.btnPlay.setImageResource(R.drawable.ic_pause)
+        playQueueViewModel.playbackState.observe(viewLifecycleOwner) { state ->
+            if (state == STATE_PLAYING) binding.btnPlay.setImageResource(R.drawable.ic_pause)
             else binding.btnPlay.setImageResource(R.drawable.ic_play)
         }
 
