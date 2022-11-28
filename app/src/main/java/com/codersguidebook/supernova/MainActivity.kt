@@ -171,6 +171,11 @@ class MainActivity : AppCompatActivity() {
         override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
             super.onMetadataChanged(metadata)
 
+            if (metadata?.description?.mediaId !=
+                playQueueViewModel.currentlyPlayingSongMetadata.value?.description?.mediaId) {
+                playQueueViewModel.playbackPosition.value = 0
+            }
+
             playQueueViewModel.currentlyPlayingSongMetadata.value = metadata
         }
     }
