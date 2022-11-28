@@ -136,7 +136,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             super.onPrepare()
 
             if (playQueue.isEmpty()) {
-                error()
+                error(getString(R.string.error_media_service_empty_queue))
                 return
             }
 
@@ -179,7 +179,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             } catch (e: IOException) {
                 error()
             } catch (e: IllegalStateException) {
-                error()
+                error(getString(R.string.error_media_service_player_state))
             } catch (e: IllegalArgumentException) {
                 error()
             }
@@ -243,7 +243,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         setMediaPlaybackState(STATE_PLAYING, playbackPosition,
                             1f, getBundleWithSongDuration())
                     } catch (e: IllegalStateException) {
-                        error()
+                        error(getString(R.string.error_media_service_player_state))
                     } catch (e: NullPointerException) {
                         error()
                     }
@@ -770,7 +770,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
      * will be displayed to the user in a toast notification. By default, a generic error
      * message will be shown.
      */
-    private fun error(message: String = getString(R.string.default_media_service_error)) {
+    private fun error(message: String = getString(R.string.error_media_service_default)) {
         mediaSessionCompat.controller.transportControls.stop()
         stopForeground(STOP_FOREGROUND_REMOVE)
         Toast.makeText(application, message, Toast.LENGTH_LONG).show()
