@@ -188,13 +188,15 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
     override fun onStart() {
         super.onStart()
 
-        binding.animatedView.viewWidth = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            callingActivity.windowManager.currentWindowMetrics.bounds.width()
-        } else {
+        binding.animatedView.viewWidth = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            // Pre-SDK 30
             val displayMetrics = DisplayMetrics()
             @Suppress("DEPRECATION")
             callingActivity.windowManager.defaultDisplay.getMetrics(displayMetrics)
             displayMetrics.widthPixels
+        } else {
+            // SDK 30 and up
+            callingActivity.windowManager.currentWindowMetrics.bounds.width()
         }
 
         isAnimationVisible = sharedPreferences.getBoolean(ANIMATION_ACTIVE, true)
