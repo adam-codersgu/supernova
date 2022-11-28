@@ -70,30 +70,27 @@ class AlbumFragment : Fragment() {
                     it.track.toString().substring(0, 1).toInt()
                 }.map { it.track.toString().substring(0, 1).toInt() }
 
-                when {
-                    albumAdapter.songs.isEmpty() -> {
-                        albumAdapter.displayDiscNumbers = discNumbers.size > 1
-                        albumAdapter.songs = albumSongs.toMutableList()
-                        albumAdapter.notifyItemRangeInserted(0, albumSongs.size)
-                    }
-                    else -> {
-                        for ((index, song) in albumSongs.withIndex()) {
-                            when {
-                                index >= albumAdapter.songs.size -> {
-                                    albumAdapter.songs.add(song)
-                                    albumAdapter.notifyItemInserted(index)
-                                }
-                                albumAdapter.songs[index] != song -> {
-                                    albumAdapter.songs[index] = song
-                                    albumAdapter.notifyItemChanged(index)
-                                }
+                if (albumAdapter.songs.isEmpty()) {
+                    albumAdapter.displayDiscNumbers = discNumbers.size > 1
+                    albumAdapter.songs = albumSongs.toMutableList()
+                    albumAdapter.notifyItemRangeInserted(0, albumSongs.size)
+                } else {
+                    for ((index, song) in albumSongs.withIndex()) {
+                        when {
+                            index >= albumAdapter.songs.size -> {
+                                albumAdapter.songs.add(song)
+                                albumAdapter.notifyItemInserted(index)
+                            }
+                            albumAdapter.songs[index] != song -> {
+                                albumAdapter.songs[index] = song
+                                albumAdapter.notifyItemChanged(index)
                             }
                         }
-                        if (albumAdapter.songs.size > albumSongs.size) {
-                            val numberItemsToRemove = albumAdapter.songs.size - albumSongs.size
-                            albumAdapter.songs.dropLast(numberItemsToRemove)
-                            albumAdapter.notifyItemRangeRemoved(albumSongs.size, numberItemsToRemove)
-                        }
+                    }
+                    if (albumAdapter.songs.size > albumSongs.size) {
+                        val numberItemsToRemove = albumAdapter.songs.size - albumSongs.size
+                        albumAdapter.songs.dropLast(numberItemsToRemove)
+                        albumAdapter.notifyItemRangeRemoved(albumSongs.size, numberItemsToRemove)
                     }
                 }
                 isUpdating = false
