@@ -20,32 +20,31 @@ import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 
 class AlbumFragment : Fragment() {
 
-    private var albumID: String? = null
-    private var albumSongs = emptyList<Song>()
+    private var albumId: String? = null
     private var _binding: FragmentWithFabBinding? = null
     private val binding get() = _binding!!
     private lateinit var callingActivity: MainActivity
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
+                              savedInstanceState: Bundle?): View {
         arguments?.let {
             val safeArgs = AlbumFragmentArgs.fromBundle(it)
-            albumID = safeArgs.albumID
+            albumId = safeArgs.albumID
         }
         _binding = FragmentWithFabBinding.inflate(inflater, container, false)
         callingActivity = activity as MainActivity
+
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
         val layoutManager = LinearLayoutManager(activity)
         val albumAdapter = AlbumAdapter(callingActivity)
         binding.recyclerView.layoutManager = layoutManager
         binding.recyclerView.itemAnimator = DefaultItemAnimator()
         binding.recyclerView.adapter = albumAdapter
-
-        binding.fab.setOnClickListener {
-            callingActivity.playSongsShuffled(albumSongs)
-        }
 
         binding.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -55,36 +54,32 @@ class AlbumFragment : Fragment() {
             }
         })
 
-        val musicDatabase = MusicDatabase.getDatabase(callingActivity, lifecycleScope)
-        musicDatabase.musicDao().findAlbumSongs(albumID ?: "").observe(viewLifecycleOwner) { songs ->
-            songs?.let { it ->
-                albumSongs = it
-                val discNumbers = mutableListOf(1)
-                for (s in albumSongs) {
-                    val disc = s.track.toString().substring(0, 1).toInt()
-                    if (!discNumbers.contains(disc)) discNumbers.add(disc)
+        albumId?.let { albumId ->
+            val musicDatabase = MusicDatabase.getDatabase(callingActivity, lifecycleScope)
+            musicDatabase.musicDao().findAlbumSongs(albumId).observe(viewLifecycleOwner) { albumSongs ->
+                setupMenu(albumSongs)
+
+                binding.fab.setOnClickListener {
+                    callingActivity.playSongsShuffled(albumSongs)
                 }
+
+                val discNumbers = albumSongs.distinctBy {
+                    it.track.toString().substring(0, 1).toInt()
+                }.map { it.track.toString().substring(0, 1).toInt() }
+                
                 when {
                     albumAdapter.songs.isEmpty() -> {
                         albumAdapter.displayDiscNumbers = discNumbers.size > 1
-                        albumAdapter.songs = it.toMutableList()
-                        // FIXME: Need to refine the mechanism for updating the RecyclerView
-                        albumAdapter.notifyDataSetChanged()
+                        albumAdapter.songs = albumSongs.toMutableList()
+                        albumAdapter.notifyItemRangeInserted(0, albumSongs.size)
                     }
-                    albumAdapter.songs.size != songs.size -> albumAdapter.processSongs(it)
+                    albumAdapter.songs.size != albumSongs.size -> albumAdapter.processSongs(albumSongs)
                 }
             }
         }
-
-        return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        setupMenu()
-    }
-
-    private fun setupMenu() {
+    private fun setupMenu(albumSongs: List<Song>) {
         (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
             override fun onPrepareMenu(menu: Menu) {
                 menu.setGroupVisible(R.id.menu_group_album_actions, true)
