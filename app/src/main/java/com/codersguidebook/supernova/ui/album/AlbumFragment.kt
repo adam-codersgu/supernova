@@ -23,6 +23,7 @@ class AlbumFragment : Fragment() {
     private var albumId: String? = null
     private var _binding: FragmentWithFabBinding? = null
     private val binding get() = _binding!!
+    private var isUpdating = false
     private lateinit var callingActivity: MainActivity
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
@@ -57,6 +58,8 @@ class AlbumFragment : Fragment() {
         albumId?.let { albumId ->
             val musicDatabase = MusicDatabase.getDatabase(callingActivity, lifecycleScope)
             musicDatabase.musicDao().findAlbumSongs(albumId).observe(viewLifecycleOwner) { albumSongs ->
+                if (isUpdating) return@observe
+                isUpdating = true
                 setupMenu(albumSongs)
 
                 binding.fab.setOnClickListener {
@@ -66,15 +69,34 @@ class AlbumFragment : Fragment() {
                 val discNumbers = albumSongs.distinctBy {
                     it.track.toString().substring(0, 1).toInt()
                 }.map { it.track.toString().substring(0, 1).toInt() }
-                
+
                 when {
                     albumAdapter.songs.isEmpty() -> {
                         albumAdapter.displayDiscNumbers = discNumbers.size > 1
                         albumAdapter.songs = albumSongs.toMutableList()
                         albumAdapter.notifyItemRangeInserted(0, albumSongs.size)
                     }
-                    albumAdapter.songs.size != albumSongs.size -> albumAdapter.processSongs(albumSongs)
+                    else -> {
+                        for ((index, song) in albumSongs.withIndex()) {
+                            when {
+                                index >= albumAdapter.songs.size -> {
+                                    albumAdapter.songs.add(song)
+                                    albumAdapter.notifyItemInserted(index)
+                                }
+                                albumAdapter.songs[index] != song -> {
+                                    albumAdapter.songs[index] = song
+                                    albumAdapter.notifyItemChanged(index)
+                                }
+                            }
+                        }
+                        if (albumAdapter.songs.size > albumSongs.size) {
+                            val numberItemsToRemove = albumAdapter.songs.size - albumSongs.size
+                            albumAdapter.songs.dropLast(numberItemsToRemove)
+                            albumAdapter.notifyItemRangeRemoved(albumSongs.size, numberItemsToRemove)
+                        }
+                    }
                 }
+                isUpdating = false
             }
         }
     }
