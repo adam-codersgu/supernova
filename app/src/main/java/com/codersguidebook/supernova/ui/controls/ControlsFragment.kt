@@ -2,6 +2,7 @@ package com.codersguidebook.supernova.ui.controls
 
 import android.os.Bundle
 import android.support.v4.media.MediaMetadataCompat
+import android.support.v4.media.session.PlaybackStateCompat.STATE_PLAYING
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -42,8 +43,8 @@ class ControlsFragment : Fragment() {
             updateCurrentlyDisplayedMetadata(it)
         }
 
-        playQueueViewModel.isPlaying.observe(viewLifecycleOwner) { isPlaying ->
-            if (isPlaying) binding.btnPlay.setImageResource(R.drawable.ic_pause)
+        playQueueViewModel.playbackState.observe(viewLifecycleOwner) { state ->
+            if (state == STATE_PLAYING) binding.btnPlay.setImageResource(R.drawable.ic_pause)
             else binding.btnPlay.setImageResource(R.drawable.ic_play)
         }
 
