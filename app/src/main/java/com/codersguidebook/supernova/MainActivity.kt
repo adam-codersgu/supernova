@@ -1056,9 +1056,8 @@ class MainActivity : AppCompatActivity() {
                     val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
 
                     val cw = ContextWrapper(application)
-                    // path to /data/data/yourapp/app_data/albumArt
+                    // path to /data/data/this_app/app_data/albumArt
                     val directory = cw.getDir("albumArt", Context.MODE_PRIVATE)
-                    // Create imageDir
                     val path = File(directory, "$albumID.jpg")
                     // If artwork is not saved then try and find some
                     if (!path.exists()) {
