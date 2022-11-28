@@ -2,7 +2,10 @@ package com.codersguidebook.supernova.ui.album
 
 import android.os.Bundle
 import android.view.*
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DefaultItemAnimator
@@ -40,8 +43,6 @@ class AlbumFragment : Fragment() {
         binding.recyclerView.itemAnimator = DefaultItemAnimator()
         binding.recyclerView.adapter = albumAdapter
 
-        setHasOptionsMenu(true)
-
         binding.fab.setOnClickListener {
             callingActivity.playSongsShuffled(albumSongs)
         }
@@ -55,7 +56,7 @@ class AlbumFragment : Fragment() {
         })
 
         val musicDatabase = MusicDatabase.getDatabase(callingActivity, lifecycleScope)
-        musicDatabase.musicDao().findAlbumSongs(albumID ?: "").observe(viewLifecycleOwner, { songs ->
+        musicDatabase.musicDao().findAlbumSongs(albumID ?: "").observe(viewLifecycleOwner) { songs ->
             songs?.let { it ->
                 albumSongs = it
                 val discNumbers = mutableListOf(1)
@@ -67,55 +68,56 @@ class AlbumFragment : Fragment() {
                     albumAdapter.songs.isEmpty() -> {
                         albumAdapter.displayDiscNumbers = discNumbers.size > 1
                         albumAdapter.songs = it.toMutableList()
+                        // FIXME: Need to refine the mechanism for updating the RecyclerView
                         albumAdapter.notifyDataSetChanged()
                     }
                     albumAdapter.songs.size != songs.size -> albumAdapter.processSongs(it)
                 }
             }
-        })
+        }
 
         return binding.root
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        menu.setGroupVisible(R.id.menu_group_album_actions, true)
-        if (albumSongs.isNotEmpty()) {
-            val distinctArtists = albumSongs.distinctBy {
-                it.artist
-            }
-            if (distinctArtists.size > 1) menu.findItem(R.id.album_view_artist).isVisible = false
-        }
-
-        super.onCreateOptionsMenu(menu, inflater)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setupMenu()
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.album_play_next -> {
-                callingActivity.addSongsToPlayQueue(albumSongs, true)
-                true
-            }
-            R.id.album_add_queue -> {
-                callingActivity.addSongsToPlayQueue(albumSongs)
-                true
-            }
-            R.id.album_add_playlist -> {
-                callingActivity.openAddToPlaylistDialog(albumSongs)
-                true
-            }
-            R.id.album_view_artist -> {
-                val action = ArtistsFragmentDirections.actionSelectArtist(albumSongs[0].artist)
-                findNavController().navigate(action)
-                true
-            }
-            R.id.album_edit_album_info -> {
-                val action = AlbumFragmentDirections.actionEditAlbum(albumSongs[0].albumId)
-                findNavController().navigate(action)
-                true
+    private fun setupMenu() {
+        (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
+            override fun onPrepareMenu(menu: Menu) {
+                menu.setGroupVisible(R.id.menu_group_album_actions, true)
+                if (albumSongs.isNotEmpty()) {
+                    val distinctArtists = albumSongs.distinctBy {
+                        it.artist
+                    }
+                    if (distinctArtists.size != 1) menu.findItem(R.id.album_view_artist).isVisible = false
+                }
             }
 
-            else -> super.onOptionsItemSelected(item)
-        }
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) { }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                when (menuItem.itemId) {
+                    R.id.album_play_next -> {
+                        callingActivity.addSongsToPlayQueue(albumSongs, true)
+                    }
+                    R.id.album_add_queue -> callingActivity.addSongsToPlayQueue(albumSongs)
+                    R.id.album_add_playlist -> callingActivity.openAddToPlaylistDialog(albumSongs)
+                    R.id.album_view_artist -> {
+                        val action = ArtistsFragmentDirections.actionSelectArtist(albumSongs[0].artist)
+                        findNavController().navigate(action)
+                    }
+                    R.id.album_edit_album_info -> {
+                        val action = AlbumFragmentDirections.actionEditAlbum(albumSongs[0].albumId)
+                        findNavController().navigate(action)
+                    }
+                    else -> return false
+                }
+                return true
+            }
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
 
     override fun onDestroyView() {
