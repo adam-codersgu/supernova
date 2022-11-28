@@ -9,10 +9,7 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.AudioManager.*
 import android.media.MediaPlayer
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.os.ResultReceiver
+import android.os.*
 import android.provider.MediaStore
 import android.service.media.MediaBrowserService
 import android.support.v4.media.MediaBrowserCompat
@@ -90,7 +87,15 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
 
     private val mediaSessionCallback: MediaSessionCompat.Callback = object : MediaSessionCompat.Callback() {
         override fun onMediaButtonEvent(mediaButtonEvent: Intent?): Boolean {
-            val keyEvent: KeyEvent? = mediaButtonEvent?.getParcelableExtra(Intent.EXTRA_KEY_EVENT)
+            val keyEvent: KeyEvent? = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                // Pre-SDK 33
+                @Suppress("DEPRECATION")
+                mediaButtonEvent?.getParcelableExtra(Intent.EXTRA_KEY_EVENT)
+            } else {
+                // SDK 33 and up
+                mediaButtonEvent?.getParcelableExtra(Intent.EXTRA_KEY_EVENT, KeyEvent::class.java)
+            }
+
             if (keyEvent != null && mediaPlayer != null) {
                 when (keyEvent.keyCode) {
                     KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
@@ -741,15 +746,14 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         } else null
     }
 
-    //Not important for general audio service, required for class
+    // Not important for general audio service, required for class
     override fun onLoadChildren(parentId: String, result: Result<List<MediaBrowserCompat.MediaItem>>) {
         result.sendResult(null)
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        val actionString = intent.action
-        if (actionString != null) {
-            when (actionString) {
+        intent.action?.let { action ->
+            when (action) {
                 ACTION_PLAY -> mediaSessionCallback.onPlay()
                 ACTION_PAUSE -> mediaSessionCallback.onPause()
                 ACTION_NEXT -> mediaSessionCallback.onSkipToNext()
@@ -759,11 +763,17 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         return super.onStartCommand(intent, flags, startId)
     }
 
-    /** Handle errors that occur during playback */
-    private fun error() {
+    /**
+     * Handle errors that occur during playback
+     *
+     * @param message - A String detailing the reason for the error. The error message
+     * will be displayed to the user in a toast notification. By default, a generic error
+     * message will be shown.
+     */
+    private fun error(message: String = getString(R.string.default_media_service_error)) {
         mediaSessionCompat.controller.transportControls.stop()
         stopForeground(STOP_FOREGROUND_REMOVE)
-        Toast.makeText(application, getString(R.string.error), Toast.LENGTH_LONG).show()
+        Toast.makeText(application, message, Toast.LENGTH_LONG).show()
     }
 
     override fun onError(mp: MediaPlayer?, what: Int, extra: Int): Boolean {

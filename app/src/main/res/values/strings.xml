@@ -107,7 +107,6 @@
     <string name="fast">Fast</string>
     <string name="normal">Normal</string>
     <string name="track">Track</string>
-    <string name="error">An error has occurred. If the song file has been moved or deleted please wait for the library to refresh.</string>
     <string name="artist_name">Artist name</string>
     <string name="about">About</string>
     <string name="app_info">App information</string>
@@ -173,6 +172,8 @@
     <string name="album_updated">Album updated!</string>
 
     <string name="app_preferences">App preferences</string>
+
+    <string name="default_media_service_error">An error has occurred. If the song file has been moved or deleted please wait for the library to refresh.</string>
 
     <string name="no">No</string>
     <string name="yes">Yes</string>
