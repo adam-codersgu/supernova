@@ -494,6 +494,7 @@ class MainActivity : AppCompatActivity() {
      * Create a MediaDescriptionCompat object for each song in a list. The MediaDescriptionCompat objects
      * are then sent to the media browser service and added to the play queue.
      *
+     * fixme
      * N.B. This method is only suitable for small play queues (up to 20 songs). Beyond 20 songs
      * there starts to be noticeable performance deterioration due to the processing of each song's
      * metadata. For this reason, an alternative method called loadLargePlayQueue will handle longer
@@ -509,7 +510,8 @@ class MainActivity : AppCompatActivity() {
      * Default value = null.
      */
     private fun sendSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false,
-                                     shuffle: Boolean = false, startPlaybackAtIndex: Int? = null) {
+                                     shuffle: Boolean = false, startPlaybackAtIndex: Int? = null)
+    = lifecycleScope.launch(Dispatchers.Default) {
         val songIds = songs.map { it.songId }
         val gson = Gson()
         val songIdsJson = gson.toJson(songIds)
@@ -535,7 +537,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        mediaController.sendCommand(LOAD_SONGS, bundle, resultReceiver)
+        lifecycleScope.launch(Dispatchers.IO) {
+            mediaController.sendCommand(LOAD_SONGS, bundle, resultReceiver)
+        }
     }
 
     /**
@@ -545,13 +549,27 @@ class MainActivity : AppCompatActivity() {
     private fun populatePlayQueueData() = lifecycleScope.launch(Dispatchers.Default) {
         refreshPlayQueue()
 
+        fun updateQueueItem(song: Song, queueItem: QueueItem) {
+            val mediaDescriptionBundle = mediaDescriptionManager.getDescriptionAsBundle(song)
+            mediaDescriptionBundle.putLong("queueItemId", queueItem.queueId)
+            mediaController.sendCommand(UPDATE_QUEUE_ITEM, mediaDescriptionBundle, null)
+        }
+
+        // Update the currently playing song first
+        if (currentQueueItemId != -1L) {
+            playQueue.find { it.queueId == currentQueueItemId }?.let { queueItem ->
+                val songId = queueItem.description.mediaId?.toLong() ?: return@let
+                val song = getSongById(songId) ?: return@let
+                updateQueueItem(song, queueItem)
+            }
+        }
+
+        // Update the rest of the play queue
         for (queueItem in playQueue) {
             if (queueItem.description.title == null || queueItem.description.subtitle == null) {
                 val songId = queueItem.description.mediaId?.toLong() ?: continue
                 val song = getSongById(songId) ?: continue
-                val mediaDescriptionBundle = mediaDescriptionManager.getDescriptionAsBundle(song)
-                mediaDescriptionBundle.putLong("queueItemId", queueItem.queueId)
-                mediaController.sendCommand(UPDATE_QUEUE_ITEM, mediaDescriptionBundle, null)
+                updateQueueItem(song, queueItem)
             }
         }
 
@@ -772,6 +790,11 @@ class MainActivity : AppCompatActivity() {
         musicLibraryViewModel.updatePlaylists(listOf(playlist))
     }
 
+    /**
+     * Delete a given playlist from the app database and any associated artwork.
+     *
+     * @param playlist - The Playlist object to be deleted.
+     */
     fun deletePlaylist(playlist: Playlist) {
         musicLibraryViewModel.deletePlaylist(playlist)
         val cw = ContextWrapper(application)

@@ -291,35 +291,6 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             super.onCommand(command, extras, cb)
 
             when (command) {
-                RESTORE_PLAY_QUEUE -> {
-                    extras?.let {
-                        val queueItemsJson = it.getString("queueItemPairs") ?: return@let
-                        val gson = Gson()
-                        val itemType = object : TypeToken<List<Pair<Long, Long>>>() {}.type
-                        val queueItemPairs = gson.fromJson<List<Pair<Long, Long>>>(queueItemsJson, itemType)
-
-                        playQueue.clear()
-                        currentlyPlayingQueueItemId = -1L
-
-                        // Pair mapping is <Long, Long> -> <QueueId, songId>
-                        for (pair in queueItemPairs) {
-                            val mediaDescription = MediaDescriptionCompat.Builder()
-                                .setMediaId(pair.second.toString())
-                                .build()
-                            val queueItem = QueueItem(mediaDescription, pair.first)
-                            playQueue.add(queueItem)
-                        }
-
-                        mediaSessionCompat.setQueue(playQueue)
-
-                        currentlyPlayingQueueItemId = it.getLong("queueItemId", -1L)
-                        if (currentlyPlayingQueueItemId != -1L) {
-                            onSkipToQueueItem(currentlyPlayingQueueItemId)
-                        }
-
-                        cb?.send(SUCCESS, Bundle())
-                    }
-                }
                 LOAD_SONGS -> {
                     extras?.let {
                         val songIdsJson = it.getString("songIds") ?: return@let
@@ -370,6 +341,35 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         }
                         playQueue.removeIf { it.queueId == queueItemId }
                         setPlayQueue()
+                        cb?.send(SUCCESS, Bundle())
+                    }
+                }
+                RESTORE_PLAY_QUEUE -> {
+                    extras?.let {
+                        val queueItemsJson = it.getString("queueItemPairs") ?: return@let
+                        val gson = Gson()
+                        val itemType = object : TypeToken<List<Pair<Long, Long>>>() {}.type
+                        val queueItemPairs = gson.fromJson<List<Pair<Long, Long>>>(queueItemsJson, itemType)
+
+                        playQueue.clear()
+                        currentlyPlayingQueueItemId = -1L
+
+                        // Pair mapping is <Long, Long> -> <QueueId, songId>
+                        for (pair in queueItemPairs) {
+                            val mediaDescription = MediaDescriptionCompat.Builder()
+                                .setMediaId(pair.second.toString())
+                                .build()
+                            val queueItem = QueueItem(mediaDescription, pair.first)
+                            playQueue.add(queueItem)
+                        }
+
+                        mediaSessionCompat.setQueue(playQueue)
+
+                        currentlyPlayingQueueItemId = it.getLong("queueItemId", -1L)
+                        if (currentlyPlayingQueueItemId != -1L) {
+                            onSkipToQueueItem(currentlyPlayingQueueItemId)
+                        }
+
                         cb?.send(SUCCESS, Bundle())
                     }
                 }
