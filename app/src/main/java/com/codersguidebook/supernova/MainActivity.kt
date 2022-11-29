@@ -453,7 +453,7 @@ class MainActivity : AppCompatActivity() {
         if (songs.isNotEmpty()) {
             mediaController.transportControls.stop()
 
-            sendSongsToPlayQueue(songs, startPlaybackAtIndex = startIndex)
+            addSongsToPlayQueue(songs, startPlaybackAtIndex = startIndex)
             setShuffleMode(SHUFFLE_MODE_NONE)
         }
     }
@@ -468,7 +468,7 @@ class MainActivity : AppCompatActivity() {
         if (songs.isNotEmpty()) {
             mediaController.transportControls.stop()
 
-            sendSongsToPlayQueue(songs, shuffle = true, startPlaybackAtIndex = 0)
+            addSongsToPlayQueue(songs, shuffle = true, startPlaybackAtIndex = 0)
             setShuffleMode(SHUFFLE_MODE_ALL)
         }
     }
@@ -482,7 +482,7 @@ class MainActivity : AppCompatActivity() {
      * after the currently playing queue item. Default value = false.
      */
     fun addSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false) {
-        sendSongsToPlayQueue(songs, addSongsAfterCurrentQueueItem = addSongsAfterCurrentQueueItem)
+        addSongsToPlayQueue(songs, addSongsAfterCurrentQueueItem = addSongsAfterCurrentQueueItem)
 
         if (songs.size > 1) Toast.makeText(this@MainActivity,
             getString(R.string.songs_added_play_queue), Toast.LENGTH_SHORT).show()
@@ -491,8 +491,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Create a MediaDescriptionCompat object for each song in a list. The MediaDescriptionCompat objects
-     * are then sent to the media browser service and added to the play queue.
+     * Add a list of songs to the play queue.
      *
      * @param songs - A list containing Song objects that should be added to the play queue.
      * @param addSongsAfterCurrentQueueItem - A Boolean indicating whether the songs should be added to
@@ -503,28 +502,39 @@ class MainActivity : AppCompatActivity() {
      * then specify an index. Enter 0 if playback should begin from the start of the play queue.
      * Default value = -1 (playback will not start as out of index bounds).
      */
-    private fun sendSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false,
-                                     shuffle: Boolean = false, startPlaybackAtIndex: Int = -1)
+    private fun addSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false,
+                                    shuffle: Boolean = false, startPlaybackAtIndex: Int = -1)
     = lifecycleScope.launch(Dispatchers.Default) {
-        val songIds = songs.map { it.songId }
-        val gson = Gson()
-        val songIdsJson = gson.toJson(songIds)
-        val bundle = Bundle().apply {
-            putString("songIds", songIdsJson)
-            putBoolean("addSongsAfterCurrentQueueItem", addSongsAfterCurrentQueueItem)
-            putBoolean("shuffle", shuffle)
-            putInt("startPlaybackAtIndex", startPlaybackAtIndex)
-        }
 
-        val resultReceiver = object : ResultReceiver(Handler(Looper.getMainLooper())) {
-            override fun onReceiveResult(resultCode: Int, resultData: Bundle) {
-                if (resultCode == SUCCESS) {
-                    populatePlayQueueData()
+        // TODO: Experiment with processing song additions in batches of 25
+        //      The next batch should be processed in onReceiveResult
+        //      It should not be necessary to send the startPlayingAtIndex each time -
+        //      The currently playing song should be processed almost immediately
+
+        val songIds = songs.map { it.songId }
+        if (songIds.size > 25) {
+            val chunkedSongIds = songIds.chunked(25)
+        } else {
+            val gson = Gson()
+            val songIdsJson = gson.toJson(songIds)
+
+            val bundle = Bundle().apply {
+                putString("songIds", songIdsJson)
+                putBoolean("addSongsAfterCurrentQueueItem", addSongsAfterCurrentQueueItem)
+                putBoolean("shuffle", shuffle)
+                putInt("startPlaybackAtIndex", startPlaybackAtIndex)
+            }
+
+            val resultReceiver = object : ResultReceiver(Handler(Looper.getMainLooper())) {
+                override fun onReceiveResult(resultCode: Int, resultData: Bundle) {
+                    if (resultCode == SUCCESS) {
+                        populatePlayQueueData()
+                    }
                 }
             }
-        }
 
-        mediaController.sendCommand(LOAD_SONGS, bundle, resultReceiver)
+            mediaController.sendCommand(LOAD_SONGS, bundle, resultReceiver)
+        }
     }
 
     /**
