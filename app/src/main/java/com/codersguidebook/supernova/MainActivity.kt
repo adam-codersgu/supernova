@@ -510,6 +510,7 @@ class MainActivity : AppCompatActivity() {
         //      The next batch should be processed in onReceiveResult
         //      It should not be necessary to send the startPlayingAtIndex each time -
         //      The currently playing song should be processed almost immediately
+        //      Playing a song that appears in a later batch will need to be handled thoughtfully
 
         val songIds = songs.map { it.songId }
         if (songIds.size > 25) {
