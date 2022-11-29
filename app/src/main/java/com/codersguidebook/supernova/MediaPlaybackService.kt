@@ -315,6 +315,14 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         if (it.getBoolean("shuffle")) playQueue.shuffle()
 
                         mediaSessionCompat.setQueue(playQueue)
+
+                        val startPlayingAtIndex = it.getInt("startPlaybackAtIndex")
+                        if (startPlayingAtIndex in 0..playQueue.size) {
+                            currentlyPlayingQueueItemId = playQueue[startPlayingAtIndex].queueId
+                            onSkipToQueueItem(currentlyPlayingQueueItemId)
+                            onPlay()
+                        }
+
                         cb?.send(SUCCESS, Bundle())
                     }
                 }

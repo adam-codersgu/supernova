@@ -262,7 +262,7 @@ class MainActivity : AppCompatActivity() {
         musicLibraryViewModel.mostPlayedSongsById.observe(this) {
             val playlist = findPlaylist(getString(R.string.most_played))
             if (playlist != null) {
-                val mostPlayedSongs = convertSongIDListToJson(it)
+                val mostPlayedSongs = convertSongIdListToJson(it)
                 if (mostPlayedSongs != playlist.songs){
                     playlist.songs = mostPlayedSongs
                     musicLibraryViewModel.updatePlaylists(listOf(playlist))
@@ -494,12 +494,6 @@ class MainActivity : AppCompatActivity() {
      * Create a MediaDescriptionCompat object for each song in a list. The MediaDescriptionCompat objects
      * are then sent to the media browser service and added to the play queue.
      *
-     * fixme
-     * N.B. This method is only suitable for small play queues (up to 20 songs). Beyond 20 songs
-     * there starts to be noticeable performance deterioration due to the processing of each song's
-     * metadata. For this reason, an alternative method called loadLargePlayQueue will handle longer
-     * lists of songs.
-     *
      * @param songs - A list containing Song objects that should be added to the play queue.
      * @param addSongsAfterCurrentQueueItem - A Boolean indicating whether the songs should be added to
      * after the currently playing queue item. Default value = false.
@@ -507,10 +501,10 @@ class MainActivity : AppCompatActivity() {
      * Default value = false.
      * @param startPlaybackAtIndex - If playback should begin once the songs have been added to the play queue,
      * then specify an index. Enter 0 if playback should begin from the start of the play queue.
-     * Default value = null.
+     * Default value = -1 (playback will not start as out of index bounds).
      */
     private fun sendSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false,
-                                     shuffle: Boolean = false, startPlaybackAtIndex: Int? = null)
+                                     shuffle: Boolean = false, startPlaybackAtIndex: Int = -1)
     = lifecycleScope.launch(Dispatchers.Default) {
         val songIds = songs.map { it.songId }
         val gson = Gson()
@@ -519,27 +513,18 @@ class MainActivity : AppCompatActivity() {
             putString("songIds", songIdsJson)
             putBoolean("addSongsAfterCurrentQueueItem", addSongsAfterCurrentQueueItem)
             putBoolean("shuffle", shuffle)
+            putInt("startPlaybackAtIndex", startPlaybackAtIndex)
         }
 
         val resultReceiver = object : ResultReceiver(Handler(Looper.getMainLooper())) {
             override fun onReceiveResult(resultCode: Int, resultData: Bundle) {
                 if (resultCode == SUCCESS) {
-                    startPlaybackAtIndex?.let {
-                        refreshPlayQueue(true)
-                        if (playQueue.size > it) {
-                            val queueId = playQueue[it].queueId
-                            mediaController.transportControls.skipToQueueItem(queueId)
-                            mediaController.transportControls.play()
-                        }
-                    }
                     populatePlayQueueData()
                 }
             }
         }
 
-        lifecycleScope.launch(Dispatchers.IO) {
-            mediaController.sendCommand(LOAD_SONGS, bundle, resultReceiver)
-        }
+        mediaController.sendCommand(LOAD_SONGS, bundle, resultReceiver)
     }
 
     /**
@@ -573,7 +558,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        refreshPlayQueue()
+        refreshPlayQueue(true)
     }
 
     /**
@@ -785,7 +770,7 @@ class MainActivity : AppCompatActivity() {
      */
     fun savePlaylistWithSongIds(playlist: Playlist, songIds: List<Long>) {
         if (songIds.isNotEmpty()) {
-            playlist.songs = convertSongIDListToJson(songIds)
+            playlist.songs = convertSongIdListToJson(songIds)
         } else playlist.songs = null
         musicLibraryViewModel.updatePlaylists(listOf(playlist))
     }
@@ -849,7 +834,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (songIdList.isNotEmpty()) {
-                val newSongListJSON = convertSongIDListToJson(songIdList)
+                val newSongListJSON = convertSongIdListToJson(songIdList)
                 favouritesPlaylist.songs = newSongListJSON
             } else favouritesPlaylist.songs = null
             musicLibraryViewModel.updatePlaylists(listOf(favouritesPlaylist))
@@ -882,7 +867,7 @@ class MainActivity : AppCompatActivity() {
                 songIDList.add(0, songId)
                 if (songIDList.size > 30) songIDList.removeAt(songIDList.size - 1)
             } else songIDList.add(songId)
-            this.songs = convertSongIDListToJson(songIDList)
+            this.songs = convertSongIdListToJson(songIDList)
             musicLibraryViewModel.updatePlaylists(listOf(this))
         }
     }
@@ -893,9 +878,9 @@ class MainActivity : AppCompatActivity() {
         }?.albumId
     }
 
-    fun convertSongIDListToJson(songIDList: List<Long>): String {
+    fun convertSongIdListToJson(songIdList: List<Long>): String {
         val gPretty = GsonBuilder().setPrettyPrinting().create()
-        return gPretty.toJson(songIDList)
+        return gPretty.toJson(songIdList)
     }
 
     /**
@@ -1219,7 +1204,7 @@ class MainActivity : AppCompatActivity() {
                         } while (index != -1)
 
                         if (playlistModified) {
-                            playlist.songs = convertSongIDListToJson(newSongIDList)
+                            playlist.songs = convertSongIdListToJson(newSongIDList)
                             updatedPlaylists.add(playlist)
                         }
                     }
