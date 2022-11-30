@@ -29,6 +29,7 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTI
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PAUSE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PLAY
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PREVIOUS
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_PLAY_QUEUE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_SONGS
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
@@ -291,6 +292,9 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             super.onCommand(command, extras, cb)
 
             when (command) {
+                LOAD_PLAY_QUEUE -> {
+                    // TODO - Implement
+                }
                 LOAD_SONGS -> {
                     extras?.let {
                         val songIdsJson = it.getString("songIds") ?: return@let
@@ -316,9 +320,9 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
 
                         mediaSessionCompat.setQueue(playQueue)
 
-                        val startPlayingAtIndex = it.getInt("startPlaybackAtIndex")
-                        if (startPlayingAtIndex in 0..playQueue.size) {
-                            currentlyPlayingQueueItemId = playQueue[startPlayingAtIndex].queueId
+                        val startIndex = it.getInt("startIndex")
+                        if (startIndex in 0..playQueue.size) {
+                            currentlyPlayingQueueItemId = playQueue[startIndex].queueId
                             onSkipToQueueItem(currentlyPlayingQueueItemId)
                             onPlay()
                         }

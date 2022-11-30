@@ -53,6 +53,7 @@ import com.bumptech.glide.signature.ObjectKey
 import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_PLAY_QUEUE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_SONGS
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
@@ -447,30 +448,76 @@ class MainActivity : AppCompatActivity() {
      * @param songs - The list of songs to be played.
      * @param startIndex - The index of the song where playback should start from.
      * Default value = 0.
-     * @return
      */
+    @Deprecated("Use loadNewPlayQueue() directly")
     fun playSongs(songs: List<Song>, startIndex: Int = 0) {
-        if (songs.isNotEmpty()) {
-            mediaController.transportControls.stop()
-
-            addSongsToPlayQueue(songs, startPlaybackAtIndex = startIndex)
-            setShuffleMode(SHUFFLE_MODE_NONE)
-        }
+        loadNewPlayQueue(songs, startIndex)
     }
 
     /**
      * Load a list of Song objects into the media player service, shuffle them and commence playback.
      *
      * @param songs - The list of songs to be played.
-     * @return
      */
+    @Deprecated("Use loadNewPlayQueue() directly")
     fun playSongsShuffled(songs: List<Song>) {
-        if (songs.isNotEmpty()) {
-            mediaController.transportControls.stop()
+        loadNewPlayQueue(songs, shuffle = true)
+    }
 
-            addSongsToPlayQueue(songs, shuffle = true, startPlaybackAtIndex = 0)
-            setShuffleMode(SHUFFLE_MODE_ALL)
+    /**
+     * Add a list of songs to the play queue.
+     *
+     * @param songs - A list containing Song objects that should be added to the play queue.
+     * @param startIndex - If playback should begin once the songs have been added to the play queue,
+     * then specify an index. Enter 0 if playback should begin from the start of the play queue.
+     * @param shuffle - A Boolean indicating whether the list of songs should be shuffled.
+     * Default value = false.
+     */
+    private fun loadNewPlayQueue(songs: List<Song>, startIndex: Int = 0, shuffle: Boolean = false)
+            = lifecycleScope.launch(Dispatchers.Default) {
+        if (songs.isEmpty() || startIndex >= songs.size) return@launch
+        mediaController.transportControls.stop()
+
+        if (shuffle) setShuffleMode(SHUFFLE_MODE_ALL)
+        else setShuffleMode(SHUFFLE_MODE_NONE)
+
+        // TODO: Experiment with processing song additions in batches of 25
+        //      The next batch should be processed in onReceiveResult
+        //      It should not be necessary to send the startPlayingAtIndex each time -
+        //      The currently playing song should be processed almost immediately
+        //      Playing a song that appears in a later batch will need to be handled thoughtfully
+
+        val chunkSize = 25
+        val songIds = songs.map { it.songId }
+        val chunkedSongIds = songIds.chunked(chunkSize)
+        val chunkContainingCurrentlyPlayingIndex = startIndex / chunkSize
+
+        // TODO: Process chunk containing the currently playing song first
+
+        for ((index, songIdsChunk) in chunkedSongIds.withIndex()) {
+            // TODO: Process any remaining chunks
+            //   Need to be careful we do not process the chunk containing the currently playing song again
         }
+
+        val gson = Gson()
+        val songIdsJson = gson.toJson(songIds)
+
+        val bundle = Bundle().apply {
+            putString("songIds", songIdsJson)
+            putBoolean("shuffle", shuffle)
+            putInt("startIndex", startIndex)
+        }
+
+        val resultReceiver = object : ResultReceiver(Handler(Looper.getMainLooper())) {
+            override fun onReceiveResult(resultCode: Int, resultData: Bundle) {
+                if (resultCode == SUCCESS) {
+                    // FIXME: Queue data should only be populated once all chunks have been loaded?
+                    populatePlayQueueData()
+                }
+            }
+        }
+
+        mediaController.sendCommand(LOAD_PLAY_QUEUE, bundle, resultReceiver)
     }
 
     /**
@@ -482,60 +529,31 @@ class MainActivity : AppCompatActivity() {
      * after the currently playing queue item. Default value = false.
      */
     fun addSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false) {
-        addSongsToPlayQueue(songs, addSongsAfterCurrentQueueItem = addSongsAfterCurrentQueueItem)
-
-        if (songs.size > 1) Toast.makeText(this@MainActivity,
-            getString(R.string.songs_added_play_queue), Toast.LENGTH_SHORT).show()
-        else Toast.makeText(this@MainActivity,
-            getString(R.string.item_added_play_queue, songs[0].title), Toast.LENGTH_SHORT).show()
-    }
-
-    /**
-     * Add a list of songs to the play queue.
-     *
-     * @param songs - A list containing Song objects that should be added to the play queue.
-     * @param addSongsAfterCurrentQueueItem - A Boolean indicating whether the songs should be added to
-     * after the currently playing queue item. Default value = false.
-     * @param shuffle - A Boolean indicating whether the list of songs should be shuffled.
-     * Default value = false.
-     * @param startPlaybackAtIndex - If playback should begin once the songs have been added to the play queue,
-     * then specify an index. Enter 0 if playback should begin from the start of the play queue.
-     * Default value = -1 (playback will not start as out of index bounds).
-     */
-    private fun addSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false,
-                                    shuffle: Boolean = false, startPlaybackAtIndex: Int = -1)
-    = lifecycleScope.launch(Dispatchers.Default) {
-
-        // TODO: Experiment with processing song additions in batches of 25
-        //      The next batch should be processed in onReceiveResult
-        //      It should not be necessary to send the startPlayingAtIndex each time -
-        //      The currently playing song should be processed almost immediately
-        //      Playing a song that appears in a later batch will need to be handled thoughtfully
-
         val songIds = songs.map { it.songId }
-        if (songIds.size > 25) {
-            val chunkedSongIds = songIds.chunked(25)
-        } else {
-            val gson = Gson()
-            val songIdsJson = gson.toJson(songIds)
+        // FIXME: Do we need to apply the chunking approach here also?
+        val gson = Gson()
+        val songIdsJson = gson.toJson(songIds)
 
-            val bundle = Bundle().apply {
-                putString("songIds", songIdsJson)
-                putBoolean("addSongsAfterCurrentQueueItem", addSongsAfterCurrentQueueItem)
-                putBoolean("shuffle", shuffle)
-                putInt("startPlaybackAtIndex", startPlaybackAtIndex)
-            }
-
-            val resultReceiver = object : ResultReceiver(Handler(Looper.getMainLooper())) {
-                override fun onReceiveResult(resultCode: Int, resultData: Bundle) {
-                    if (resultCode == SUCCESS) {
-                        populatePlayQueueData()
-                    }
-                }
-            }
-
-            mediaController.sendCommand(LOAD_SONGS, bundle, resultReceiver)
+        val bundle = Bundle().apply {
+            putString("songIds", songIdsJson)
+            putBoolean("addSongsAfterCurrentQueueItem", addSongsAfterCurrentQueueItem)
         }
+
+        val resultReceiver = object : ResultReceiver(Handler(Looper.getMainLooper())) {
+            override fun onReceiveResult(resultCode: Int, resultData: Bundle) {
+                if (resultCode == SUCCESS) {
+                    populatePlayQueueData()
+                    if (songs.size > 1) Toast.makeText(this@MainActivity,
+                        getString(R.string.songs_added_play_queue), Toast.LENGTH_SHORT).show()
+                    else Toast.makeText(this@MainActivity,
+                        getString(R.string.item_added_play_queue, songs[0].title), Toast.LENGTH_SHORT).show()
+                }
+                // FIXME: Do we need to have an else block here to handle failures?
+            }
+        }
+
+        // FIXME: Fix deprecated parameter pathway
+        mediaController.sendCommand(LOAD_SONGS, bundle, resultReceiver)
     }
 
     /**
