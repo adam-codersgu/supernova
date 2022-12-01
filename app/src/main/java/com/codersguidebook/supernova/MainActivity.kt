@@ -468,8 +468,8 @@ class MainActivity : AppCompatActivity() {
      * Add a list of songs to the play queue.
      *
      * @param songs - A list containing Song objects that should be added to the play queue.
-     * @param startIndex - If playback should begin once the songs have been added to the play queue,
-     * then specify an index. Enter 0 if playback should begin from the start of the play queue.
+     * @param startIndex - The index of the play queue element at which playback should begin.
+     * Default = 0 (the beginning of the play queue).
      * @param shuffle - A Boolean indicating whether the list of songs should be shuffled.
      * Default value = false.
      */
@@ -493,6 +493,7 @@ class MainActivity : AppCompatActivity() {
         val chunkContainingCurrentlyPlayingIndex = startIndex / chunkSize
 
         // TODO: Process chunk containing the currently playing song first
+        //  Also initiate playback
 
         for ((index, songIdsChunk) in chunkedSongIds.withIndex()) {
             // TODO: Process any remaining chunks
