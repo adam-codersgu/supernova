@@ -452,7 +452,7 @@ class MainActivity : AppCompatActivity() {
      */
     @Deprecated("Use loadNewPlayQueue() directly")
     fun playSongs(songs: List<Song>, startIndex: Int = 0) {
-        loadNewPlayQueue(songs, startIndex)
+        playNewPlayQueue(songs, startIndex)
     }
 
     /**
@@ -462,7 +462,7 @@ class MainActivity : AppCompatActivity() {
      */
     @Deprecated("Use loadNewPlayQueue() directly")
     fun playSongsShuffled(songs: List<Song>) {
-        loadNewPlayQueue(songs, shuffle = true)
+        playNewPlayQueue(songs, shuffle = true)
     }
 
     /**
@@ -474,7 +474,7 @@ class MainActivity : AppCompatActivity() {
      * @param shuffle - A Boolean indicating whether the list of songs should be shuffled.
      * Default value = false.
      */
-    private fun loadNewPlayQueue(songs: List<Song>, startIndex: Int = 0, shuffle: Boolean = false)
+    private fun playNewPlayQueue(songs: List<Song>, startIndex: Int = 0, shuffle: Boolean = false)
             = lifecycleScope.launch(Dispatchers.Default) {
         if (songs.isEmpty() || startIndex >= songs.size) {
             Toast.makeText(this@MainActivity,
