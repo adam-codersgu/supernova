@@ -475,7 +475,7 @@ class MainActivity : AppCompatActivity() {
      */
     private fun loadNewPlayQueue(songs: List<Song>, startIndex: Int = 0, shuffle: Boolean = false)
             = lifecycleScope.launch(Dispatchers.Default) {
-        if (songs.isEmpty() || startIndex >= songs.size) return@launch
+        if (songs.isEmpty() || startIndex >= songs.size) return@launch // FIXME: Should we have error handling here?
         mediaController.transportControls.stop()
 
         if (shuffle) setShuffleMode(SHUFFLE_MODE_ALL)
