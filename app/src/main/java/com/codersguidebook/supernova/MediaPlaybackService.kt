@@ -29,7 +29,7 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTI
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PAUSE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PLAY
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PREVIOUS
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_PLAY_QUEUE
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_PLAY_QUEUE_CHUNK
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_SONGS
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
@@ -292,8 +292,14 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             super.onCommand(command, extras, cb)
 
             when (command) {
-                LOAD_PLAY_QUEUE -> {
+                LOAD_PLAY_QUEUE_CHUNK -> {
                     // TODO - Implement
+                    extras?.let {
+                        val songIdsJson = it.getString("songIds") ?: return@let
+                        val gson = Gson()
+                        val listType = object : TypeToken<List<Long>>() {}.type
+                        var songIds = gson.fromJson<List<Long>>(songIdsJson, listType)
+                    }
                 }
                 LOAD_SONGS -> {
                     extras?.let {

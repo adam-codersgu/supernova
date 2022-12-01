@@ -53,7 +53,7 @@ import com.bumptech.glide.signature.ObjectKey
 import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_PLAY_QUEUE
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_PLAY_QUEUE_CHUNK
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_SONGS
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
@@ -475,7 +475,11 @@ class MainActivity : AppCompatActivity() {
      */
     private fun loadNewPlayQueue(songs: List<Song>, startIndex: Int = 0, shuffle: Boolean = false)
             = lifecycleScope.launch(Dispatchers.Default) {
-        if (songs.isEmpty() || startIndex >= songs.size) return@launch // FIXME: Should we have error handling here?
+        if (songs.isEmpty() || startIndex >= songs.size) {
+            Toast.makeText(this@MainActivity,
+                getString(R.string.error_generic_playback), Toast.LENGTH_LONG).show()
+            return@launch
+        }
         mediaController.transportControls.stop()
 
         if (shuffle) setShuffleMode(SHUFFLE_MODE_ALL)
@@ -491,35 +495,39 @@ class MainActivity : AppCompatActivity() {
         val songIds = songs.map { it.songId }
         val chunkedSongIds = songIds.chunked(chunkSize)
         val chunkContainingCurrentlyPlayingIndex = startIndex / chunkSize
-
-        // TODO: Process chunk containing the currently playing song first
-        //  Also initiate playback
-
-        for ((index, songIdsChunk) in chunkedSongIds.withIndex()) {
-            // TODO: Process any remaining chunks
-            //   Need to be careful we do not process the chunk containing the currently playing song again
-        }
+        val chunkContainingCurrentlyPlaying = chunkedSongIds[chunkContainingCurrentlyPlayingIndex]
 
         val gson = Gson()
-        val songIdsJson = gson.toJson(songIds)
+        val songIdsJson = gson.toJson(chunkContainingCurrentlyPlaying)
+
+        val startIndexInChunk = startIndex - (chunkSize * chunkContainingCurrentlyPlayingIndex)
 
         val bundle = Bundle().apply {
             putString("songIds", songIdsJson)
             // FIXME: Give thought to how you handle shuffling
             putBoolean("shuffle", shuffle)
-            putInt("startIndex", startIndex)
+            putInt("startIndex", startIndexInChunk)
         }
 
         val resultReceiver = object : ResultReceiver(Handler(Looper.getMainLooper())) {
             override fun onReceiveResult(resultCode: Int, resultData: Bundle) {
                 if (resultCode == SUCCESS) {
+
                     // FIXME: Queue data should only be populated once all chunks have been loaded?
                     populatePlayQueueData()
                 }
             }
         }
 
-        mediaController.sendCommand(LOAD_PLAY_QUEUE, bundle, resultReceiver)
+        mediaController.sendCommand(LOAD_PLAY_QUEUE_CHUNK, bundle, resultReceiver)
+
+        // TODO: Process chunk containing the currently playing song first
+        //  Also initiate playback
+
+        for ((index, songIdsChunk) in chunkedSongIds.withIndex()) {
+            if (index == chunkContainingCurrentlyPlayingIndex) continue
+            // TODO: Process any remaining chunks
+        }
     }
 
     /**

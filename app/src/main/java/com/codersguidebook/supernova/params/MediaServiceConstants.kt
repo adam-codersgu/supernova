@@ -10,7 +10,7 @@ class MediaServiceConstants {
         const val ACTION_PAUSE = "pause"
         const val ACTION_NEXT = "next"
         const val ACTION_PREVIOUS = "previous"
-        const val LOAD_PLAY_QUEUE = "loadPlayQueue"
+        const val LOAD_PLAY_QUEUE_CHUNK = "loadPlayQueueChunk"
         @Deprecated("Refactor LOAD_SONGS to ADD_SONGS_TO_PLAY_QUEUE")
         const val LOAD_SONGS = "loadSongs"
         const val MOVE_QUEUE_ITEM = "moveQueueItem"
