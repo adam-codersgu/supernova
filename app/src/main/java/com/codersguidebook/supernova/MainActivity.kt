@@ -505,6 +505,7 @@ class MainActivity : AppCompatActivity() {
 
         val bundle = Bundle().apply {
             putString("songIds", songIdsJson)
+            // FIXME: Give thought to how you handle shuffling
             putBoolean("shuffle", shuffle)
             putInt("startIndex", startIndex)
         }
