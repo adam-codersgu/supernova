@@ -29,6 +29,7 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTI
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PAUSE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PLAY
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PREVIOUS
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.CHUNK_SIZE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_PLAY_QUEUE_CHUNK
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_SONGS
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
@@ -112,10 +113,12 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             return super.onMediaButtonEvent(mediaButtonEvent)
         }
 
+        // fixme - can deprecate?
         override fun onAddQueueItem(description: MediaDescriptionCompat?) {
             onAddQueueItem(description, playQueue.size)
         }
 
+        // fixme - can deprecate?
         override fun onAddQueueItem(description: MediaDescriptionCompat?, index: Int) {
             super.onAddQueueItem(description, index)
 
@@ -293,12 +296,41 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
 
             when (command) {
                 LOAD_PLAY_QUEUE_CHUNK -> {
-                    // TODO - Implement
                     extras?.let {
                         val songIdsJson = it.getString("songIds") ?: return@let
                         val gson = Gson()
                         val listType = object : TypeToken<List<Long>>() {}.type
-                        var songIds = gson.fromJson<List<Long>>(songIdsJson, listType)
+                        val songIds = gson.fromJson<List<Long>>(songIdsJson, listType)
+                        if (songIds.isEmpty()) return@let
+
+                        val chunkIndex = it.getInt("chunkIndex", -1)
+                        if (chunkIndex == -1) return@let
+                        var queueId = (chunkIndex * CHUNK_SIZE).toLong()
+
+                        for (id in songIds) {
+                            val mediaDescription = MediaDescriptionCompat.Builder()
+                                .setMediaId(id.toString())
+                                .build()
+                            val queueItem = QueueItem(mediaDescription, queueId)
+
+                            val index = if (queueId >= playQueue.size) playQueue.size
+                            else queueId.toInt()
+
+                            playQueue.add(index, queueItem)
+                            ++queueId
+                        }
+
+                        mediaSessionCompat.setQueue(playQueue)
+
+                        val startIndex = it.getInt("startIndex", -1)
+                        if (startIndex in 0..playQueue.size) {
+                            currentlyPlayingQueueItemId = playQueue[startIndex].queueId
+                            // TODO: Populate the metadata for the currently playing song here?
+                            onSkipToQueueItem(currentlyPlayingQueueItemId)
+                            onPlay()
+                        }
+
+                        cb?.send(SUCCESS, Bundle())
                     }
                 }
                 LOAD_SONGS -> {
@@ -326,7 +358,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
 
                         mediaSessionCompat.setQueue(playQueue)
 
-                        val startIndex = it.getInt("startIndex")
+                        val startIndex = it.getInt("startIndex", -1)
                         if (startIndex in 0..playQueue.size) {
                             currentlyPlayingQueueItemId = playQueue[startIndex].queueId
                             onSkipToQueueItem(currentlyPlayingQueueItemId)

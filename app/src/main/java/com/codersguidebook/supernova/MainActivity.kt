@@ -53,6 +53,7 @@ import com.bumptech.glide.signature.ObjectKey
 import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.CHUNK_SIZE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_PLAY_QUEUE_CHUNK
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_SONGS
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
@@ -491,22 +492,25 @@ class MainActivity : AppCompatActivity() {
         //      The currently playing song should be processed almost immediately
         //      Playing a song that appears in a later batch will need to be handled thoughtfully
 
-        val chunkSize = 25
         val songIds = songs.map { it.songId }
-        val chunkedSongIds = songIds.chunked(chunkSize)
-        val chunkContainingCurrentlyPlayingIndex = startIndex / chunkSize
+        val chunkedSongIds = songIds.chunked(CHUNK_SIZE)
+        val chunkContainingCurrentlyPlayingIndex = startIndex / CHUNK_SIZE
         val chunkContainingCurrentlyPlaying = chunkedSongIds[chunkContainingCurrentlyPlayingIndex]
 
         val gson = Gson()
         val songIdsJson = gson.toJson(chunkContainingCurrentlyPlaying)
 
-        val startIndexInChunk = startIndex - (chunkSize * chunkContainingCurrentlyPlayingIndex)
+        val startIndexInChunk = startIndex - (CHUNK_SIZE * chunkContainingCurrentlyPlayingIndex)
 
         val bundle = Bundle().apply {
             putString("songIds", songIdsJson)
             // FIXME: Give thought to how you handle shuffling
+            //  Could pick a random song from within a random chunk to play first
+            //  Then shuffle the songs once all have been loaded?
             putBoolean("shuffle", shuffle)
             putInt("startIndex", startIndexInChunk)
+            putInt("chunkIndex", chunkContainingCurrentlyPlayingIndex)
+            // TODO: Send over the metadata of the currently playing song in this bundle also?
         }
 
         val resultReceiver = object : ResultReceiver(Handler(Looper.getMainLooper())) {
