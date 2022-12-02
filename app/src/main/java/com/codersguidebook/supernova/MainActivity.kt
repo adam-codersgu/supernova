@@ -53,7 +53,6 @@ import com.bumptech.glide.signature.ObjectKey
 import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_SONGS
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.RESTORE_PLAY_QUEUE
@@ -441,7 +440,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // TODO - Should maybe still deprecate the below two methods?
     /**
      * Play a list of songs.
      *
@@ -507,32 +505,22 @@ class MainActivity : AppCompatActivity() {
      * @param addSongsAfterCurrentQueueItem - A Boolean indicating whether the songs should be added to
      * after the currently playing queue item. Default value = false.
      */
-    fun addSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false) {
-        val songIds = songs.map { it.songId }
-        // FIXME: Do we need to apply the chunking approach here also?
-        val gson = Gson()
-        val songIdsJson = gson.toJson(songIds)
+    fun addSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false)
+            = lifecycleScope.launch(Dispatchers.Default) {
+        val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
+        if (addSongsAfterCurrentQueueItem) {
+            val index = playQueue.indexOfFirst { it.queueId == currentQueueItemId } + 1
 
-        val bundle = Bundle().apply {
-            putString("songIds", songIdsJson)
-            putBoolean("addSongsAfterCurrentQueueItem", addSongsAfterCurrentQueueItem)
-        }
-
-        val resultReceiver = object : ResultReceiver(Handler(Looper.getMainLooper())) {
-            override fun onReceiveResult(resultCode: Int, resultData: Bundle) {
-                if (resultCode == SUCCESS) {
-                    populatePlayQueueData()
-                    if (songs.size > 1) Toast.makeText(this@MainActivity,
-                        getString(R.string.songs_added_play_queue), Toast.LENGTH_SHORT).show()
-                    else Toast.makeText(this@MainActivity,
-                        getString(R.string.item_added_play_queue, songs[0].title), Toast.LENGTH_SHORT).show()
-                }
-                // FIXME: Do we need to have an else block here to handle failures?
+            for (song in songs.asReversed()) {
+                val songDesc = mediaDescriptionManager.buildDescription(song)
+                mediaControllerCompat.addQueueItem(songDesc, index)
+            }
+        } else {
+            for (song in songs) {
+                val songDesc = mediaDescriptionManager.buildDescription(song)
+                mediaControllerCompat.addQueueItem(songDesc)
             }
         }
-
-        // FIXME: Fix deprecated parameter pathway
-        mediaController.sendCommand(LOAD_SONGS, bundle, resultReceiver)
     }
 
     /**

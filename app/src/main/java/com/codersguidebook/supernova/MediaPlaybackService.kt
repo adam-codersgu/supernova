@@ -29,9 +29,6 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTI
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PAUSE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PLAY
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PREVIOUS
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.CHUNK_SIZE
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_PLAY_QUEUE
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_SONGS
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.RESTORE_PLAY_QUEUE
@@ -139,8 +136,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                 playQueue.add(playQueue.size, queueItem)
             }
 
-            // TODO: Comment out the below if necessary?
-            // mediaSessionCompat.setQueue(playQueue)
+            mediaSessionCompat.setQueue(playQueue)
         }
 
         override fun onPrepare() {
@@ -302,86 +298,6 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             super.onCommand(command, extras, cb)
 
             when (command) {
-                // fixme - can deprecate?
-                LOAD_PLAY_QUEUE -> {
-                    extras?.let {
-                        val songIdsJson = it.getString("songIds") ?: return@let
-                        val gson = Gson()
-                        val listType = object : TypeToken<List<Long>>() {}.type
-                        val songIds = gson.fromJson<List<Long>>(songIdsJson, listType)
-                        if (songIds.isEmpty()) return@let
-
-                        val chunkIndex = it.getInt("chunkIndex", -1)
-                        if (chunkIndex == -1) return@let
-                        var queueId = (chunkIndex * CHUNK_SIZE).toLong()
-
-                        for (id in songIds) {
-                            val mediaDescription = MediaDescriptionCompat.Builder()
-                                .setMediaId(id.toString())
-                                .build()
-                            val queueItem = QueueItem(mediaDescription, queueId)
-
-                            val index = if (queueId >= playQueue.size) playQueue.size
-                            else queueId.toInt()
-
-                            playQueue.add(index, queueItem)
-                            ++queueId
-                        }
-
-                        mediaSessionCompat.setQueue(playQueue)
-
-                        val startIndex = it.getInt("startIndex", -1)
-                        if (startIndex in 0..playQueue.size) {
-                            currentlyPlayingQueueItemId = playQueue[startIndex].queueId
-
-                            val startSongMetadataBundle = it.getBundle("startSongMetadata")
-                            startSongMetadataBundle?.let { startSongMetadata ->
-                                val mediaDescription = buildMediaDescriptionFromBundle(startSongMetadata)
-                                updateMetadataForQueueItem(mediaDescription, currentlyPlayingQueueItemId)
-                            }
-
-                            onSkipToQueueItem(currentlyPlayingQueueItemId)
-                            onPlay()
-                        }
-
-                        cb?.send(SUCCESS, Bundle())
-                    }
-                }
-                LOAD_SONGS -> {
-                    extras?.let {
-                        val songIdsJson = it.getString("songIds") ?: return@let
-                        val gson = Gson()
-                        val listType = object : TypeToken<List<Long>>() {}.type
-                        var songIds = gson.fromJson<List<Long>>(songIdsJson, listType)
-
-                        val addSongsAfterCurrentQueueItem = it.getBoolean("addSongsAfterCurrentQueueItem")
-                        if (addSongsAfterCurrentQueueItem) songIds = songIds.reversed()
-                        for (id in songIds) {
-                            val mediaDescription = MediaDescriptionCompat.Builder()
-                                .setMediaId(id.toString())
-                                .build()
-                            if (addSongsAfterCurrentQueueItem) {
-                                val targetIndex = playQueue.indexOfFirst { queueItem ->
-                                    queueItem.queueId == currentlyPlayingQueueItemId
-                                } + 1
-                                onAddQueueItem(mediaDescription, targetIndex)
-                            } else onAddQueueItem(mediaDescription)
-                        }
-
-                        if (it.getBoolean("shuffle")) playQueue.shuffle()
-
-                        mediaSessionCompat.setQueue(playQueue)
-
-                        val startIndex = it.getInt("startIndex", -1)
-                        if (startIndex in 0..playQueue.size) {
-                            currentlyPlayingQueueItemId = playQueue[startIndex].queueId
-                            onSkipToQueueItem(currentlyPlayingQueueItemId)
-                            onPlay()
-                        }
-
-                        cb?.send(SUCCESS, Bundle())
-                    }
-                }
                 MOVE_QUEUE_ITEM -> {
                     extras?.let {
                         val queueItemId = it.getLong("queueItemId", -1L)
