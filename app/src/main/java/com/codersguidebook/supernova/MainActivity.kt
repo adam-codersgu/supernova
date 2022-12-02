@@ -53,7 +53,6 @@ import com.bumptech.glide.signature.ObjectKey
 import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_SONGS
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.RESTORE_PLAY_QUEUE
@@ -442,34 +441,59 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Load a list of Song objects into the media player service and commence playback.
+     * Play a list of songs.
      *
-     * @param songs - The list of songs to be played.
-     * @param startIndex - The index of the song where playback should start from.
-     * Default value = 0.
-     * @return
+     * @param songs - A list containing Song objects that should be added to the play queue.
+     * @param startIndex - The index of the play queue element at which playback should begin.
+     * Default = 0 (the beginning of the play queue).
      */
-    fun playSongs(songs: List<Song>, startIndex: Int = 0) {
-        if (songs.isNotEmpty()) {
-            mediaController.transportControls.stop()
+    fun playSongs(songs: List<Song>, startIndex: Int = 0) = lifecycleScope.launch(Dispatchers.Default)  {
+        loadNewPlayQueue(songs, startIndex)
 
-            sendSongsToPlayQueue(songs, startPlaybackAtIndex = startIndex)
+        val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
+        if (mediaControllerCompat.shuffleMode == SHUFFLE_MODE_ALL) {
             setShuffleMode(SHUFFLE_MODE_NONE)
         }
     }
 
     /**
-     * Load a list of Song objects into the media player service, shuffle them and commence playback.
+     * Shuffle and play a list of songs.
      *
-     * @param songs - The list of songs to be played.
-     * @return
+     * @param songs - A list containing Song objects that should be added to the play queue.
      */
-    fun playSongsShuffled(songs: List<Song>) {
-        if (songs.isNotEmpty()) {
-            mediaController.transportControls.stop()
+    fun playSongsShuffled(songs: List<Song>) = lifecycleScope.launch(Dispatchers.Default)  {
+        val startIndex = (songs.indices).random()
+        loadNewPlayQueue(songs, startIndex)
+        setShuffleMode(SHUFFLE_MODE_ALL)
+    }
 
-            sendSongsToPlayQueue(songs, shuffle = true, startPlaybackAtIndex = 0)
-            setShuffleMode(SHUFFLE_MODE_ALL)
+    /**
+     * Build a play queue using a list of songs and commence playback.
+     *
+     * @param songs - A list containing Song objects that should be added to the play queue.
+     * @param startIndex - The index of the play queue element at which playback should begin.
+     * Default = 0 (the beginning of the play queue).
+     */
+    private fun loadNewPlayQueue(songs: List<Song>, startIndex: Int = 0)
+            = lifecycleScope.launch(Dispatchers.Default) {
+        if (songs.isEmpty() || startIndex >= songs.size) {
+            Toast.makeText(this@MainActivity,
+                getString(R.string.error_generic_playback), Toast.LENGTH_LONG).show()
+            return@launch
+        }
+        mediaController.transportControls.stop()
+
+        val startSongDesc = mediaDescriptionManager.buildDescription(songs[startIndex], startIndex.toLong())
+
+        val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
+        mediaControllerCompat.addQueueItem(startSongDesc)
+        mediaControllerCompat.transportControls.skipToQueueItem(startIndex.toLong())
+        mediaControllerCompat.transportControls.play()
+
+        for ((index, song) in songs.withIndex()) {
+            if (index == startIndex) continue
+            val songDesc = mediaDescriptionManager.buildDescription(song, index.toLong())
+            mediaControllerCompat.addQueueItem(songDesc, index)
         }
     }
 
@@ -481,50 +505,22 @@ class MainActivity : AppCompatActivity() {
      * @param addSongsAfterCurrentQueueItem - A Boolean indicating whether the songs should be added to
      * after the currently playing queue item. Default value = false.
      */
-    fun addSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false) {
-        sendSongsToPlayQueue(songs, addSongsAfterCurrentQueueItem = addSongsAfterCurrentQueueItem)
+    fun addSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false)
+            = lifecycleScope.launch(Dispatchers.Default) {
+        val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
+        if (addSongsAfterCurrentQueueItem) {
+            val index = playQueue.indexOfFirst { it.queueId == currentQueueItemId } + 1
 
-        if (songs.size > 1) Toast.makeText(this@MainActivity,
-            getString(R.string.songs_added_play_queue), Toast.LENGTH_SHORT).show()
-        else Toast.makeText(this@MainActivity,
-            getString(R.string.item_added_play_queue, songs[0].title), Toast.LENGTH_SHORT).show()
-    }
-
-    /**
-     * Create a MediaDescriptionCompat object for each song in a list. The MediaDescriptionCompat objects
-     * are then sent to the media browser service and added to the play queue.
-     *
-     * @param songs - A list containing Song objects that should be added to the play queue.
-     * @param addSongsAfterCurrentQueueItem - A Boolean indicating whether the songs should be added to
-     * after the currently playing queue item. Default value = false.
-     * @param shuffle - A Boolean indicating whether the list of songs should be shuffled.
-     * Default value = false.
-     * @param startPlaybackAtIndex - If playback should begin once the songs have been added to the play queue,
-     * then specify an index. Enter 0 if playback should begin from the start of the play queue.
-     * Default value = -1 (playback will not start as out of index bounds).
-     */
-    private fun sendSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false,
-                                     shuffle: Boolean = false, startPlaybackAtIndex: Int = -1)
-    = lifecycleScope.launch(Dispatchers.Default) {
-        val songIds = songs.map { it.songId }
-        val gson = Gson()
-        val songIdsJson = gson.toJson(songIds)
-        val bundle = Bundle().apply {
-            putString("songIds", songIdsJson)
-            putBoolean("addSongsAfterCurrentQueueItem", addSongsAfterCurrentQueueItem)
-            putBoolean("shuffle", shuffle)
-            putInt("startPlaybackAtIndex", startPlaybackAtIndex)
-        }
-
-        val resultReceiver = object : ResultReceiver(Handler(Looper.getMainLooper())) {
-            override fun onReceiveResult(resultCode: Int, resultData: Bundle) {
-                if (resultCode == SUCCESS) {
-                    populatePlayQueueData()
-                }
+            for (song in songs.asReversed()) {
+                val songDesc = mediaDescriptionManager.buildDescription(song)
+                mediaControllerCompat.addQueueItem(songDesc, index)
+            }
+        } else {
+            for (song in songs) {
+                val songDesc = mediaDescriptionManager.buildDescription(song)
+                mediaControllerCompat.addQueueItem(songDesc)
             }
         }
-
-        mediaController.sendCommand(LOAD_SONGS, bundle, resultReceiver)
     }
 
     /**
@@ -534,18 +530,12 @@ class MainActivity : AppCompatActivity() {
     private fun populatePlayQueueData() = lifecycleScope.launch(Dispatchers.Default) {
         refreshPlayQueue()
 
-        fun updateQueueItem(song: Song, queueItem: QueueItem) {
-            val mediaDescriptionBundle = mediaDescriptionManager.getDescriptionAsBundle(song)
-            mediaDescriptionBundle.putLong("queueItemId", queueItem.queueId)
-            mediaController.sendCommand(UPDATE_QUEUE_ITEM, mediaDescriptionBundle, null)
-        }
-
         // Update the currently playing song first
         if (currentQueueItemId != -1L) {
             playQueue.find { it.queueId == currentQueueItemId }?.let { queueItem ->
                 val songId = queueItem.description.mediaId?.toLong() ?: return@let
                 val song = getSongById(songId) ?: return@let
-                updateQueueItem(song, queueItem)
+                updateQueueItemById(song, queueItem.queueId)
             }
         }
 
@@ -554,11 +544,23 @@ class MainActivity : AppCompatActivity() {
             if (queueItem.description.title == null || queueItem.description.subtitle == null) {
                 val songId = queueItem.description.mediaId?.toLong() ?: continue
                 val song = getSongById(songId) ?: continue
-                updateQueueItem(song, queueItem)
+                updateQueueItemById(song, queueItem.queueId)
             }
         }
 
         refreshPlayQueue(true)
+    }
+
+    /**
+     * Update the metadata for a given play queue item.
+     *
+     * @param song - A Song object containing the media metadata to be used.
+     * @param queueId - The ID of the play queue item that should be updated.
+     */
+    private fun updateQueueItemById(song: Song, queueId: Long) {
+        val mediaDescriptionBundle = mediaDescriptionManager.getDescriptionAsBundle(song)
+        mediaDescriptionBundle.putLong("queueItemId", queueId)
+        mediaController.sendCommand(UPDATE_QUEUE_ITEM, mediaDescriptionBundle, null)
     }
 
     /**

@@ -10,7 +10,6 @@ class MediaServiceConstants {
         const val ACTION_PAUSE = "pause"
         const val ACTION_NEXT = "next"
         const val ACTION_PREVIOUS = "previous"
-        const val LOAD_SONGS = "loadSongs"
         const val MOVE_QUEUE_ITEM = "moveQueueItem"
         const val REMOVE_QUEUE_ITEM_BY_ID = "removeQueueItemById"
         const val RESTORE_PLAY_QUEUE = "restorePlayQueue"

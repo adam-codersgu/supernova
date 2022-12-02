@@ -177,6 +177,8 @@
     <string name="error_media_service_empty_queue">A playback error has occurred. The play queue is empty.</string>
     <string name="error_media_service_player_state">A playback error has occurred. The media player must be restarted.</string>
 
+    <string name="error_generic_playback">A playback error has occurred.</string>
+
     <string name="no">No</string>
     <string name="yes">Yes</string>
     <string name="save_play_queue">Save play queue as playlist</string>
