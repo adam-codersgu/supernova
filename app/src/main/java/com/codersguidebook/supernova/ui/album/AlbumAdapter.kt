@@ -78,14 +78,16 @@ class AlbumAdapter(private val mainActivity: MainActivity):
                 holder as ViewHolderSongs
                 val current = songs[position -1]
 
-                if (displayDiscNumbers && songs.size > 1 && position -1 == 0 ||
-                    songs[position -1].track.toString().substring(0, 1) !=
-                    songs[position -2].track.toString().substring(0, 1)) {
-                    holder.mDisc.isVisible = true
-                    val disc = current.track.toString().substring(0, 1)
-                    val text = mainActivity.getString(R.string.disc_number, disc)
-                    holder.mDisc.text = text
-                } else holder.mDisc.isVisible = false
+                holder.mDisc.isVisible = false
+                if (displayDiscNumbers && songs.size > 1) {
+                    if (position - 1 == 0 || songs[position -1].track.toString().substring(0, 1) !=
+                        songs[position -2].track.toString().substring(0, 1)) {
+                        holder.mDisc.isVisible = true
+                        val disc = current.track.toString().substring(0, 1)
+                        val text = mainActivity.getString(R.string.disc_number, disc)
+                        holder.mDisc.text = text
+                    }
+                }
 
                 holder.mTrack.text = current.track.toString().substring(1, 4).toInt().toString()
                 holder.mTitle.text = current.title

@@ -89,7 +89,7 @@ class AlbumFragment : Fragment() {
                     }
                     if (albumAdapter.songs.size > albumSongs.size) {
                         val numberItemsToRemove = albumAdapter.songs.size - albumSongs.size
-                        albumAdapter.songs.dropLast(numberItemsToRemove)
+                        albumAdapter.songs = albumAdapter.songs.dropLast(numberItemsToRemove).toMutableList()
                         albumAdapter.notifyItemRangeRemoved(albumSongs.size, numberItemsToRemove)
                     }
                 }
