@@ -30,7 +30,7 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTI
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PLAY
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PREVIOUS
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.CHUNK_SIZE
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_PLAY_QUEUE_CHUNK
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_PLAY_QUEUE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_SONGS
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
@@ -113,20 +113,24 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             return super.onMediaButtonEvent(mediaButtonEvent)
         }
 
-        // fixme - can deprecate?
         override fun onAddQueueItem(description: MediaDescriptionCompat?) {
             onAddQueueItem(description, playQueue.size)
         }
 
-        // fixme - can deprecate?
         override fun onAddQueueItem(description: MediaDescriptionCompat?, index: Int) {
             super.onAddQueueItem(description, index)
 
             val sortedQueue = playQueue.sortedByDescending {
                 it.queueId
             }
-            val queueId = if (sortedQueue.isNotEmpty()) sortedQueue[0].queueId + 1
-            else 0
+            val presetQueueId = description?.extras?.getLong("queue_id")
+            val queueId = when {
+                presetQueueId != null && sortedQueue.find { it.queueId == presetQueueId } == null -> {
+                    presetQueueId
+                }
+                sortedQueue.isNotEmpty() -> sortedQueue[0].queueId + 1
+                else -> 0
+            }
 
             val queueItem = QueueItem(description, queueId)
             try {
@@ -134,6 +138,9 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             } catch (exception: IndexOutOfBoundsException) {
                 playQueue.add(playQueue.size, queueItem)
             }
+
+            // TODO: Comment out the below if necessary?
+            // mediaSessionCompat.setQueue(playQueue)
         }
 
         override fun onPrepare() {
@@ -295,7 +302,8 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             super.onCommand(command, extras, cb)
 
             when (command) {
-                LOAD_PLAY_QUEUE_CHUNK -> {
+                // fixme - can deprecate?
+                LOAD_PLAY_QUEUE -> {
                     extras?.let {
                         val songIdsJson = it.getString("songIds") ?: return@let
                         val gson = Gson()

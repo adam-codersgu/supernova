@@ -53,8 +53,6 @@ import com.bumptech.glide.signature.ObjectKey
 import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.CHUNK_SIZE
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_PLAY_QUEUE_CHUNK
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_SONGS
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
@@ -443,6 +441,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // TODO - Should maybe still deprecate the below two methods?
     /**
      * Play a list of songs.
      *
@@ -451,7 +450,7 @@ class MainActivity : AppCompatActivity() {
      * Default = 0 (the beginning of the play queue).
      */
     fun playSongs(songs: List<Song>, startIndex: Int = 0) = lifecycleScope.launch(Dispatchers.Default)  {
-        loadNewPlayQueueAsync(songs, startIndex).await()
+        loadNewPlayQueue(songs, startIndex)
 
         val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
         if (mediaControllerCompat.shuffleMode == SHUFFLE_MODE_ALL) {
@@ -466,7 +465,7 @@ class MainActivity : AppCompatActivity() {
      */
     fun playSongsShuffled(songs: List<Song>) = lifecycleScope.launch(Dispatchers.Default)  {
         val startIndex = (songs.indices).random()
-        loadNewPlayQueueAsync(songs, startIndex).await()
+        loadNewPlayQueue(songs, startIndex)
         setShuffleMode(SHUFFLE_MODE_ALL)
     }
 
@@ -477,63 +476,27 @@ class MainActivity : AppCompatActivity() {
      * @param startIndex - The index of the play queue element at which playback should begin.
      * Default = 0 (the beginning of the play queue).
      */
-    private fun loadNewPlayQueueAsync(songs: List<Song>, startIndex: Int = 0): Deferred<Boolean>
-            = lifecycleScope.async(Dispatchers.Default) {
+    private fun loadNewPlayQueue(songs: List<Song>, startIndex: Int = 0)
+            = lifecycleScope.launch(Dispatchers.Default) {
         if (songs.isEmpty() || startIndex >= songs.size) {
             Toast.makeText(this@MainActivity,
                 getString(R.string.error_generic_playback), Toast.LENGTH_LONG).show()
-            return@async false
+            return@launch
         }
         mediaController.transportControls.stop()
 
-        val songIds = songs.map { it.songId }
-        val chunkedSongIds = songIds.chunked(CHUNK_SIZE)
-        val chunkContainingStartSongIndex = startIndex / CHUNK_SIZE
-        val chunk = chunkedSongIds[chunkContainingStartSongIndex]
+        val startSongDesc = mediaDescriptionManager.buildDescription(songs[startIndex], startIndex.toLong())
 
-        val gson = Gson()
-        val songIdsInChunkJson = gson.toJson(chunk)
+        val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
+        mediaControllerCompat.addQueueItem(startSongDesc)
+        mediaControllerCompat.transportControls.skipToQueueItem(startIndex.toLong())
+        mediaControllerCompat.transportControls.play()
 
-        val startIndexInChunk = startIndex - (CHUNK_SIZE * chunkContainingStartSongIndex)
-
-        val startSongMetadataBundle = mediaDescriptionManager.getDescriptionAsBundle(songs[startIndex])
-
-        fun buildChunkBundle(songIdsJson: String, chunkIndex: Int): Bundle {
-            return Bundle().apply {
-                putString("songIds", songIdsJson)
-                putInt("chunkIndex", chunkIndex)
-            }
+        for ((index, song) in songs.withIndex()) {
+            if (index == startIndex) continue
+            val songDesc = mediaDescriptionManager.buildDescription(song, index.toLong())
+            mediaControllerCompat.addQueueItem(songDesc, index)
         }
-
-        val startSongBundle = buildChunkBundle(songIdsInChunkJson, chunkContainingStartSongIndex).apply {
-            putInt("startIndex", startIndexInChunk)
-            putBundle("startSongMetadata", startSongMetadataBundle)
-        }
-
-        val finalChunkResultReceiver = object : ResultReceiver(Handler(Looper.getMainLooper())) {
-            override fun onReceiveResult(resultCode: Int, resultData: Bundle) {
-                if (resultCode == SUCCESS) populatePlayQueueData()
-            }
-        }
-
-        if (chunkedSongIds.size > 1) {
-            mediaController.sendCommand(LOAD_PLAY_QUEUE_CHUNK, startSongBundle, null)
-            for ((index, songIdsChunk) in chunkedSongIds.withIndex()) {
-                // The chunk containing the start song has already been processed
-                if (index == chunkContainingStartSongIndex) continue
-
-                val songIdsJson = gson.toJson(songIdsChunk)
-                val firstSongInChunkIndex = index / CHUNK_SIZE
-
-                val bundle = buildChunkBundle(songIdsJson, firstSongInChunkIndex)
-                if (index == chunkedSongIds.size - 1 || index == chunkedSongIds.size - 2 &&
-                    chunkContainingStartSongIndex == chunkedSongIds.size - 1) {
-                    mediaController.sendCommand(LOAD_PLAY_QUEUE_CHUNK, bundle, finalChunkResultReceiver)
-                } else mediaController.sendCommand(LOAD_PLAY_QUEUE_CHUNK, bundle, null)
-            }
-        } else mediaController.sendCommand(LOAD_PLAY_QUEUE_CHUNK, startSongBundle, finalChunkResultReceiver)
-
-        return@async true
     }
 
     /**
