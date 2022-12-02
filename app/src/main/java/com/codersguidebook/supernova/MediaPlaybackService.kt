@@ -325,8 +325,13 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         val startIndex = it.getInt("startIndex", -1)
                         if (startIndex in 0..playQueue.size) {
                             currentlyPlayingQueueItemId = playQueue[startIndex].queueId
-                            val mediaDescription = buildMediaDescriptionFromBundle(it)
-                            updateMetadataForQueueItem(mediaDescription, currentlyPlayingQueueItemId)
+
+                            val startSongMetadataBundle = it.getBundle("startSongMetadata")
+                            startSongMetadataBundle?.let { startSongMetadata ->
+                                val mediaDescription = buildMediaDescriptionFromBundle(startSongMetadata)
+                                updateMetadataForQueueItem(mediaDescription, currentlyPlayingQueueItemId)
+                            }
+
                             onSkipToQueueItem(currentlyPlayingQueueItemId)
                             onPlay()
                         }
