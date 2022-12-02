@@ -47,7 +47,7 @@ class SongsFragment : Fragment() {
 
         // Shuffle the music library then play it
         binding.fab.setOnClickListener {
-            callingActivity.playSongsShuffled(completeLibrary)
+            callingActivity.playNewPlayQueue(completeLibrary, shuffle = true)
         }
 
         binding.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {

@@ -305,7 +305,7 @@ class MainActivity : AppCompatActivity() {
             PlaybackState.STATE_PLAYING -> mediaController.transportControls.pause()
             else -> {
                 // Load and play the user's music library if the play queue is empty
-                if (playQueue.isEmpty()) playSongs(completeLibrary)
+                if (playQueue.isEmpty()) playNewPlayQueue(completeLibrary)
                 else {
                     // It's possible a queue has been built without ever pressing play.
                     // In which case, commence playback
@@ -441,40 +441,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Play a list of songs.
-     *
-     * @param songs - A list containing Song objects that should be added to the play queue.
-     * @param startIndex - The index of the play queue element at which playback should begin.
-     * Default = 0 (the beginning of the play queue).
-     */
-    fun playSongs(songs: List<Song>, startIndex: Int = 0) = lifecycleScope.launch(Dispatchers.Default)  {
-        loadNewPlayQueue(songs, startIndex)
-
-        val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
-        if (mediaControllerCompat.shuffleMode == SHUFFLE_MODE_ALL) {
-            setShuffleMode(SHUFFLE_MODE_NONE)
-        }
-    }
-
-    /**
-     * Shuffle and play a list of songs.
-     *
-     * @param songs - A list containing Song objects that should be added to the play queue.
-     */
-    fun playSongsShuffled(songs: List<Song>) = lifecycleScope.launch(Dispatchers.Default)  {
-        val startIndex = (songs.indices).random()
-        loadNewPlayQueue(songs, startIndex)
-        setShuffleMode(SHUFFLE_MODE_ALL)
-    }
-
-    /**
      * Build a play queue using a list of songs and commence playback.
      *
      * @param songs - A list containing Song objects that should be added to the play queue.
      * @param startIndex - The index of the play queue element at which playback should begin.
      * Default = 0 (the beginning of the play queue).
+     * N.B. If shuffle is true then the startIndex is ignored.
+     * @param shuffle - Indicates whether the play queue should be shuffled.
      */
-    private fun loadNewPlayQueue(songs: List<Song>, startIndex: Int = 0)
+    fun playNewPlayQueue(songs: List<Song>, startIndex: Int = 0, shuffle: Boolean = false)
             = lifecycleScope.launch(Dispatchers.Default) {
         if (songs.isEmpty() || startIndex >= songs.size) {
             Toast.makeText(this@MainActivity,
@@ -483,17 +458,25 @@ class MainActivity : AppCompatActivity() {
         }
         mediaController.transportControls.stop()
 
-        val startSongDesc = mediaDescriptionManager.buildDescription(songs[startIndex], startIndex.toLong())
+        val startSongIndex = if (shuffle) (songs.indices).random()
+        else startIndex
+
+        val startSongDesc = mediaDescriptionManager.buildDescription(songs[startIndex], startSongIndex.toLong())
 
         val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
         mediaControllerCompat.addQueueItem(startSongDesc)
-        mediaControllerCompat.transportControls.skipToQueueItem(startIndex.toLong())
+        mediaControllerCompat.transportControls.skipToQueueItem(startSongIndex.toLong())
         mediaControllerCompat.transportControls.play()
 
         for ((index, song) in songs.withIndex()) {
-            if (index == startIndex) continue
+            if (index == startSongIndex) continue
             val songDesc = mediaDescriptionManager.buildDescription(song, index.toLong())
             mediaControllerCompat.addQueueItem(songDesc, index)
+        }
+
+        when {
+            shuffle -> setShuffleMode(SHUFFLE_MODE_ALL)
+            mediaControllerCompat.shuffleMode == SHUFFLE_MODE_ALL -> setShuffleMode(SHUFFLE_MODE_NONE)
         }
     }
 
