@@ -12,7 +12,6 @@ class MediaServiceConstants {
         const val ACTION_PREVIOUS = "previous"
         const val MOVE_QUEUE_ITEM = "moveQueueItem"
         const val REMOVE_QUEUE_ITEM_BY_ID = "removeQueueItemById"
-        const val RESTORE_PLAY_QUEUE = "restorePlayQueue"
         const val SET_REPEAT_MODE = "setRepeatMode"
         const val SET_SHUFFLE_MODE = "setShuffleMode"
         const val UPDATE_QUEUE_ITEM = "updateQueueItem"

@@ -31,15 +31,12 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTI
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PREVIOUS
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.RESTORE_PLAY_QUEUE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_REPEAT_MODE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_SHUFFLE_MODE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.UPDATE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.ResultReceiverConstants.Companion.SUCCESS
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
@@ -321,35 +318,6 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         }
                         playQueue.removeIf { it.queueId == queueItemId }
                         setPlayQueue()
-                        cb?.send(SUCCESS, Bundle())
-                    }
-                }
-                RESTORE_PLAY_QUEUE -> {
-                    extras?.let {
-                        val queueItemsJson = it.getString("queueItemPairs") ?: return@let
-                        val gson = Gson()
-                        val itemType = object : TypeToken<List<Pair<Long, Long>>>() {}.type
-                        val queueItemPairs = gson.fromJson<List<Pair<Long, Long>>>(queueItemsJson, itemType)
-
-                        playQueue.clear()
-                        currentlyPlayingQueueItemId = -1L
-
-                        // Pair mapping is <Long, Long> -> <QueueId, songId>
-                        for (pair in queueItemPairs) {
-                            val mediaDescription = MediaDescriptionCompat.Builder()
-                                .setMediaId(pair.second.toString())
-                                .build()
-                            val queueItem = QueueItem(mediaDescription, pair.first)
-                            playQueue.add(queueItem)
-                        }
-
-                        mediaSessionCompat.setQueue(playQueue)
-
-                        currentlyPlayingQueueItemId = it.getLong("queueItemId", -1L)
-                        if (currentlyPlayingQueueItemId != -1L) {
-                            onSkipToQueueItem(currentlyPlayingQueueItemId)
-                        }
-
                         cb?.send(SUCCESS, Bundle())
                     }
                 }
