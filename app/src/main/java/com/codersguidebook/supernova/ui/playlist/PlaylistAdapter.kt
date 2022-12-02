@@ -62,7 +62,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
         }
 
         override fun onClick(view: View) {
-            mainActivity.playSongs(songs, layoutPosition - 1)
+            mainActivity.playNewPlayQueue(songs, layoutPosition - 1)
         }
     }
 

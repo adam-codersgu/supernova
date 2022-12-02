@@ -29,18 +29,14 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTI
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PAUSE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PLAY
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PREVIOUS
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.LOAD_SONGS
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.RESTORE_PLAY_QUEUE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_REPEAT_MODE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_SHUFFLE_MODE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.UPDATE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.ResultReceiverConstants.Companion.SUCCESS
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
@@ -121,8 +117,14 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             val sortedQueue = playQueue.sortedByDescending {
                 it.queueId
             }
-            val queueId = if (sortedQueue.isNotEmpty()) sortedQueue[0].queueId + 1
-            else 0
+            val presetQueueId = description?.extras?.getLong("queue_id")
+            val queueId = when {
+                presetQueueId != null && sortedQueue.find { it.queueId == presetQueueId } == null -> {
+                    presetQueueId
+                }
+                sortedQueue.isNotEmpty() -> sortedQueue[0].queueId + 1
+                else -> 0
+            }
 
             val queueItem = QueueItem(description, queueId)
             try {
@@ -130,6 +132,8 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             } catch (exception: IndexOutOfBoundsException) {
                 playQueue.add(playQueue.size, queueItem)
             }
+
+            mediaSessionCompat.setQueue(playQueue)
         }
 
         override fun onPrepare() {
@@ -291,62 +295,6 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             super.onCommand(command, extras, cb)
 
             when (command) {
-                RESTORE_PLAY_QUEUE -> {
-                    extras?.let {
-                        val queueItemsJson = it.getString("queueItemPairs") ?: return@let
-                        val gson = Gson()
-                        val itemType = object : TypeToken<List<Pair<Long, Long>>>() {}.type
-                        val queueItemPairs = gson.fromJson<List<Pair<Long, Long>>>(queueItemsJson, itemType)
-
-                        playQueue.clear()
-                        currentlyPlayingQueueItemId = -1L
-
-                        // Pair mapping is <Long, Long> -> <QueueId, songId>
-                        for (pair in queueItemPairs) {
-                            val mediaDescription = MediaDescriptionCompat.Builder()
-                                .setMediaId(pair.second.toString())
-                                .build()
-                            val queueItem = QueueItem(mediaDescription, pair.first)
-                            playQueue.add(queueItem)
-                        }
-
-                        mediaSessionCompat.setQueue(playQueue)
-
-                        currentlyPlayingQueueItemId = it.getLong("queueItemId", -1L)
-                        if (currentlyPlayingQueueItemId != -1L) {
-                            onSkipToQueueItem(currentlyPlayingQueueItemId)
-                        }
-
-                        cb?.send(SUCCESS, Bundle())
-                    }
-                }
-                LOAD_SONGS -> {
-                    extras?.let {
-                        val songIdsJson = it.getString("songIds") ?: return@let
-                        val gson = Gson()
-                        val listType = object : TypeToken<List<Long>>() {}.type
-                        var songIds = gson.fromJson<List<Long>>(songIdsJson, listType)
-
-                        val addSongsAfterCurrentQueueItem = it.getBoolean("addSongsAfterCurrentQueueItem")
-                        if (addSongsAfterCurrentQueueItem) songIds = songIds.reversed()
-                        for (id in songIds) {
-                            val mediaDescription = MediaDescriptionCompat.Builder()
-                                .setMediaId(id.toString())
-                                .build()
-                            if (addSongsAfterCurrentQueueItem) {
-                                val targetIndex = playQueue.indexOfFirst { queueItem ->
-                                    queueItem.queueId == currentlyPlayingQueueItemId
-                                } + 1
-                                onAddQueueItem(mediaDescription, targetIndex)
-                            } else onAddQueueItem(mediaDescription)
-                        }
-
-                        if (it.getBoolean("shuffle")) playQueue.shuffle()
-
-                        mediaSessionCompat.setQueue(playQueue)
-                        cb?.send(SUCCESS, Bundle())
-                    }
-                }
                 MOVE_QUEUE_ITEM -> {
                     extras?.let {
                         val queueItemId = it.getLong("queueItemId", -1L)
@@ -400,12 +348,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                 }
                 UPDATE_QUEUE_ITEM -> {
                     extras?.let {
-                        val mediaDescription = MediaDescriptionCompat.Builder()
-                            .setExtras(it.getBundle("extras"))
-                            .setMediaId(it.getString("mediaId"))
-                            .setSubtitle(it.getString("subtitle"))
-                            .setTitle(it.getString("title"))
-                            .build()
+                        val mediaDescription = buildMediaDescriptionFromBundle(it)
                         val queueItemId = it.getLong("queueItemId")
                         updateMetadataForQueueItem(mediaDescription, queueItemId)
                     }
@@ -526,6 +469,21 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         return playQueue.find {
             it.queueId == currentlyPlayingQueueItemId
         }
+    }
+
+    /**
+     * Construct a MediaDescriptionCompat object based on the metadata supplied in a Bundle.
+     *
+     * @param bundle - A Bundle containing the metadata for a given song.
+     * @return A MediaDescriptionCompat object containing the metadata that can be used by the service.
+     */
+    private fun buildMediaDescriptionFromBundle(bundle: Bundle): MediaDescriptionCompat {
+        return MediaDescriptionCompat.Builder()
+            .setExtras(bundle.getBundle("extras"))
+            .setMediaId(bundle.getString("mediaId"))
+            .setSubtitle(bundle.getString("subtitle"))
+            .setTitle(bundle.getString("title"))
+            .build()
     }
 
     /**

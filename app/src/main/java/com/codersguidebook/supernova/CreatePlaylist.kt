@@ -29,7 +29,7 @@ class CreatePlaylist (private val songIds: List<Long>) : DialogFragment() {
         btnOK.setOnClickListener{
             val playlistName = txtCreatePlaylist.text.toString()
             if (playlistName.isNotEmpty()) {
-                val songListJSON = callingActivity.convertSongIDListToJson(songIds)
+                val songListJSON = callingActivity.convertSongIdListToJson(songIds)
 
                 val newPlaylist = Playlist(0, playlistName, songListJSON, false)
 

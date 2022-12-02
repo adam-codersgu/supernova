@@ -34,7 +34,7 @@ class SongOfTheDayAdapter(private val mainActivity: MainActivity):
         }
 
         override fun onClick(view: View) {
-            song?.let { mainActivity.playSongs(listOf(it)) }
+            song?.let { mainActivity.playNewPlayQueue(listOf(it)) }
         }
     }
 
