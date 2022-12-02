@@ -325,7 +325,8 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         val startIndex = it.getInt("startIndex", -1)
                         if (startIndex in 0..playQueue.size) {
                             currentlyPlayingQueueItemId = playQueue[startIndex].queueId
-                            // TODO: Populate the metadata for the currently playing song here?
+                            val mediaDescription = buildMediaDescriptionFromBundle(it)
+                            updateMetadataForQueueItem(mediaDescription, currentlyPlayingQueueItemId)
                             onSkipToQueueItem(currentlyPlayingQueueItemId)
                             onPlay()
                         }
@@ -450,12 +451,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                 }
                 UPDATE_QUEUE_ITEM -> {
                     extras?.let {
-                        val mediaDescription = MediaDescriptionCompat.Builder()
-                            .setExtras(it.getBundle("extras"))
-                            .setMediaId(it.getString("mediaId"))
-                            .setSubtitle(it.getString("subtitle"))
-                            .setTitle(it.getString("title"))
-                            .build()
+                        val mediaDescription = buildMediaDescriptionFromBundle(it)
                         val queueItemId = it.getLong("queueItemId")
                         updateMetadataForQueueItem(mediaDescription, queueItemId)
                     }
@@ -576,6 +572,21 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         return playQueue.find {
             it.queueId == currentlyPlayingQueueItemId
         }
+    }
+
+    /**
+     * Construct a MediaDescriptionCompat object based on the metadata supplied in a Bundle.
+     *
+     * @param bundle - A Bundle containing the metadata for a given song.
+     * @return A MediaDescriptionCompat object containing the metadata that can be used by the service.
+     */
+    private fun buildMediaDescriptionFromBundle(bundle: Bundle): MediaDescriptionCompat {
+        return MediaDescriptionCompat.Builder()
+            .setExtras(bundle.getBundle("extras"))
+            .setMediaId(bundle.getString("mediaId"))
+            .setSubtitle(bundle.getString("subtitle"))
+            .setTitle(bundle.getString("title"))
+            .build()
     }
 
     /**

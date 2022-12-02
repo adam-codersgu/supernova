@@ -502,6 +502,9 @@ class MainActivity : AppCompatActivity() {
 
         val startIndexInChunk = startIndex - (CHUNK_SIZE * chunkContainingCurrentlyPlayingIndex)
 
+        val currentSong = songs[startIndex]
+        val currentSongMetadataBundle = mediaDescriptionManager.getDescriptionAsBundle(currentSong)
+
         val bundle = Bundle().apply {
             putString("songIds", songIdsJson)
             // FIXME: Give thought to how you handle shuffling
@@ -510,6 +513,7 @@ class MainActivity : AppCompatActivity() {
             putBoolean("shuffle", shuffle)
             putInt("startIndex", startIndexInChunk)
             putInt("chunkIndex", chunkContainingCurrentlyPlayingIndex)
+            putBundle("currentSongMetadata", currentSongMetadataBundle)
             // TODO: Send over the metadata of the currently playing song in this bundle also?
         }
 
@@ -577,18 +581,12 @@ class MainActivity : AppCompatActivity() {
     private fun populatePlayQueueData() = lifecycleScope.launch(Dispatchers.Default) {
         refreshPlayQueue()
 
-        fun updateQueueItem(song: Song, queueItem: QueueItem) {
-            val mediaDescriptionBundle = mediaDescriptionManager.getDescriptionAsBundle(song)
-            mediaDescriptionBundle.putLong("queueItemId", queueItem.queueId)
-            mediaController.sendCommand(UPDATE_QUEUE_ITEM, mediaDescriptionBundle, null)
-        }
-
         // Update the currently playing song first
         if (currentQueueItemId != -1L) {
             playQueue.find { it.queueId == currentQueueItemId }?.let { queueItem ->
                 val songId = queueItem.description.mediaId?.toLong() ?: return@let
                 val song = getSongById(songId) ?: return@let
-                updateQueueItem(song, queueItem)
+                updateQueueItemById(song, queueItem.queueId)
             }
         }
 
@@ -597,11 +595,23 @@ class MainActivity : AppCompatActivity() {
             if (queueItem.description.title == null || queueItem.description.subtitle == null) {
                 val songId = queueItem.description.mediaId?.toLong() ?: continue
                 val song = getSongById(songId) ?: continue
-                updateQueueItem(song, queueItem)
+                updateQueueItemById(song, queueItem.queueId)
             }
         }
 
         refreshPlayQueue(true)
+    }
+
+    /**
+     * Update the metadata for a given play queue item.
+     *
+     * @param song - A Song object containing the media metadata to be used.
+     * @param queueId - The ID of the play queue item that should be updated.
+     */
+    private fun updateQueueItemById(song: Song, queueId: Long) {
+        val mediaDescriptionBundle = mediaDescriptionManager.getDescriptionAsBundle(song)
+        mediaDescriptionBundle.putLong("queueItemId", queueId)
+        mediaController.sendCommand(UPDATE_QUEUE_ITEM, mediaDescriptionBundle, null)
     }
 
     /**
