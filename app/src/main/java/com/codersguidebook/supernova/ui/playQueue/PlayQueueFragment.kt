@@ -147,7 +147,6 @@ class PlayQueueFragment : Fragment() {
 
                         true
                     }
-
                     else -> false
                 }
             }

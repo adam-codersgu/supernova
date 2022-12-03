@@ -171,6 +171,10 @@
     <string name="album_year_cannot_be_empty">The album year field cannot be empty</string>
     <string name="album_updated">Album updated!</string>
 
+    <string name="displayed_song">1 song</string>
+    <string name="displayed_songs">%1$d songs</string>
+    <string name="disc_number">Disc %1$s</string>
+
     <string name="app_preferences">App preferences</string>
 
     <string name="error_media_service_default">A playback error has occurred. If the song file has been moved or deleted please wait for the library to refresh.</string>

@@ -35,14 +35,32 @@ class AlbumAdapter(private val mainActivity: MainActivity):
     }
 
     inner class ViewHolderSongs(itemView: View) :
-        RecyclerView.ViewHolder(itemView) {
+        RecyclerView.ViewHolder(itemView),
+        View.OnClickListener {
 
         internal var mDisc = itemView.findViewById<View>(R.id.discNumber) as TextView
         internal var mTrack = itemView.findViewById<View>(R.id.songTrack) as TextView
         internal var mTitle = itemView.findViewById<View>(R.id.title) as TextView
         internal var mArtist = itemView.findViewById<View>(R.id.artist) as TextView
-        internal var mBtnAlbumMenu = itemView.findViewById<ImageButton>(R.id.albumMenu)
-        internal var songLayout = itemView.findViewById<ConstraintLayout>(R.id.songPreviewLayout)
+        private var mBtnAlbumMenu = itemView.findViewById<ImageButton>(R.id.albumMenu)
+        private var songLayout = itemView.findViewById<ConstraintLayout>(R.id.songPreviewLayout)
+
+        init {
+            songLayout.isClickable = true
+            songLayout.setOnClickListener(this)
+            songLayout.setOnLongClickListener{
+                mainActivity.openDialog(SongOptions(songs[layoutPosition - 1]))
+                return@setOnLongClickListener true
+            }
+
+            mBtnAlbumMenu.setOnClickListener {
+                mainActivity.openDialog(SongOptions(songs[layoutPosition - 1]))
+            }
+        }
+
+        override fun onClick(view: View) {
+            mainActivity.playSongs(songs, layoutPosition - 1)
+        }
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -69,80 +87,29 @@ class AlbumAdapter(private val mainActivity: MainActivity):
                     holder.mTitle.text = songs[0].albumName
                     holder.mArtist.text = songs[0].artist
                     val songCountInt = songs.size
-                    holder.mSongCount.text = if (songCountInt == 1) "$songCountInt song"
-                    else "$songCountInt songs"
+                    holder.mSongCount.text = if (songCountInt == 1) mainActivity.getString(R.string.displayed_song)
+                    else mainActivity.getString(R.string.displayed_songs, songCountInt)
                 }
             }
 
             SONG -> {
                 holder as ViewHolderSongs
                 val current = songs[position -1]
-                var includeDisc = false
-                if (displayDiscNumbers && songs.size > 1) includeDisc = position -1 == 0 || songs[position -1].track.toString().substring(0, 1).toInt() != songs[position -2].track.toString().substring(0, 1).toInt()
 
-                if (!includeDisc) holder.mDisc.isVisible = false
-                else {
-                    holder.mDisc.isVisible = true
-                    val disc = current.track.toString().substring(0, 1).toInt()
-                    val text = "Disc $disc"
-                    holder.mDisc.text = text
+                holder.mDisc.isVisible = false
+                if (displayDiscNumbers && songs.size > 1) {
+                    if (position - 1 == 0 || songs[position -1].track.toString().substring(0, 1) !=
+                        songs[position -2].track.toString().substring(0, 1)) {
+                        holder.mDisc.isVisible = true
+                        val disc = current.track.toString().substring(0, 1)
+                        val text = mainActivity.getString(R.string.disc_number, disc)
+                        holder.mDisc.text = text
+                    }
                 }
 
-                // converting the track number to an integer before converting it back to a string helps remove leading 0's
                 holder.mTrack.text = current.track.toString().substring(1, 4).toInt().toString()
                 holder.mTitle.text = current.title
                 holder.mArtist.text = current.artist
-
-                holder.mBtnAlbumMenu.setOnClickListener {
-                    mainActivity.openDialog(SongOptions(current))
-                }
-
-                holder.songLayout.setOnClickListener {
-                    mainActivity.playNewPlayQueue(songs, position - 1)
-                }
-
-                holder.songLayout.setOnLongClickListener {
-                    mainActivity.openDialog(SongOptions(current))
-                    return@setOnLongClickListener true
-                }
-            }
-        }
-    }
-
-    internal fun processSongs(songList: List<Song>) {
-        when {
-            songList.size > songs.size -> {
-                val difference = songList.filterNot {
-                    songs.contains(it)
-                }
-                for (s in difference) {
-                    songs.add(s)
-                    songs = songs.sortedBy { song ->
-                        song.track
-                    }.toMutableList()
-                    val index = songs.indexOfFirst {
-                        it.songId == s.songId
-                    }
-                    if (index != -1) {
-                        notifyItemInserted(index + 1)
-                        notifyItemChanged(index + 1)
-                        notifyItemChanged(0)
-                    }
-                }
-            }
-            songList.size < songs.size -> {
-                val difference = songs - songList
-                for (s in difference) {
-                    val index = songs.indexOfFirst {
-                        it.songId == s.songId
-                    }
-                    if (index != -1) {
-                        songs.removeAt(index)
-                        notifyItemRemoved(index + 1)
-                        notifyItemRangeChanged(index + 1, songs.size - index)
-                        notifyItemChanged(0)
-                    }
-                }
             }
         }
     }
