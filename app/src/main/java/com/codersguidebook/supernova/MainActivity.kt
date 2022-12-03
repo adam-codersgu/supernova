@@ -67,6 +67,7 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SONG_OF_THE_DAY_LAST_UPDATED
 import com.codersguidebook.supernova.utils.MediaDescriptionCompatManager
+import com.codersguidebook.supernova.utils.MediaStoreContentObserver
 import com.google.android.material.navigation.NavigationView
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -81,6 +82,7 @@ import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
+
 class MainActivity : AppCompatActivity() {
 
     private val channelID = "supernova"
@@ -91,6 +93,7 @@ class MainActivity : AppCompatActivity() {
     private val playQueueViewModel: PlayQueueViewModel by viewModels()
     private var allPlaylists = listOf<Playlist>()
     private val mediaDescriptionManager = MediaDescriptionCompatManager()
+    private var mediaStoreContentObserver: MediaStoreContentObserver? = null
     private var musicDatabase: MusicDatabase? = null
     var completeLibrary = listOf<Song>()
     private lateinit var mediaBrowser: MediaBrowserCompat
@@ -252,6 +255,12 @@ class MainActivity : AppCompatActivity() {
 
         // Prevent icon tints from being overwritten
         binding.navView.itemIconTintList = null
+
+        val handler = Handler(Looper.getMainLooper())
+        mediaStoreContentObserver = MediaStoreContentObserver(handler, this).also {
+            this.contentResolver.registerContentObserver(MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                true, it)
+        }
 
         musicLibraryViewModel.allSongs.observe(this) {
             completeLibrary = it.toMutableList()
@@ -1274,6 +1283,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+
+        mediaStoreContentObserver?.let {
+            this.contentResolver.unregisterContentObserver(it)
+        }
 
         MediaControllerCompat.getMediaController(this)?.apply {
             transportControls.stop()
