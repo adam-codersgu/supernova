@@ -101,7 +101,7 @@ class PlaylistFragment : Fragment() {
         }
 
         binding.fab.setOnClickListener {
-            callingActivity.playSongsShuffled(playlistSongs)
+            callingActivity.playNewPlayQueue(playlistSongs, shuffle = true)
         }
 
         binding.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {

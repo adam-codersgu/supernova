@@ -33,7 +33,7 @@ class RecentlyPlayedAdapter(private val mainActivity: MainActivity):
         }
 
         override fun onClick(view: View) {
-            mainActivity.playSongs(songs, layoutPosition)
+            mainActivity.playNewPlayQueue(songs, layoutPosition)
         }
     }
 

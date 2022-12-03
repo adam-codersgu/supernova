@@ -60,7 +60,7 @@ class ArtistSongsFragment : Fragment() {
             })
 
         binding.fab.setOnClickListener {
-            callingActivity.playSongsShuffled(artistsSongs)
+            callingActivity.playNewPlayQueue(artistsSongs, shuffle = true)
         }
 
         binding.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {

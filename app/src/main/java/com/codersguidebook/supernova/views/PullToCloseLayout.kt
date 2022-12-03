@@ -105,6 +105,10 @@ class PullToCloseLayout(context: Context, attributeSet: AttributeSet?) : FrameLa
         }
 
         override fun onViewDragStateChanged(state: Int) {
+            if (state == ViewDragHelper.STATE_DRAGGING) {
+                pullToCloseLayout.listener?.isDragging(true)
+            } else pullToCloseLayout.listener?.isDragging(false)
+
             if (isDismissed && state == ViewDragHelper.STATE_IDLE) {
                 pullToCloseLayout.listener?.onDismissed()
             }
@@ -114,11 +118,20 @@ class PullToCloseLayout(context: Context, attributeSet: AttributeSet?) : FrameLa
             isDismissed = dragPercent >= 0.50f ||
                     abs(xvel) > pullToCloseLayout.minFlingVelocity && dragPercent > 0.20f
             if (!isDismissed) pullToCloseLayout.dragHelper.settleCapturedViewAt(0, startTop)
+            // fixme - or maybe try just commenting out the below?? Or only run below if isDismissed
             pullToCloseLayout.invalidate()
         }
     }
 
     interface Listener {
+        /**
+         * A method called when the layout has started being dragged or is released.
+         *
+         * @param dragging - A Boolean indicating whether the layout is being dragged (true)
+         * or has been released (false)
+         */
+        fun isDragging(dragging: Boolean)
+
         /** Layout is pulled down to dismiss */
         fun onDismissed()
     }

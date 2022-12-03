@@ -55,6 +55,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
     private var _binding: FragmentCurrentlyPlayingBinding? = null
     private val binding get() = _binding!!
     private var isAnimationVisible = true
+    private var isDragging = false
     private var fastForwarding = false
     private var fastRewinding = false
     private lateinit var callingActivity: MainActivity
@@ -95,8 +96,8 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
             updateCurrentlyDisplayedMetadata(it)
         }
 
-        playQueueViewModel.isPlaying.observe(viewLifecycleOwner) {
-            if (it) binding.btnPlay.setImageResource(R.drawable.ic_pause)
+        playQueueViewModel.playbackState.observe(viewLifecycleOwner) { state ->
+            if (state == STATE_PLAYING) binding.btnPlay.setImageResource(R.drawable.ic_pause)
             else binding.btnPlay.setImageResource(R.drawable.ic_play)
         }
 
@@ -106,6 +107,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
         }
 
         playQueueViewModel.playbackPosition.observe(viewLifecycleOwner) {
+            if (isDragging) return@observe
             binding.currentSeekBar.progress = it
             binding.currentPosition.text = SimpleDateFormat("mm:ss", Locale.UK).format(it)
         }
@@ -186,12 +188,15 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
     override fun onStart() {
         super.onStart()
 
-        binding.animatedView.viewWidth = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            callingActivity.windowManager.currentWindowMetrics.bounds.width()
-        } else {
+        binding.animatedView.viewWidth = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            // Pre-SDK 30
             val displayMetrics = DisplayMetrics()
+            @Suppress("DEPRECATION")
             callingActivity.windowManager.defaultDisplay.getMetrics(displayMetrics)
             displayMetrics.widthPixels
+        } else {
+            // SDK 30 and up
+            callingActivity.windowManager.currentWindowMetrics.bounds.width()
         }
 
         isAnimationVisible = sharedPreferences.getBoolean(ANIMATION_ACTIVE, true)
@@ -436,6 +441,10 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
             }
             show()
         }
+    }
+
+    override fun isDragging(dragging: Boolean) {
+        isDragging = dragging
     }
 
     override fun onDismissed() {
