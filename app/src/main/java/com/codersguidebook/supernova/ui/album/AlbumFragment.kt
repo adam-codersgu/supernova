@@ -75,7 +75,7 @@ class AlbumFragment : Fragment() {
         setupMenu(songs)
 
         binding.fab.setOnClickListener {
-            callingActivity.playSongsShuffled(songs)
+            callingActivity.playNewPlayQueue(songs)
         }
 
         val discNumbers = songs.distinctBy {

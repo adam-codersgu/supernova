@@ -59,7 +59,7 @@ class AlbumAdapter(private val mainActivity: MainActivity):
         }
 
         override fun onClick(view: View) {
-            mainActivity.playSongs(songs, layoutPosition - 1)
+            mainActivity.playNewPlayQueue(songs, layoutPosition - 1)
         }
     }
 
