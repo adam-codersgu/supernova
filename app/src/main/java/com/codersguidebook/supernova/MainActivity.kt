@@ -21,6 +21,7 @@ import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.media.session.PlaybackStateCompat.*
+import android.util.Log
 import android.util.Size
 import android.view.Menu
 import android.view.View
@@ -171,6 +172,9 @@ class MainActivity : AppCompatActivity() {
         override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
             super.onMetadataChanged(metadata)
 
+            // fixme: remove me when done debugging
+            Log.e("DEBUGGING", "The ID of the current song is " + metadata?.description?.mediaId)
+
             if (metadata?.description?.mediaId !=
                 playQueueViewModel.currentlyPlayingSongMetadata.value?.description?.mediaId) {
                 playQueueViewModel.playbackPosition.value = 0
@@ -258,7 +262,7 @@ class MainActivity : AppCompatActivity() {
 
         val handler = Handler(Looper.getMainLooper())
         mediaStoreContentObserver = MediaStoreContentObserver(handler, this).also {
-            this.contentResolver.registerContentObserver(MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+            this.contentResolver.registerContentObserver(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 true, it)
         }
 
@@ -279,6 +283,33 @@ class MainActivity : AppCompatActivity() {
                     musicLibraryViewModel.updatePlaylists(listOf(playlist))
                 }
             }
+        }
+    }
+
+    /**
+     * Notify the activity of a change to the media associated with a given content URI. This
+     * method is used by MediaStoreContentObserver whenever a given URI is associated with
+     * media insertion, deletion or update.
+     *
+     * @param uri - The content URI associated with the change.
+     */
+    fun changeToContentUri(uri: Uri) {
+        Log.e("DEBUGGING", "MainActivity notified of Uri: $uri")
+        val idString = uri.toString().removePrefix(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString())
+        try {
+            val songId = idString.toLong()
+            Log.e("DEBUGGING", "Id as long is: $songId")
+
+            // TODO: Need to respond to Uri change. Three scenarios to handle
+            //      1 -> Deletion of media -> ID exists in library but file does not exist
+            //      2 -> Insertion of media -> ID does not exist in library
+            //      3 -> Change to media e.g. file name/properties -> If ID exists in library and file exists
+            //          Then update metadata
+            //      Once the above has been implemented, need to streamline the updates to the music library.
+            //          - Complete refresh should only happen on launch
+            //          - Should have convenience methods for handling more specific changes
+        } catch (_: NumberFormatException) {
+            // todo: implement
         }
     }
 
