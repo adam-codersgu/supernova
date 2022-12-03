@@ -172,9 +172,6 @@ class MainActivity : AppCompatActivity() {
         override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
             super.onMetadataChanged(metadata)
 
-            // fixme: remove me when done debugging
-            Log.e("DEBUGGING", "The ID of the current song is " + metadata?.description?.mediaId)
-
             if (metadata?.description?.mediaId !=
                 playQueueViewModel.currentlyPlayingSongMetadata.value?.description?.mediaId) {
                 playQueueViewModel.playbackPosition.value = 0
@@ -293,7 +290,7 @@ class MainActivity : AppCompatActivity() {
      *
      * @param uri - The content URI associated with the change.
      */
-    fun changeToContentUri(uri: Uri) {
+    fun handleChangeToContentUri(uri: Uri) {
         Log.e("DEBUGGING", "MainActivity notified of Uri: $uri")
         val idString = uri.toString().removePrefix(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString())
         try {
