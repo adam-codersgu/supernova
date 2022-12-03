@@ -24,7 +24,10 @@ class AlbumFragment : Fragment() {
     private var _binding: FragmentWithFabBinding? = null
     private val binding get() = _binding!!
     private var isUpdating = false
+    private var unhandledRequestReceived = false
+    private lateinit var albumAdapter: AlbumAdapter
     private lateinit var callingActivity: MainActivity
+    private lateinit var musicDatabase: MusicDatabase
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
@@ -42,7 +45,7 @@ class AlbumFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val layoutManager = LinearLayoutManager(activity)
-        val albumAdapter = AlbumAdapter(callingActivity)
+        albumAdapter = AlbumAdapter(callingActivity)
         binding.recyclerView.layoutManager = layoutManager
         binding.recyclerView.itemAnimator = DefaultItemAnimator()
         binding.recyclerView.adapter = albumAdapter
@@ -56,44 +59,88 @@ class AlbumFragment : Fragment() {
         })
 
         albumId?.let { albumId ->
-            val musicDatabase = MusicDatabase.getDatabase(callingActivity, lifecycleScope)
-            musicDatabase.musicDao().findAlbumSongs(albumId).observe(viewLifecycleOwner) { albumSongs ->
-                if (isUpdating) return@observe
-                isUpdating = true
-                setupMenu(albumSongs)
+            musicDatabase = MusicDatabase.getDatabase(callingActivity, lifecycleScope)
+            musicDatabase.musicDao().findAlbumSongs(albumId).observe(viewLifecycleOwner) {
+                processNewSongs(it)
+            }
+        }
+    }
 
-                binding.fab.setOnClickListener {
-                    callingActivity.playSongsShuffled(albumSongs)
+    private fun processNewSongs(songs: List<Song>) {
+        if (isUpdating) {
+            unhandledRequestReceived = true
+            return
+        }
+        isUpdating = true
+        setupMenu(songs)
+
+        binding.fab.setOnClickListener {
+            callingActivity.playSongsShuffled(songs)
+        }
+
+        val discNumbers = songs.distinctBy {
+            it.track.toString().substring(0, 1).toInt()
+        }.map { it.track.toString().substring(0, 1).toInt() }
+
+        if (albumAdapter.songs.isEmpty()) {
+            albumAdapter.displayDiscNumbers = discNumbers.size > 1
+            albumAdapter.songs = songs.toMutableList()
+            albumAdapter.notifyItemRangeInserted(0, songs.size)
+        } else {
+            for ((index, song) in songs.withIndex()) {
+                processLoopIteration(index, song)
+            }
+
+            if (albumAdapter.songs.size > songs.size) {
+                val numberItemsToRemove = albumAdapter.songs.size - songs.size
+                repeat(numberItemsToRemove) { albumAdapter.songs.removeLast() }
+                albumAdapter.notifyItemRangeRemoved(songs.size, numberItemsToRemove)
+            }
+        }
+
+        isUpdating = false
+        if (unhandledRequestReceived) {
+            unhandledRequestReceived = false
+            musicDatabase.musicDao().findAlbumSongs(albumId ?: return).value?.let {
+                processNewSongs(it)
+            }
+        }
+    }
+
+    /**
+     * Handle updates to the content of the RecyclerView. The below method will determine what
+     * changes are required when an element/elements is/are changed, inserted, or deleted.
+     *
+     * @param index - The index of the current iteration through the up-to-date content list.
+     * @param song - The Song object that should be displayed at the index.
+     */
+    private fun processLoopIteration(index: Int, song: Song) {
+        when {
+            index >= albumAdapter.songs.size -> {
+                albumAdapter.songs.add(song)
+                albumAdapter.notifyItemInserted(index + 1)
+            }
+            song.songId != albumAdapter.songs[index].songId -> {
+                var numberOfItemsRemoved = 0
+                do {
+                    albumAdapter.songs.removeAt(index)
+                    ++numberOfItemsRemoved
+                } while (index < albumAdapter.songs.size &&
+                    song.songId != albumAdapter.songs[index].songId)
+
+                when {
+                    numberOfItemsRemoved == 1 -> albumAdapter.notifyItemRemoved(index + 1)
+                    numberOfItemsRemoved > 1 -> {
+                        albumAdapter.notifyItemRangeRemoved(index + 1,
+                            numberOfItemsRemoved)
+                    }
                 }
 
-                val discNumbers = albumSongs.distinctBy {
-                    it.track.toString().substring(0, 1).toInt()
-                }.map { it.track.toString().substring(0, 1).toInt() }
-
-                if (albumAdapter.songs.isEmpty()) {
-                    albumAdapter.displayDiscNumbers = discNumbers.size > 1
-                    albumAdapter.songs = albumSongs.toMutableList()
-                    albumAdapter.notifyItemRangeInserted(0, albumSongs.size)
-                } else {
-                    for ((index, song) in albumSongs.withIndex()) {
-                        when {
-                            index >= albumAdapter.songs.size -> {
-                                albumAdapter.songs.add(song)
-                                albumAdapter.notifyItemInserted(index)
-                            }
-                            albumAdapter.songs[index] != song -> {
-                                albumAdapter.songs[index] = song
-                                albumAdapter.notifyItemChanged(index)
-                            }
-                        }
-                    }
-                    if (albumAdapter.songs.size > albumSongs.size) {
-                        val numberItemsToRemove = albumAdapter.songs.size - albumSongs.size
-                        albumAdapter.songs = albumAdapter.songs.dropLast(numberItemsToRemove).toMutableList()
-                        albumAdapter.notifyItemRangeRemoved(albumSongs.size, numberItemsToRemove)
-                    }
-                }
-                isUpdating = false
+                processLoopIteration(index, song)
+            }
+            song != albumAdapter.songs[index] -> {
+                albumAdapter.songs[index] = song
+                albumAdapter.notifyItemChanged(index + 1)
             }
         }
     }
