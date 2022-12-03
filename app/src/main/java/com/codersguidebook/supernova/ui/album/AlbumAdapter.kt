@@ -35,14 +35,32 @@ class AlbumAdapter(private val mainActivity: MainActivity):
     }
 
     inner class ViewHolderSongs(itemView: View) :
-        RecyclerView.ViewHolder(itemView) {
+        RecyclerView.ViewHolder(itemView),
+        View.OnClickListener {
 
         internal var mDisc = itemView.findViewById<View>(R.id.discNumber) as TextView
         internal var mTrack = itemView.findViewById<View>(R.id.songTrack) as TextView
         internal var mTitle = itemView.findViewById<View>(R.id.title) as TextView
         internal var mArtist = itemView.findViewById<View>(R.id.artist) as TextView
-        internal var mBtnAlbumMenu = itemView.findViewById<ImageButton>(R.id.albumMenu)
-        internal var songLayout = itemView.findViewById<ConstraintLayout>(R.id.songPreviewLayout)
+        private var mBtnAlbumMenu = itemView.findViewById<ImageButton>(R.id.albumMenu)
+        private var songLayout = itemView.findViewById<ConstraintLayout>(R.id.songPreviewLayout)
+
+        init {
+            songLayout.isClickable = true
+            songLayout.setOnClickListener(this)
+            songLayout.setOnLongClickListener{
+                mainActivity.openDialog(SongOptions(songs[layoutPosition - 1]))
+                return@setOnLongClickListener true
+            }
+
+            mBtnAlbumMenu.setOnClickListener {
+                mainActivity.openDialog(SongOptions(songs[layoutPosition - 1]))
+            }
+        }
+
+        override fun onClick(view: View) {
+            mainActivity.playSongs(songs, layoutPosition - 1)
+        }
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -92,19 +110,6 @@ class AlbumAdapter(private val mainActivity: MainActivity):
                 holder.mTrack.text = current.track.toString().substring(1, 4).toInt().toString()
                 holder.mTitle.text = current.title
                 holder.mArtist.text = current.artist
-
-                holder.mBtnAlbumMenu.setOnClickListener {
-                    mainActivity.openDialog(SongOptions(current))
-                }
-
-                holder.songLayout.setOnClickListener {
-                    mainActivity.playSongs(songs, position - 1)
-                }
-
-                holder.songLayout.setOnLongClickListener {
-                    mainActivity.openDialog(SongOptions(current))
-                    return@setOnLongClickListener true
-                }
             }
         }
     }
