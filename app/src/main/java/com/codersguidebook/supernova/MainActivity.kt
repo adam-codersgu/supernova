@@ -297,35 +297,29 @@ class MainActivity : AppCompatActivity() {
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + "/")
 
         try {
-            // TODO: For metadata updates
-            val projection = arrayOf(MediaStore.Audio.Media.DATA)
+            val songId = songIdString.toLong()
+
             val selection = MediaStore.Audio.Media._ID + "=?"
             val selectionArgs = arrayOf(songIdString)
-            val cursor = getMediaStoreCursorAsync(projection, selection, selectionArgs).await()
+            val cursor = getMediaStoreCursorAsync(selection, selectionArgs).await()
 
             when {
                 cursor == null -> return@launch
-                cursor.count == 0 -> deleteSongById(songIdString.toLong())
-                else -> {
-                    val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
-
-                    while (cursor.moveToNext()) {
-                        val filePath = cursor.getString(dataColumn)
-
-                        if (File(filePath).exists()) Log.e("DEBUGGING", "File found successfully for $uri")
-                        else Log.e("DEBUGGING", "The file could not be found for $uri")
-                    }
+                cursor.count == 0 -> deleteSongById(songId)
+                getSongById(songId) == null -> {
+                    cursor.moveToNext()
+                    val song = createSongFromCursor(cursor)
+                    Log.e("DEBUGGING", "Inserting a song called " + song.title + " to the music library")
+                    musicLibraryViewModel.insertSongs(listOf(song))
                 }
             }
 
             // TODO: Need to respond to Uri change. Three scenarios to handle
-            //      2 -> Insertion of media -> ID does not exist in library
-            //      3 -> Change to media e.g. file name/properties -> If ID exists in library and file exists
-            //          Then update metadata
             //      Once the above has been implemented, need to streamline the updates to the music library.
             //          - Complete refresh should only happen on launch
             //          - Should have convenience methods for handling more specific changes
             //          - Coroutines may be necessary for the convenience methods
+            //      I want to test that songs added while the app is closed are still added to the music library correctly
         } catch (_: NumberFormatException) {
             // todo: implement
         }
@@ -994,10 +988,6 @@ class MainActivity : AppCompatActivity() {
     private fun libraryMaintenance(checkForDeletedSongs: Boolean) = lifecycleScope.launch(
         Dispatchers.Main
     ) {
-        val mediaStoreVersion = MediaStore.getVersion(this@MainActivity)
-        // TODO: Need to investigate what events cause this number to change and what the causes are
-        //      Also, if the library is empty then you want to perform a scan anyway
-        Log.e("DEBUGGING", "The media store version is $mediaStoreVersion")
         val libraryBuilt = libraryRefreshAsync().await()
         if (libraryBuilt && completeLibrary.isNotEmpty()) {
             if (checkForDeletedSongs) {
@@ -1009,94 +999,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun libraryRefreshAsync(): Deferred<Boolean> = lifecycleScope.async(Dispatchers.IO) {
-        var songs = mutableListOf<Song>()
-        val projection = arrayOf(
-            MediaStore.Audio.Media._ID,
-            MediaStore.Audio.Media.TRACK,
-            MediaStore.Audio.Media.TITLE,
-            MediaStore.Audio.Media.ARTIST,
-            MediaStore.Audio.Media.ALBUM,
-            MediaStore.Audio.Media.ALBUM_ID,
-            MediaStore.Audio.Media.YEAR
-        )
-        val libraryCursor = getMediaStoreCursorAsync(projection).await()
+        val songs = mutableListOf<Song>()
+        val libraryCursor = getMediaStoreCursorAsync().await()
         libraryCursor?.use { cursor ->
             val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-            val trackColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
-            val titleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
-            val artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
-            val albumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
-            val albumIDColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
-            val yearColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
 
             while (cursor.moveToNext()) {
-                // Get values of columns for a given audio file
-                val id = cursor.getLong(idColumn)
-
-                // check song has not been added to library. will return -1 if not in library
-                val indexOfSong = completeLibrary.indexOfFirst { song: Song ->
-                    song.songId == id
-                }
-                if (indexOfSong == -1) {
-                    var trackString = cursor.getString(trackColumn) ?: "1001"
-
-                    // We need the Track value in the format 1xxx where the first digit is the disc number
-                    val track = try {
-                        when (trackString.length) {
-                            4 -> trackString.toInt()
-                            in 1..3 -> {
-                                val numberNeeded = 4 - trackString.length
-                                trackString = when (numberNeeded) {
-                                    1 -> "1$trackString"
-                                    2 -> "10$trackString"
-                                    else -> "100$trackString"
-                                }
-                                trackString.toInt()
-                            }
-                            else -> 1001
-                        }
-                    } catch (e: NumberFormatException) {
-                        // if track string format is incorrect (e.g. you can get stuff like "12/23") then simply set track to 1001
-                        1001
-                    }
-
-                    val title = cursor.getString(titleColumn) ?: "Unknown song"
-                    val artist = cursor.getString(artistColumn) ?: "Unknown artist"
-                    val album = cursor.getString(albumColumn) ?: "Unknown album"
-                    val year = cursor.getString(yearColumn) ?: "2000"
-                    val albumID = cursor.getString(albumIDColumn) ?: "unknown_album_ID"
-                    val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
-
-                    val cw = ContextWrapper(application)
-                    // path to /data/data/this_app/app_data/albumArt
-                    val directory = cw.getDir("albumArt", Context.MODE_PRIVATE)
-                    val path = File(directory, "$albumID.jpg")
-                    // If artwork is not saved then try and find some
-                    if (!path.exists()) {
-                        val albumArt = try {
-                            application.contentResolver.loadThumbnail(uri,
-                                Size(640, 640), null)
-                        } catch (_: FileNotFoundException) { null }
-                        albumArt?.let { saveImage(it, path) }
-                    }
-
-                    // Stores column values and the contentUri in a local object
-                    // that represents the media file.
-                    val song = Song(
-                        id,
-                        track,
-                        title,
-                        artist,
-                        album,
-                        albumID,
-                        year,
-                        false,
-                        0
-                    )
+                val songExists = getSongById(cursor.getLong(idColumn)) != null
+                if (!songExists) {
+                    val song = createSongFromCursor(cursor)
                     songs.add(song)
                     if (songs.size > 9) {
                         musicLibraryViewModel.insertSongs(songs)
-                        songs = mutableListOf()
+                        songs.clear()
                     }
                 }
             }
@@ -1106,10 +1021,70 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Obtain a Cursor featuring all music entries in the media store that fulfil given
-     * projection and selection criteria.
+     * Use the media metadata from an entry in a Cursor object to construct a Song object.
      *
-     * @param projection - The media store columns that should be included in the Cursor.
+     * @param cursor - A Cursor object that is set to the row containing the metadata that a Song
+     * object should be constructed for.
+     */
+    private fun createSongFromCursor(cursor: Cursor): Song {
+        val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+        val trackColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
+        val titleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
+        val artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
+        val albumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
+        val albumIDColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
+        val yearColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
+
+        val id = cursor.getLong(idColumn)
+        var trackString = cursor.getString(trackColumn) ?: "1001"
+
+        // The Track value will be stored in the format 1xxx where the first digit is the disc number
+        val track = try {
+            when (trackString.length) {
+                4 -> trackString.toInt()
+                in 1..3 -> {
+                    val numberNeeded = 4 - trackString.length
+                    trackString = when (numberNeeded) {
+                        1 -> "1$trackString"
+                        2 -> "10$trackString"
+                        else -> "100$trackString"
+                    }
+                    trackString.toInt()
+                }
+                else -> 1001
+            }
+        } catch (e: NumberFormatException) {
+            // If the Track value is unusual (e.g. you can get stuff like "12/23") then use 1001
+            1001
+        }
+
+        val title = cursor.getString(titleColumn) ?: "Unknown song"
+        val artist = cursor.getString(artistColumn) ?: "Unknown artist"
+        val album = cursor.getString(albumColumn) ?: "Unknown album"
+        val year = cursor.getString(yearColumn) ?: "2000"
+        val albumID = cursor.getString(albumIDColumn) ?: "unknown_album_ID"
+        val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
+
+        val contextWrapper = ContextWrapper(application)
+        // path to /data/data/this_app/app_data/albumArt
+        val directory = contextWrapper.getDir("albumArt", Context.MODE_PRIVATE)
+        val path = File(directory, "$albumID.jpg")
+        // If artwork is not saved then try and find some
+        if (!path.exists()) {
+            val albumArt = try {
+                application.contentResolver.loadThumbnail(uri,
+                    Size(640, 640), null)
+            } catch (_: FileNotFoundException) { null }
+            albumArt?.let { saveImage(it, path) }
+        }
+
+        return Song(id, track, title, artist, album, albumID, year)
+    }
+
+    /**
+     * Obtain a Cursor featuring all music entries in the media store that fulfil a given
+     * selection criteria.
+     *
      * @param selection - The WHERE clause for the media store query.
      * Default = standard WHERE clause that selects only music entries.
      * @param selectionArgs - An array of String selection arguments that filter the results
@@ -1117,10 +1092,18 @@ class MainActivity : AppCompatActivity() {
      * Default = null (no selection arguments).
      * @return A Cursor object detailing all the relevant media store entries.
      */
-    private fun getMediaStoreCursorAsync(projection: Array<String>,
-                                         selection: String = MediaStore.Audio.Media.IS_MUSIC,
+    private fun getMediaStoreCursorAsync(selection: String = MediaStore.Audio.Media.IS_MUSIC,
                                          selectionArgs: Array<String>? = null)
         : Deferred<Cursor?> = lifecycleScope.async(Dispatchers.IO) {
+        val projection = arrayOf(
+            MediaStore.Audio.Media._ID,
+            MediaStore.Audio.Media.TRACK,
+            MediaStore.Audio.Media.TITLE,
+            MediaStore.Audio.Media.ARTIST,
+            MediaStore.Audio.Media.ALBUM,
+            MediaStore.Audio.Media.ALBUM_ID,
+            MediaStore.Audio.Media.YEAR
+        )
         val sortOrder = MediaStore.Audio.Media.TITLE + " ASC"
         return@async application.contentResolver.query(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
@@ -1172,8 +1155,8 @@ class MainActivity : AppCompatActivity() {
      * Such songs should be removed from the music library.
      */
     private fun checkLibrarySongsExistAsync(): Deferred<List<Song>?> = lifecycleScope.async(Dispatchers.IO) {
-        val projection = arrayOf(MediaStore.Audio.Media._ID)
-        val libraryCursor = getMediaStoreCursorAsync(projection).await()
+        // todo: can we just use the same cursor as the library maintenance method
+        val libraryCursor = getMediaStoreCursorAsync().await()
         libraryCursor?.use { cursor ->
             val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
             val songsToBeDeleted = completeLibrary.toMutableList()
