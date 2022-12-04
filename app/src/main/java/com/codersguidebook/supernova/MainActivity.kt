@@ -1019,6 +1019,7 @@ class MainActivity : AppCompatActivity() {
 
             for (song in songsToBeDeleted) deleteSong(song)
         }
+        refreshSongOfTheDay()
     }
 
     /**
