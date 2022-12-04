@@ -162,8 +162,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         it.toLong())
                 }
                 if (currentQueueItemUri == null) {
-                    Toast.makeText(application,
-                        "The URI for the currently loaded song could not be found.",
+                    Toast.makeText(application, getString(R.string.error_media_service_default),
                         Toast.LENGTH_LONG).show()
                     return
                 }
