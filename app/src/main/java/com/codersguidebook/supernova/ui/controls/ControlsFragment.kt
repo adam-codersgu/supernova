@@ -132,8 +132,8 @@ class ControlsFragment : Fragment() {
         binding.album.text = metadata?.getString(MediaMetadataCompat.METADATA_KEY_ALBUM)
 
         if (metadata != null) {
-            callingActivity.insertArtwork(metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI),
-                binding.artwork)
+            callingActivity.runGlideByBitmap(
+                metadata.getBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART), binding.artwork)
         } else {
             Glide.with(callingActivity)
                 .clear(binding.artwork)

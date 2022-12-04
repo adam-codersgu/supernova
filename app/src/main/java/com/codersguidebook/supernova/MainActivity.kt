@@ -329,8 +329,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-
-            // TODO: I want to test that songs added or removed while the app is closed are still added to the music library correctly
         } catch (_: NumberFormatException) { refreshMusicLibrary() }
     }
 
@@ -955,27 +953,42 @@ class MainActivity : AppCompatActivity() {
         notificationManager.createNotificationChannel(channel)
     }
 
+    /**
+     * Create a File object for the image file associated with a given album ID
+     * and load the artwork into a user interface View.
+     *
+     * @param albumID - The ID of the album that artwork should be loaded for.
+     * @param view - The user interface View that the artwork should be displayed in.
+     */
     fun insertArtwork(albumID: String?, view: ImageView) {
         var file: File? = null
         if (albumID != null) {
-            val cw = ContextWrapper(this)
-            val directory = cw.getDir("albumArt", Context.MODE_PRIVATE)
+            val contextWrapper = ContextWrapper(this)
+            val directory = contextWrapper.getDir("albumArt", Context.MODE_PRIVATE)
             file = File(directory, "$albumID.jpg")
         }
-        runGlide(file, view)
+        runGlideByFile(file, view)
     }
 
+    /**
+     * Create a File object for the image file associated with a given playlist
+     * and load the artwork into a user interface View.
+     *
+     * @param playlist - The Playlist object that artwork should be loaded for.
+     * @param view - The user interface View that the artwork should be displayed in.
+     * @return A Boolean indicating whether artwork was successfully found and loaded.
+     */
     fun insertPlaylistArtwork(playlist: Playlist, view: ImageView) : Boolean {
-        val cw = ContextWrapper(this)
-        val directory = cw.getDir("playlistArt", Context.MODE_PRIVATE)
+        val contextWrapper = ContextWrapper(this)
+        val directory = contextWrapper.getDir("playlistArt", Context.MODE_PRIVATE)
         val file = File(directory, playlist.playlistId.toString() + ".jpg")
         return if (file.exists()) {
-            runGlide(file, view)
+            runGlideByFile(file, view)
             true
         } else false
     }
 
-    private fun runGlide(file: File?, view: ImageView) {
+    private fun runGlideByFile(file: File?, view: ImageView) {
         Glide.with(this)
             .load(file ?: R.drawable.no_album_artwork)
             .transition(DrawableTransitionOptions.withCrossFade())
@@ -986,9 +999,20 @@ class MainActivity : AppCompatActivity() {
             .into(view)
     }
 
+    fun runGlideByBitmap(bitmap: Bitmap?, view: ImageView) {
+        Glide.with(this)
+            .load(bitmap ?: R.drawable.no_album_artwork)
+            .transition(DrawableTransitionOptions.withCrossFade())
+            .centerCrop()
+            .signature(ObjectKey(bitmap?.generationId ?: R.drawable.no_album_artwork))
+            .override(600, 600)
+            .error(R.drawable.no_album_artwork)
+            .into(view)
+    }
+
     fun changeArtwork(dirName: String, newArtwork: Bitmap, filename: String) {
-        val cw = ContextWrapper(application)
-        val directory = cw.getDir(dirName, Context.MODE_PRIVATE)
+        val contextWrapper = ContextWrapper(application)
+        val directory = contextWrapper.getDir(dirName, Context.MODE_PRIVATE)
         val path = File(directory, "$filename.jpg")
         saveImage(newArtwork, path)
     }
