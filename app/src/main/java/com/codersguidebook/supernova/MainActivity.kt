@@ -329,8 +329,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-
-            // TODO: I want to test that songs added or removed while the app is closed are still added to the music library correctly
         } catch (_: NumberFormatException) { refreshMusicLibrary() }
     }
 
@@ -955,19 +953,26 @@ class MainActivity : AppCompatActivity() {
         notificationManager.createNotificationChannel(channel)
     }
 
+    /**
+     * Create a File object for the image file associated with a given album ID
+     * and load the artwork into a user interface View.
+     *
+     * @param albumID - The ID of the album that artwork should be loaded for.
+     * @param view - The user interface View that the artwork should be displayed in.
+     */
     fun insertArtwork(albumID: String?, view: ImageView) {
         var file: File? = null
         if (albumID != null) {
-            val cw = ContextWrapper(this)
-            val directory = cw.getDir("albumArt", Context.MODE_PRIVATE)
+            val contextWrapper = ContextWrapper(this)
+            val directory = contextWrapper.getDir("albumArt", Context.MODE_PRIVATE)
             file = File(directory, "$albumID.jpg")
         }
         runGlide(file, view)
     }
 
     fun insertPlaylistArtwork(playlist: Playlist, view: ImageView) : Boolean {
-        val cw = ContextWrapper(this)
-        val directory = cw.getDir("playlistArt", Context.MODE_PRIVATE)
+        val contextWrapper = ContextWrapper(this)
+        val directory = contextWrapper.getDir("playlistArt", Context.MODE_PRIVATE)
         val file = File(directory, playlist.playlistId.toString() + ".jpg")
         return if (file.exists()) {
             runGlide(file, view)

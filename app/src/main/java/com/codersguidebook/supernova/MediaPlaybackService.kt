@@ -638,62 +638,31 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             putString(MediaMetadataCompat.METADATA_KEY_ALBUM, albumName)
             val albumId = extras?.getString("album_id")
             putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, albumId)
-            putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, getArtworkAsBitmap(albumId))
+            putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, getArtworkByAlbumId(albumId))
         }
         mediaSessionCompat.setMetadata(metadataBuilder.build())
     }
 
     /**
-     * Retrieve the album artwork for a given album ID. If no artwork is found,
-     * then a default artwork image is returned instead.
+     * Retrieve the album artwork stored by the app for a given album ID.
+     * If no artwork is found then a default artwork image is returned instead.
      *
      * @param albumId - The ID of the album that artwork should be retrieved for.
      * @return A Bitmap representation of the album artwork.
      */
-    private fun getArtworkAsBitmap(albumId: String?) : Bitmap {
+    private fun getArtworkByAlbumId(albumId: String?): Bitmap {
         albumId?.let {
             try {
-                return BitmapFactory.Options().run {
-                    inJustDecodeBounds = true
-                    val contextWrapper = ContextWrapper(applicationContext)
-                    val imageDirectory = contextWrapper.getDir("albumArt", Context.MODE_PRIVATE)
-                    val imageFile = File(imageDirectory, "$it.jpg")
-                    BitmapFactory.decodeStream(FileInputStream(imageFile))
-
-                    inSampleSize = calculateInSampleSize(this)
-                    inJustDecodeBounds = false
-                    BitmapFactory.decodeStream(FileInputStream(imageFile))
+                val contextWrapper = ContextWrapper(applicationContext)
+                val imageDirectory = contextWrapper.getDir("albumArt", Context.MODE_PRIVATE)
+                val imageFile = File(imageDirectory, "$albumId.jpg")
+                if (imageFile.exists()) {
+                    return BitmapFactory.decodeStream(FileInputStream(imageFile))
                 }
             } catch (_: Exception) { }
         }
         // If an error has occurred or the album ID is null, then return a default artwork image
         return BitmapFactory.decodeResource(applicationContext.resources, R.drawable.no_album_artwork)
-    }
-
-    /**
-     * Calculate an inSampleSize value that can be used to scale the
-     * dimensions of a Bitmap image. Useful for compressing large images.
-     *
-     * @param options - The BitmapFactory.Options instance the should be used to
-     * calculate the inSampleSize value for.
-     * @return An integer inSampleSize value.
-     */
-    private fun calculateInSampleSize(options: BitmapFactory.Options): Int {
-        val reqWidth = 100; val reqHeight = 100
-        val (height: Int, width: Int) = options.run { outHeight to outWidth }
-        var inSampleSize = 1
-
-        if (height > reqHeight || width > reqWidth) {
-            val halfHeight = height / 2; val halfWidth = width / 2
-
-            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
-            // height and width larger than the requested height and width.
-            while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
-                inSampleSize *= 2
-            }
-        }
-
-        return inSampleSize
     }
 
     // Not important for general audio service, required for class
