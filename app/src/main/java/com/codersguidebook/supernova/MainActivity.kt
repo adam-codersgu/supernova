@@ -290,21 +290,42 @@ class MainActivity : AppCompatActivity() {
      *
      * @param uri - The content URI associated with the change.
      */
-    fun handleChangeToContentUri(uri: Uri) {
+    fun handleChangeToContentUri(uri: Uri) = lifecycleScope.launch {
         Log.e("DEBUGGING", "MainActivity notified of Uri: $uri")
-        val idString = uri.toString().removePrefix(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString())
+
+        val songIdString = uri.toString().removePrefix(
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + "/")
+
         try {
-            val songId = idString.toLong()
-            Log.e("DEBUGGING", "Id as long is: $songId")
+            // TODO: For metadata updates
+            val projection = arrayOf(MediaStore.Audio.Media.DATA)
+            val selection = MediaStore.Audio.Media._ID + "=?"
+            val selectionArgs = arrayOf(songIdString)
+            val cursor = getMediaStoreCursorAsync(projection, selection, selectionArgs).await()
+
+            when {
+                cursor == null -> return@launch
+                cursor.count == 0 -> deleteSongById(songIdString.toLong())
+                else -> {
+                    val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+
+                    while (cursor.moveToNext()) {
+                        val filePath = cursor.getString(dataColumn)
+
+                        if (File(filePath).exists()) Log.e("DEBUGGING", "File found successfully for $uri")
+                        else Log.e("DEBUGGING", "The file could not be found for $uri")
+                    }
+                }
+            }
 
             // TODO: Need to respond to Uri change. Three scenarios to handle
-            //      1 -> Deletion of media -> ID exists in library but file does not exist
             //      2 -> Insertion of media -> ID does not exist in library
             //      3 -> Change to media e.g. file name/properties -> If ID exists in library and file exists
             //          Then update metadata
             //      Once the above has been implemented, need to streamline the updates to the music library.
             //          - Complete refresh should only happen on launch
             //          - Should have convenience methods for handling more specific changes
+            //          - Coroutines may be necessary for the convenience methods
         } catch (_: NumberFormatException) {
             // todo: implement
         }
@@ -973,6 +994,10 @@ class MainActivity : AppCompatActivity() {
     private fun libraryMaintenance(checkForDeletedSongs: Boolean) = lifecycleScope.launch(
         Dispatchers.Main
     ) {
+        val mediaStoreVersion = MediaStore.getVersion(this@MainActivity)
+        // TODO: Need to investigate what events cause this number to change and what the causes are
+        //      Also, if the library is empty then you want to perform a scan anyway
+        Log.e("DEBUGGING", "The media store version is $mediaStoreVersion")
         val libraryBuilt = libraryRefreshAsync().await()
         if (libraryBuilt && completeLibrary.isNotEmpty()) {
             if (checkForDeletedSongs) {
@@ -994,9 +1019,8 @@ class MainActivity : AppCompatActivity() {
             MediaStore.Audio.Media.ALBUM_ID,
             MediaStore.Audio.Media.YEAR
         )
-        val libraryCursor = musicQueryAsync(projection).await()
+        val libraryCursor = getMediaStoreCursorAsync(projection).await()
         libraryCursor?.use { cursor ->
-            // Cache column indices.
             val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
             val trackColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
             val titleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
@@ -1081,14 +1105,28 @@ class MainActivity : AppCompatActivity() {
         return@async true
     }
 
-    private fun musicQueryAsync(projection: Array<String>): Deferred<Cursor?> = lifecycleScope.async(Dispatchers.IO) {
-        val selection = MediaStore.Audio.Media.IS_MUSIC
+    /**
+     * Obtain a Cursor featuring all music entries in the media store that fulfil given
+     * projection and selection criteria.
+     *
+     * @param projection - The media store columns that should be included in the Cursor.
+     * @param selection - The WHERE clause for the media store query.
+     * Default = standard WHERE clause that selects only music entries.
+     * @param selectionArgs - An array of String selection arguments that filter the results
+     * that are returned in the Cursor.
+     * Default = null (no selection arguments).
+     * @return A Cursor object detailing all the relevant media store entries.
+     */
+    private fun getMediaStoreCursorAsync(projection: Array<String>,
+                                         selection: String = MediaStore.Audio.Media.IS_MUSIC,
+                                         selectionArgs: Array<String>? = null)
+        : Deferred<Cursor?> = lifecycleScope.async(Dispatchers.IO) {
         val sortOrder = MediaStore.Audio.Media.TITLE + " ASC"
         return@async application.contentResolver.query(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
             projection,
             selection,
-            null,
+            selectionArgs,
             sortOrder
         )
     }
@@ -1135,7 +1173,7 @@ class MainActivity : AppCompatActivity() {
      */
     private fun checkLibrarySongsExistAsync(): Deferred<List<Song>?> = lifecycleScope.async(Dispatchers.IO) {
         val projection = arrayOf(MediaStore.Audio.Media._ID)
-        val libraryCursor = musicQueryAsync(projection).await()
+        val libraryCursor = getMediaStoreCursorAsync(projection).await()
         libraryCursor?.use { cursor ->
             val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
             val songsToBeDeleted = completeLibrary.toMutableList()
@@ -1152,12 +1190,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
+     * Delete a given song from the music library based on its ID.
+     *
+     * @param songId - The ID of the song to delete.
+     */
+    private suspend fun deleteSongById(songId: Long) = lifecycleScope.launch(Dispatchers.Default) {
+        val song = completeLibrary.find { it.songId == songId }
+        song?.let { deleteSongs(listOf(song)) }
+    }
+
+    /**
      * Cleanup operations for when songs are to be deleted from the user's music library. The deleted songs must be
      * removed from the play queue and any playlists they feature in. The saved artwork for those songs can also be
      * deleted if no longer required. The Song objects should also be deleted from the application database.
      *
      * @param songs - The list of Song objects to be deleted.
-     * @return
      */
     private suspend fun deleteSongs(songs: List<Song>) = lifecycleScope.launch(Dispatchers.Default) {
         for (song in songs) {
