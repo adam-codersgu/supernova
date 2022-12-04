@@ -264,6 +264,7 @@ class MainActivity : AppCompatActivity() {
 
         musicLibraryViewModel.allSongs.observe(this) {
             completeLibrary = it.toMutableList()
+            refreshSongOfTheDay()
         }
 
         musicLibraryViewModel.allPlaylists.observe(this) {
@@ -1006,20 +1007,14 @@ class MainActivity : AppCompatActivity() {
                 else {
                     val song = createSongFromCursor(cursor)
                     songsToAddToMusicLibrary.add(song)
-                    if (songsToAddToMusicLibrary.size > 9) {
-                        musicLibraryViewModel.insertSongs(songsToAddToMusicLibrary)
-                        songsToAddToMusicLibrary.clear()
-                    }
                 }
             }
 
-            if (songsToAddToMusicLibrary.isNotEmpty()) {
-                musicLibraryViewModel.insertSongs(songsToAddToMusicLibrary)
-            }
+            val chunksToAddToMusicLibrary = songsToAddToMusicLibrary.chunked(25)
+            for (chunk in chunksToAddToMusicLibrary) musicLibraryViewModel.insertSongs(chunk)
 
             for (song in songsToBeDeleted) deleteSong(song)
         }
-        refreshSongOfTheDay()
     }
 
     /**
