@@ -21,7 +21,6 @@ import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.media.session.PlaybackStateCompat.*
-import android.util.Log
 import android.util.Size
 import android.view.Menu
 import android.view.View
@@ -281,6 +280,19 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        if (MusicPermissionHelper.hasReadPermission(this)) refreshMusicLibrary()
+        else MusicPermissionHelper.requestPermissions(this)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        refreshSongOfTheDay()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        volumeControlStream = AudioManager.STREAM_MUSIC
     }
 
     /**
@@ -291,8 +303,6 @@ class MainActivity : AppCompatActivity() {
      * @param uri - The content URI associated with the change.
      */
     fun handleChangeToContentUri(uri: Uri) = lifecycleScope.launch {
-        Log.e("DEBUGGING", "MainActivity notified of Uri: $uri")
-
         val songIdString = uri.toString().removePrefix(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + "/")
 
@@ -303,26 +313,24 @@ class MainActivity : AppCompatActivity() {
             val selectionArgs = arrayOf(songIdString)
             val cursor = getMediaStoreCursorAsync(selection, selectionArgs).await()
 
+            val existingSong = getSongById(songId)
             when {
-                cursor == null -> return@launch
-                cursor.count == 0 -> deleteSongById(songId)
-                getSongById(songId) == null -> {
-                    cursor.moveToNext()
-                    val song = createSongFromCursor(cursor)
-                    Log.e("DEBUGGING", "Inserting a song called " + song.title + " to the music library")
-                    musicLibraryViewModel.insertSongs(listOf(song))
+                existingSong == null && cursor?.count!! > 0 -> {
+                    cursor.apply {
+                        this.moveToNext()
+                        val createdSong = createSongFromCursor(this)
+                        musicLibraryViewModel.insertSongs(listOf(createdSong))
+                    }
+                }
+                cursor?.count == 0 -> {
+                    existingSong?.let {
+                        deleteSong(existingSong)
+                    }
                 }
             }
 
-            // TODO: Need to respond to Uri change. Three scenarios to handle
-            //      Once the above has been implemented, need to streamline the updates to the music library.
-            //          - Complete refresh should only happen on launch
-            //          - Should have convenience methods for handling more specific changes
-            //          - Coroutines may be necessary for the convenience methods
-            //      I want to test that songs added while the app is closed are still added to the music library correctly
-        } catch (_: NumberFormatException) {
-            // todo: implement
-        }
+            // TODO: I want to test that songs added or removed while the app is closed are still added to the music library correctly
+        } catch (_: NumberFormatException) { refreshMusicLibrary() }
     }
 
     /** Fetch and save an up-to-date version of the play queue from the media controller. */
@@ -714,7 +722,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun refreshSongOfTheDay(forceUpdate: Boolean) {
+    /**
+     * Refresh the song of the day.
+     *
+     * @param forceUpdate - Whether the song of the day should be refreshed even if it has already
+     * been updated for the current day (i.e. the refresh is user-initiated).
+     * Default = false.
+     */
+    fun refreshSongOfTheDay(forceUpdate: Boolean = false) {
         if (completeLibrary.isEmpty()) return
         val playlist = findPlaylist(getString(R.string.song_day)) ?: Playlist(
             0,
@@ -977,47 +992,33 @@ class MainActivity : AppCompatActivity() {
         saveImage(newArtwork, path)
     }
 
-    /**
-     * Initiate music library maintenance tasks such as adding new songs, removing deleted
-     * songs, and refreshing the song of the day.
-     *
-     * @param checkForDeletedSongs - A Boolean value indicating whether the method should
-     * check whether songs have been deleted from the user's device.
-     * @return
-     */
-    private fun libraryMaintenance(checkForDeletedSongs: Boolean) = lifecycleScope.launch(
-        Dispatchers.Main
-    ) {
-        val libraryBuilt = libraryRefreshAsync().await()
-        if (libraryBuilt && completeLibrary.isNotEmpty()) {
-            if (checkForDeletedSongs) {
-                val songsToDelete = checkLibrarySongsExistAsync().await()
-                if (!songsToDelete.isNullOrEmpty()) deleteSongs(songsToDelete)
-            }
-            refreshSongOfTheDay(false)
-        }
-    }
+    /** Refresh the music library. Add new songs and remove deleted songs. */
+    private fun refreshMusicLibrary() = lifecycleScope.launch(Dispatchers.Main) {
+        val cursor = getMediaStoreCursorAsync().await()
 
-    private fun libraryRefreshAsync(): Deferred<Boolean> = lifecycleScope.async(Dispatchers.IO) {
-        val songs = mutableListOf<Song>()
-        val libraryCursor = getMediaStoreCursorAsync().await()
-        libraryCursor?.use { cursor ->
+        val songsToAddToMusicLibrary = mutableListOf<Song>()
+        cursor?.use {
             val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-
+            val songsToBeDeleted = completeLibrary.toMutableList()
             while (cursor.moveToNext()) {
-                val songExists = getSongById(cursor.getLong(idColumn)) != null
-                if (!songExists) {
+                val existingSong = getSongById(cursor.getLong(idColumn))
+                if (existingSong != null) songsToBeDeleted.remove(existingSong)
+                else {
                     val song = createSongFromCursor(cursor)
-                    songs.add(song)
-                    if (songs.size > 9) {
-                        musicLibraryViewModel.insertSongs(songs)
-                        songs.clear()
+                    songsToAddToMusicLibrary.add(song)
+                    if (songsToAddToMusicLibrary.size > 9) {
+                        musicLibraryViewModel.insertSongs(songsToAddToMusicLibrary)
+                        songsToAddToMusicLibrary.clear()
                     }
                 }
             }
+
+            if (songsToAddToMusicLibrary.isNotEmpty()) {
+                musicLibraryViewModel.insertSongs(songsToAddToMusicLibrary)
+            }
+
+            for (song in songsToBeDeleted) deleteSong(song)
         }
-        if (songs.isNotEmpty()) musicLibraryViewModel.insertSongs(songs)
-        return@async true
     }
 
     /**
@@ -1129,105 +1130,63 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Check if the album artwork associated with songs that have been deleted from the music library
-     * is still required for other songs. If the artwork is no longer used elsewhere, then the image
-     * file can be deleted.
+     * Check if the album artwork associated with a song that has been removed from the music library
+     * is still required. If the artwork is no longer used elsewhere, then the image  can be deleted.
      *
-     * @param songs - A list of Song objects that have been deleted from the music library.
+     * @param song - The Song object that has been removed from the music library.
      */
-    private suspend fun deleteRedundantArtworkForDeletedSongs(songs: List<Song>) {
+    private suspend fun deleteRedundantArtworkBySong(song: Song) {
         val contextWrapper = ContextWrapper(application)
         val directory = contextWrapper.getDir("albumArt", Context.MODE_PRIVATE)
-        for (song in songs){
-            val songsWithAlbumId = musicDatabase!!.musicDao().getSongWithAlbumId(song.albumId)
-            if (songsWithAlbumId.isEmpty()){
-                val path = File(directory, song.albumId + ".jpg")
-                if (path.exists()) path.delete()
-            }
+        val songsWithAlbumId = musicDatabase!!.musicDao().getSongWithAlbumId(song.albumId)
+        if (songsWithAlbumId.isEmpty()){
+            val path = File(directory, song.albumId + ".jpg")
+            if (path.exists()) path.delete()
         }
     }
 
     /**
-     * Check if the audio file for each song in the user's music library still exists on the device.
-     * Any songs that no longer exist should be deleted.
+     * Delete a given song from the music library.
      *
-     * @return - A deferred list of Song objects for which the corresponding audio file could not be found.
-     * Such songs should be removed from the music library.
+     * @param song - The Song object to be deleted.
      */
-    private fun checkLibrarySongsExistAsync(): Deferred<List<Song>?> = lifecycleScope.async(Dispatchers.IO) {
-        // todo: can we just use the same cursor as the library maintenance method
-        val libraryCursor = getMediaStoreCursorAsync().await()
-        libraryCursor?.use { cursor ->
-            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-            val songsToBeDeleted = completeLibrary.toMutableList()
+    private suspend fun deleteSong(song: Song) = lifecycleScope.launch(Dispatchers.Default) {
+        if (allPlaylists.isNotEmpty()) {
+            val updatedPlaylists = mutableListOf<Playlist>()
+            for (playlist in allPlaylists) {
+                if (playlist.songs != null) {
+                    val newSongIDList = extractPlaylistSongIds(playlist.songs)
 
-            while (cursor.moveToNext()) {
-                val id = cursor.getLong(idColumn)
-                val indexOfSong = songsToBeDeleted.indexOfFirst { song: Song ->
-                    song.songId == id
-                }
-                if (indexOfSong != -1) songsToBeDeleted.removeAt(indexOfSong)
-            }
-            return@async songsToBeDeleted
-        }
-    }
-
-    /**
-     * Delete a given song from the music library based on its ID.
-     *
-     * @param songId - The ID of the song to delete.
-     */
-    private suspend fun deleteSongById(songId: Long) = lifecycleScope.launch(Dispatchers.Default) {
-        val song = completeLibrary.find { it.songId == songId }
-        song?.let { deleteSongs(listOf(song)) }
-    }
-
-    /**
-     * Cleanup operations for when songs are to be deleted from the user's music library. The deleted songs must be
-     * removed from the play queue and any playlists they feature in. The saved artwork for those songs can also be
-     * deleted if no longer required. The Song objects should also be deleted from the application database.
-     *
-     * @param songs - The list of Song objects to be deleted.
-     */
-    private suspend fun deleteSongs(songs: List<Song>) = lifecycleScope.launch(Dispatchers.Default) {
-        for (song in songs) {
-            if (allPlaylists.isNotEmpty()) {
-                val updatedPlaylists = mutableListOf<Playlist>()
-                for (playlist in allPlaylists) {
-                    if (playlist.songs != null) {
-                        val newSongIDList = extractPlaylistSongIds(playlist.songs)
-
-                        var playlistModified = false
-                        fun findIndex(): Int {
-                            return newSongIDList.indexOfFirst {
-                                it == song.songId
-                            }
-                        }
-
-                        // Remove all instances of the song from the playlist
-                        do {
-                            val index = findIndex()
-                            if (index != -1) {
-                                newSongIDList.removeAt(index)
-                                playlistModified = true
-                            }
-                        } while (index != -1)
-
-                        if (playlistModified) {
-                            playlist.songs = convertSongIdListToJson(newSongIDList)
-                            updatedPlaylists.add(playlist)
+                    var playlistModified = false
+                    fun findIndex(): Int {
+                        return newSongIDList.indexOfFirst {
+                            it == song.songId
                         }
                     }
+
+                    // Remove all instances of the song from the playlist
+                    do {
+                        val index = findIndex()
+                        if (index != -1) {
+                            newSongIDList.removeAt(index)
+                            playlistModified = true
+                        }
+                    } while (index != -1)
+
+                    if (playlistModified) {
+                        playlist.songs = convertSongIdListToJson(newSongIDList)
+                        updatedPlaylists.add(playlist)
+                    }
                 }
-                if (updatedPlaylists.isNotEmpty()) musicLibraryViewModel.updatePlaylists(updatedPlaylists)
             }
-
-            val queueItemsToRemove = playQueue.filter { it.description.mediaId == song.songId.toString() }
-            for (item in queueItemsToRemove) removeQueueItemById(item.queueId)
-
-            musicLibraryViewModel.deleteSong(song)
+            if (updatedPlaylists.isNotEmpty()) musicLibraryViewModel.updatePlaylists(updatedPlaylists)
         }
-        deleteRedundantArtworkForDeletedSongs(songs)
+
+        val queueItemsToRemove = playQueue.filter { it.description.mediaId == song.songId.toString() }
+        for (item in queueItemsToRemove) removeQueueItemById(item.queueId)
+
+        musicLibraryViewModel.deleteSong(song)
+        deleteRedundantArtworkBySong(song)
     }
 
     /**
@@ -1290,15 +1249,7 @@ class MainActivity : AppCompatActivity() {
                 MusicPermissionHelper.launchPermissionSettings(this)
             }
             finish()
-        } else libraryMaintenance(false)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        volumeControlStream = AudioManager.STREAM_MUSIC
-
-        if (MusicPermissionHelper.hasReadPermission(this)) libraryMaintenance(true)
-        else MusicPermissionHelper.requestPermissions(this)
+        } else refreshMusicLibrary()
     }
 
     /** Restore the play queue and playback state from the last save. */
