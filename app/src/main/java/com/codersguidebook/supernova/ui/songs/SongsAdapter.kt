@@ -18,7 +18,7 @@ class SongsAdapter(private val activity: MainActivity):
     var songs = mutableListOf<Song>()
 
     override fun getSectionName(position: Int): String {
-        return songs[position].title[0].toUpperCase().toString()
+        return songs[position].title[0].uppercase()
     }
 
     inner class SongsViewHolder(itemView: View) :

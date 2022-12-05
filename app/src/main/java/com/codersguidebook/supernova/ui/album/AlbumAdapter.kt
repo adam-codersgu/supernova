@@ -17,7 +17,7 @@ import com.codersguidebook.supernova.entities.Song
 
 class AlbumAdapter(private val mainActivity: MainActivity):
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-    var songs = mutableListOf<Song>()
+    val songs = mutableListOf<Song>()
     var displayDiscNumbers = false
 
     companion object {

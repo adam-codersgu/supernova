@@ -4,29 +4,22 @@ import android.os.Bundle
 import android.view.*
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.fragments.RecyclerViewWithFabFragment
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 
-class AlbumFragment : Fragment() {
+class AlbumFragment : RecyclerViewWithFabFragment() {
 
     private var albumId: String? = null
-    private var _binding: FragmentWithFabBinding? = null
-    private val binding get() = _binding!!
-    private var isUpdating = false
-    private var unhandledRequestReceived = false
     private lateinit var albumAdapter: AlbumAdapter
-    private lateinit var callingActivity: MainActivity
     private lateinit var musicDatabase: MusicDatabase
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
@@ -35,17 +28,14 @@ class AlbumFragment : Fragment() {
             val safeArgs = AlbumFragmentArgs.fromBundle(it)
             albumId = safeArgs.albumID
         }
-        _binding = FragmentWithFabBinding.inflate(inflater, container, false)
-        callingActivity = activity as MainActivity
-
-        return binding.root
+        return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         val layoutManager = LinearLayoutManager(activity)
-        albumAdapter = AlbumAdapter(callingActivity)
+        albumAdapter = AlbumAdapter(mainActivity)
         binding.recyclerView.layoutManager = layoutManager
         binding.recyclerView.itemAnimator = DefaultItemAnimator()
         binding.recyclerView.adapter = albumAdapter
@@ -59,49 +49,8 @@ class AlbumFragment : Fragment() {
         })
 
         albumId?.let { albumId ->
-            musicDatabase = MusicDatabase.getDatabase(callingActivity, lifecycleScope)
+            musicDatabase = MusicDatabase.getDatabase(mainActivity, lifecycleScope)
             musicDatabase.musicDao().findAlbumSongs(albumId).observe(viewLifecycleOwner) {
-                processNewSongs(it)
-            }
-        }
-    }
-
-    private fun processNewSongs(songs: List<Song>) {
-        if (isUpdating) {
-            unhandledRequestReceived = true
-            return
-        }
-        isUpdating = true
-        setupMenu(songs)
-
-        binding.fab.setOnClickListener {
-            callingActivity.playNewPlayQueue(songs)
-        }
-
-        val discNumbers = songs.distinctBy {
-            it.track.toString().substring(0, 1).toInt()
-        }.map { it.track.toString().substring(0, 1).toInt() }
-
-        if (albumAdapter.songs.isEmpty()) {
-            albumAdapter.displayDiscNumbers = discNumbers.size > 1
-            albumAdapter.songs = songs.toMutableList()
-            albumAdapter.notifyItemRangeInserted(0, songs.size)
-        } else {
-            for ((index, song) in songs.withIndex()) {
-                processLoopIteration(index, song)
-            }
-
-            if (albumAdapter.songs.size > songs.size) {
-                val numberItemsToRemove = albumAdapter.songs.size - songs.size
-                repeat(numberItemsToRemove) { albumAdapter.songs.removeLast() }
-                albumAdapter.notifyItemRangeRemoved(songs.size, numberItemsToRemove)
-            }
-        }
-
-        isUpdating = false
-        if (unhandledRequestReceived) {
-            unhandledRequestReceived = false
-            musicDatabase.musicDao().findAlbumSongs(albumId ?: return).value?.let {
                 processNewSongs(it)
             }
         }
@@ -162,10 +111,10 @@ class AlbumFragment : Fragment() {
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
                 when (menuItem.itemId) {
                     R.id.album_play_next -> {
-                        callingActivity.addSongsToPlayQueue(albumSongs, true)
+                        mainActivity.addSongsToPlayQueue(albumSongs, true)
                     }
-                    R.id.album_add_queue -> callingActivity.addSongsToPlayQueue(albumSongs)
-                    R.id.album_add_playlist -> callingActivity.openAddToPlaylistDialog(albumSongs)
+                    R.id.album_add_queue -> mainActivity.addSongsToPlayQueue(albumSongs)
+                    R.id.album_add_playlist -> mainActivity.openAddToPlaylistDialog(albumSongs)
                     R.id.album_view_artist -> {
                         val action = ArtistsFragmentDirections.actionSelectArtist(albumSongs[0].artist)
                         findNavController().navigate(action)
@@ -179,10 +128,5 @@ class AlbumFragment : Fragment() {
                 return true
             }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 }
