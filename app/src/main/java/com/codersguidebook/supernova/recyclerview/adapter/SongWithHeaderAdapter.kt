@@ -11,9 +11,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.SongOptions
-import com.codersguidebook.supernova.entities.Song
 
-abstract class SongWithHeaderAdapter(private val activity: MainActivity): SongAdapter(activity) {
+abstract class SongWithHeaderAdapter(private val activity: MainActivity): SongAdapter() {
 
     companion object {
         const val HEADER = 1
@@ -71,31 +70,5 @@ abstract class SongWithHeaderAdapter(private val activity: MainActivity): SongAd
 
     override fun getItemCount() = songs.size + 1
 
-    override fun processLoopIteration(index: Int, song: Song) {
-        when {
-            index >= songs.size -> {
-                songs.add(song)
-                notifyItemInserted(index + 1)
-            }
-            song.songId != songs[index].songId -> {
-                var numberOfItemsRemoved = 0
-                do {
-                    songs.removeAt(index)
-                    ++numberOfItemsRemoved
-                } while (index < songs.size &&
-                    song.songId != songs[index].songId)
-
-                when {
-                    numberOfItemsRemoved == 1 -> notifyItemRemoved(index + 1)
-                    numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index + 1, numberOfItemsRemoved)
-                }
-
-                processLoopIteration(index, song)
-            }
-            song != songs[index] -> {
-                songs[index] = song
-                notifyItemChanged(index + 1)
-            }
-        }
-    }
+    override fun getRecyclerViewIndex(index: Int): Int = index + 1
 }
