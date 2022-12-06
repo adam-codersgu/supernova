@@ -1,7 +1,6 @@
-package com.codersguidebook.supernova.fragments
+package com.codersguidebook.supernova.recyclerview
 
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.entities.Song
 
@@ -9,9 +8,13 @@ abstract class RecyclerViewFragment: Fragment() {
 
     var isUpdating = false
     var unhandledRequestReceived = false
-    lateinit var adapter: RecyclerView.Adapter<RecyclerView.ViewHolder>
     lateinit var mainActivity: MainActivity
 
+    /**
+     * Refresh the content displayed in the RecyclerView.
+     *
+     * @param songs - The up-to-date list of Song objects that should be displayed.
+     */
     open fun updateRecyclerView(songs: List<Song>) {
         if (isUpdating) {
             unhandledRequestReceived = true

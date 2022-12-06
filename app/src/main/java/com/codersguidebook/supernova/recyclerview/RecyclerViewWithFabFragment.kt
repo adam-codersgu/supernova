@@ -1,9 +1,10 @@
-package com.codersguidebook.supernova.fragments
+package com.codersguidebook.supernova.recyclerview
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
 import com.codersguidebook.supernova.entities.Song
@@ -12,6 +13,7 @@ abstract class RecyclerViewWithFabFragment: RecyclerViewFragment() {
 
     var fragmentBinding: FragmentWithFabBinding? = null
     val binding get() = fragmentBinding!!
+    lateinit var adapter: SongAdapter
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
@@ -42,10 +44,10 @@ abstract class RecyclerViewWithFabFragment: RecyclerViewFragment() {
                 processLoopIteration(index, song)
             }
 
-            if (albumAdapter.songs.size > songs.size) {
-                val numberItemsToRemove = albumAdapter.songs.size - songs.size
-                repeat(numberItemsToRemove) { albumAdapter.songs.removeLast() }
-                albumAdapter.notifyItemRangeRemoved(songs.size, numberItemsToRemove)
+            if (adapter.songs.size > songs.size) {
+                val numberItemsToRemove = adapter.songs.size - songs.size
+                repeat(numberItemsToRemove) { adapter.songs.removeLast() }
+                adapter.notifyItemRangeRemoved(songs.size, numberItemsToRemove)
             }
         }
 
@@ -53,9 +55,6 @@ abstract class RecyclerViewWithFabFragment: RecyclerViewFragment() {
         if (unhandledRequestReceived) {
             unhandledRequestReceived = false
             requestNewData()
-            musicDatabase.musicDao().findAlbumSongs(albumId ?: return).value?.let {
-                processNewSongs(it)
-            }
         }
     }
 

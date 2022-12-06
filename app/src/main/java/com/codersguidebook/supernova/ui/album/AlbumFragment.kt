@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Song
-import com.codersguidebook.supernova.fragments.RecyclerViewWithFabFragment
+import com.codersguidebook.supernova.recyclerview.RecyclerViewWithFabFragment
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 
 class AlbumFragment : RecyclerViewWithFabFragment() {
@@ -51,7 +51,7 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
         albumId?.let { albumId ->
             musicDatabase = MusicDatabase.getDatabase(mainActivity, lifecycleScope)
             musicDatabase.musicDao().findAlbumSongs(albumId).observe(viewLifecycleOwner) {
-                processNewSongs(it)
+                updateRecyclerView(it)
             }
         }
     }
@@ -94,12 +94,12 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
         }
     }
 
-    private fun setupMenu(albumSongs: List<Song>) {
+    override fun setupMenu(songs: List<Song>) {
         (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
             override fun onPrepareMenu(menu: Menu) {
                 menu.setGroupVisible(R.id.menu_group_album_actions, true)
-                if (albumSongs.isNotEmpty()) {
-                    val distinctArtists = albumSongs.distinctBy {
+                if (songs.isNotEmpty()) {
+                    val distinctArtists = songs.distinctBy {
                         it.artist
                     }
                     if (distinctArtists.size != 1) menu.findItem(R.id.album_view_artist).isVisible = false
@@ -111,16 +111,16 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
                 when (menuItem.itemId) {
                     R.id.album_play_next -> {
-                        mainActivity.addSongsToPlayQueue(albumSongs, true)
+                        mainActivity.addSongsToPlayQueue(songs, true)
                     }
-                    R.id.album_add_queue -> mainActivity.addSongsToPlayQueue(albumSongs)
-                    R.id.album_add_playlist -> mainActivity.openAddToPlaylistDialog(albumSongs)
+                    R.id.album_add_queue -> mainActivity.addSongsToPlayQueue(songs)
+                    R.id.album_add_playlist -> mainActivity.openAddToPlaylistDialog(songs)
                     R.id.album_view_artist -> {
-                        val action = ArtistsFragmentDirections.actionSelectArtist(albumSongs[0].artist)
+                        val action = ArtistsFragmentDirections.actionSelectArtist(songs[0].artist)
                         findNavController().navigate(action)
                     }
                     R.id.album_edit_album_info -> {
-                        val action = AlbumFragmentDirections.actionEditAlbum(albumSongs[0].albumId)
+                        val action = AlbumFragmentDirections.actionEditAlbum(songs[0].albumId)
                         findNavController().navigate(action)
                     }
                     else -> return false
@@ -128,5 +128,11 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
                 return true
             }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+    }
+
+    override fun requestNewData() {
+        musicDatabase.musicDao().findAlbumSongs(albumId ?: return).value?.let {
+            updateRecyclerView(it)
+        }
     }
 }
