@@ -7,12 +7,11 @@ import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.DefaultItemAnimator
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.recyclerview.RecyclerViewWithFabFragment
+import com.codersguidebook.supernova.recyclerview.adapter.AlbumAdapter
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 
 class AlbumFragment : RecyclerViewWithFabFragment() {
@@ -36,44 +35,6 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
             musicDatabase = MusicDatabase.getDatabase(mainActivity, lifecycleScope)
             musicDatabase.musicDao().findAlbumSongs(albumId).observe(viewLifecycleOwner) {
                 updateRecyclerView(it)
-            }
-        }
-    }
-
-    /**
-     * Handle updates to the content of the RecyclerView. The below method will determine what
-     * changes are required when an element/elements is/are changed, inserted, or deleted.
-     *
-     * @param index - The index of the current iteration through the up-to-date content list.
-     * @param song - The Song object that should be displayed at the index.
-     */
-    private fun processLoopIteration(index: Int, song: Song) {
-        when {
-            index >= albumAdapter.songs.size -> {
-                albumAdapter.songs.add(song)
-                albumAdapter.notifyItemInserted(index + 1)
-            }
-            song.songId != albumAdapter.songs[index].songId -> {
-                var numberOfItemsRemoved = 0
-                do {
-                    albumAdapter.songs.removeAt(index)
-                    ++numberOfItemsRemoved
-                } while (index < albumAdapter.songs.size &&
-                    song.songId != albumAdapter.songs[index].songId)
-
-                when {
-                    numberOfItemsRemoved == 1 -> albumAdapter.notifyItemRemoved(index + 1)
-                    numberOfItemsRemoved > 1 -> {
-                        albumAdapter.notifyItemRangeRemoved(index + 1,
-                            numberOfItemsRemoved)
-                    }
-                }
-
-                processLoopIteration(index, song)
-            }
-            song != albumAdapter.songs[index] -> {
-                albumAdapter.songs[index] = song
-                albumAdapter.notifyItemChanged(index + 1)
             }
         }
     }
@@ -116,6 +77,16 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
 
     override fun initialiseAdapter() {
         adapter = AlbumAdapter(mainActivity)
+    }
+
+    override fun updateRecyclerView(songs: List<Song>) {
+        val discNumbers = songs.distinctBy {
+            it.track.toString().substring(0, 1).toInt()
+        }.map { it.track.toString().substring(0, 1).toInt() }
+
+        (adapter as AlbumAdapter).displayDiscNumbers = discNumbers.size > 1
+
+        super.updateRecyclerView(songs)
     }
 
     override fun requestNewData() {

@@ -5,6 +5,7 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.recyclerview.adapter.SongAdapter
 
 abstract class RecyclerViewFragment: Fragment() {
 

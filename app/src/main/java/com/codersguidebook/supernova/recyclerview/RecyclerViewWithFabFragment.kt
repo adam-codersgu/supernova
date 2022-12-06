@@ -49,17 +49,12 @@ abstract class RecyclerViewWithFabFragment: RecyclerViewFragment() {
             mainActivity.playNewPlayQueue(songs, shuffle = true)
         }
 
-        val discNumbers = songs.distinctBy {
-            it.track.toString().substring(0, 1).toInt()
-        }.map { it.track.toString().substring(0, 1).toInt() }
-
         if (adapter.songs.isEmpty()) {
-            adapter.displayDiscNumbers = discNumbers.size > 1
             adapter.songs.addAll(songs)
             adapter.notifyItemRangeInserted(0, songs.size)
         } else {
             for ((index, song) in songs.withIndex()) {
-                processLoopIteration(index, song)
+                adapter.processLoopIteration(index, song)
             }
 
             if (adapter.songs.size > songs.size) {
