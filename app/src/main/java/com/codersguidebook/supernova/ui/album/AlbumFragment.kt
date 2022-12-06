@@ -9,7 +9,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Song
@@ -19,7 +18,6 @@ import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 class AlbumFragment : RecyclerViewWithFabFragment() {
 
     private var albumId: String? = null
-    private lateinit var albumAdapter: AlbumAdapter
     private lateinit var musicDatabase: MusicDatabase
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
@@ -33,20 +31,6 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        val layoutManager = LinearLayoutManager(activity)
-        albumAdapter = AlbumAdapter(mainActivity)
-        binding.recyclerView.layoutManager = layoutManager
-        binding.recyclerView.itemAnimator = DefaultItemAnimator()
-        binding.recyclerView.adapter = albumAdapter
-
-        binding.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-                if (dy > 0 && binding.fab.visibility == View.VISIBLE) binding.fab.hide()
-                else if (dy < 0 && binding.fab.visibility != View.VISIBLE) binding.fab.show()
-            }
-        })
 
         albumId?.let { albumId ->
             musicDatabase = MusicDatabase.getDatabase(mainActivity, lifecycleScope)
@@ -128,6 +112,10 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
                 return true
             }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+    }
+
+    override fun initialiseAdapter() {
+        adapter = AlbumAdapter(mainActivity)
     }
 
     override fun requestNewData() {

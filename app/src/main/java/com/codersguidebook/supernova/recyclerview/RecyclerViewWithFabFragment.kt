@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
@@ -13,13 +15,29 @@ abstract class RecyclerViewWithFabFragment: RecyclerViewFragment() {
 
     var fragmentBinding: FragmentWithFabBinding? = null
     val binding get() = fragmentBinding!!
-    lateinit var adapter: SongAdapter
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
         fragmentBinding = FragmentWithFabBinding.inflate(inflater, container, false)
         mainActivity = activity as MainActivity
         return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val layoutManager = LinearLayoutManager(activity)
+        binding.recyclerView.layoutManager = layoutManager
+        binding.recyclerView.itemAnimator = DefaultItemAnimator()
+        binding.recyclerView.adapter = adapter
+
+        binding.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                if (dy > 0 && binding.fab.visibility == View.VISIBLE) binding.fab.hide()
+                else if (dy < 0 && binding.fab.visibility != View.VISIBLE) binding.fab.show()
+            }
+        })
     }
 
     override fun updateRecyclerView(songs: List<Song>) {

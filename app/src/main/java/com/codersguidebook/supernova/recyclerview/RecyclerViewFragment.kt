@@ -1,5 +1,7 @@
 package com.codersguidebook.supernova.recyclerview
 
+import android.os.Bundle
+import android.view.View
 import androidx.fragment.app.Fragment
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.entities.Song
@@ -8,7 +10,14 @@ abstract class RecyclerViewFragment: Fragment() {
 
     var isUpdating = false
     var unhandledRequestReceived = false
+    lateinit var adapter: SongAdapter
     lateinit var mainActivity: MainActivity
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        initialiseAdapter()
+    }
 
     /**
      * Refresh the content displayed in the RecyclerView.
@@ -36,4 +45,7 @@ abstract class RecyclerViewFragment: Fragment() {
      * @param songs - A list of Song objects to be used for certain menu actions.
      */
     abstract fun setupMenu(songs: List<Song>)
+
+    /** Each fragment that uses a RecyclerView must initialise the adapter variable. */
+    abstract fun initialiseAdapter()
 }
