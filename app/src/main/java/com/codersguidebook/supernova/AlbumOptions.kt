@@ -7,23 +7,25 @@ import androidx.core.view.isGone
 import androidx.fragment.app.DialogFragment
 import androidx.navigation.findNavController
 import com.codersguidebook.supernova.databinding.OptionsLayoutBinding
-import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.ui.album.AlbumFragmentDirections
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 
-class AlbumOptions(private val songs: List<Song>) : DialogFragment() {
+class AlbumOptions(private val albumId: String) : DialogFragment() {
 
     private var _binding: OptionsLayoutBinding? = null
     private val binding get() = _binding!!
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-
         val callingActivity = activity as MainActivity
+
         val inflater = callingActivity.layoutInflater
         _binding = OptionsLayoutBinding.inflate(inflater)
 
         val builder = AlertDialog.Builder(callingActivity)
             .setView(binding.root)
+
+        val songs = callingActivity.getSongsByAlbumId(albumId)
+        if (songs.isEmpty()) return builder.create()
 
         binding.optionsTitle.text = songs[0].albumName
         binding.option1.text = getString(R.string.play_next)

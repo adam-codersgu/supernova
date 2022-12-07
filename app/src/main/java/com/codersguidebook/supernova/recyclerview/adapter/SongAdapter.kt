@@ -3,7 +3,7 @@ package com.codersguidebook.supernova.recyclerview.adapter
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.entities.Song
 
-abstract class SongAdapter(): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+abstract class SongAdapter: RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     val songs = mutableListOf<Song>()
 
     override fun getItemCount() = songs.size

@@ -12,17 +12,18 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.databinding.FragmentWithScrollBinding
+import com.codersguidebook.supernova.databinding.ScrollRecyclerViewBinding
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
+import com.codersguidebook.supernova.recyclerview.adapter.AlbumsAdapter
+import com.codersguidebook.supernova.recyclerview.adapter.SongsAdapter
 import java.util.*
 
-class AlbumsFragment : Fragment() {
+class AlbumsFragment : RecyclerViewFragment() {
 
     private var albums = mutableListOf<Song>()
-    private var _binding: FragmentWithScrollBinding? = null
-    private val binding get() = _binding!!
-    private var isProcessing = false
-    private lateinit var albumsAdapter: AlbumsAdapter
-    private lateinit var callingActivity: MainActivity
+    private var _binding: ScrollRecyclerViewBinding? = null
+    override lateinit var adapter: AlbumsAdapter
     private lateinit var musicLibraryViewModel: MusicLibraryViewModel
 
     override fun onCreateView(
@@ -30,14 +31,8 @@ class AlbumsFragment : Fragment() {
             container: ViewGroup?,
             savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentWithScrollBinding.inflate(inflater, container, false)
-        callingActivity = activity as MainActivity
-        val layoutManager = LinearLayoutManager(activity)
-        albumsAdapter = AlbumsAdapter(callingActivity)
-        binding.scrollRecyclerView.layoutManager = layoutManager
-        binding.scrollRecyclerView.itemAnimator = DefaultItemAnimator()
-        binding.scrollRecyclerView.adapter = albumsAdapter
-        albumsAdapter.stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
+        _binding = ScrollRecyclerViewBinding.inflate(inflater, container, false)
+        mainActivity = activity as MainActivity
 
         musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
         musicLibraryViewModel.allSongs.observe(viewLifecycleOwner, { songs ->
@@ -47,6 +42,23 @@ class AlbumsFragment : Fragment() {
         })
 
         return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val layoutManager = LinearLayoutManager(activity)
+        binding.recyclerView.layoutManager = layoutManager
+        binding.recyclerView.itemAnimator = DefaultItemAnimator()
+        binding.recyclerView.adapter = adapter
+
+        binding.scrollRecyclerView.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                if (dy > 0 && binding.fab.visibility == View.VISIBLE) binding.fab.hide()
+                else if (dy < 0 && binding.fab.visibility != View.VISIBLE) binding.fab.show()
+            }
+        })
     }
 
     private fun processAlbums(albumList: List<Song>) {
@@ -86,8 +98,8 @@ class AlbumsFragment : Fragment() {
         }
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+    override fun initialiseAdapter() {
+        adapter = AlbumsAdapter(mainActivity)
+        adapter.stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
     }
 }

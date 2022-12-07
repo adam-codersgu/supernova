@@ -19,8 +19,7 @@ abstract class SongWithHeaderAdapter(private val activity: MainActivity): SongAd
         const val SONG = 2
     }
 
-    inner class ViewHolderHeader(itemView: View) :
-        RecyclerView.ViewHolder(itemView) {
+    inner class ViewHolderHeader(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         internal var mArtwork = itemView.findViewById<View>(R.id.largeSongArtwork) as ImageView
         internal var mTitle = itemView.findViewById<View>(R.id.largeTitle) as TextView

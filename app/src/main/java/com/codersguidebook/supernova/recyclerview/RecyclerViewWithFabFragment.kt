@@ -4,17 +4,21 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.recyclerview.adapter.SongAdapter
 
 abstract class RecyclerViewWithFabFragment: RecyclerViewFragment() {
 
-    var fragmentBinding: FragmentWithFabBinding? = null
-    val binding get() = fragmentBinding!!
+    override var fragBinding: FragmentWithFabBinding? = null
+    override val binding get() = fragmentBinding!!
+    override lateinit var adapter: SongAdapter
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
@@ -27,11 +31,11 @@ abstract class RecyclerViewWithFabFragment: RecyclerViewFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val layoutManager = LinearLayoutManager(activity)
-        binding.recyclerView.layoutManager = layoutManager
-        binding.recyclerView.itemAnimator = DefaultItemAnimator()
-        binding.recyclerView.adapter = adapter
+        binding.scrollRecyclerView.recyclerView.layoutManager = layoutManager
+        binding.scrollRecyclerView.recyclerView.itemAnimator = DefaultItemAnimator()
+        binding.scrollRecyclerView.recyclerView.adapter = adapter
 
-        binding.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
+        binding.scrollRecyclerView.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
                 if (dy > 0 && binding.fab.visibility == View.VISIBLE) binding.fab.hide()
@@ -69,10 +73,5 @@ abstract class RecyclerViewWithFabFragment: RecyclerViewFragment() {
             unhandledRequestReceived = false
             requestNewData()
         }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        fragmentBinding = null
     }
 }

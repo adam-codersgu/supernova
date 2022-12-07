@@ -27,7 +27,7 @@ class ArtistsFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val root = inflater.inflate(R.layout.fragment_with_scroll, container, false)
+        val root = inflater.inflate(R.layout.scroll_recycler_view, container, false)
         callingActivity = activity as MainActivity
         recyclerView = root.findViewById(R.id.scrollRecyclerView)
         artistsAdapter = ArtistsAdapter(callingActivity)

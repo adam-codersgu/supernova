@@ -3,15 +3,19 @@ package com.codersguidebook.supernova.recyclerview
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.RecyclerView
+import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.MainActivity
+import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.entities.Song
-import com.codersguidebook.supernova.recyclerview.adapter.SongAdapter
 
 abstract class RecyclerViewFragment: Fragment() {
 
+    abstract val adapter: RecyclerView.Adapter<RecyclerView.ViewHolder>
+    abstract var fragmentBinding: ViewDataBinding?
+    abstract val binding: ViewBinding
     var isUpdating = false
     var unhandledRequestReceived = false
-    lateinit var adapter: SongAdapter
     lateinit var mainActivity: MainActivity
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -49,4 +53,9 @@ abstract class RecyclerViewFragment: Fragment() {
 
     /** Each fragment that uses a RecyclerView must initialise the adapter variable. */
     abstract fun initialiseAdapter()
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        fragmentBinding = null
+    }
 }
