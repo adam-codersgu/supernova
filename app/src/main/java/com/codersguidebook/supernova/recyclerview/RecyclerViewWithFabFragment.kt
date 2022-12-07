@@ -4,11 +4,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
 import com.codersguidebook.supernova.entities.Song
@@ -16,8 +14,7 @@ import com.codersguidebook.supernova.recyclerview.adapter.SongAdapter
 
 abstract class RecyclerViewWithFabFragment: RecyclerViewFragment() {
 
-    override var fragBinding: FragmentWithFabBinding? = null
-    override val binding get() = fragmentBinding!!
+    override val binding get() = fragmentBinding as FragmentWithFabBinding
     override lateinit var adapter: SongAdapter
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,

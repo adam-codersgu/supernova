@@ -6,14 +6,14 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.MainActivity
-import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.entities.Song
 
 abstract class RecyclerViewFragment: Fragment() {
 
     abstract val adapter: RecyclerView.Adapter<RecyclerView.ViewHolder>
-    abstract var fragmentBinding: ViewDataBinding?
+    var fragmentBinding: ViewBinding? = null
     abstract val binding: ViewBinding
+
     var isUpdating = false
     var unhandledRequestReceived = false
     lateinit var mainActivity: MainActivity

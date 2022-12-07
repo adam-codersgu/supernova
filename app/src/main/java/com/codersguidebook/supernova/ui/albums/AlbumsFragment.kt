@@ -4,25 +4,22 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.MusicLibraryViewModel
-import com.codersguidebook.supernova.databinding.FragmentWithScrollBinding
 import com.codersguidebook.supernova.databinding.ScrollRecyclerViewBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
 import com.codersguidebook.supernova.recyclerview.adapter.AlbumsAdapter
-import com.codersguidebook.supernova.recyclerview.adapter.SongsAdapter
 import java.util.*
 
 class AlbumsFragment : RecyclerViewFragment() {
 
     private var albums = mutableListOf<Song>()
-    private var _binding: ScrollRecyclerViewBinding? = null
+    override val binding get() = fragmentBinding as ScrollRecyclerViewBinding
     override lateinit var adapter: AlbumsAdapter
     private lateinit var musicLibraryViewModel: MusicLibraryViewModel
 
@@ -31,7 +28,7 @@ class AlbumsFragment : RecyclerViewFragment() {
             container: ViewGroup?,
             savedInstanceState: Bundle?
     ): View {
-        _binding = ScrollRecyclerViewBinding.inflate(inflater, container, false)
+        fragmentBinding = ScrollRecyclerViewBinding.inflate(inflater, container, false)
         mainActivity = activity as MainActivity
 
         musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
