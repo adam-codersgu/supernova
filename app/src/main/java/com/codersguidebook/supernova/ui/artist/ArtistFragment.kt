@@ -9,11 +9,13 @@ import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.MusicDatabase
+import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
 import com.codersguidebook.supernova.databinding.ScrollRecyclerViewBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
+import com.codersguidebook.supernova.recyclerview.adapter.AlbumAdapter
 import com.codersguidebook.supernova.recyclerview.adapter.AlbumsAdapter
 import com.codersguidebook.supernova.recyclerview.adapter.ArtistAdapter
 
@@ -23,7 +25,8 @@ class ArtistFragment : RecyclerViewFragment() {
     private var artistAlbums = mutableListOf<Song>()
 
     override val binding get() = fragmentBinding as FragmentWithRecyclerViewBinding
-    override lateinit var adapter: AlbumsAdapter
+    override lateinit var adapter: ArtistAdapter
+    private lateinit var musicDatabase: MusicDatabase
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -35,15 +38,22 @@ class ArtistFragment : RecyclerViewFragment() {
             artistName = safeArgs.artist
         }
         fragmentBinding = FragmentWithRecyclerViewBinding.inflate(inflater, container, false)
+        musicDatabase = MusicDatabase.getDatabase(mainActivity, lifecycleScope)
 
+        // fixme
+        setHasOptionsMenu(true)
+
+        return super.onCreateView(inflater, container, savedInstanceState)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         val layoutManager = LinearLayoutManager(activity)
-        val artistAdapter = ArtistAdapter(callingActivity, this)
         binding.root.layoutManager = layoutManager
         binding.root.itemAnimator = DefaultItemAnimator()
-        binding.root.adapter = artistAdapter
+        binding.root.adapter = adapter
 
-        val musicDatabase = MusicDatabase.getDatabase(mainActivity, lifecycleScope)
         musicDatabase.musicDao().findArtistsSongs(artistName ?: "").observe(viewLifecycleOwner,
             { songs ->
                 songs?.let {
@@ -66,13 +76,10 @@ class ArtistFragment : RecyclerViewFragment() {
                     }
                 }
             })
-        
-        setHasOptionsMenu(true)
-        return super.onCreateView(inflater, container, savedInstanceState)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun requestNewData() {
+        TODO("Not yet implemented")
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -96,5 +103,9 @@ class ArtistFragment : RecyclerViewFragment() {
             else -> return super.onOptionsItemSelected(item)
         }
         return true
+    }
+
+    override fun initialiseAdapter() {
+        adapter = ArtistAdapter(mainActivity)
     }
 }

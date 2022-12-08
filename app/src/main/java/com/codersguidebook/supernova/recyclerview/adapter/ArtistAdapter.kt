@@ -18,7 +18,7 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.ui.artist.ArtistFragmentDirections
 
-abstract class ArtistAdapter(private val activity: MainActivity): Adapter() {
+class ArtistAdapter(private val activity: MainActivity): Adapter() {
 
     val songsByAlbum = mutableListOf<Song>()
     // TODO: The fragment should set this value directly via a database query
