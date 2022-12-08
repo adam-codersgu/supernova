@@ -1,7 +1,9 @@
 package com.codersguidebook.supernova.recyclerview
 
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
@@ -11,12 +13,17 @@ import com.codersguidebook.supernova.entities.Song
 abstract class RecyclerViewFragment: Fragment() {
 
     abstract val adapter: RecyclerView.Adapter<RecyclerView.ViewHolder>
-    var fragmentBinding: ViewBinding? = null
     abstract val binding: ViewBinding
-
+    var fragmentBinding: ViewBinding? = null
     var isUpdating = false
     var unhandledRequestReceived = false
     lateinit var mainActivity: MainActivity
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
+                              savedInstanceState: Bundle?): View {
+        mainActivity = activity as MainActivity
+        return binding.root
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -43,13 +50,6 @@ abstract class RecyclerViewFragment: Fragment() {
      * this, we must request up-to-date data via requestNewData() when a postponed update is initiated.
      */
     abstract fun requestNewData()
-
-    /**
-     * Configure the fragment's menu.
-     *
-     * @param songs - A list of Song objects to be used for certain menu actions.
-     */
-    abstract fun setupMenu(songs: List<Song>)
 
     /** Each fragment that uses a RecyclerView must initialise the adapter variable. */
     abstract fun initialiseAdapter()

@@ -15,13 +15,13 @@ import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
 
-class AlbumsAdapter(private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>(),
+class AlbumsAdapter(private val activity: MainActivity): Adapter(),
     FastScrollRecyclerView.SectionedAdapter {
 
-    val albums = mutableListOf<Song>()
+    val songsByAlbum = mutableListOf<Song>()
 
     override fun getSectionName(position: Int): String {
-        return albums[position].albumName[0].uppercase()
+        return songsByAlbum[position].albumName[0].uppercase()
     }
 
     inner class ViewHolderAlbum(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -34,17 +34,46 @@ class AlbumsAdapter(private val activity: MainActivity): RecyclerView.Adapter<Re
         init {
             itemView.rootView.isClickable = true
             itemView.rootView.setOnClickListener {
-                val action = AlbumsFragmentDirections.actionSelectAlbum(albums[layoutPosition].albumId)
+                val action = AlbumsFragmentDirections.actionSelectAlbum(songsByAlbum[layoutPosition].albumId)
                 it.findNavController().navigate(action)
             }
 
             itemView.rootView.setOnLongClickListener{
-                activity.openDialog(AlbumOptions(albums[layoutPosition].albumId))
+                activity.openDialog(AlbumOptions(songsByAlbum[layoutPosition].albumId))
                 return@setOnLongClickListener true
             }
 
             mMenu.setOnClickListener {
-                activity.openDialog(AlbumOptions(albums[layoutPosition].albumId))
+                activity.openDialog(AlbumOptions(songsByAlbum[layoutPosition].albumId))
+            }
+        }
+    }
+
+    override fun processLoopIteration(index: Int, song: Song) {
+        val recyclerViewIndex = getRecyclerViewIndex(index)
+        when {
+            index >= songsByAlbum.size -> {
+                songsByAlbum.add(song)
+                notifyItemInserted(recyclerViewIndex)
+            }
+            song.albumId != songsByAlbum[index].albumId -> {
+                var numberOfItemsRemoved = 0
+                do {
+                    songsByAlbum.removeAt(index)
+                    ++numberOfItemsRemoved
+                } while (index < songsByAlbum.size &&
+                    song.songId != songsByAlbum[index].songId)
+
+                when {
+                    numberOfItemsRemoved == 1 -> notifyItemRemoved(recyclerViewIndex)
+                    numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(recyclerViewIndex, numberOfItemsRemoved)
+                }
+
+                processLoopIteration(index, song)
+            }
+            song.albumName != songsByAlbum[index].albumName || song.artist != songsByAlbum[index].artist -> {
+                songsByAlbum[index] = song
+                notifyItemChanged(recyclerViewIndex)
             }
         }
     }
@@ -57,7 +86,7 @@ class AlbumsAdapter(private val activity: MainActivity): RecyclerView.Adapter<Re
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         holder as ViewHolderAlbum
-        val current = albums[position]
+        val current = songsByAlbum[position]
 
         activity.insertArtwork(current.albumId, holder.mArtwork)
 
@@ -65,5 +94,5 @@ class AlbumsAdapter(private val activity: MainActivity): RecyclerView.Adapter<Re
         holder.mArtist.text = current.artist
     }
 
-    override fun getItemCount() = albums.size
+    override fun getItemCount() = songsByAlbum.size
 }

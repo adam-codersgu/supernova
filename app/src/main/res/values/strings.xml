@@ -183,6 +183,12 @@
 
     <string name="error_generic_playback">A playback error has occurred.</string>
 
+    <string name="one_album">1 album</string>
+    <string name="n_albums">%1$d albums</string>
+
+    <string name="played_one_time">Played 1 time</string>
+    <string name="played_n_times">Played %1$d times</string>
+
     <string name="no">No</string>
     <string name="yes">Yes</string>
     <string name="save_play_queue">Save play queue as playlist</string>

@@ -8,17 +8,14 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.databinding.ScrollRecyclerViewBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
 import com.codersguidebook.supernova.recyclerview.adapter.AlbumsAdapter
-import java.util.*
 
 class AlbumsFragment : RecyclerViewFragment() {
 
-    private var albums = mutableListOf<Song>()
     override val binding get() = fragmentBinding as ScrollRecyclerViewBinding
     override lateinit var adapter: AlbumsAdapter
     private lateinit var musicLibraryViewModel: MusicLibraryViewModel
@@ -29,16 +26,9 @@ class AlbumsFragment : RecyclerViewFragment() {
             savedInstanceState: Bundle?
     ): View {
         fragmentBinding = ScrollRecyclerViewBinding.inflate(inflater, container, false)
-        mainActivity = activity as MainActivity
-
         musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
-        musicLibraryViewModel.allSongs.observe(viewLifecycleOwner, { songs ->
-            songs?.let {
-                if (it.isNotEmpty() || albums.isNotEmpty()) processAlbums(it)
-            }
-        })
 
-        return binding.root
+        return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -49,49 +39,43 @@ class AlbumsFragment : RecyclerViewFragment() {
         binding.recyclerView.itemAnimator = DefaultItemAnimator()
         binding.recyclerView.adapter = adapter
 
-        binding.scrollRecyclerView.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-                if (dy > 0 && binding.fab.visibility == View.VISIBLE) binding.fab.hide()
-                else if (dy < 0 && binding.fab.visibility != View.VISIBLE) binding.fab.show()
-            }
-        })
+        musicLibraryViewModel.allSongs.observe(viewLifecycleOwner) {
+            updateRecyclerView(it)
+        }
     }
 
-    private fun processAlbums(albumList: List<Song>) {
-        // use the isProcessing boolean to prevent the processAlbums method from being run multiple times in quick succession (e.g. when the library is being built for the first time)
-        if (!isProcessing) {
-            isProcessing = true
-            albums = albumList.distinctBy { song ->
-                song.albumId
-            }.sortedBy { song ->
-                song.albumName.toUpperCase(Locale.ROOT)
-            }.toMutableList()
+    override fun requestNewData() {
+        musicLibraryViewModel.allSongs.value?.let { updateRecyclerView(it) }
+    }
 
-            val adapterAlbums = albumsAdapter.albums
-            albumsAdapter.albums = albums
-            when {
-                adapterAlbums.isEmpty() -> albumsAdapter.notifyItemRangeInserted(0, albums.size)
-                albums.size > adapterAlbums.size -> {
-                    val difference = albums - adapterAlbums
-                    for (s in difference) {
-                        val index = albums.indexOfFirst {
-                            it.albumId == s.albumId
-                        }
-                        if (index != -1) albumsAdapter.notifyItemInserted(index)
-                    }
-                }
-                albums.size < adapterAlbums.size -> {
-                    val difference = adapterAlbums - albums
-                    for (s in difference) {
-                        val index = adapterAlbums.indexOfFirst {
-                            it.albumId == s.albumId
-                        }
-                        if (index != -1) albumsAdapter.notifyItemRemoved(index)
-                    }
-                }
+    override fun updateRecyclerView(songs: List<Song>) {
+        super.updateRecyclerView(songs)
+
+        val songsByAlbum = songs.distinctBy { song ->
+            song.albumId
+        }.sortedBy { song ->
+            song.albumName.uppercase()
+        }.toMutableList()
+
+        if (adapter.songsByAlbum.isEmpty()) {
+            adapter.songsByAlbum.addAll(songsByAlbum)
+            adapter.notifyItemRangeInserted(0, songsByAlbum.size)
+        } else {
+            for ((index, album) in songsByAlbum.withIndex()) {
+                adapter.processLoopIteration(index, album)
             }
-            isProcessing = false
+
+            if (adapter.songsByAlbum.size > songsByAlbum.size) {
+                val numberItemsToRemove = adapter.songsByAlbum.size - songsByAlbum.size
+                repeat(numberItemsToRemove) { adapter.songsByAlbum.removeLast() }
+                adapter.notifyItemRangeRemoved(songsByAlbum.size, numberItemsToRemove)
+            }
+        }
+
+        isUpdating = false
+        if (unhandledRequestReceived) {
+            unhandledRequestReceived = false
+            requestNewData()
         }
     }
 

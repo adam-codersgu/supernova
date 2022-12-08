@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.recyclerview.adapter.SongAdapter
@@ -20,8 +19,7 @@ abstract class RecyclerViewWithFabFragment: RecyclerViewFragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
         fragmentBinding = FragmentWithFabBinding.inflate(inflater, container, false)
-        mainActivity = activity as MainActivity
-        return binding.root
+        return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -43,8 +41,6 @@ abstract class RecyclerViewWithFabFragment: RecyclerViewFragment() {
 
     override fun updateRecyclerView(songs: List<Song>) {
         super.updateRecyclerView(songs)
-
-        setupMenu(songs)
 
         binding.fab.setOnClickListener {
             mainActivity.playNewPlayQueue(songs, shuffle = true)

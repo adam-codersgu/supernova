@@ -39,7 +39,29 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
         }
     }
 
-    override fun setupMenu(songs: List<Song>) {
+    override fun initialiseAdapter() {
+        adapter = AlbumAdapter(mainActivity)
+    }
+
+    override fun updateRecyclerView(songs: List<Song>) {
+        val discNumbers = songs.distinctBy {
+            it.track.toString().substring(0, 1).toInt()
+        }.map { it.track.toString().substring(0, 1).toInt() }
+
+        (adapter as AlbumAdapter).displayDiscNumbers = discNumbers.size > 1
+
+        super.updateRecyclerView(songs)
+
+        setupMenu(songs)
+    }
+
+    override fun requestNewData() {
+        musicDatabase.musicDao().findAlbumSongs(albumId ?: return).value?.let {
+            updateRecyclerView(it)
+        }
+    }
+
+    private fun setupMenu(songs: List<Song>) {
         (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
             override fun onPrepareMenu(menu: Menu) {
                 menu.setGroupVisible(R.id.menu_group_album_actions, true)
@@ -73,25 +95,5 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
                 return true
             }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
-    }
-
-    override fun initialiseAdapter() {
-        adapter = AlbumAdapter(mainActivity)
-    }
-
-    override fun updateRecyclerView(songs: List<Song>) {
-        val discNumbers = songs.distinctBy {
-            it.track.toString().substring(0, 1).toInt()
-        }.map { it.track.toString().substring(0, 1).toInt() }
-
-        (adapter as AlbumAdapter).displayDiscNumbers = discNumbers.size > 1
-
-        super.updateRecyclerView(songs)
-    }
-
-    override fun requestNewData() {
-        musicDatabase.musicDao().findAlbumSongs(albumId ?: return).value?.let {
-            updateRecyclerView(it)
-        }
     }
 }

@@ -5,7 +5,6 @@ import android.view.View
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MusicLibraryViewModel
-import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.recyclerview.RecyclerViewWithFabFragment
 import com.codersguidebook.supernova.recyclerview.adapter.SongsAdapter
 
@@ -30,6 +29,4 @@ class SongsFragment : RecyclerViewWithFabFragment() {
     override fun requestNewData() {
         musicLibraryViewModel.allSongs.value?.let { updateRecyclerView(it) }
     }
-
-    override fun setupMenu(songs: List<Song>) { }
 }

@@ -1,9 +1,8 @@
 package com.codersguidebook.supernova.recyclerview.adapter
 
-import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.entities.Song
 
-abstract class SongAdapter: RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+abstract class SongAdapter: Adapter() {
     val songs = mutableListOf<Song>()
 
     override fun getItemCount() = songs.size
@@ -15,7 +14,7 @@ abstract class SongAdapter: RecyclerView.Adapter<RecyclerView.ViewHolder>() {
      * @param index - The index of the current iteration through the up-to-date content list.
      * @param song - The Song object that should be displayed at the index.
      */
-    fun processLoopIteration(index: Int, song: Song) {
+    override fun processLoopIteration(index: Int, song: Song) {
         val recyclerViewIndex = getRecyclerViewIndex(index)
         when {
             index >= songs.size -> {
@@ -43,14 +42,4 @@ abstract class SongAdapter: RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             }
         }
     }
-
-    /**
-     * Convenience method for retrieving the target index of RecyclerView element updates.
-     * RecyclerViews that contain a header will need to add + 1 to the index.
-     *
-     * @param index - The index of the target RecyclerView element.
-     * @return The index at which updates should be applied, accommodating for any headers.
-     * Default - The supplied index.
-     */
-    open fun getRecyclerViewIndex(index: Int): Int = index
 }
