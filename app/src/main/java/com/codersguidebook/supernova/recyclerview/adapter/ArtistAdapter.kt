@@ -21,7 +21,6 @@ import com.codersguidebook.supernova.ui.artist.ArtistFragmentDirections
 class ArtistAdapter(private val activity: MainActivity): Adapter() {
 
     val songsByAlbumByYear = mutableListOf<Song>()
-    // TODO: The fragment should set this value directly via a database query
     var plays = 0
 
     companion object {

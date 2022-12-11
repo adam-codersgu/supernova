@@ -75,13 +75,15 @@ class ArtistFragment : RecyclerViewFragment() {
             }
         }
 
-        /*
-        TODO
-            QUERY THE DATABASE TO GET THE SONG PLAYS HERE
-            IF THE SONG PLAYS NUMBER IS DIFFERENT TO THE VALUE HELD BY THE ADAPTER THEN ->
-            UPDATE THE PLAYS VARIABLE IN THE ADAPTER
-            CALL NOTIFYITEMCHANGED ON INDEX 0
-         */
+        if (songs.isNotEmpty()) {
+            artistName?.let {
+                val plays = musicDatabase.musicDao().getSongPlaysByArtist(it)
+                if (plays != adapter.plays) {
+                    adapter.plays = plays
+                    adapter.notifyItemChanged(0)
+                }
+            }
+        }
 
         setupMenu(songs.sortedBy { it.title })
 
