@@ -30,6 +30,12 @@ class LibraryFragment : Fragment() {
 
         _binding = FragmentLibraryBinding.inflate(inflater, container, false)
 
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
         val viewPagerAdapter = ViewPagerAdapter(this)
         binding.viewPager.adapter = viewPagerAdapter
         binding.viewPager.currentItem = viewPagerPosition ?: 0
@@ -52,8 +58,6 @@ class LibraryFragment : Fragment() {
             tab.text = namesArray[position]
         }.attach()
         binding.tabLayout.tabGravity = TabLayout.GRAVITY_FILL
-
-        return binding.root
     }
 
     override fun onDestroyView() {
