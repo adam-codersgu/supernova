@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:paddingVertical="10dp">
 
-    <include layout="@layout/song_details"
+    <include layout="@layout/item_details"
         app:layout_constraintEnd_toStartOf="@+id/menu"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"

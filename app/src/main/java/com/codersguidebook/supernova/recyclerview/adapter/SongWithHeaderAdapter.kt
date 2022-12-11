@@ -30,7 +30,7 @@ abstract class SongWithHeaderAdapter(private val activity: MainActivity): SongAd
     open inner class ViewHolderSong(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         internal var mTitle = itemView.findViewById<View>(R.id.title) as TextView
-        internal var mArtist = itemView.findViewById<View>(R.id.artist) as TextView
+        internal var mArtist = itemView.findViewById<View>(R.id.subtitle) as TextView
         private var mMenu = itemView.findViewById<ImageButton>(R.id.menu)
         private var songLayout = itemView.findViewById<ConstraintLayout>(R.id.songPreviewLayout)
 
@@ -63,7 +63,7 @@ abstract class SongWithHeaderAdapter(private val activity: MainActivity): SongAd
             )
         )
         else ViewHolderSong(
-            LayoutInflater.from(parent.context).inflate(R.layout.song_preview, parent, false)
+            LayoutInflater.from(parent.context).inflate(R.layout.item_with_menu, parent, false)
         )
     }
 

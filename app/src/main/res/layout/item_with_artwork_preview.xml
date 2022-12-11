@@ -13,7 +13,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         android:contentDescription="@string/album_artwork" />
 
-    <include layout="@layout/song_preview"
+    <include layout="@layout/item_with_menu"
         android:background="?attr/selectableItemBackground"
         android:layout_height="match_parent"
         android:layout_width="0dp"

@@ -23,7 +23,7 @@ class SongsAdapter(private val activity: MainActivity): SongAdapter(),
 
         internal var mArtwork = itemView.findViewById<View>(R.id.artwork) as ImageView
         internal var mTitle = itemView.findViewById<View>(R.id.title) as TextView
-        internal var mArtist = itemView.findViewById<View>(R.id.artist) as TextView
+        internal var mArtist = itemView.findViewById<View>(R.id.subtitle) as TextView
         private var mMenu = itemView.findViewById<ImageButton>(R.id.menu)
 
         init {
@@ -45,7 +45,7 @@ class SongsAdapter(private val activity: MainActivity): SongAdapter(),
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return ViewHolderSong(
-            LayoutInflater.from(parent.context).inflate(R.layout.song_with_artwork_preview, parent, false)
+            LayoutInflater.from(parent.context).inflate(R.layout.item_with_artwork_preview, parent, false)
         )
     }
 

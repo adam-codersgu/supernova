@@ -59,7 +59,7 @@ class ArtistAdapter(private val activity: MainActivity): Adapter() {
         internal var mArtwork = itemView.findViewById<View>(R.id.artwork) as ImageView
         internal var mTitle = itemView.findViewById<View>(R.id.title) as TextView
         // Fixme: In the layout, refactor artist to subtitle
-        internal var mYear = itemView.findViewById<View>(R.id.artist) as TextView
+        internal var mYear = itemView.findViewById<View>(R.id.subtitle) as TextView
         private var mMenu = itemView.findViewById<ImageButton>(R.id.menu)
 
         init {
@@ -98,7 +98,7 @@ class ArtistAdapter(private val activity: MainActivity): Adapter() {
                 LayoutInflater.from(parent.context).inflate(R.layout.all_songs, parent, false)
             )
             else -> ViewHolderAlbum(
-                LayoutInflater.from(parent.context).inflate(R.layout.song_with_artwork_preview, parent, false)
+                LayoutInflater.from(parent.context).inflate(R.layout.item_with_artwork_preview, parent, false)
             )
         }
     }
