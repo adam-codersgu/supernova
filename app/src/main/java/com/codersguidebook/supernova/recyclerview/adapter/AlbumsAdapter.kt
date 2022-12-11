@@ -32,13 +32,13 @@ class AlbumsAdapter(private val activity: MainActivity): Adapter(),
         private var mMenu = itemView.findViewById<ImageButton>(R.id.menu)
 
         init {
-            itemView.rootView.isClickable = true
-            itemView.rootView.setOnClickListener {
+            itemView.isClickable = true
+            itemView.setOnClickListener {
                 val action = AlbumsFragmentDirections.actionSelectAlbum(songsByAlbum[layoutPosition].albumId)
                 it.findNavController().navigate(action)
             }
 
-            itemView.rootView.setOnLongClickListener{
+            itemView.setOnLongClickListener{
                 activity.openDialog(AlbumOptions(songsByAlbum[layoutPosition].albumId))
                 return@setOnLongClickListener true
             }
