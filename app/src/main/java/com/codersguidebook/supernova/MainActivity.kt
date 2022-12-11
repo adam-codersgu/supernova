@@ -915,19 +915,20 @@ class MainActivity : AppCompatActivity() {
         } else mutableListOf()
     }
 
+    /**
+     * Extract the corresponding Song objects for a list of Song IDs that have been
+     * saved in JSON format. This method helps restore a playlist.
+     *
+     * @param json - A JSON String representation of a list of song IDs.
+     * @return A list of Song objects
+     */
     fun extractPlaylistSongs(json: String?): MutableList<Song> {
-        val songIDList = extractPlaylistSongIds(json)
-        return if (songIDList.isEmpty()) mutableListOf()
-        else {
-            val playlistSongs = mutableListOf<Song>()
-            for (i in songIDList) {
-                val song = completeLibrary.find {
-                    it.songId == i
-                }
-                if (song != null) playlistSongs.add(song)
-            }
-            playlistSongs
+        val songIdList = extractPlaylistSongIds(json)
+        val playlistSongs = mutableListOf<Song>()
+        for (id in songIdList) {
+            getSongById(id)?.let { playlistSongs.add(it) }
         }
+        return playlistSongs
     }
 
     fun saveNewPlaylist(playlist: Playlist): Boolean{
