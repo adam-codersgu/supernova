@@ -1,4 +1,4 @@
-package com.codersguidebook.supernova.ui.playlist
+package com.codersguidebook.supernova.recyclerview.adapter
 
 import android.annotation.SuppressLint
 import android.view.LayoutInflater
@@ -16,72 +16,57 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
+import com.codersguidebook.supernova.SongOptions
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.ui.playlist.PlaylistFragment
 
 class PlaylistAdapter(private val fragment: PlaylistFragment,
-                      private val mainActivity: MainActivity
-):
-    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+                      private val activity: MainActivity
+): SongWithHeaderAdapter(activity) {
     private var showHandles = false
     var playlist: Playlist? = null
-    var songs = mutableListOf<Song>()
 
     companion object {
         private const val HEADER = 1
         private const val SONG = 2
     }
 
-    class ViewHolderPlaylistSummary(itemView: View) :
-        RecyclerView.ViewHolder(itemView) {
+    inner class ViewHolderPlaylistHeader(itemView: View) :
+        ViewHolderHeader(itemView) {
 
-        internal var mArtwork =itemView.findViewById<View>(R.id.largeSongArtwork) as ImageView
         internal var mArtworkGrid = itemView.findViewById(R.id.imageGrid) as GridLayout
         internal var mArtwork1 = itemView.findViewById<View>(R.id.artwork1) as ImageView
         internal var mArtwork2 = itemView.findViewById<View>(R.id.artwork2) as ImageView
         internal var mArtwork3 = itemView.findViewById<View>(R.id.artwork3) as ImageView
         internal var mArtwork4 = itemView.findViewById<View>(R.id.artwork4) as ImageView
-        internal var mTitle = itemView.findViewById<View>(R.id.largeTitle) as TextView
-        internal var mSongCount = itemView.findViewById<View>(R.id.largeSubtitle) as TextView
-        internal var mSubtitle2 = itemView.findViewById<View>(R.id.largeSubtitle2) as TextView
     }
 
-    inner class PlaylistSongViewHolder(itemView: View) :
-        RecyclerView.ViewHolder(itemView),
-        View.OnClickListener {
+    inner class ViewHolderSongWithHandle(itemView: View) :
+        ViewHolderSong(itemView) {
 
-        internal var mArtwork = itemView.findViewById<View>(R.id.playlistArtwork) as ImageView
-        internal var mTitle = itemView.findViewById<View>(R.id.playlistTitle) as TextView
-        internal var mArtist = itemView.findViewById<View>(R.id.playlistArtistOrYear) as TextView
-        internal var mPlays = itemView.findViewById<View>(R.id.playlistSongPlays) as TextView
-        internal var mBtnSongMenu = itemView.findViewById<ImageButton>(R.id.playlistMenu)
+        internal var mPlays = itemView.findViewById<View>(R.id.plays) as TextView
 
         init {
-            itemView.isClickable = true
-            itemView.setOnClickListener(this)
+            songLayout.setOnLongClickListener{
+                if (!showHandles) activity.openDialog(SongOptions(songs[layoutPosition - 1]))
+                return@setOnLongClickListener true
+            }
         }
-
-        override fun onClick(view: View) {
-            mainActivity.playNewPlayQueue(songs, layoutPosition - 1)
-        }
-    }
-
-    override fun getItemViewType(position: Int): Int {
-        super.getItemViewType(position)
-        return if (position == 0) HEADER
-        else SONG
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        return if (viewType == HEADER) ViewHolderPlaylistSummary(LayoutInflater.from(parent.context).inflate(R.layout.large_preview, parent, false))
-        else PlaylistSongViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.most_played_preview, parent, false))
+        return if (viewType == HEADER) ViewHolderPlaylistHeader(
+            LayoutInflater.from(parent.context).inflate(R.layout.large_preview, parent, false)
+        ) else ViewHolderSongWithHandle(
+            LayoutInflater.from(parent.context).inflate(R.layout.playlist_song, parent, false)
+        )
     }
 
-    @SuppressLint("ClickableViewAccessibility")
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder.itemViewType) {
             HEADER -> {
-                holder as ViewHolderPlaylistSummary
+                holder as ViewHolderPlaylistHeader
 
                 holder.itemView.setBackgroundColor(ContextCompat.getColor(mainActivity, R.color.preview_background))
 
@@ -112,7 +97,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                 }
             }
             SONG -> {
-                holder as PlaylistSongViewHolder
+                holder as ViewHolderSongWithHandle
                 val current = songs[position -1]
 
                 if (showHandles) {
@@ -125,9 +110,6 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                         if (event.actionMasked == MotionEvent.ACTION_DOWN) fragment.startDragging(holder)
                         return@setOnTouchListener true
                     }
-                    holder.itemView.setOnLongClickListener {
-                        return@setOnLongClickListener true
-                    }
                 } else {
                     holder.mArtwork.layoutParams.width = mainActivity.resources.getDimension(R.dimen.artwork_preview_width).toInt()
                     holder.mArtwork.clearColorFilter()
@@ -135,10 +117,6 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                         return@setOnTouchListener true
                     }
                     mainActivity.insertArtwork(current.albumId, holder.mArtwork)
-                    holder.itemView.setOnLongClickListener {
-                        fragment.openDialog(songs.toMutableList(), position -1, playlist!!)
-                        return@setOnLongClickListener true
-                    }
                 }
 
                 holder.mTitle.text = current.title
@@ -186,7 +164,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
 
     internal fun manageHandles(applyHandles: Boolean){
         this.showHandles = applyHandles
-        notifyDataSetChanged()
+        notifyItemRangeChanged(1, songs.size)
     }
     
     internal fun processSongs(newSongs: MutableList<Song>) {
@@ -229,6 +207,4 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
             }
         }
     }
-
-    override fun getItemCount() = songs.size + 1
 }

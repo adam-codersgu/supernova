@@ -19,7 +19,7 @@ abstract class SongWithHeaderAdapter(private val activity: MainActivity): SongAd
         const val SONG = 2
     }
 
-    inner class ViewHolderHeader(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    open inner class ViewHolderHeader(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         internal var mArtwork = itemView.findViewById<View>(R.id.largeSongArtwork) as ImageView
         internal var mTitle = itemView.findViewById<View>(R.id.largeTitle) as TextView
@@ -32,7 +32,7 @@ abstract class SongWithHeaderAdapter(private val activity: MainActivity): SongAd
         internal var mTitle = itemView.findViewById<View>(R.id.title) as TextView
         internal var mArtist = itemView.findViewById<View>(R.id.subtitle) as TextView
         private var mMenu = itemView.findViewById<ImageButton>(R.id.menu)
-        private var songLayout = itemView.findViewById<ConstraintLayout>(R.id.songPreviewLayout)
+        internal var songLayout = itemView.findViewById<ConstraintLayout>(R.id.songPreviewLayout)
 
         init {
             songLayout.isClickable = true

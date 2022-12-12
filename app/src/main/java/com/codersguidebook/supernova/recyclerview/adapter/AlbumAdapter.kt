@@ -23,11 +23,8 @@ class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(ac
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return if (viewType == HEADER) ViewHolderHeader(
-            LayoutInflater.from(parent.context).inflate(
-                R.layout.large_preview, parent, false
-            )
-        )
-        else ViewHolderSongWithDisc(
+            LayoutInflater.from(parent.context).inflate(R.layout.large_preview, parent, false)
+        ) else ViewHolderSongWithDisc(
             LayoutInflater.from(parent.context).inflate(R.layout.song_with_disc_preview, parent, false)
         )
     }
@@ -71,6 +68,4 @@ class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(ac
             }
         }
     }
-
-    override fun getItemCount() = songs.size + 1
 }

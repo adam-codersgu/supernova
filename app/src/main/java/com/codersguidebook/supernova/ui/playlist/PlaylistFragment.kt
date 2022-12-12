@@ -3,7 +3,6 @@ package com.codersguidebook.supernova.ui.playlist
 import android.os.Bundle
 import android.view.*
 import android.widget.Toast
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.DefaultItemAnimator
@@ -14,21 +13,20 @@ import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.PlaylistSongOptions
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.recyclerview.RecyclerViewWithFabFragment
+import com.codersguidebook.supernova.recyclerview.adapter.PlaylistAdapter
 
-class PlaylistFragment : Fragment() {
+class PlaylistFragment : RecyclerViewWithFabFragment() {
 
-    private var _binding: FragmentWithFabBinding? = null
-    private val binding get() = _binding!!
     private var playlistName: String? = null
     private var playlist: Playlist? = null
     private var playlistSongs= mutableListOf<Song>()
     private lateinit var callingActivity: MainActivity
     private lateinit var reorderPlaylist: MenuItem
     private lateinit var finishedReorder: MenuItem
-    private lateinit var playlistAdapter: PlaylistAdapter
+    private lateinit var adapter: PlaylistAdapter
     private val itemTouchHelper by lazy {
         val simpleItemTouchCallback =
             object : ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0) {
@@ -44,7 +42,7 @@ class PlaylistFragment : Fragment() {
 
                     viewHolder.itemView.alpha = 1.0f
                     playlist?.let {
-                        val songIds = playlistAdapter.songs.map { song -> song.songId }
+                        val songIds = adapter.songs.map { song -> song.songId }
                         callingActivity.savePlaylistWithSongIds(it, songIds)
                     }
                 }
@@ -55,10 +53,10 @@ class PlaylistFragment : Fragment() {
                     val from = viewHolder.layoutPosition
                     val to = target.layoutPosition
                     if (from != to && from != 0 && to != 0) {
-                        val song = playlistAdapter.songs[from - 1]
-                        playlistAdapter.songs.removeAt(from - 1)
-                        playlistAdapter.songs.add(to - 1, song)
-                        playlistAdapter.notifyItemMoved(from, to)
+                        val song = adapter.songs[from - 1]
+                        adapter.songs.removeAt(from - 1)
+                        adapter.songs.add(to - 1, song)
+                        adapter.notifyItemMoved(from, to)
                     }
 
                     return true
@@ -77,26 +75,25 @@ class PlaylistFragment : Fragment() {
             val safeArgs = PlaylistFragmentArgs.fromBundle(it)
             playlistName = safeArgs.playlistName
         }
-        _binding = FragmentWithFabBinding.inflate(inflater, container, false)
+        // fixme
         setHasOptionsMenu(true)
-        
-        callingActivity = activity as MainActivity
-        playlistAdapter = PlaylistAdapter(this, callingActivity)
+
+        adapter = PlaylistAdapter(this, callingActivity)
         binding.recyclerView.layoutManager = LinearLayoutManager(activity)
         binding.recyclerView.itemAnimator = DefaultItemAnimator()
-        binding.recyclerView.adapter = playlistAdapter
+        binding.recyclerView.adapter = adapter
 
         val musicDatabase = MusicDatabase.getDatabase(requireContext(), lifecycleScope)
         musicDatabase.playlistDao().findPlaylist(playlistName ?: "").observe(viewLifecycleOwner) { p ->
             p?.let {
                 playlist = it
-                if (playlistAdapter.playlist == null) playlistAdapter.playlist = it
+                if (adapter.playlist == null) adapter.playlist = it
                 val newSongs = callingActivity.extractPlaylistSongs(it.songs)
                 playlistSongs = newSongs
                 if (newSongs.isEmpty()) {
-                    playlistAdapter.songs = mutableListOf()
-                    playlistAdapter.notifyDataSetChanged()
-                } else playlistAdapter.processSongs(newSongs)
+                    adapter.songs = mutableListOf()
+                    adapter.notifyDataSetChanged()
+                } else adapter.processSongs(newSongs)
             }
         }
 
@@ -152,7 +149,7 @@ class PlaylistFragment : Fragment() {
             }
             R.id.reorderPlaylist -> {
                 itemTouchHelper.attachToRecyclerView(binding.recyclerView)
-                playlistAdapter.manageHandles(true)
+                adapter.manageHandles(true)
                 reorderPlaylist.isVisible = false
                 finishedReorder.isVisible = true
             }
@@ -165,7 +162,7 @@ class PlaylistFragment : Fragment() {
             R.id.done -> {
                 // null essentially removes the itemTouchHelper from the recycler view
                 itemTouchHelper.attachToRecyclerView(null)
-                playlistAdapter.manageHandles(false)
+                adapter.manageHandles(false)
                 reorderPlaylist.isVisible = true
                 finishedReorder.isVisible = false
             }
