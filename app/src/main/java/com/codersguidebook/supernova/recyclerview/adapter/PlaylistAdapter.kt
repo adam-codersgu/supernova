@@ -45,6 +45,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
     inner class ViewHolderSongWithHandle(itemView: View) :
         ViewHolderSong(itemView) {
 
+        internal var mArtwork = itemView.findViewById<View>(R.id.artwork) as ImageView
         internal var mPlays = itemView.findViewById<View>(R.id.plays) as TextView
 
         init {
@@ -63,6 +64,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
         )
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder.itemViewType) {
             HEADER -> {
@@ -101,8 +103,10 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                 val current = songs[position -1]
 
                 if (showHandles) {
-                    holder.mArtwork.setColorFilter(ContextCompat.getColor(fragment.requireActivity(), R.color.onSurface60))
-                    holder.mArtwork.layoutParams.width = mainActivity.resources.getDimension(R.dimen.handle_width).toInt()
+                    holder.mArtwork.setColorFilter(ContextCompat
+                        .getColor(fragment.requireActivity(), R.color.onSurface60))
+                    holder.mArtwork.layoutParams.width = activity.resources
+                        .getDimension(R.dimen.handle_width).toInt()
                     Glide.with(fragment)
                         .load(R.drawable.ic_drag_handle)
                         .into(holder.mArtwork)
@@ -111,16 +115,18 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                         return@setOnTouchListener true
                     }
                 } else {
-                    holder.mArtwork.layoutParams.width = mainActivity.resources.getDimension(R.dimen.artwork_preview_width).toInt()
+                    holder.mArtwork.layoutParams.width = activity.resources
+                        .getDimension(R.dimen.artwork_preview_width).toInt()
                     holder.mArtwork.clearColorFilter()
                     holder.mArtwork.setOnTouchListener { _, _ ->
                         return@setOnTouchListener true
                     }
-                    mainActivity.insertArtwork(current.albumId, holder.mArtwork)
+                    activity.insertArtwork(current.albumId, holder.mArtwork)
                 }
 
                 holder.mTitle.text = current.title
                 holder.mArtist.text = current.artist
+
                 if (playlist?.name == mainActivity.getString(R.string.most_played)) {
                     holder.mPlays.isVisible = true
                     val plays = current.plays
@@ -153,10 +159,6 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                             holder.mBtnSongMenu.setColorFilter(ContextCompat.getColor(mainActivity, R.color.onSurface60))
                         }
                     }
-                }
-
-                holder.mBtnSongMenu.setOnClickListener {
-                    fragment.openDialog(songs.toMutableList(), position -1, playlist!!)
                 }
             }
         }
