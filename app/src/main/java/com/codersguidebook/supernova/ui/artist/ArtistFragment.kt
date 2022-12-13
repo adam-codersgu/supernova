@@ -60,17 +60,17 @@ class ArtistFragment : RecyclerViewFragment() {
             song.year
         }.toMutableList()
 
-        if (adapter.songsByAlbumByYear.isEmpty()) {
-            adapter.songsByAlbumByYear.addAll(songsByAlbumByYear)
+        if (adapter.songs.isEmpty()) {
+            adapter.songs.addAll(songsByAlbumByYear)
             adapter.notifyItemRangeInserted(0, adapter.getRecyclerViewIndex(songsByAlbumByYear.size))
         } else {
             for ((index, album) in songsByAlbumByYear.withIndex()) {
                 adapter.processLoopIteration(index, album)
             }
 
-            if (adapter.songsByAlbumByYear.size > songsByAlbumByYear.size) {
-                val numberItemsToRemove = adapter.songsByAlbumByYear.size - songsByAlbumByYear.size
-                repeat(numberItemsToRemove) { adapter.songsByAlbumByYear.removeLast() }
+            if (adapter.songs.size > songsByAlbumByYear.size) {
+                val numberItemsToRemove = adapter.songs.size - songsByAlbumByYear.size
+                repeat(numberItemsToRemove) { adapter.songs.removeLast() }
                 adapter.notifyItemRangeRemoved(songsByAlbumByYear.size, numberItemsToRemove)
             }
         }

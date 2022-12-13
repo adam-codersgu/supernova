@@ -15,12 +15,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.AlbumOptions
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.ui.artist.ArtistFragmentDirections
 
-class ArtistAdapter(private val activity: MainActivity): Adapter() {
+class ArtistAdapter(private val activity: MainActivity): SongAdapter() {
 
-    val songsByAlbumByYear = mutableListOf<Song>()
     var plays = 0
 
     companion object {
@@ -46,8 +44,8 @@ class ArtistAdapter(private val activity: MainActivity): Adapter() {
         init {
             itemView.isClickable = true
             itemView.setOnClickListener {
-                if (songsByAlbumByYear.isEmpty()) return@setOnClickListener
-                val action = ArtistFragmentDirections.actionSelectArtistSongs(songsByAlbumByYear[0].artist)
+                if (songs.isEmpty()) return@setOnClickListener
+                val action = ArtistFragmentDirections.actionSelectArtistSongs(songs[0].artist)
                 it.findNavController().navigate(action)
             }
         }
@@ -63,17 +61,17 @@ class ArtistAdapter(private val activity: MainActivity): Adapter() {
         init {
             itemView.rootView.isClickable = true
             itemView.rootView.setOnClickListener {
-                val action = ArtistFragmentDirections.actionSelectAlbum(songsByAlbumByYear[layoutPosition - 2].albumId)
+                val action = ArtistFragmentDirections.actionSelectAlbum(songs[layoutPosition - 2].albumId)
                 it.findNavController().navigate(action)
             }
 
             itemView.rootView.setOnLongClickListener{
-                activity.openDialog(AlbumOptions(songsByAlbumByYear[layoutPosition - 2].albumId))
+                activity.openDialog(AlbumOptions(songs[layoutPosition - 2].albumId))
                 return@setOnLongClickListener true
             }
 
             mMenu.setOnClickListener {
-                activity.openDialog(AlbumOptions(songsByAlbumByYear[layoutPosition - 2].albumId))
+                activity.openDialog(AlbumOptions(songs[layoutPosition - 2].albumId))
             }
         }
     }
@@ -107,7 +105,7 @@ class ArtistAdapter(private val activity: MainActivity): Adapter() {
 
                 holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.preview_background))
 
-                val albumIds = songsByAlbumByYear.map { it.albumId }
+                val albumIds = songs.map { it.albumId }
 
                 when {
                     albumIds.size == 1 -> activity.insertArtwork(albumIds[0], holder.mArtwork)
@@ -122,12 +120,12 @@ class ArtistAdapter(private val activity: MainActivity): Adapter() {
                     }
                 }
 
-                if (songsByAlbumByYear.isNotEmpty()){
-                    holder.mArtist.text = songsByAlbumByYear[0].artist
-                    holder.mAlbumCount.text = if (songsByAlbumByYear.size == 1) {
+                if (songs.isNotEmpty()){
+                    holder.mArtist.text = songs[0].artist
+                    holder.mAlbumCount.text = if (songs.size == 1) {
                         activity.getString(R.string.one_album)
                     } else {
-                        activity.getString(R.string.n_albums, songsByAlbumByYear.size)
+                        activity.getString(R.string.n_albums, songs.size)
                     }
 
                     holder.mArtistPlays.text = if (plays == 1) {
@@ -140,7 +138,7 @@ class ArtistAdapter(private val activity: MainActivity): Adapter() {
             ALBUM -> {
                 holder as ViewHolderAlbum
 
-                val current = songsByAlbumByYear[position -2]
+                val current = songs[position -2]
 
                 activity.insertArtwork(current.albumId, holder.mArtwork)
 
@@ -150,36 +148,7 @@ class ArtistAdapter(private val activity: MainActivity): Adapter() {
         }
     }
 
-    override fun processLoopIteration(index: Int, song: Song) {
-        val recyclerViewIndex = getRecyclerViewIndex(index)
-        when {
-            index >= songsByAlbumByYear.size -> {
-                songsByAlbumByYear.add(song)
-                notifyItemInserted(recyclerViewIndex)
-            }
-            song.albumId != songsByAlbumByYear[index].albumId -> {
-                var numberOfItemsRemoved = 0
-                do {
-                    songsByAlbumByYear.removeAt(index)
-                    ++numberOfItemsRemoved
-                } while (index < songsByAlbumByYear.size &&
-                    song.songId != songsByAlbumByYear[index].songId)
-
-                when {
-                    numberOfItemsRemoved == 1 -> notifyItemRemoved(recyclerViewIndex)
-                    numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(recyclerViewIndex, numberOfItemsRemoved)
-                }
-
-                processLoopIteration(index, song)
-            }
-            song.albumName != songsByAlbumByYear[index].albumName || song.artist != songsByAlbumByYear[index].artist -> {
-                songsByAlbumByYear[index] = song
-                notifyItemChanged(recyclerViewIndex)
-            }
-        }
-    }
-
-    override fun getItemCount() = songsByAlbumByYear.size + 2
+    override fun getItemCount() = songs.size + 2
 
     override fun getRecyclerViewIndex(index: Int): Int = index + 2
 }
