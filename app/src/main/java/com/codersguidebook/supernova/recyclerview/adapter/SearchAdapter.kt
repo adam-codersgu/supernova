@@ -18,8 +18,7 @@ import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 import com.codersguidebook.supernova.ui.search.SearchFragmentDirections
 
-class SearchAdapter(private val activity: MainActivity):
-    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class SearchAdapter(private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     var songs = mutableListOf<Song>()
     var albums = mutableListOf<Song>()
@@ -105,10 +104,12 @@ class SearchAdapter(private val activity: MainActivity):
                 holder.mArtwork.isGone = true
                 holder.mTitle.text = current.artistName
 
-                // determine how to present songCount
                 val songCountInt = current.songCount
-                holder.mSubtitle.text = if (songCountInt == 1) "$songCountInt song"
-                else "$songCountInt songs"
+                holder.mSubtitle.text = if (songCountInt == 1) {
+                    activity.getString(R.string.displayed_song)
+                } else {
+                    activity.getString(R.string.displayed_songs, songCountInt)
+                }
 
                 holder.mMenu.setOnClickListener {
                     activity.openDialog(ArtistOptions(current.artistName ?: ""))
@@ -137,10 +138,12 @@ class SearchAdapter(private val activity: MainActivity):
 
                 holder.mTitle.text = current.name
 
-                // determine how to present songCount
                 val songCountInt = playlistSongIDs.size
-                holder.mSubtitle.text = if (songCountInt == 1) "$songCountInt song"
-                else "$songCountInt songs"
+                holder.mSubtitle.text = if (songCountInt == 1) {
+                    activity.getString(R.string.displayed_song)
+                } else {
+                    activity.getString(R.string.displayed_songs, songCountInt)
+                }
 
                 holder.mMenu.setOnClickListener {
                     activity.openDialog(PlaylistOptions(current))

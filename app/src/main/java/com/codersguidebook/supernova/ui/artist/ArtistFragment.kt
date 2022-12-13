@@ -33,8 +33,6 @@ class ArtistFragment : RecyclerViewFragment() {
             artistName = safeArgs.artist
         }
         fragmentBinding = FragmentWithRecyclerViewBinding.inflate(inflater, container, false)
-        musicDatabase = MusicDatabase.getDatabase(mainActivity, lifecycleScope)
-
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
@@ -46,6 +44,7 @@ class ArtistFragment : RecyclerViewFragment() {
         binding.root.itemAnimator = DefaultItemAnimator()
         binding.root.adapter = adapter
 
+        musicDatabase = MusicDatabase.getDatabase(mainActivity, lifecycleScope)
         musicDatabase.musicDao().findArtistsSongs(artistName ?: "").observe(viewLifecycleOwner) {
             updateRecyclerView(it)
         }

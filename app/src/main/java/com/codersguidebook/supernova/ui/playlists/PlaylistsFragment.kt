@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DefaultItemAnimator
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
 import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
 import com.codersguidebook.supernova.entities.Playlist
@@ -27,13 +27,13 @@ class PlaylistsFragment : RecyclerViewFragment() {
         fragmentBinding = FragmentWithRecyclerViewBinding.inflate(inflater, container, false)
         musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
 
-        return binding.root
+        return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.root.layoutManager = LinearLayoutManager(activity)
+        binding.root.layoutManager = GridLayoutManager(mainActivity, 3)
         binding.root.itemAnimator = DefaultItemAnimator()
         binding.root.adapter = adapter
 

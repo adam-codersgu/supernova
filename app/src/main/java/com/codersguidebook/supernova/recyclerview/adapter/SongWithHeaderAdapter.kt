@@ -5,8 +5,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.RelativeLayout
 import android.widget.TextView
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
@@ -32,7 +32,7 @@ abstract class SongWithHeaderAdapter(private val activity: MainActivity): SongAd
         internal var mTitle = itemView.findViewById<View>(R.id.title) as TextView
         internal var mArtist = itemView.findViewById<View>(R.id.subtitle) as TextView
         internal var mMenu = itemView.findViewById<ImageButton>(R.id.menu)
-        internal var songLayout = itemView.findViewById<ConstraintLayout>(R.id.songPreviewLayout)
+        internal var songLayout = itemView.findViewById<RelativeLayout>(R.id.songPreviewLayout)
 
         init {
             songLayout.isClickable = true

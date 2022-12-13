@@ -74,7 +74,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
             playlistName = safeArgs.playlistName
         }
 
-        return binding.root
+        return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
