@@ -1,4 +1,4 @@
-package com.codersguidebook.supernova.ui.playlists
+package com.codersguidebook.supernova.recyclerview.adapter
 
 import android.view.LayoutInflater
 import android.view.View
@@ -8,16 +8,17 @@ import android.widget.TextView
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.*
+import com.codersguidebook.supernova.entities.Artist
 import com.codersguidebook.supernova.entities.Playlist
+import com.codersguidebook.supernova.ui.playlists.PlaylistsFragmentDirections
+import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
 import java.util.*
 
-class PlaylistsAdapter(private val mainActivity: MainActivity):
-    RecyclerView.Adapter<PlaylistsAdapter.PlaylistsViewHolder>() {
+class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>(),
+    FastScrollRecyclerView.SectionedAdapter {
     var playlists = mutableListOf<Playlist>()
 
-    inner class PlaylistsViewHolder(itemView: View) :
-        RecyclerView.ViewHolder(itemView),
-        View.OnClickListener {
+    inner class ViewHolderPlaylist(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         internal var mArtwork = itemView.findViewById<View>(R.id.smallSongArtwork) as ImageView
         internal var mPlaylistName = itemView.findViewById<View>(R.id.smallSongTitle) as TextView
@@ -25,32 +26,30 @@ class PlaylistsAdapter(private val mainActivity: MainActivity):
 
         init {
             itemView.isClickable = true
-            itemView.setOnClickListener(this)
+            itemView.setOnClickListener {
+                val action = PlaylistsFragmentDirections.actionSelectPlaylist(playlists[layoutPosition].name)
+                it.findNavController().navigate(action)
+            }
             itemView.setOnLongClickListener{
-                mainActivity.openDialog(PlaylistOptions(playlists[layoutPosition]))
+                activity.openDialog(PlaylistOptions(playlists[layoutPosition]))
                 return@setOnLongClickListener true
             }
         }
-
-        override fun onClick(view: View) {
-            val action = PlaylistsFragmentDirections.actionSelectPlaylist(playlists[layoutPosition].name)
-            view.findNavController().navigate(action)
-        }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlaylistsViewHolder {
-        return PlaylistsViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.small_recycler_grid_preview, parent, false))
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolderPlaylist {
+        return ViewHolderPlaylist(LayoutInflater.from(parent.context).inflate(R.layout.small_recycler_grid_preview, parent, false))
     }
 
-    override fun onBindViewHolder(holder: PlaylistsViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: ViewHolderPlaylist, position: Int) {
         val current = playlists[position]
 
         holder.mPlaylistName.text = current.name
 
-        val playlistSongIDs = mainActivity.extractPlaylistSongIds(current.songs)
+        val playlistSongIDs = activity.extractPlaylistSongIds(current.songs)
         // FIXME: Maybe find another way to handle artwork for playlists with no songs
-        if (!mainActivity.insertPlaylistArtwork(current, holder.mArtwork) && playlistSongIDs.isNotEmpty()) {
-            mainActivity.insertArtwork(mainActivity.findFirstSongArtwork(playlistSongIDs[0]), holder.mArtwork)
+        if (!activity.insertPlaylistArtwork(current, holder.mArtwork) && playlistSongIDs.isNotEmpty()) {
+            activity.insertArtwork(activity.findFirstSongArtwork(playlistSongIDs[0]), holder.mArtwork)
         }
 
         // determine how to present songCount
@@ -59,6 +58,34 @@ class PlaylistsAdapter(private val mainActivity: MainActivity):
         else "$songCountInt songs"
 
         holder.mPlaylistSongCount.text = songCount
+    }
+
+    fun processLoopIteration(index: Int, playlist: Playlist) {
+        when {
+            index >= artists.size -> {
+                artists.add(artist)
+                notifyItemInserted(index)
+            }
+            artist.artistName != artists[index].artistName -> {
+                var numberOfItemsRemoved = 0
+                do {
+                    artists.removeAt(index)
+                    ++numberOfItemsRemoved
+                } while (index < artists.size &&
+                    artist.artistName != artists[index].artistName)
+
+                when {
+                    numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
+                    numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index, numberOfItemsRemoved)
+                }
+
+                processLoopIteration(index, artist)
+            }
+            artist.songCount != artists[index].songCount -> {
+                artists[index] = artist
+                notifyItemChanged(index)
+            }
+        }
     }
 
     internal fun updatePlaylists(playlistList: List<Playlist>) {

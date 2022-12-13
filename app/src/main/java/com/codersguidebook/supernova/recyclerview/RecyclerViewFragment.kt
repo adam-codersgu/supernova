@@ -37,11 +37,25 @@ abstract class RecyclerViewFragment: Fragment() {
      * @param songs - The up-to-date list of Song objects that should be displayed.
      */
     open fun updateRecyclerView(songs: List<Song>) {
+        setIsUpdatingTrue()
+    }
+
+    /** Convenience method that sets the isUpdating state of the RecyclerView update workflow to true **/
+    fun setIsUpdatingTrue() {
         if (isUpdating) {
             unhandledRequestReceived = true
             return
         }
         isUpdating = true
+    }
+
+    /** Convenience method that sets the isUpdating state of the RecyclerView update workflow to false **/
+    fun setIsUpdatingFalse() {
+        isUpdating = false
+        if (unhandledRequestReceived) {
+            unhandledRequestReceived = false
+            requestNewData()
+        }
     }
 
     /**

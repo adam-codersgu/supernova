@@ -49,11 +49,7 @@ class ArtistsFragment : RecyclerViewFragment() {
     }
 
     private fun updateRecyclerViewWithArtists(artists: List<Artist>) {
-        if (isUpdating) {
-            unhandledRequestReceived = true
-            return
-        }
-        isUpdating = true
+        setIsUpdatingTrue()
 
         val sortedArtists = artists.sortedBy { artist ->
             artist.artistName?.uppercase()
@@ -74,11 +70,7 @@ class ArtistsFragment : RecyclerViewFragment() {
             }
         }
 
-        isUpdating = false
-        if (unhandledRequestReceived) {
-            unhandledRequestReceived = false
-            requestNewData()
-        }
+        setIsUpdatingFalse()
     }
 
     override fun initialiseAdapter() {

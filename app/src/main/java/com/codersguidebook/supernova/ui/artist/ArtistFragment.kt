@@ -87,11 +87,7 @@ class ArtistFragment : RecyclerViewFragment() {
 
         setupMenu(songs.sortedBy { it.title })
 
-        isUpdating = false
-        if (unhandledRequestReceived) {
-            unhandledRequestReceived = false
-            requestNewData()
-        }
+        setIsUpdatingFalse()
     }
 
     override fun requestNewData() {

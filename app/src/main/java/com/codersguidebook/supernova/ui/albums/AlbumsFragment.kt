@@ -72,11 +72,7 @@ class AlbumsFragment : RecyclerViewFragment() {
             }
         }
 
-        isUpdating = false
-        if (unhandledRequestReceived) {
-            unhandledRequestReceived = false
-            requestNewData()
-        }
+        setIsUpdatingFalse()
     }
 
     override fun initialiseAdapter() {
