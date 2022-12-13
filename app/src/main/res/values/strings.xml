@@ -188,6 +188,8 @@
 
     <string name="played_one_time">Played 1 time</string>
     <string name="played_n_times">Played %1$d times</string>
+    <string name="one_play">1 play</string>
+    <string name="n_plays">%1$d plays</string>
 
     <string name="no">No</string>
     <string name="yes">Yes</string>

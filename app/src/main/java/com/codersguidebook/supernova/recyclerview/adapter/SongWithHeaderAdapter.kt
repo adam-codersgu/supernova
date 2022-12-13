@@ -31,7 +31,7 @@ abstract class SongWithHeaderAdapter(private val activity: MainActivity): SongAd
 
         internal var mTitle = itemView.findViewById<View>(R.id.title) as TextView
         internal var mArtist = itemView.findViewById<View>(R.id.subtitle) as TextView
-        private var mMenu = itemView.findViewById<ImageButton>(R.id.menu)
+        internal var mMenu = itemView.findViewById<ImageButton>(R.id.menu)
         internal var songLayout = itemView.findViewById<ConstraintLayout>(R.id.songPreviewLayout)
 
         init {
