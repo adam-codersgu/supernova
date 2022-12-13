@@ -1,4 +1,4 @@
-package com.codersguidebook.supernova.ui.playQueue
+package com.codersguidebook.supernova.recyclerview.adapter
 
 import android.annotation.SuppressLint
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
@@ -14,15 +14,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.QueueOptions
 import com.codersguidebook.supernova.R
+import com.codersguidebook.supernova.ui.playQueue.PlayQueueFragment
 
 class PlayQueueAdapter(private val fragment: PlayQueueFragment
-, private val activity: MainActivity): RecyclerView.Adapter<PlayQueueAdapter.PlayQueueViewHolder>() {
+, private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     var currentlyPlayingQueueId = -1L
     val playQueue = mutableListOf<QueueItem>()
 
-    inner class PlayQueueViewHolder(itemView: View) :
-        RecyclerView.ViewHolder(itemView),
-        View.OnClickListener {
+    inner class ViewHolderPlayQueue(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         internal var txtSongTitle = itemView.findViewById<View>(R.id.title) as TextView
         internal var txtSongArtist = itemView.findViewById<View>(R.id.subtitle) as TextView
@@ -31,7 +30,9 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
 
         init {
             itemView.isClickable = true
-            itemView.setOnClickListener(this)
+            itemView.setOnClickListener {
+                activity.skipToQueueItem(playQueue[layoutPosition].queueId)
+            }
             btnSongMenu.setOnClickListener {
                 val isCurrentlyPlayingSelected =
                     playQueue[layoutPosition].queueId == currentlyPlayingQueueId
@@ -39,19 +40,16 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
                     isCurrentlyPlayingSelected))
             }
         }
-
-        override fun onClick(view: View) {
-            activity.skipToQueueItem(playQueue[layoutPosition].queueId)
-        }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlayQueueViewHolder {
-        return PlayQueueViewHolder(LayoutInflater.from(parent.context)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return ViewHolderPlayQueue(LayoutInflater.from(parent.context)
             .inflate(R.layout.play_queue_song, parent, false))
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    override fun onBindViewHolder(holder: PlayQueueViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        holder as ViewHolderPlayQueue
         val currentQueueItemDescription = playQueue[position].description
 
         holder.txtSongTitle.text = currentQueueItemDescription.title
@@ -84,15 +82,34 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
         notifyItemChanged(newCurrentlyPlayingIndex)
     }
 
-    override fun getItemCount() = playQueue.size
+    fun processLoopIteration(index: Int, queueItem: QueueItem) {
+        when {
+            index >= playQueue.size -> {
+                playQueue.add(queueItem)
+                notifyItemInserted(index)
+            }
+            queueItem.queueId != playQueue[index].queueId -> {
+                var numberOfItemsRemoved = 0
+                do {
+                    playQueue.removeAt(index)
+                    ++numberOfItemsRemoved
+                } while (index < playQueue.size &&
+                    queueItem.queueId != playQueue[index].queueId)
 
-    fun removeQueueItemById(queueItemId: Long) {
-        val index = playQueue.indexOfFirst { item ->
-            item.queueId == queueItemId
-        }
-        if (index != -1) {
-            playQueue.removeAt(index)
-            notifyItemRemoved(index)
+                when {
+                    numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
+                    numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index, numberOfItemsRemoved)
+                }
+
+                processLoopIteration(index, queueItem)
+            }
+            queueItem.description.title != playQueue[index].description.title ||
+                    queueItem.description.subtitle != playQueue[index].description.subtitle -> {
+                playQueue[index] = queueItem
+                notifyItemChanged(index)
+            }
         }
     }
+
+    override fun getItemCount() = playQueue.size
 }

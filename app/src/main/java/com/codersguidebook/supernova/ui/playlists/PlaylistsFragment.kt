@@ -8,14 +8,14 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.codersguidebook.supernova.MusicLibraryViewModel
-import com.codersguidebook.supernova.databinding.ScrollRecyclerViewBinding
+import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
 import com.codersguidebook.supernova.recyclerview.adapter.PlaylistsAdapter
 
 class PlaylistsFragment : RecyclerViewFragment() {
 
-    override val binding get() = fragmentBinding as ScrollRecyclerViewBinding
+    override val binding get() = fragmentBinding as FragmentWithRecyclerViewBinding
     override lateinit var adapter: PlaylistsAdapter
     private lateinit var musicLibraryViewModel: MusicLibraryViewModel
 
@@ -24,7 +24,7 @@ class PlaylistsFragment : RecyclerViewFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        fragmentBinding = ScrollRecyclerViewBinding.inflate(inflater, container, false)
+        fragmentBinding = FragmentWithRecyclerViewBinding.inflate(inflater, container, false)
         musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
 
         return binding.root
@@ -33,10 +33,9 @@ class PlaylistsFragment : RecyclerViewFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val layoutManager = LinearLayoutManager(activity)
-        binding.recyclerView.layoutManager = layoutManager
-        binding.recyclerView.itemAnimator = DefaultItemAnimator()
-        binding.recyclerView.adapter = adapter
+        binding.root.layoutManager = LinearLayoutManager(activity)
+        binding.root.itemAnimator = DefaultItemAnimator()
+        binding.root.adapter = adapter
 
         musicLibraryViewModel.allPlaylists.observe(viewLifecycleOwner) {
             updateRecyclerViewWithPlaylists(it)

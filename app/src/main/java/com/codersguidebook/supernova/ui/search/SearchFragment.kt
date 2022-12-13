@@ -15,6 +15,7 @@ import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentSearchBinding
+import com.codersguidebook.supernova.recyclerview.adapter.SearchAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 

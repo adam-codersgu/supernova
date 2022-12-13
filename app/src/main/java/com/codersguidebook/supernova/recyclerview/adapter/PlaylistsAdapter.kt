@@ -7,22 +7,20 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.*
-import com.codersguidebook.supernova.entities.Artist
+import com.codersguidebook.supernova.MainActivity
+import com.codersguidebook.supernova.PlaylistOptions
+import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.ui.playlists.PlaylistsFragmentDirections
-import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
-import java.util.*
 
-class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>(),
-    FastScrollRecyclerView.SectionedAdapter {
+class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     var playlists = mutableListOf<Playlist>()
 
     inner class ViewHolderPlaylist(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         internal var mArtwork = itemView.findViewById<View>(R.id.smallSongArtwork) as ImageView
         internal var mPlaylistName = itemView.findViewById<View>(R.id.smallSongTitle) as TextView
-        internal var mPlaylistSongCount = itemView.findViewById<View>(R.id.smallSongArtistOrCount) as TextView
+        internal var mSongCount = itemView.findViewById<View>(R.id.smallSongArtistOrCount) as TextView
 
         init {
             itemView.isClickable = true
@@ -37,11 +35,12 @@ class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter
         }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolderPlaylist {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return ViewHolderPlaylist(LayoutInflater.from(parent.context).inflate(R.layout.small_recycler_grid_preview, parent, false))
     }
 
-    override fun onBindViewHolder(holder: ViewHolderPlaylist, position: Int) {
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        holder as ViewHolderPlaylist
         val current = playlists[position]
 
         holder.mPlaylistName.text = current.name
@@ -52,76 +51,36 @@ class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter
             activity.insertArtwork(activity.findFirstSongArtwork(playlistSongIDs[0]), holder.mArtwork)
         }
 
-        // determine how to present songCount
         val songCountInt = playlistSongIDs.size
-        val songCount = if (songCountInt == 1) "$songCountInt song"
-        else "$songCountInt songs"
-
-        holder.mPlaylistSongCount.text = songCount
+        holder.mSongCount.text = if (songCountInt == 1) activity.getString(R.string.displayed_song)
+        else activity.getString(R.string.displayed_songs, songCountInt)
     }
 
     fun processLoopIteration(index: Int, playlist: Playlist) {
         when {
-            index >= artists.size -> {
-                artists.add(artist)
+            index >= playlists.size -> {
+                playlists.add(playlist)
                 notifyItemInserted(index)
             }
-            artist.artistName != artists[index].artistName -> {
+            playlist.playlistId != playlists[index].playlistId -> {
                 var numberOfItemsRemoved = 0
                 do {
-                    artists.removeAt(index)
+                    playlists.removeAt(index)
                     ++numberOfItemsRemoved
-                } while (index < artists.size &&
-                    artist.artistName != artists[index].artistName)
+                } while (index < playlists.size &&
+                    playlist.playlistId != playlists[index].playlistId)
 
                 when {
                     numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
                     numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index, numberOfItemsRemoved)
                 }
 
-                processLoopIteration(index, artist)
+                processLoopIteration(index, playlist)
             }
-            artist.songCount != artists[index].songCount -> {
-                artists[index] = artist
+            playlist.name != playlists[index].name ||
+                    playlist.songs != playlists[index].songs -> {
+                playlists[index] = playlist
                 notifyItemChanged(index)
-            }
-        }
-    }
-
-    internal fun updatePlaylists(playlistList: List<Playlist>) {
-        when {
-            playlistList.size > playlists.size -> {
-                val difference = playlistList.filterNot {
-                    playlists.contains(it)
-                }
-                for (p in difference) {
-                    playlists.add(p)
-                    playlists = playlists.sortedBy { song ->
-                        song.name.toUpperCase(Locale.ROOT)
-                    }.toMutableList()
-                    val index = playlists.indexOfFirst {
-                        it.playlistId== p.playlistId
-                    }
-                    if (index != -1) {
-                        notifyItemInserted(index)
-                        notifyItemChanged(index)
-                    }
-                }
-            }
-            playlistList.size < playlists.size -> {
-                val difference = playlists.filterNot {
-                    playlistList.contains(it)
-                }
-                for (s in difference) {
-                    val index = playlists.indexOfFirst {
-                        it.playlistId == s.playlistId
-                    }
-                    if (index != -1) {
-                        playlists.removeAt(index)
-                        notifyItemRemoved(index)
-                        notifyItemChanged(index)
-                    }
-                }
             }
         }
     }

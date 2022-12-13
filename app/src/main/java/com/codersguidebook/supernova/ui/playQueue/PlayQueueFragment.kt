@@ -6,7 +6,6 @@ import android.view.*
 import android.widget.Toast
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.recyclerview.widget.DefaultItemAnimator
@@ -15,17 +14,16 @@ import androidx.recyclerview.widget.ItemTouchHelper.*
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.CreatePlaylist
-import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.PlayQueueViewModel
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
+import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
+import com.codersguidebook.supernova.recyclerview.adapter.PlayQueueAdapter
 
-class PlayQueueFragment : Fragment() {
-    private var _binding: FragmentWithRecyclerViewBinding? = null
-    private val binding get() = _binding!!
+class PlayQueueFragment : RecyclerViewFragment() {
+    override val binding get() = fragmentBinding as FragmentWithRecyclerViewBinding
     private val playQueueViewModel: PlayQueueViewModel by activityViewModels()
-    private lateinit var callingActivity: MainActivity
-    private lateinit var playQueueAdapter: PlayQueueAdapter
+    override lateinit var adapter: PlayQueueAdapter
 
     private val itemTouchHelper by lazy {
         val simpleItemTouchCallback = object : SimpleCallback(UP or DOWN, 0) {
@@ -44,7 +42,7 @@ class PlayQueueFragment : Fragment() {
                 viewHolder.itemView.alpha = 1.0f
 
                 if (to != null && queueItem != null) {
-                    callingActivity.notifyQueueItemMoved(queueItem!!.queueId, to!!)
+                    mainActivity.notifyQueueItemMoved(queueItem!!.queueId, to!!)
                     to = null
                     queueItem = null
                 }
@@ -54,10 +52,10 @@ class PlayQueueFragment : Fragment() {
                 val from = viewHolder.layoutPosition
                 to = target.layoutPosition
                 if (from != to) {
-                    queueItem = playQueueAdapter.playQueue[from]
-                    playQueueAdapter.playQueue.removeAt(from)
-                    playQueueAdapter.playQueue.add(to!!, queueItem!!)
-                    playQueueAdapter.notifyItemMoved(from, to!!)
+                    queueItem = adapter.playQueue[from]
+                    adapter.playQueue.removeAt(from)
+                    adapter.playQueue.add(to!!, queueItem!!)
+                    adapter.notifyItemMoved(from, to!!)
                 }
 
                 return true
@@ -70,8 +68,7 @@ class PlayQueueFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
-        _binding = FragmentWithRecyclerViewBinding.inflate(inflater, container, false)
-        callingActivity = activity as MainActivity
+        fragmentBinding = FragmentWithRecyclerViewBinding.inflate(inflater, container, false)
 
         return binding.root
     }
@@ -80,50 +77,54 @@ class PlayQueueFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupMenu()
 
-        playQueueAdapter = PlayQueueAdapter(this, callingActivity)
         binding.root.layoutManager = LinearLayoutManager(activity)
         binding.root.itemAnimator = DefaultItemAnimator()
-        binding.root.adapter = playQueueAdapter
+        binding.root.adapter = adapter
 
         playQueueViewModel.playQueue.observe(viewLifecycleOwner) {
-            when {
-                it.size > playQueueAdapter.playQueue.size -> refreshPlayQueue()
-                playQueueAdapter.playQueue.size > it.size -> {
-                    val queueItemsToRemove = playQueueAdapter.playQueue.filter { queueItem ->
-                        it.find { item -> item.queueId == queueItem.queueId } == null
-                    }
-                    for (queueItem in queueItemsToRemove) {
-                        playQueueAdapter.removeQueueItemById(queueItem.queueId)
-                    }
-                }
-            }
+            updateRecyclerViewWithPlayQueue(it)
         }
 
         playQueueViewModel.refreshPlayQueue.observe(viewLifecycleOwner) {
-            if (it) refreshPlayQueue()
+            if (it) requestNewData()
         }
 
         playQueueViewModel.currentQueueItemId.observe(viewLifecycleOwner) { position ->
-            position?.let { playQueueAdapter.changeCurrentlyPlayingQueueItemId(it) }
+            position?.let { adapter.changeCurrentlyPlayingQueueItemId(it) }
         }
 
         itemTouchHelper.attachToRecyclerView(binding.root)
     }
 
-    /** Refresh the currently displayed play queue */
-    private fun refreshPlayQueue() {
-        if (playQueueAdapter.playQueue.isNotEmpty()) {
-            val numberItemsRemoved = playQueueAdapter.playQueue.size
-            playQueueAdapter.playQueue.clear()
-            playQueueAdapter.notifyItemRangeRemoved(0, numberItemsRemoved)
-        }
-        playQueueViewModel.playQueue.value?.let {
-            if (it.isNotEmpty()) {
-                playQueueAdapter.playQueue.addAll(it)
-                playQueueAdapter.notifyItemRangeInserted(0, it.size)
+    override fun initialiseAdapter() {
+        adapter = PlayQueueAdapter(this, mainActivity)
+    }
+
+    override fun requestNewData() {
+        playQueueViewModel.playQueue.value?.let { updateRecyclerViewWithPlayQueue(it) }
+    }
+
+    private fun updateRecyclerViewWithPlayQueue(playQueue: List<QueueItem>) {
+        setIsUpdatingTrue()
+
+        if (adapter.playQueue.isEmpty()) {
+            adapter.playQueue.addAll(playQueue)
+            adapter.notifyItemRangeInserted(0, playQueue.size)
+        } else {
+            for ((index, queueItem) in playQueue.withIndex()) {
+                adapter.processLoopIteration(index, queueItem)
+            }
+
+            if (adapter.playQueue.size > playQueue.size) {
+                val numberItemsToRemove = adapter.playQueue.size - playQueue.size
+                repeat(numberItemsToRemove) { adapter.playQueue.removeLast() }
+                adapter.notifyItemRangeRemoved(playQueue.size, numberItemsToRemove)
             }
         }
-        playQueueViewModel.refreshPlayQueue.postValue(false)
+
+        setIsUpdatingFalse()
+        // TODO: Can we remove the below (incl variable) given the new processing path?
+        playQueueViewModel.refreshPlayQueue.value = false
     }
 
     private fun setupMenu() {
@@ -138,12 +139,12 @@ class PlayQueueFragment : Fragment() {
                 return when (menuItem.itemId) {
                     R.id.savePlayQueue -> {
                         val songIds = mutableListOf<Long>()
-                        for (queueItem in playQueueAdapter.playQueue) {
+                        for (queueItem in adapter.playQueue) {
                             songIds.add(queueItem.description.mediaId?.toLong() ?: continue)
                         }
 
-                        if (songIds.isNotEmpty()) callingActivity.openDialog(CreatePlaylist(songIds))
-                        else Toast.makeText(callingActivity, getString(R.string.empty_play_queue), Toast.LENGTH_SHORT).show()
+                        if (songIds.isNotEmpty()) mainActivity.openDialog(CreatePlaylist(songIds))
+                        else Toast.makeText(mainActivity, getString(R.string.empty_play_queue), Toast.LENGTH_SHORT).show()
 
                         true
                     }
@@ -158,19 +159,14 @@ class PlayQueueFragment : Fragment() {
 
         // This code finds the position in the recycler view list of the currently playing song,
         // and scrolls to it.
-        val currentlyPlayingQueueIndex = playQueueAdapter.playQueue.indexOfFirst { queueItem ->
-            queueItem.queueId == playQueueAdapter.currentlyPlayingQueueId
+        val currentlyPlayingQueueIndex = adapter.playQueue.indexOfFirst { queueItem ->
+            queueItem.queueId == adapter.currentlyPlayingQueueId
         }
 
         if (currentlyPlayingQueueIndex != -1) {
             (binding.root.layoutManager as LinearLayoutManager)
                 .scrollToPositionWithOffset(currentlyPlayingQueueIndex, 0)
         }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 
     fun startDragging(viewHolder: RecyclerView.ViewHolder) = itemTouchHelper.startDrag(viewHolder)
