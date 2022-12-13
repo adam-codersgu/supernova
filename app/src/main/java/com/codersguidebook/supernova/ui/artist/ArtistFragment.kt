@@ -43,7 +43,6 @@ class ArtistFragment : RecyclerViewFragment() {
 
         binding.root.layoutManager = LinearLayoutManager(activity)
         binding.root.itemAnimator = DefaultItemAnimator()
-        binding.root.adapter = adapter
 
         musicDatabase = MusicDatabase.getDatabase(mainActivity, lifecycleScope)
         musicDatabase.musicDao().findArtistsSongs(artistName ?: "").observe(viewLifecycleOwner) {
@@ -73,6 +72,10 @@ class ArtistFragment : RecyclerViewFragment() {
                 repeat(numberItemsToRemove) { adapter.songs.removeLast() }
                 adapter.notifyItemRangeRemoved(songsByAlbumByYear.size, numberItemsToRemove)
             }
+        }
+
+        if (binding.root.adapter == null) {
+            binding.root.adapter = adapter
         }
 
         if (songs.isNotEmpty()) {
