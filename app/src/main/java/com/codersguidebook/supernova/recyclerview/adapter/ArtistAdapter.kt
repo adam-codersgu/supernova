@@ -79,7 +79,6 @@ class ArtistAdapter(private val activity: MainActivity): Adapter() {
     }
 
     override fun getItemViewType(position: Int): Int {
-        super.getItemViewType(position)
         return when (position) {
             0 -> HEADER
             1 -> ALL_SONGS

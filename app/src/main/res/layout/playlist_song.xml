@@ -14,8 +14,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         android:contentDescription="@string/album_artwork" />
 
-    <include android:id="@+id/songPreviewLayout"
-        layout="@layout/item_details"
+    <include layout="@layout/item_details"
         android:layout_height="match_parent"
         android:layout_width="0dp"
         app:layout_constraintEnd_toStartOf="@+id/plays"

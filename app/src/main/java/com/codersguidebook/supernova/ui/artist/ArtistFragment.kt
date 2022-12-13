@@ -15,6 +15,8 @@ import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
 import com.codersguidebook.supernova.recyclerview.adapter.ArtistAdapter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class ArtistFragment : RecyclerViewFragment() {
 
@@ -39,8 +41,7 @@ class ArtistFragment : RecyclerViewFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val layoutManager = LinearLayoutManager(activity)
-        binding.root.layoutManager = layoutManager
+        binding.root.layoutManager = LinearLayoutManager(activity)
         binding.root.itemAnimator = DefaultItemAnimator()
         binding.root.adapter = adapter
 
@@ -76,10 +77,12 @@ class ArtistFragment : RecyclerViewFragment() {
 
         if (songs.isNotEmpty()) {
             artistName?.let {
-                val plays = musicDatabase.musicDao().getSongPlaysByArtist(it)
-                if (plays != adapter.plays) {
-                    adapter.plays = plays
-                    adapter.notifyItemChanged(0)
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val plays = musicDatabase.musicDao().getSongPlaysByArtist(it)
+                    if (plays != adapter.plays) {
+                        adapter.plays = plays
+                        adapter.notifyItemChanged(0)
+                    }
                 }
             }
         }

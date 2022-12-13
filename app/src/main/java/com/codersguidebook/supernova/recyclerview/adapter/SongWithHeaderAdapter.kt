@@ -5,14 +5,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
-import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.SongOptions
 
-abstract class SongWithHeaderAdapter(private val activity: MainActivity): SongAdapter() {
+abstract class SongWithHeaderAdapter(): SongAdapter() {
 
     companion object {
         const val HEADER = 1
@@ -32,26 +29,9 @@ abstract class SongWithHeaderAdapter(private val activity: MainActivity): SongAd
         internal var mTitle = itemView.findViewById<View>(R.id.title) as TextView
         internal var mArtist = itemView.findViewById<View>(R.id.subtitle) as TextView
         internal var mMenu = itemView.findViewById<ImageButton>(R.id.menu)
-        internal var songLayout = itemView.findViewById<RelativeLayout>(R.id.songPreviewLayout)
-
-        init {
-            songLayout.isClickable = true
-            songLayout.setOnClickListener {
-                activity.playNewPlayQueue(songs, layoutPosition - 1)
-            }
-            songLayout.setOnLongClickListener{
-                activity.openDialog(SongOptions(songs[layoutPosition - 1]))
-                return@setOnLongClickListener true
-            }
-
-            mMenu.setOnClickListener {
-                activity.openDialog(SongOptions(songs[layoutPosition - 1]))
-            }
-        }
     }
 
     override fun getItemViewType(position: Int): Int {
-        super.getItemViewType(position)
         return if (position == 0) HEADER
         else SONG
     }

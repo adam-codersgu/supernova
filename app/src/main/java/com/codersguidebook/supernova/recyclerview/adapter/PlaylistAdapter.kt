@@ -21,7 +21,7 @@ import com.codersguidebook.supernova.ui.playlist.PlaylistFragment
 
 class PlaylistAdapter(private val fragment: PlaylistFragment,
                       private val activity: MainActivity
-): SongWithHeaderAdapter(activity) {
+): SongWithHeaderAdapter() {
     private var showHandles = false
     var playlist: Playlist? = null
 
@@ -47,7 +47,12 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
         internal var mPlays = itemView.findViewById<View>(R.id.plays) as TextView
 
         init {
-            songLayout.setOnLongClickListener {
+            itemView.isClickable = true
+            itemView.setOnClickListener {
+                activity.playNewPlayQueue(songs, layoutPosition - 1)
+            }
+
+            itemView.setOnLongClickListener {
                 if (!showHandles) playlist?.let {
                     activity.openDialog(PlaylistSongOptions(songs, layoutPosition - 1, it))
                 }

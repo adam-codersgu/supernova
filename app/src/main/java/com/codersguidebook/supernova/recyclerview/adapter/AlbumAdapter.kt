@@ -4,21 +4,41 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
+import com.codersguidebook.supernova.SongOptions
 
-class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(activity) {
+class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter() {
 
     var displayDiscNumbers = false
 
     inner class ViewHolderSongWithDisc(itemView: View) :
         ViewHolderSong(itemView) {
 
+        private var songLayout = itemView.findViewById<ConstraintLayout>(R.id.songPreviewLayout)
         internal var mDisc = itemView.findViewById<View>(R.id.discNumber) as TextView
         internal var mTrack = itemView.findViewById<View>(R.id.songTrack) as TextView
+
+        init {
+            songLayout.isClickable = true
+
+            songLayout.setOnClickListener {
+                activity.playNewPlayQueue(songs, layoutPosition - 1)
+            }
+
+            songLayout.setOnLongClickListener{
+                activity.openDialog(SongOptions(songs[layoutPosition - 1]))
+                return@setOnLongClickListener true
+            }
+
+            mMenu.setOnClickListener {
+                activity.openDialog(SongOptions(songs[layoutPosition - 1]))
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {

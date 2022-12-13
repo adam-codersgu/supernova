@@ -70,7 +70,7 @@ class PlayQueueFragment : RecyclerViewFragment() {
                               savedInstanceState: Bundle?): View {
         fragmentBinding = FragmentWithRecyclerViewBinding.inflate(inflater, container, false)
 
-        return binding.root
+        return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
