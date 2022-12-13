@@ -73,6 +73,7 @@ class HomeFragment : Fragment() {
         binding.recentlyPlayedRecyclerView.itemAnimator = DefaultItemAnimator()
         binding.recentlyPlayedRecyclerView.adapter = recentlyPlayedAdapter
 
+        // TODO: Find a better way of updating the playlists in this fragment that is not so dependent on other classes e.g. MainActivity and the view model loading data
         var isLoaded = false
         musicLibraryViewModel.allSongs.observe(viewLifecycleOwner) {
             if (it.isNotEmpty() && !isLoaded) {
