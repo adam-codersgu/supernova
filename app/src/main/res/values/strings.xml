@@ -1,78 +1,73 @@
 <resources>
+    <!-- App details -->
     <string name="app_name">Supernova</string>
-    <string name="action_settings">Settings</string>
-    <string name="menu_home">Home</string>
+
+    <!-- Navigation -->
+    <string name="albums">Albums</string>
+    <string name="artists">Artists</string>
+    <string name="home">Home</string>
     <string name="play_queue">Play queue</string>
     <string name="playlists">Playlists</string>
-    <string name="artists">Artists</string>
-    <string name="albums">Albums</string>
-    <string name="edit_music">Edit music info</string>
     <string name="search">Search</string>
+    <string name="settings">Settings</string>
     <string name="songs">Songs</string>
+
+    <!-- Actions -->
     <string name="add_que">Add to play queue</string>
     <string name="add_playlist">Add to playlist</string>
     <string name="cancel">Cancel</string>
+    <string name="change_image">Change image</string>
     <string name="create_playlist">Create new playlist</string>
-    <string name="title">Title</string>
-    <string name="year">Year</string>
+    <string name="delete_image">Delete image</string>
+    <string name="done">Done</string>
     <string name="edit_album">Edit album info</string>
-    <string name="name_playlist">Playlist name</string>
+    <string name="edit_music">Edit music info</string>
+    <string name="more_settings">More settings</string>
     <string name="ok">OK</string>
     <string name="play_next">Play next</string>
-    <string name="play_prev">Play previous</string>
     <string name="play_pause">Play or pause</string>
+    <string name="play_prev">Play previous</string>
+    <string name="repeat_current_playlist">Repeat current playlist</string>
     <string name="save">Save</string>
-    <string name="search_hint">Search music</string>
-    <string name="library">My Library</string>
-    <string name="handle_view_desc">Icon that allows you to reorder songs in the current playback list.</string>
-    <string name="album_artwork">Album artwork</string>
-    <string name="album_information">Album information</string>
-    <string name="set_album_artwork">Set album artwork</string>
+    <string name="submit">Submit</string>
+
+    <!-- Labels -->
+    <string name="album">Album</string>
     <string name="album_title">Album title</string>
     <string name="album_year">Album year</string>
-    <string name="repeat_current_playlist">Repeat current playlist</string>
-    <string name="playlist_results">Your playlist is below! You must save it in order to play the full list of songs.</string>
-    <string name="more_settings">More settings</string>
-    <string name="connection_lost">The connection to Spotify has been lost.</string>
-    <string name="reconnect">Attempt to reconnect</string>
-    <string name="change_image">Change image</string>
-    <string name="delete_image">Delete image</string>
-    <string name="welcome">Welcome</string>
+    <string name="artist">Artist</string>
+    <string name="library">My Library</string>
     <string name="no_results">No results found</string>
-    <string name="transition_image">transition_image</string>
-    <string name="transition_title">transition_title</string>
-    <string name="transition_subtitle">transition_subtitle</string>
-    <string name="transition_subtitle2">transition_subtitle2</string>
-    <string name="transition_back">transition_back</string>
-    <string name="transition_play">transition_play</string>
-    <string name="transition_forward">transition_forward</string>
-    <string name="close_currently_playing">Close currently playing</string>
-    <string name="spotify_SOTD_title">Song of the day inspiration</string>
-    <string name="spotify_SOTD_yes">The song of the day will be based on your music taste</string>
-    <string name="spotify_SOTD_no">The song of the day will be random</string>
-    <string name="liked_songs">Liked Songs</string>
-    <string name="add_to_likes">Add to liked songs</string>
-    <string name="remove_from_likes">Remove from liked Songs</string>
-    <string name="playlist_generator">Playlist generator</string>
-    <string name="playlist_generator_subtitle">Generate custom Spotify playlists based on your mood</string>
-    <string name="mood">How do you feel?</string>
-    <string name="activity">Choose an activity</string>
-    <string name="relax">Relax</string>
-    <string name="dancing">Dance</string>
-    <string name="workout">Workout</string>
-    <string name="study">Study</string>
-    <string name="optional">Optional</string>
-    <string name="show_genres">Select a genre</string>
-    <string name="select_genres">Select up to three genres</string>
-    <string name="submit">Submit</string>
-    <string name="changes_applied">Your changes will be applied to the next round of animations.</string>
+    <string name="playlist_name">Playlist name</string>
+    <string name="search_hint">Search music</string>
+    <string name="title">Title</string>
+    <string name="year">Year</string>
 
-    <string name="theme_toggle">Night theme</string>
-    <string name="view_queue">View the current play queue</string>
-    <string name="skip_back">Skip back a track</string>
+    <!-- Accessibility -->
+    <string name="album_artwork">Album artwork</string>
+    <string name="album_information">Album information</string>
+    <string name="close_currently_playing">Close currently playing</string>
+    <string name="handle_view_desc">Icon that allows you to reorder songs in the current playback list.</string>
+    <string name="set_album_artwork">Set album artwork</string>
     <string name="shuffle_playlist">Shuffle current playlist</string>
     <string name="shuffle_tracks">Shuffle tracks</string>
     <string name="skip_ahead">Skip ahead a track</string>
+    <string name="skip_back">Skip back a track</string>
+
+    <!-- Transition labels -->
+    <string name="transition_back">transition_back</string>
+    <string name="transition_forward">transition_forward</string>
+    <string name="transition_image">transition_image</string>
+    <string name="transition_play">transition_play</string>
+    <string name="transition_subtitle">transition_subtitle</string>
+    <string name="transition_subtitle2">transition_subtitle2</string>
+    <string name="transition_title">transition_title</string>
+
+    <!-- Toast notifications -->
+    <string name="changes_applied">Your changes will be applied to the next round of animations.</string>
+
+
+
     <string name="play_or_pause_current_track">Play or pause current track</string>
     <string name="options_menu">Options menu</string>
     <string name="remove_from_queue">Remove from play queue</string>

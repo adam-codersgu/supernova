@@ -52,7 +52,7 @@ class ArtistFragment : RecyclerViewFragment() {
 
         val songsByAlbumByYear = songs.distinctBy { song ->
             song.albumId
-        }.sortedBy { song ->
+        }.sortedByDescending { song ->
             song.year
         }.toMutableList()
 
