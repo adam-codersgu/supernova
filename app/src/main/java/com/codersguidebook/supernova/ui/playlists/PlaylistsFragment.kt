@@ -1,70 +1,70 @@
 package com.codersguidebook.supernova.ui.playlists
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.MusicLibraryViewModel
-import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
-import java.util.*
+import com.codersguidebook.supernova.entities.Playlist
+import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
+import com.codersguidebook.supernova.recyclerview.adapter.PlaylistsAdapter
 
-class PlaylistsFragment : Fragment() {
+class PlaylistsFragment : RecyclerViewFragment() {
 
-    private var _binding: FragmentWithRecyclerViewBinding? = null
-    private val binding get() = _binding!!
+    override lateinit var adapter: PlaylistsAdapter
     private lateinit var musicLibraryViewModel: MusicLibraryViewModel
-    private lateinit var callingActivity: MainActivity
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentWithRecyclerViewBinding.inflate(inflater, container, false)
-        callingActivity = activity as MainActivity
-        musicLibraryViewModel = ViewModelProvider(this).get(MusicLibraryViewModel::class.java)
-
-        return binding.root
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val playlistsAdapter = PlaylistsAdapter(callingActivity)
-        binding.root.layoutManager = GridLayoutManager(context, 3)
-        binding.root.itemAnimator = DefaultItemAnimator()
-        binding.root.adapter = playlistsAdapter
-        playlistsAdapter.stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
+        binding.root.layoutManager = GridLayoutManager(mainActivity, 3)
 
-        musicLibraryViewModel.allPlaylists.observe(viewLifecycleOwner) { playlists ->
-            playlists?.let {
-                var allPlaylists = it.toMutableList()
-                allPlaylists.removeIf { p ->
-                    p.isDefault && p.songs.isNullOrBlank()
-                }
-                allPlaylists = allPlaylists.sortedBy { p ->
-                    p.name.uppercase(Locale.ROOT)
-                }.toMutableList()
-
-                when {
-                    playlistsAdapter.playlists.isEmpty() -> {
-                        playlistsAdapter.playlists = allPlaylists
-                        playlistsAdapter.notifyItemRangeInserted(0, allPlaylists.size)
-                    }
-                    else -> playlistsAdapter.updatePlaylists(allPlaylists)
-                }
-            }
+        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
+        musicLibraryViewModel.allPlaylists.observe(viewLifecycleOwner) {
+            updateRecyclerViewWithPlaylists(it)
         }
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+    override fun initialiseAdapter() {
+        adapter = PlaylistsAdapter(mainActivity)
+    }
+
+    override fun requestNewData() {
+        musicLibraryViewModel.allPlaylists.value?.let { updateRecyclerViewWithPlaylists(it) }
+    }
+
+    /**
+     * Refresh the content displayed in the RecyclerView.
+     *
+     * @param playlists - The up-to-date list of Playlist objects that should be displayed.
+     */
+    private fun updateRecyclerViewWithPlaylists(playlists: List<Playlist>) {
+        setIsUpdatingTrue()
+
+        val playlistsToDisplay = playlists.toMutableList().apply {
+            removeIf { playlist ->
+                playlist.isDefault && playlist.songs.isNullOrBlank()
+            }
+            sortBy { playlist ->
+                playlist.name.uppercase()
+            }
+        }
+
+        if (adapter.playlists.isEmpty()) {
+            adapter.playlists.addAll(playlistsToDisplay)
+            adapter.notifyItemRangeInserted(0, playlistsToDisplay.size)
+        } else {
+            for ((index, playlist) in playlistsToDisplay.withIndex()) {
+                adapter.processLoopIteration(index, playlist)
+            }
+
+            if (adapter.playlists.size > playlistsToDisplay.size) {
+                val numberItemsToRemove = adapter.playlists.size - playlistsToDisplay.size
+                repeat(numberItemsToRemove) { adapter.playlists.removeLast() }
+                adapter.notifyItemRangeRemoved(playlistsToDisplay.size, numberItemsToRemove)
+            }
+        }
+
+        finishUpdate()
     }
 }

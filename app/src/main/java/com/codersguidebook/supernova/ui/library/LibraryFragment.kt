@@ -4,18 +4,21 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
+import androidx.viewbinding.ViewBinding
 import androidx.viewpager2.widget.ViewPager2
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.ViewPagerAdapter
 import com.codersguidebook.supernova.databinding.FragmentLibraryBinding
+import com.codersguidebook.supernova.recyclerview.BaseFragment
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 
-class LibraryFragment : Fragment() {
-    private var _binding: FragmentLibraryBinding? = null
-    private val binding get() = _binding!!
+class LibraryFragment : BaseFragment() {
+    override var _binding: ViewBinding? = null
+        get() = field as FragmentLibraryBinding?
+    override val binding: FragmentLibraryBinding
+        get() = _binding!! as FragmentLibraryBinding
     private var viewPagerPosition: Int? = null
 
     override fun onCreateView(
@@ -30,9 +33,14 @@ class LibraryFragment : Fragment() {
 
         _binding = FragmentLibraryBinding.inflate(inflater, container, false)
 
-        val viewPagerAdapter = ViewPagerAdapter(this)
-        binding.viewPager.adapter = viewPagerAdapter
+        binding.viewPager.adapter = ViewPagerAdapter(this)
         binding.viewPager.currentItem = viewPagerPosition ?: 0
+
+        return super.onCreateView(inflater, container, savedInstanceState)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         val navView: NavigationView = requireActivity().findViewById(R.id.nav_view)
         val pageChangeCallback = object : ViewPager2.OnPageChangeCallback() {
@@ -47,17 +55,10 @@ class LibraryFragment : Fragment() {
         }
         binding.viewPager.registerOnPageChangeCallback(pageChangeCallback)
 
-        val namesArray = arrayOf("Playlists","Artists","Albums","Songs")
+        val namesArray = arrayOf("Playlists", "Artists", "Albums", "Songs")
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
             tab.text = namesArray[position]
         }.attach()
         binding.tabLayout.tabGravity = TabLayout.GRAVITY_FILL
-
-        return binding.root
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 }

@@ -18,7 +18,7 @@ import com.codersguidebook.supernova.databinding.FragmentHomeBinding
 import com.codersguidebook.supernova.ui.playlists.PlaylistsFragmentDirections
 
 class HomeFragment : Fragment() {
-    
+
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
     private lateinit var callingActivity: MainActivity
@@ -29,9 +29,9 @@ class HomeFragment : Fragment() {
     private lateinit var musicLibraryViewModel: MusicLibraryViewModel
 
     override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         callingActivity = activity as MainActivity
@@ -73,6 +73,7 @@ class HomeFragment : Fragment() {
         binding.recentlyPlayedRecyclerView.itemAnimator = DefaultItemAnimator()
         binding.recentlyPlayedRecyclerView.adapter = recentlyPlayedAdapter
 
+        // TODO: Find a better way of updating the playlists in this fragment that is not so dependent on other classes e.g. MainActivity and the view model loading data
         var isLoaded = false
         musicLibraryViewModel.allSongs.observe(viewLifecycleOwner) {
             if (it.isNotEmpty() && !isLoaded) {

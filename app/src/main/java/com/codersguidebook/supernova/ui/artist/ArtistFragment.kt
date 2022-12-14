@@ -2,24 +2,24 @@ package com.codersguidebook.supernova.ui.artist
 
 import android.os.Bundle
 import android.view.*
-import androidx.fragment.app.Fragment
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.DefaultItemAnimator
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
+import com.codersguidebook.supernova.recyclerview.adapter.ArtistAdapter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
-class ArtistFragment : Fragment() {
+class ArtistFragment : RecyclerViewFragment() {
+
     private var artistName: String? = null
-    private var artistSongs = mutableListOf<Song>()
-    private var artistAlbums = mutableListOf<Song>()
-    private var _binding: FragmentWithRecyclerViewBinding? = null
-    private val binding get() = _binding!!
-    private lateinit var callingActivity: MainActivity
+    override lateinit var adapter: ArtistAdapter
+    private lateinit var musicDatabase: MusicDatabase
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -30,73 +30,97 @@ class ArtistFragment : Fragment() {
             val safeArgs = ArtistFragmentArgs.fromBundle(it)
             artistName = safeArgs.artist
         }
-        _binding = FragmentWithRecyclerViewBinding.inflate(inflater, container, false)
+        return super.onCreateView(inflater, container, savedInstanceState)
+    }
 
-        callingActivity = activity as MainActivity
-        val layoutManager = LinearLayoutManager(activity)
-        val artistAdapter = ArtistAdapter(callingActivity, this)
-        binding.root.layoutManager = layoutManager
-        binding.root.itemAnimator = DefaultItemAnimator()
-        binding.root.adapter = artistAdapter
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        val musicDatabase = MusicDatabase.getDatabase(callingActivity, lifecycleScope)
-        musicDatabase.musicDao().findArtistsSongs(artistName ?: "").observe(viewLifecycleOwner,
-            { songs ->
-                songs?.let {
-                    val adapterSongCount = artistAdapter.artistSongs.size
-                    artistSongs = it.toMutableList()
-                    artistAdapter.artistSongs = artistSongs
-                    artistAlbums = it.distinctBy { album ->
-                        album.albumName
-                    }.sortedByDescending { album ->
-                        album.year
-                    }.toMutableList()
-                    when {
-                        artistAdapter.albums.isEmpty() -> {
-                            artistAdapter.albums = artistAlbums
-                            artistAdapter.notifyDataSetChanged()
-                        }
-                        artistAdapter.albums.size != artistAlbums.size -> artistAdapter.processAlbums(artistAlbums)
-                        // song count changed but albums have not
-                        adapterSongCount != artistSongs.size -> artistAdapter.notifyItemChanged(0)
+        musicDatabase = MusicDatabase.getDatabase(mainActivity, lifecycleScope)
+        musicDatabase.musicDao().findArtistsSongs(artistName ?: "").observe(viewLifecycleOwner) {
+            updateRecyclerView(it)
+        }
+    }
+
+    /**
+     * Refresh the content displayed in the RecyclerView.
+     *
+     * @param songs - The up-to-date list of Song objects that should be displayed.
+     */
+    private fun updateRecyclerView(songs: List<Song>) {
+        setIsUpdatingTrue()
+
+        val songsByAlbumByYear = songs.distinctBy { song ->
+            song.albumId
+        }.sortedBy { song ->
+            song.year
+        }.toMutableList()
+
+        if (adapter.songs.isEmpty()) {
+            adapter.songs.addAll(songsByAlbumByYear)
+            adapter.notifyItemRangeInserted(0, adapter.getRecyclerViewIndex(songsByAlbumByYear.size))
+        } else {
+            for ((index, album) in songsByAlbumByYear.withIndex()) {
+                adapter.processLoopIteration(index, album)
+            }
+
+            if (adapter.songs.size > songsByAlbumByYear.size) {
+                val numberItemsToRemove = adapter.songs.size - songsByAlbumByYear.size
+                repeat(numberItemsToRemove) { adapter.songs.removeLast() }
+                adapter.notifyItemRangeRemoved(
+                    adapter.getRecyclerViewIndex(songsByAlbumByYear.size), numberItemsToRemove)
+            }
+        }
+
+        if (songs.isNotEmpty()) {
+            artistName?.let {
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val plays = musicDatabase.musicDao().getSongPlaysByArtist(it)
+                    if (plays != adapter.plays) {
+                        adapter.plays = plays
+                        adapter.notifyItemChanged(0)
                     }
                 }
-            })
-        
-        setHasOptionsMenu(true)
-        return binding.root
-    }
-
-    fun viewSongs() {
-        val action = ArtistFragmentDirections.actionSelectArtistSongs(artistName!!)
-        findNavController().navigate(action)
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        menu.setGroupVisible(R.id.menu_group_artist_actions, true)
-
-        super.onCreateOptionsMenu(menu, inflater)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val songList = artistSongs.sortedBy {
-            it.title
-        }
-        when (item.itemId) {
-            R.id.artist_play_next -> callingActivity.addSongsToPlayQueue(songList, true)
-            R.id.artist_add_queue -> callingActivity.addSongsToPlayQueue(songList)
-            R.id.artist_add_playlist -> callingActivity.openAddToPlaylistDialog(songList)
-            R.id.artist_edit_artist_info -> {
-                val action = artistName?.let { ArtistFragmentDirections.actionEditArtist(it) }
-                if (action != null) findNavController().navigate(action)
             }
-            else -> return super.onOptionsItemSelected(item)
         }
-        return true
+
+        setupMenu(songs.sortedBy { it.title })
+        finishUpdate()
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+    override fun requestNewData() {
+        musicDatabase.musicDao().findArtistsSongs(artistName ?: return).value?.let {
+            updateRecyclerView(it)
+        }
+    }
+
+    override fun initialiseAdapter() {
+        adapter = ArtistAdapter(mainActivity)
+    }
+
+    private fun setupMenu(songs: List<Song>) {
+        (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
+            override fun onPrepareMenu(menu: Menu) {
+                menu.setGroupVisible(R.id.menu_group_artist_actions, true)
+            }
+
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) { }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+
+                when (menuItem.itemId) {
+                    R.id.artist_play_next -> mainActivity.addSongsToPlayQueue(songs, true)
+                    R.id.artist_add_queue -> mainActivity.addSongsToPlayQueue(songs)
+                    R.id.artist_add_playlist -> mainActivity.openAddToPlaylistDialog(songs)
+                    R.id.artist_edit_artist_info -> {
+                        artistName?.let {
+                            findNavController().navigate(ArtistFragmentDirections.actionEditArtist(it))
+                        }
+                    }
+                    else -> return false
+                }
+                return true
+            }
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
 }

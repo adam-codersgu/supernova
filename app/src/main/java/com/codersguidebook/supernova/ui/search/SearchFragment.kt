@@ -6,28 +6,31 @@ import android.widget.SearchView
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.codersguidebook.supernova.MainActivity
+import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentSearchBinding
+import com.codersguidebook.supernova.recyclerview.BaseRecyclerViewFragment
+import com.codersguidebook.supernova.recyclerview.adapter.SearchAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class SearchFragment : Fragment() {
+class SearchFragment : BaseRecyclerViewFragment() {
 
-    private var _binding: FragmentSearchBinding? = null
-    private val binding get() = _binding!!
+    override var _binding: ViewBinding? = null
+        get() = field as FragmentSearchBinding?
+    override val binding: FragmentSearchBinding
+        get() = _binding!! as FragmentSearchBinding
+
     private var musicDatabase: MusicDatabase? = null
     private var query = ""
     private var searchType = TRACK
     private var searchView: SearchView? = null
-    private lateinit var adapter: SearchAdapter
-    private lateinit var callingActivity: MainActivity
+    override lateinit var adapter: SearchAdapter
     private lateinit var onBackPressedCallback: OnBackPressedCallback
 
     companion object {
@@ -44,8 +47,6 @@ class SearchFragment : Fragment() {
     ): View {
         _binding = FragmentSearchBinding.inflate(inflater, container, false)
         setHasOptionsMenu(true)
-        callingActivity = activity as MainActivity
-        adapter = SearchAdapter(callingActivity)
         musicDatabase = MusicDatabase.getDatabase(requireContext(), lifecycleScope)
 
         binding.chipGroup.setOnCheckedChangeListener { _, checkedId ->
@@ -92,15 +93,21 @@ class SearchFragment : Fragment() {
 
         onBackPressedCallback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                callingActivity.iconifySearchView()
+                mainActivity.iconifySearchView()
                 findNavController().popBackStack()
             }
         }
 
-        callingActivity.onBackPressedDispatcher.addCallback(viewLifecycleOwner, onBackPressedCallback)
+        mainActivity.onBackPressedDispatcher.addCallback(viewLifecycleOwner, onBackPressedCallback)
         
-        return binding.root
+        return super.onCreateView(inflater, container, savedInstanceState)
     }
+
+    override fun initialiseAdapter() {
+        adapter = SearchAdapter(mainActivity)
+    }
+
+    override fun requestNewData() { }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         val searchItem = menu.findItem(R.id.search)
@@ -310,12 +317,11 @@ class SearchFragment : Fragment() {
 
     override fun onStop() {
         super.onStop()
-        callingActivity.hideKeyboard(callingActivity)
+        mainActivity.hideKeyboard(mainActivity)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null
         onBackPressedCallback.remove()
     }
 }

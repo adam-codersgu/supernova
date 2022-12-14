@@ -1,4 +1,4 @@
-package com.codersguidebook.supernova.ui.search
+package com.codersguidebook.supernova.recyclerview.adapter
 
 import android.view.LayoutInflater
 import android.view.View
@@ -16,9 +16,9 @@ import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
+import com.codersguidebook.supernova.ui.search.SearchFragmentDirections
 
-class SearchAdapter(private val mainActivity: MainActivity):
-    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class SearchAdapter(private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     var songs = mutableListOf<Song>()
     var albums = mutableListOf<Song>()
@@ -33,8 +33,7 @@ class SearchAdapter(private val mainActivity: MainActivity):
         const val PLAYLIST = 3
     }
 
-    class ViewHolderItem(itemView: View) :
-        RecyclerView.ViewHolder(itemView) {
+    inner class ViewHolderItem(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         internal var mArtwork = itemView.findViewById<View>(R.id.artwork) as ImageView
         internal var mTitle = itemView.findViewById<View>(R.id.title) as TextView
@@ -47,7 +46,9 @@ class SearchAdapter(private val mainActivity: MainActivity):
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        return ViewHolderItem(LayoutInflater.from(parent.context).inflate(R.layout.preview, parent, false))
+        return ViewHolderItem(
+            LayoutInflater.from(parent.context).inflate(R.layout.item_with_artwork_preview, parent, false)
+        )
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
@@ -58,19 +59,19 @@ class SearchAdapter(private val mainActivity: MainActivity):
                 val current = songs[position]
 
                 holder.mArtwork.isVisible = true
-                mainActivity.insertArtwork(current.albumId, holder.mArtwork)
+                activity.insertArtwork(current.albumId, holder.mArtwork)
                 holder.mTitle.text = current.title
                 holder.mSubtitle.text = current.artist
                 holder.mMenu.setOnClickListener {
-                    mainActivity.openDialog(SongOptions(current))
+                    activity.openDialog(SongOptions(current))
                 }
 
                 holder.itemView.setOnClickListener {
-                    mainActivity.playNewPlayQueue(listOf(current))
+                    activity.playNewPlayQueue(listOf(current))
                 }
 
                 holder.itemView.setOnLongClickListener {
-                    mainActivity.openDialog(SongOptions(current))
+                    activity.openDialog(SongOptions(current))
                     return@setOnLongClickListener true
                 }
             }
@@ -79,11 +80,11 @@ class SearchAdapter(private val mainActivity: MainActivity):
                 val current = albums[position]
 
                 holder.mArtwork.isVisible = true
-                mainActivity.insertArtwork(current.albumId, holder.mArtwork)
+                activity.insertArtwork(current.albumId, holder.mArtwork)
                 holder.mTitle.text = current.albumName
                 holder.mSubtitle.text = current.artist
                 holder.mMenu.setOnClickListener {
-                    mainActivity.openAlbumDialog(current.albumId)
+                    activity.openDialog(AlbumOptions(current.albumId))
                 }
 
                 holder.itemView.setOnClickListener {
@@ -92,7 +93,7 @@ class SearchAdapter(private val mainActivity: MainActivity):
                 }
 
                 holder.itemView.setOnLongClickListener{
-                    mainActivity.openAlbumDialog(current.albumId)
+                    activity.openDialog(AlbumOptions(current.albumId))
                     return@setOnLongClickListener true
                 }
             }
@@ -103,13 +104,15 @@ class SearchAdapter(private val mainActivity: MainActivity):
                 holder.mArtwork.isGone = true
                 holder.mTitle.text = current.artistName
 
-                // determine how to present songCount
                 val songCountInt = current.songCount
-                holder.mSubtitle.text = if (songCountInt == 1) "$songCountInt song"
-                else "$songCountInt songs"
+                holder.mSubtitle.text = if (songCountInt == 1) {
+                    activity.getString(R.string.displayed_song)
+                } else {
+                    activity.getString(R.string.displayed_songs, songCountInt)
+                }
 
                 holder.mMenu.setOnClickListener {
-                    mainActivity.openDialog(ArtistOptions(current.artistName ?: ""))
+                    activity.openDialog(ArtistOptions(current.artistName ?: ""))
                 }
 
                 holder.itemView.setOnClickListener {
@@ -118,7 +121,7 @@ class SearchAdapter(private val mainActivity: MainActivity):
                 }
 
                 holder.itemView.setOnLongClickListener{
-                    mainActivity.openDialog(ArtistOptions(current.artistName ?: ""))
+                    activity.openDialog(ArtistOptions(current.artistName ?: ""))
                     return@setOnLongClickListener true
                 }
             }
@@ -127,21 +130,23 @@ class SearchAdapter(private val mainActivity: MainActivity):
                 val current = playlists[position]
 
                 holder.mArtwork.isVisible = true
-                val playlistSongIDs= mainActivity.extractPlaylistSongIds(current.songs)
+                val playlistSongIDs= activity.extractPlaylistSongIds(current.songs)
                 if (playlistSongIDs.isNotEmpty()){
-                    val firstSongArtwork = mainActivity.findFirstSongArtwork(playlistSongIDs[0])
-                    mainActivity.insertArtwork(firstSongArtwork, holder.mArtwork)
+                    val firstSongArtwork = activity.findFirstSongArtwork(playlistSongIDs[0])
+                    activity.insertArtwork(firstSongArtwork, holder.mArtwork)
                 }
 
                 holder.mTitle.text = current.name
 
-                // determine how to present songCount
                 val songCountInt = playlistSongIDs.size
-                holder.mSubtitle.text = if (songCountInt == 1) "$songCountInt song"
-                else "$songCountInt songs"
+                holder.mSubtitle.text = if (songCountInt == 1) {
+                    activity.getString(R.string.displayed_song)
+                } else {
+                    activity.getString(R.string.displayed_songs, songCountInt)
+                }
 
                 holder.mMenu.setOnClickListener {
-                    mainActivity.openDialog(PlaylistOptions(current))
+                    activity.openDialog(PlaylistOptions(current))
                 }
 
                 holder.itemView.setOnClickListener {
@@ -150,7 +155,7 @@ class SearchAdapter(private val mainActivity: MainActivity):
                 }
 
                 holder.itemView.setOnLongClickListener{
-                    mainActivity.openDialog(PlaylistOptions(current))
+                    activity.openDialog(PlaylistOptions(current))
                     return@setOnLongClickListener true
                 }
             }

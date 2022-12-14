@@ -5,23 +5,8 @@
     android:layout_height="match_parent"
     android:background="@color/fragment_background" >
 
-    <com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
-        android:id="@+id/recyclerView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:fastScrollAutoHide="true"
-        app:fastScrollAutoHideDelay="1500"
-        app:fastScrollTrackColor="@android:color/transparent"
-        app:fastScrollThumbInactiveColor="@color/accent"
-        app:fastScrollEnableThumbInactiveColor="true"
-        app:fastScrollPopupBackgroundSize="62dp"
-        app:fastScrollPopupBgColor="@color/accent"
-        app:fastScrollPopupPosition="adjacent"
-        app:fastScrollPopupTextColor="@android:color/white"
-        app:fastScrollPopupTextSize="32dp"
-        app:fastScrollPopupTextVerticalAlignmentMode="font_metrics"
-        app:fastScrollThumbColor="@color/accent"
-        app:fastScrollThumbEnabled="true" />
+    <include layout="@layout/scroll_recycler_view"
+        android:id="@+id/scroll_recycler_view" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"

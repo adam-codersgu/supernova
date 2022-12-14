@@ -1,90 +1,64 @@
 package com.codersguidebook.supernova.ui.artists
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.DefaultItemAnimator
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.*
+import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.entities.Artist
-import java.util.*
+import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
+import com.codersguidebook.supernova.recyclerview.adapter.ArtistsAdapter
 
-class ArtistsFragment : Fragment() {
+class ArtistsFragment : RecyclerViewFragment() {
 
-    private var artists = mutableListOf<Artist>()
-    private var isProcessing = false
-    private lateinit var artistsAdapter: ArtistsAdapter
-    private lateinit var callingActivity: MainActivity
+    override lateinit var adapter: ArtistsAdapter
     private lateinit var musicLibraryViewModel: MusicLibraryViewModel
-    private lateinit var recyclerView: RecyclerView
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        val root = inflater.inflate(R.layout.fragment_with_scroll, container, false)
-        callingActivity = activity as MainActivity
-        recyclerView = root.findViewById(R.id.scrollRecyclerView)
-        artistsAdapter = ArtistsAdapter(callingActivity)
-        recyclerView.layoutManager = WrapContentLinearLayoutManager(callingActivity, LinearLayoutManager.VERTICAL, false)
-        recyclerView.itemAnimator = DefaultItemAnimator()
-        recyclerView.adapter = artistsAdapter
-        artistsAdapter.stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        musicLibraryViewModel = ViewModelProvider(this).get(MusicLibraryViewModel::class.java)
-        musicLibraryViewModel.allArtists.observe(viewLifecycleOwner, { a ->
-            a?.let {
-                if (it.isNotEmpty() || artists.isNotEmpty()) processArtists(it)
-            }
-        })
-
-        return root
+        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
+        musicLibraryViewModel.allArtists.observe(viewLifecycleOwner) {
+            updateRecyclerViewWithArtists(it)
+        }
     }
 
-    private fun processArtists(artistList: List<Artist>) {
-        // use the isProcessing boolean to prevent the processArtists method from being run multiple times in quick succession (e.g. when the library is being built for the first time)
-        if (!isProcessing) {
-            isProcessing = true
-            artists = artistList.sortedBy { artist ->
-                artist.artistName?.toUpperCase(Locale.ROOT)
-            }.toMutableList()
+    override fun requestNewData() {
+        musicLibraryViewModel.allArtists.value?.let { updateRecyclerViewWithArtists(it) }
+    }
 
-            val adapterArtists = artistsAdapter.artists
-            artistsAdapter.artists = artists
-            when {
-                adapterArtists.isEmpty() -> artistsAdapter.notifyItemRangeInserted(0, artists.size) // updateAdapter(SET_ADAPTER, artists.size)
-                artists.size >= adapterArtists.size -> {
-                    val difference = artists - adapterArtists
-                    for (a in difference) {
-                        val index = artists.indexOfFirst {
-                            it.artistName == a.artistName
-                        }
-                        val adapterIndex = adapterArtists.indexOfFirst {
-                            it.artistName == a.artistName
-                        }
-                        when {
-                            adapterIndex != -1 -> artistsAdapter.notifyItemChanged(index)
-                            index != -1 -> artistsAdapter.notifyItemInserted(index)
-                        }
-                    }
-                }
-                artists.size < adapterArtists.size -> {
-                    val difference = adapterArtists - artists
-                    for (a in difference) {
-                        val index = adapterArtists.indexOfFirst {
-                            it.artistName == a.artistName
-                        }
-                        adapterArtists.removeAt(index)
-                        if (index != -1) artistsAdapter.notifyItemRemoved(index)
-                    }
-                }
+    /**
+     * Refresh the content displayed in the RecyclerView.
+     *
+     * @param artists - The up-to-date list of Artist objects that should be displayed.
+     */
+    private fun updateRecyclerViewWithArtists(artists: List<Artist>) {
+        setIsUpdatingTrue()
+
+        val sortedArtists = artists.sortedBy { artist ->
+            artist.artistName?.uppercase()
+        }.toMutableList()
+
+        if (adapter.artists.isEmpty()) {
+            adapter.artists.addAll(sortedArtists)
+            adapter.notifyItemRangeInserted(0, sortedArtists.size)
+        } else {
+            for ((index, artist) in sortedArtists.withIndex()) {
+                adapter.processLoopIteration(index, artist)
             }
-            isProcessing = false
+
+            if (adapter.artists.size > sortedArtists.size) {
+                val numberItemsToRemove = adapter.artists.size - sortedArtists.size
+                repeat(numberItemsToRemove) { adapter.artists.removeLast() }
+                adapter.notifyItemRangeRemoved(sortedArtists.size, numberItemsToRemove)
+            }
         }
+
+        finishUpdate()
+    }
+
+    override fun initialiseAdapter() {
+        adapter = ArtistsAdapter(mainActivity)
+        adapter.stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
     }
 }
