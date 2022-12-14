@@ -1,42 +1,25 @@
 package com.codersguidebook.supernova.ui.playlists
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.GridLayoutManager
 import com.codersguidebook.supernova.MusicLibraryViewModel
-import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
 import com.codersguidebook.supernova.recyclerview.adapter.PlaylistsAdapter
 
 class PlaylistsFragment : RecyclerViewFragment() {
 
-    override val binding get() = fragmentBinding as FragmentWithRecyclerViewBinding
     override lateinit var adapter: PlaylistsAdapter
     private lateinit var musicLibraryViewModel: MusicLibraryViewModel
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        fragmentBinding = FragmentWithRecyclerViewBinding.inflate(inflater, container, false)
-        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
-
-        return super.onCreateView(inflater, container, savedInstanceState)
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         binding.root.layoutManager = GridLayoutManager(mainActivity, 3)
-        binding.root.itemAnimator = DefaultItemAnimator()
-        binding.root.adapter = adapter
 
+        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
         musicLibraryViewModel.allPlaylists.observe(viewLifecycleOwner) {
             updateRecyclerViewWithPlaylists(it)
         }
@@ -50,6 +33,11 @@ class PlaylistsFragment : RecyclerViewFragment() {
         musicLibraryViewModel.allPlaylists.value?.let { updateRecyclerViewWithPlaylists(it) }
     }
 
+    /**
+     * Refresh the content displayed in the RecyclerView.
+     *
+     * @param playlists - The up-to-date list of Playlist objects that should be displayed.
+     */
     private fun updateRecyclerViewWithPlaylists(playlists: List<Playlist>) {
         setIsUpdatingTrue()
 
@@ -77,6 +65,6 @@ class PlaylistsFragment : RecyclerViewFragment() {
             }
         }
 
-        setIsUpdatingFalse()
+        finishUpdate()
     }
 }

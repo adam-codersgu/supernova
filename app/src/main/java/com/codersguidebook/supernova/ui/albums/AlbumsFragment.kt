@@ -1,44 +1,23 @@
 package com.codersguidebook.supernova.ui.albums
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.DefaultItemAnimator
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MusicLibraryViewModel
-import com.codersguidebook.supernova.databinding.ScrollRecyclerViewBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
 import com.codersguidebook.supernova.recyclerview.adapter.AlbumsAdapter
 
 class AlbumsFragment : RecyclerViewFragment() {
 
-    override val binding get() = fragmentBinding as ScrollRecyclerViewBinding
     override lateinit var adapter: AlbumsAdapter
     private lateinit var musicLibraryViewModel: MusicLibraryViewModel
-
-    override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
-    ): View {
-        fragmentBinding = ScrollRecyclerViewBinding.inflate(inflater, container, false)
-        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
-
-        return super.onCreateView(inflater, container, savedInstanceState)
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val layoutManager = LinearLayoutManager(activity)
-        binding.recyclerView.layoutManager = layoutManager
-        binding.recyclerView.itemAnimator = DefaultItemAnimator()
-        binding.recyclerView.adapter = adapter
-
+        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
         musicLibraryViewModel.allSongs.observe(viewLifecycleOwner) {
             updateRecyclerView(it)
         }
@@ -48,8 +27,13 @@ class AlbumsFragment : RecyclerViewFragment() {
         musicLibraryViewModel.allSongs.value?.let { updateRecyclerView(it) }
     }
 
-    override fun updateRecyclerView(songs: List<Song>) {
-        super.updateRecyclerView(songs)
+    /**
+     * Refresh the content displayed in the RecyclerView.
+     *
+     * @param songs - The up-to-date list of Song objects that should be displayed.
+     */
+    private fun updateRecyclerView(songs: List<Song>) {
+        setIsUpdatingTrue()
 
         val songsByAlbum = songs.distinctBy { song ->
             song.albumId
@@ -72,7 +56,7 @@ class AlbumsFragment : RecyclerViewFragment() {
             }
         }
 
-        setIsUpdatingFalse()
+        finishUpdate()
     }
 
     override fun initialiseAdapter() {

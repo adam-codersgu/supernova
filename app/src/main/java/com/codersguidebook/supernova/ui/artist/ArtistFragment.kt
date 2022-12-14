@@ -7,8 +7,6 @@ import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.DefaultItemAnimator
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Song
@@ -38,17 +36,19 @@ class ArtistFragment : RecyclerViewFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.root.layoutManager = LinearLayoutManager(activity)
-        binding.root.itemAnimator = DefaultItemAnimator()
-
         musicDatabase = MusicDatabase.getDatabase(mainActivity, lifecycleScope)
         musicDatabase.musicDao().findArtistsSongs(artistName ?: "").observe(viewLifecycleOwner) {
             updateRecyclerView(it)
         }
     }
 
-    override fun updateRecyclerView(songs: List<Song>) {
-        super.updateRecyclerView(songs)
+    /**
+     * Refresh the content displayed in the RecyclerView.
+     *
+     * @param songs - The up-to-date list of Song objects that should be displayed.
+     */
+    private fun updateRecyclerView(songs: List<Song>) {
+        setIsUpdatingTrue()
 
         val songsByAlbumByYear = songs.distinctBy { song ->
             song.albumId
@@ -71,10 +71,6 @@ class ArtistFragment : RecyclerViewFragment() {
             }
         }
 
-        if (binding.root.adapter == null) {
-            binding.root.adapter = adapter
-        }
-
         if (songs.isNotEmpty()) {
             artistName?.let {
                 lifecycleScope.launch(Dispatchers.IO) {
@@ -88,8 +84,7 @@ class ArtistFragment : RecyclerViewFragment() {
         }
 
         setupMenu(songs.sortedBy { it.title })
-
-        setIsUpdatingFalse()
+        finishUpdate()
     }
 
     override fun requestNewData() {

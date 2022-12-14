@@ -7,28 +7,33 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.recyclerview.adapter.SongAdapter
 
-abstract class RecyclerViewWithFabFragment: RecyclerViewFragment() {
+abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
 
-    override val binding get() = fragmentBinding as FragmentWithFabBinding
+    override var _binding: ViewBinding? = null
+        get() = field as FragmentWithFabBinding?
+    override val binding: FragmentWithFabBinding
+        get() = _binding!! as FragmentWithFabBinding
     override lateinit var adapter: SongAdapter
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View {
-        fragmentBinding = FragmentWithFabBinding.inflate(inflater, container, false)
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentWithFabBinding.inflate(inflater, container, false)
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val layoutManager = LinearLayoutManager(activity)
-        binding.scrollRecyclerView.recyclerView.layoutManager = layoutManager
+        binding.scrollRecyclerView.recyclerView.layoutManager = LinearLayoutManager(mainActivity)
         binding.scrollRecyclerView.recyclerView.itemAnimator = DefaultItemAnimator()
-        binding.scrollRecyclerView.recyclerView.adapter = adapter
 
         binding.scrollRecyclerView.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -39,8 +44,13 @@ abstract class RecyclerViewWithFabFragment: RecyclerViewFragment() {
         })
     }
 
-    override fun updateRecyclerView(songs: List<Song>) {
-        super.updateRecyclerView(songs)
+    /**
+     * Refresh the content displayed in the RecyclerView.
+     *
+     * @param songs - The up-to-date list of Song objects that should be displayed.
+     */
+    open fun updateRecyclerView(songs: List<Song>) {
+        setIsUpdatingTrue()
 
         binding.fab.setOnClickListener {
             mainActivity.playNewPlayQueue(songs, shuffle = true)
@@ -61,10 +71,13 @@ abstract class RecyclerViewWithFabFragment: RecyclerViewFragment() {
             }
         }
 
-        isUpdating = false
-        if (unhandledRequestReceived) {
-            unhandledRequestReceived = false
-            requestNewData()
+        finishUpdate()
+    }
+
+    private fun finishUpdate() {
+        if (binding.scrollRecyclerView.recyclerView.adapter == null) {
+            binding.scrollRecyclerView.recyclerView.adapter = adapter
         }
+        setIsUpdatingFalse()
     }
 }

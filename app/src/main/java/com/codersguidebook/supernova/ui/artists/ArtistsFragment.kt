@@ -1,43 +1,23 @@
 package com.codersguidebook.supernova.ui.artists
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.DefaultItemAnimator
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MusicLibraryViewModel
-import com.codersguidebook.supernova.databinding.ScrollRecyclerViewBinding
 import com.codersguidebook.supernova.entities.Artist
 import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
 import com.codersguidebook.supernova.recyclerview.adapter.ArtistsAdapter
 
 class ArtistsFragment : RecyclerViewFragment() {
 
-    override val binding get() = fragmentBinding as ScrollRecyclerViewBinding
     override lateinit var adapter: ArtistsAdapter
     private lateinit var musicLibraryViewModel: MusicLibraryViewModel
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        fragmentBinding = ScrollRecyclerViewBinding.inflate(inflater, container, false)
-        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
-
-        return super.onCreateView(inflater, container, savedInstanceState)
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.recyclerView.layoutManager = LinearLayoutManager(activity)
-        binding.recyclerView.itemAnimator = DefaultItemAnimator()
-        binding.recyclerView.adapter = adapter
-
+        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
         musicLibraryViewModel.allArtists.observe(viewLifecycleOwner) {
             updateRecyclerViewWithArtists(it)
         }
@@ -47,6 +27,11 @@ class ArtistsFragment : RecyclerViewFragment() {
         musicLibraryViewModel.allArtists.value?.let { updateRecyclerViewWithArtists(it) }
     }
 
+    /**
+     * Refresh the content displayed in the RecyclerView.
+     *
+     * @param artists - The up-to-date list of Artist objects that should be displayed.
+     */
     private fun updateRecyclerViewWithArtists(artists: List<Artist>) {
         setIsUpdatingTrue()
 
@@ -69,7 +54,7 @@ class ArtistsFragment : RecyclerViewFragment() {
             }
         }
 
-        setIsUpdatingFalse()
+        finishUpdate()
     }
 
     override fun initialiseAdapter() {

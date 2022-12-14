@@ -3,9 +3,8 @@ package com.codersguidebook.supernova.recyclerview
 import android.os.Bundle
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.entities.Song
 
-abstract class BaseRecyclerViewFragment(): BaseFragment() {
+abstract class BaseRecyclerViewFragment: BaseFragment() {
 
     abstract val adapter: RecyclerView.Adapter<RecyclerView.ViewHolder>
     var isUpdating = false
@@ -15,15 +14,6 @@ abstract class BaseRecyclerViewFragment(): BaseFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         initialiseAdapter()
-    }
-
-    /**
-     * Refresh the content displayed in the RecyclerView.
-     *
-     * @param songs - The up-to-date list of Song objects that should be displayed.
-     */
-    open fun updateRecyclerView(songs: List<Song>) {
-        setIsUpdatingTrue()
     }
 
     /** Convenience method that sets the isUpdating state of the RecyclerView update workflow to true **/

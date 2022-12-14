@@ -9,7 +9,7 @@ import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.MainActivity
 
 @Suppress("PropertyName")
-abstract class BaseFragment(): Fragment() {
+abstract class BaseFragment: Fragment() {
 
     abstract var _binding: ViewBinding?
     abstract val binding: ViewBinding

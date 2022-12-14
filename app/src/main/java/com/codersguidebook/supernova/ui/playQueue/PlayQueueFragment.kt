@@ -2,13 +2,15 @@ package com.codersguidebook.supernova.ui.playQueue
 
 import android.os.Bundle
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
-import android.view.*
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.view.View
 import android.widget.Toast
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
-import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.*
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -16,12 +18,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.CreatePlaylist
 import com.codersguidebook.supernova.PlayQueueViewModel
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
 import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
 import com.codersguidebook.supernova.recyclerview.adapter.PlayQueueAdapter
 
 class PlayQueueFragment : RecyclerViewFragment() {
-    override val binding get() = fragmentBinding as FragmentWithRecyclerViewBinding
     private val playQueueViewModel: PlayQueueViewModel by activityViewModels()
     override lateinit var adapter: PlayQueueAdapter
 
@@ -66,20 +66,9 @@ class PlayQueueFragment : RecyclerViewFragment() {
         ItemTouchHelper(simpleItemTouchCallback)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View {
-        fragmentBinding = FragmentWithRecyclerViewBinding.inflate(inflater, container, false)
-
-        return super.onCreateView(inflater, container, savedInstanceState)
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupMenu()
-
-        binding.root.layoutManager = LinearLayoutManager(activity)
-        binding.root.itemAnimator = DefaultItemAnimator()
-        binding.root.adapter = adapter
 
         playQueueViewModel.playQueue.observe(viewLifecycleOwner) {
             updateRecyclerViewWithPlayQueue(it)
@@ -122,7 +111,7 @@ class PlayQueueFragment : RecyclerViewFragment() {
             }
         }
 
-        setIsUpdatingFalse()
+        finishUpdate()
         // TODO: Can we remove the below (incl variable) given the new processing path?
         playQueueViewModel.refreshPlayQueue.value = false
     }
