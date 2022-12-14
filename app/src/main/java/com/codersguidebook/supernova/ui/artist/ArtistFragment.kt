@@ -67,7 +67,8 @@ class ArtistFragment : RecyclerViewFragment() {
             if (adapter.songs.size > songsByAlbumByYear.size) {
                 val numberItemsToRemove = adapter.songs.size - songsByAlbumByYear.size
                 repeat(numberItemsToRemove) { adapter.songs.removeLast() }
-                adapter.notifyItemRangeRemoved(songsByAlbumByYear.size, numberItemsToRemove)
+                adapter.notifyItemRangeRemoved(
+                    adapter.getRecyclerViewIndex(songsByAlbumByYear.size), numberItemsToRemove)
             }
         }
 

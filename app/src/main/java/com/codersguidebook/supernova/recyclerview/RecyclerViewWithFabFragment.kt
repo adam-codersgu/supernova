@@ -67,7 +67,8 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
             if (adapter.songs.size > songs.size) {
                 val numberItemsToRemove = adapter.songs.size - songs.size
                 repeat(numberItemsToRemove) { adapter.songs.removeLast() }
-                adapter.notifyItemRangeRemoved(songs.size, numberItemsToRemove)
+                adapter.notifyItemRangeRemoved(
+                    adapter.getRecyclerViewIndex(songs.size), numberItemsToRemove)
             }
         }
 
