@@ -5,7 +5,7 @@ import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.entities.Song
 
-abstract class BaseRecyclerViewFragment: BaseFragment() {
+abstract class BaseRecyclerViewFragment(): BaseFragment() {
 
     abstract val adapter: RecyclerView.Adapter<RecyclerView.ViewHolder>
     var isUpdating = false

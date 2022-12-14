@@ -9,10 +9,10 @@ import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.MainActivity
 
 @Suppress("PropertyName")
-abstract class BaseFragment: Fragment() {
+abstract class BaseFragment(): Fragment() {
 
     abstract var _binding: ViewBinding?
-    val binding get() = _binding!!
+    abstract val binding: ViewBinding
     lateinit var mainActivity: MainActivity
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,

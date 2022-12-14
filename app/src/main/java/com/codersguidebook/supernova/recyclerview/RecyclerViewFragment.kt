@@ -11,6 +11,8 @@ abstract class RecyclerViewFragment: BaseRecyclerViewFragment() {
 
     override var _binding: ViewBinding? = null
         get() = field as FragmentWithRecyclerViewBinding?
+    override val binding: FragmentWithRecyclerViewBinding
+        get() = _binding!! as FragmentWithRecyclerViewBinding
 
     override fun onCreateView(
         inflater: LayoutInflater,

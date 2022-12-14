@@ -11,7 +11,6 @@ import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
 import com.codersguidebook.supernova.recyclerview.adapter.ArtistAdapter
@@ -21,7 +20,6 @@ import kotlinx.coroutines.launch
 class ArtistFragment : RecyclerViewFragment() {
 
     private var artistName: String? = null
-    override val binding get() = fragmentBinding as FragmentWithRecyclerViewBinding
     override lateinit var adapter: ArtistAdapter
     private lateinit var musicDatabase: MusicDatabase
 
@@ -34,7 +32,6 @@ class ArtistFragment : RecyclerViewFragment() {
             val safeArgs = ArtistFragmentArgs.fromBundle(it)
             artistName = safeArgs.artist
         }
-        fragmentBinding = FragmentWithRecyclerViewBinding.inflate(inflater, container, false)
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
