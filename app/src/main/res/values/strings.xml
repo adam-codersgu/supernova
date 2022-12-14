@@ -71,9 +71,6 @@
     <string name="play_or_pause_current_track">Play or pause current track</string>
     <string name="options_menu">Options menu</string>
     <string name="remove_from_queue">Remove from play queue</string>
-    <string name="artist">Artist</string>
-    <string name="album">Album</string>
-    <string name="done">Done</string>
     <string name="favourites">Favourites</string>
     <string name="recently_played">Recently played</string>
     <string name="most_played">Most played</string>
