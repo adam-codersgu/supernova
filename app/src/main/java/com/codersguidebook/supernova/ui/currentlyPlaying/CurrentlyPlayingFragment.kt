@@ -294,7 +294,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
                 editor.putString(ANIMATION_URI, gPretty)
             }
             editor.apply()
-            Toast.makeText(activity, getString(R.string.custom_image_not_found), Toast.LENGTH_LONG).show()
+            Toast.makeText(activity, getString(R.string.no_custom_image), Toast.LENGTH_LONG).show()
         }
         val drawables = arrayListOf<Drawable?>()
         for (uri in uris) {
