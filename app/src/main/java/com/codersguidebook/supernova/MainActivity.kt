@@ -82,7 +82,6 @@ import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
-
 class MainActivity : AppCompatActivity() {
 
     private val channelID = "supernova"

@@ -84,7 +84,7 @@ class ArtistFragment : RecyclerViewFragment() {
             }
         }
 
-        setupMenu(songs.sortedBy { it.title })
+        setupMenu(songs)
         finishUpdate()
     }
 
