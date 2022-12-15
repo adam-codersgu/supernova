@@ -17,7 +17,7 @@ interface MusicDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(song: Song)
 
-    @Query("SELECT * from music_library WHERE song_album_id LIKE :albumID LIMIT 1")
+    @Query("SELECT * from music_library WHERE song_album_id = :albumID LIMIT 1")
     suspend fun getSongWithAlbumId(albumID: String): List<Song>
 
     @Query("SELECT SUM(song_plays) FROM music_library WHERE song_artist = :artistName")
@@ -29,10 +29,10 @@ interface MusicDao {
     @Query("SELECT song_artist, count(*) FROM music_library WHERE song_artist LIKE :search GROUP BY song_artist LIMIT 10")
     suspend fun findBySearchArtists(search: String): List<Artist>
 
-    @Query("SELECT * FROM music_library WHERE song_album_id LIKE :albumID ORDER BY song_track ASC")
+    @Query("SELECT * FROM music_library WHERE song_album_id = :albumID ORDER BY song_track ASC")
     fun findAlbumSongs(albumID: String): LiveData<List<Song>>
 
-    @Query("SELECT * FROM music_library WHERE song_artist LIKE :artistName ORDER BY song_title ASC")
+    @Query("SELECT * FROM music_library WHERE song_artist = :artistName ORDER BY song_title ASC")
     fun findArtistsSongs(artistName: String): LiveData<List<Song>>
 
     @Query("SELECT songId FROM music_library WHERE song_plays > 0 ORDER BY song_plays DESC LIMIT 30")
