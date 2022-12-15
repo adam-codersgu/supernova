@@ -1,9 +1,20 @@
 <resources>
     <!-- App details -->
+    <string name="acknowledgements">Acknowledgements</string>
+    <string name="acknowledgements_body">Warm thanks to the following people and organisations who\'s work has been used in this app:
+    \n
+    \nThe vinyl icon used as the app icon, for missing album and playlist artwork was made by Freepik from www.flaticon.com
+    \n
+    \nThe playback control icons (play, pause, skip forward and skip back) were made by Elias Bikbulatov from www.flaticon.com</string>
     <string name="app_name">Supernova</string>
+    <string name="app_info">App information</string>
+    <string name="developer">Developer</string>
+    <string name="developer_body">This app was developed by Adam Hawke. Contact: hello@codersguidebook.com</string>
 
     <!-- Navigation -->
+    <string name="about">About</string>
     <string name="albums">Albums</string>
+    <string name="app_preferences">App preferences</string>
     <string name="artists">Artists</string>
     <string name="home">Home</string>
     <string name="play_queue">Play queue</string>
@@ -15,39 +26,83 @@
     <!-- Actions -->
     <string name="add_que">Add to play queue</string>
     <string name="add_playlist">Add to playlist</string>
+    <string name="add_to_favourites">Add to favourites</string>
     <string name="cancel">Cancel</string>
     <string name="change_image">Change image</string>
     <string name="create_playlist">Create new playlist</string>
     <string name="delete_image">Delete image</string>
+    <string name="delete_playlist">Delete playlist</string>
     <string name="done">Done</string>
     <string name="edit_album">Edit album info</string>
     <string name="edit_music">Edit music info</string>
+    <string name="edit_playlist">Edit Playlist</string>
+    <string name="edit_playlist_information">Edit Playlist Information</string>
+    <string name="manage_custom_images">Manage custom images</string>
     <string name="more_settings">More settings</string>
     <string name="ok">OK</string>
+    <string name="options_menu">Options menu</string>
     <string name="play_next">Play next</string>
     <string name="play_pause">Play or pause</string>
     <string name="play_prev">Play previous</string>
+    <string name="refresh_song_of_the_day">Refresh today\'s song of the day</string>
+    <string name="remove_favourites">Remove from favourites</string>
+    <string name="remove_play_queue">Remove from play queue</string>
+    <string name="remove_playlist">Remove from playlist</string>
+    <string name="reorder_playlist">Reorder playlist</string>
     <string name="repeat_current_playlist">Repeat current playlist</string>
     <string name="save">Save</string>
+    <string name="save_play_queue">Save play queue as playlist</string>
     <string name="submit">Submit</string>
 
     <!-- Labels -->
     <string name="album">Album</string>
     <string name="album_title">Album title</string>
     <string name="album_year">Album year</string>
+    <string name="all_songs">All songs</string>
     <string name="artist">Artist</string>
+    <string name="artist_information">Artist information</string>
+    <string name="artist_name">Artist name</string>
+    <string name="artist_songs">View artist\'s songs</string>
+    <string name="custom_image">Custom images</string>
+    <string name="disc">Disc</string>
+    <string name="disc_number">Disc %1$s</string>
+    <string name="displayed_song">1 song</string>
+    <string name="displayed_songs">%1$d songs</string>
+    <string name="edit_artist">Edit artist info</string>
+    <string name="favourites">Favourites</string>
     <string name="library">My Library</string>
+    <string name="more">More</string>
+    <string name="most_played">Most played</string>
+    <string name="n_albums">%1$d albums</string>
+    <string name="n_plays">%1$d plays</string>
+    <string name="name">Name</string>
+    <string name="night">Night</string>
+    <string name="no">No</string>
     <string name="no_results">No results found</string>
+    <string name="one_album">1 album</string>
+    <string name="one_play">1 play</string>
+    <string name="played_n_times">Played %1$d times</string>
+    <string name="played_one_time">Played 1 time</string>
+    <string name="playlist_information">Playlist information</string>
     <string name="playlist_name">Playlist name</string>
+    <string name="recently_played">Recently played</string>
     <string name="search_hint">Search music</string>
+    <string name="search_results">Search results</string>
+    <string name="select_playlist">Select a playlist or create a new one</string>
+    <string name="song_day">Song of the day</string>
+    <string name="song_of_the_day_will_be_displayed_here">Song of the day will appear here once your library is built</string>
     <string name="title">Title</string>
+    <string name="track">Track</string>
+    <string name="use_custom_image">Use custom image</string>
     <string name="year">Year</string>
+    <string name="yes">Yes</string>
 
     <!-- Accessibility -->
     <string name="album_artwork">Album artwork</string>
     <string name="album_information">Album information</string>
     <string name="close_currently_playing">Close currently playing</string>
     <string name="handle_view_desc">Icon that allows you to reorder songs in the current playback list.</string>
+    <string name="play_or_pause_current_track">Play or pause current track</string>
     <string name="set_album_artwork">Set album artwork</string>
     <string name="shuffle_playlist">Shuffle current playlist</string>
     <string name="shuffle_tracks">Shuffle tracks</string>
@@ -64,138 +119,62 @@
     <string name="transition_title">transition_title</string>
 
     <!-- Toast notifications -->
-    <string name="changes_applied">Your changes will be applied to the next round of animations.</string>
-
-
-
-    <string name="play_or_pause_current_track">Play or pause current track</string>
-    <string name="options_menu">Options menu</string>
-    <string name="remove_from_queue">Remove from play queue</string>
-    <string name="artist">Artist</string>
-    <string name="album">Album</string>
-    <string name="done">Done</string>
-    <string name="favourites">Favourites</string>
-    <string name="recently_played">Recently played</string>
-    <string name="most_played">Most played</string>
-    <string name="song_day">Song of the day</string>
-    <string name="remove_playlist">Remove from playlist</string>
-    <string name="reorder_playlist">Reorder playlist</string>
-    <string name="delete_playlist">Delete playlist</string>
-    <string name="animation_colour">Colour</string>
-    <string name="red">Red</string>
-    <string name="blue">Blue</string>
-    <string name="pastel">Pastel</string>
-    <string name="animation_images">Images</string>
-    <string name="leaves">Leaves</string>
-    <string name="animals">Animals</string>
-    <string name="space">Space</string>
-    <string name="flowers">Flowers</string>
-    <string name="mandala">Mandala</string>
-    <string name="instruments">Musical instruments</string>
-    <string name="playback_animations">Playback animations</string>
-    <string name="show_animations">Show animations</string>
-    <string name="show_hide_animations">Show/hide animations</string>
-    <string name="add_to_favourites">Add to favourites</string>
-    <string name="remove_favourites">Remove from favourites</string>
-    <string name="animation_speed">Speed</string>
-    <string name="slow">Slow</string>
-    <string name="fast">Fast</string>
-    <string name="normal">Normal</string>
-    <string name="track">Track</string>
-    <string name="artist_name">Artist name</string>
-    <string name="about">About</string>
-    <string name="app_info">App information</string>
-    <string name="acknowledgements">Acknowledgements</string>
-    <string name="acknowledgements_body">Warm thanks to the following people and organisations who\'s work has been used in this app:
-    \n
-    \nThe vinyl icon used as the app icon, for missing album and playlist artwork was made by Freepik from www.flaticon.com
-    \n
-    \nThe playback control icons (play, pause, skip forward and skip back) were made by Elias Bikbulatov from www.flaticon.com</string>
-    <string name="developer">Developer</string>
-    <string name="developer_body">This app was developed by Adam Hawke. Contact: hello@codersguidebook.com</string>
-    <string name="song_of_the_day_will_be_displayed_here">Song of the day will appear here once your library is built</string>
-    <string name="refresh_today_s_song_of_the_day">Refresh today\'s song of the day</string>
-    <string name="animations">Animations</string>
-    <string name="more">More</string>
-    <string name="all_songs">All songs</string>
-    <string name="use_custom_image">Use custom image</string>
-    <string name="custom_image">Custom images</string>
-    <string name="no_custom_image">Custom image could not be found</string>
-    <string name="custom_image_not_found">Custom image cannot be found</string>
-    <string name="manage_custom_images">Manage custom images</string>
-    <string name="image_set">Image set!</string>
-    <string name="edit_artist">Edit artist info</string>
-    <string name="night">Night</string>
-    <string name="artist_songs">View artist\'s songs</string>
-    <string name="artist_information">Artist information</string>
-    <string name="queue">Queue</string>
-    <string name="restrictions_may_apply">Restrictions may apply - click here to learn more.</string>
-
-    <string name="select_playlist">Select a playlist or create a new one</string>
-    <string name="song_added_to_playlist">%1$s has been added to %2$s</string>
-    <string name="songs_added_to_playlist">Your songs have been added to %1$s</string>
-
-    <string name="empty_play_queue">The play queue is empty.</string>
-    <string name="play_queue_shuffled">Play queue shuffled</string>
-    <string name="play_queue_unshuffled">Play queue unshuffled</string>
-    <string name="no_songs_found">No songs were found for %1$s</string>
-
-    <string name="storage_permission_needed">Storage access is required to load your music library</string>
-
     <string name="added_to_favourites">Added to favourites</string>
-    <string name="removed_from_favourites">Removed from favourites</string>
-
-    <string name="item_added_play_queue">%1$s has been added to the play queue</string>
-    <string name="songs_added_play_queue">Your songs have been added to the play queue</string>
-
-    <string name="repeat_mode_none">Repeat mode off</string>
-    <string name="repeat_mode_all">Repeat the play queue</string>
-    <string name="repeat_mode_one">Repeat the current song</string>
-
-    <string name="item_saved">%1$s saved</string>
-    <string name="playlist_already_exists">A playlist with that name already exists</string>
-    <string name="playlist_name_cannot_be_empty">The playlist name field cannot be empty</string>
-    <string name="playlist_contains_zero_songs">There are no songs in this playlist</string>
-    <string name="playlist_updated">Playlist updated!</string>
-
+    <string name="album_name_cannot_be_empty">The album name field cannot be empty</string>
+    <string name="album_updated">Album updated!</string>
+    <string name="album_year_cannot_be_empty">The album year field cannot be empty</string>
     <string name="artist_name_cannot_be_empty">The artist name field cannot be empty</string>
     <string name="artist_name_not_changed">The artist name has not been changed</string>
     <string name="artist_updated">Artist updated!</string>
+    <string name="changes_applied">Your changes will be applied to the next round of animations.</string>
+    <string name="check_fields_not_empty">Check none of the fields are empty</string>
+    <string name="details_saved">Details saved</string>
+    <string name="empty_play_queue">The play queue is empty.</string>
+    <string name="image_set">Image set!</string>
+    <string name="item_saved">%1$s saved</string>
+    <string name="item_added_play_queue">%1$s has been added to the play queue</string>
+    <string name="no_custom_image">Custom image could not be found</string>
+    <string name="no_songs_found">No songs were found for %1$s</string>
+    <string name="play_queue_shuffled">Play queue shuffled</string>
+    <string name="play_queue_unshuffled">Play queue unshuffled</string>
+    <string name="playlist_already_exists">A playlist with that name already exists</string>
+    <string name="playlist_contains_zero_songs">There are no songs in this playlist</string>
+    <string name="playlist_name_cannot_be_empty">The playlist name field cannot be empty</string>
+    <string name="playlist_updated">Playlist updated!</string>
+    <string name="removed_from_favourites">Removed from favourites</string>
+    <string name="repeat_mode_all">Repeat the play queue</string>
+    <string name="repeat_mode_none">Repeat mode off</string>
+    <string name="repeat_mode_one">Repeat the current song</string>
+    <string name="set_playlist_artwork">Set Playlist artwork</string>
+    <string name="song_added_playlist">%1$s has been added to %2$s</string>
+    <string name="songs_added_play_queue">Your songs have been added to the play queue</string>
+    <string name="songs_added_playlist">Your songs have been added to %1$s</string>
+    <string name="storage_permission_needed">Storage access is required to load your music library</string>
 
-    <string name="album_name_cannot_be_empty">The album name field cannot be empty</string>
-    <string name="album_year_cannot_be_empty">The album year field cannot be empty</string>
-    <string name="album_updated">Album updated!</string>
+    <!-- Animation labels -->
+    <string name="animals">Animals</string>
+    <string name="animation_colour">Colour</string>
+    <string name="animation_images">Images</string>
+    <string name="animation_speed">Speed</string>
+    <string name="animations">Animations</string>
+    <string name="blue">Blue</string>
+    <string name="fast">Fast</string>
+    <string name="flowers">Flowers</string>
+    <string name="instruments">Musical instruments</string>
+    <string name="leaves">Leaves</string>
+    <string name="mandala">Mandala</string>
+    <string name="normal">Normal</string>
+    <string name="pastel">Pastel</string>
+    <string name="playback_animations">Playback animations</string>
+    <string name="red">Red</string>
+    <string name="show_animations">Show animations</string>
+    <string name="show_hide_animations">Show/hide animations</string>
+    <string name="slow">Slow</string>
+    <string name="space">Space</string>
 
-    <string name="displayed_song">1 song</string>
-    <string name="displayed_songs">%1$d songs</string>
-    <string name="disc_number">Disc %1$s</string>
-
-    <string name="app_preferences">App preferences</string>
-
+    <!-- Error descriptions -->
+    <string name="error_generic_playback">A playback error has occurred.</string>
     <string name="error_media_service_default">A playback error has occurred. If the song file has been moved or deleted please wait for the library to refresh.</string>
     <string name="error_media_service_empty_queue">A playback error has occurred. The play queue is empty.</string>
     <string name="error_media_service_player_state">A playback error has occurred. The media player must be restarted.</string>
-
-    <string name="error_generic_playback">A playback error has occurred.</string>
-
-    <string name="one_album">1 album</string>
-    <string name="n_albums">%1$d albums</string>
-
-    <string name="played_one_time">Played 1 time</string>
-    <string name="played_n_times">Played %1$d times</string>
-    <string name="one_play">1 play</string>
-    <string name="n_plays">%1$d plays</string>
-
-    <string name="no">No</string>
-    <string name="yes">Yes</string>
-    <string name="save_play_queue">Save play queue as playlist</string>
-    <string name="search_results">Search results</string>
-    <string name="disc">Disc</string>
-    <string name="check_fields_not_empty">Check none of the fields are empty</string>
-    <string name="details_saved">Details saved</string>
-    <string name="set_playlist_artwork">Set Playlist artwork</string>
-    <string name="playlist_information">Playlist information</string>
-    <string name="name">Name</string>
-    <string name="edit_playlist_information">Edit Playlist Information</string>
-    <string name="edit_playlist">Edit Playlist</string>
 </resources>

@@ -54,7 +54,7 @@ class QueueOptions(private val queueItem: QueueItem,
         }
 
         // Remove from play queue button
-        binding.option4.text = getString(R.string.remove_from_queue)
+        binding.option4.text = getString(R.string.remove_play_queue)
         if (currentlyPlaying) binding.option4.isGone = true
         else {
             binding.option4.setOnClickListener {
