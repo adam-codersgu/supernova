@@ -225,7 +225,7 @@ class SearchFragment : BaseRecyclerViewFragment() {
 
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) { }
 
-            override fun onMenuItemSelected(menuItem: MenuItem): Boolean = true
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean = false
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
 
