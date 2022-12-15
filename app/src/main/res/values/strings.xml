@@ -35,6 +35,8 @@
     <string name="done">Done</string>
     <string name="edit_album">Edit album info</string>
     <string name="edit_music">Edit music info</string>
+    <string name="edit_playlist">Edit Playlist</string>
+    <string name="edit_playlist_information">Edit Playlist Information</string>
     <string name="manage_custom_images">Manage custom images</string>
     <string name="more_settings">More settings</string>
     <string name="ok">OK</string>
@@ -49,6 +51,7 @@
     <string name="reorder_playlist">Reorder playlist</string>
     <string name="repeat_current_playlist">Repeat current playlist</string>
     <string name="save">Save</string>
+    <string name="save_play_queue">Save play queue as playlist</string>
     <string name="submit">Submit</string>
 
     <!-- Labels -->
@@ -61,6 +64,7 @@
     <string name="artist_name">Artist name</string>
     <string name="artist_songs">View artist\'s songs</string>
     <string name="custom_image">Custom images</string>
+    <string name="disc">Disc</string>
     <string name="disc_number">Disc %1$s</string>
     <string name="displayed_song">1 song</string>
     <string name="displayed_songs">%1$d songs</string>
@@ -71,15 +75,19 @@
     <string name="most_played">Most played</string>
     <string name="n_albums">%1$d albums</string>
     <string name="n_plays">%1$d plays</string>
+    <string name="name">Name</string>
     <string name="night">Night</string>
+    <string name="no">No</string>
     <string name="no_results">No results found</string>
     <string name="one_album">1 album</string>
     <string name="one_play">1 play</string>
     <string name="played_n_times">Played %1$d times</string>
     <string name="played_one_time">Played 1 time</string>
+    <string name="playlist_information">Playlist information</string>
     <string name="playlist_name">Playlist name</string>
     <string name="recently_played">Recently played</string>
     <string name="search_hint">Search music</string>
+    <string name="search_results">Search results</string>
     <string name="select_playlist">Select a playlist or create a new one</string>
     <string name="song_day">Song of the day</string>
     <string name="song_of_the_day_will_be_displayed_here">Song of the day will appear here once your library is built</string>
@@ -87,6 +95,7 @@
     <string name="track">Track</string>
     <string name="use_custom_image">Use custom image</string>
     <string name="year">Year</string>
+    <string name="yes">Yes</string>
 
     <!-- Accessibility -->
     <string name="album_artwork">Album artwork</string>
@@ -118,6 +127,8 @@
     <string name="artist_name_not_changed">The artist name has not been changed</string>
     <string name="artist_updated">Artist updated!</string>
     <string name="changes_applied">Your changes will be applied to the next round of animations.</string>
+    <string name="check_fields_not_empty">Check none of the fields are empty</string>
+    <string name="details_saved">Details saved</string>
     <string name="empty_play_queue">The play queue is empty.</string>
     <string name="image_set">Image set!</string>
     <string name="item_saved">%1$s saved</string>
@@ -134,6 +145,7 @@
     <string name="repeat_mode_all">Repeat the play queue</string>
     <string name="repeat_mode_none">Repeat mode off</string>
     <string name="repeat_mode_one">Repeat the current song</string>
+    <string name="set_playlist_artwork">Set Playlist artwork</string>
     <string name="song_added_playlist">%1$s has been added to %2$s</string>
     <string name="songs_added_play_queue">Your songs have been added to the play queue</string>
     <string name="songs_added_playlist">Your songs have been added to %1$s</string>
@@ -160,23 +172,9 @@
     <string name="slow">Slow</string>
     <string name="space">Space</string>
 
-
+    <!-- Error descriptions -->
+    <string name="error_generic_playback">A playback error has occurred.</string>
     <string name="error_media_service_default">A playback error has occurred. If the song file has been moved or deleted please wait for the library to refresh.</string>
     <string name="error_media_service_empty_queue">A playback error has occurred. The play queue is empty.</string>
     <string name="error_media_service_player_state">A playback error has occurred. The media player must be restarted.</string>
-
-    <string name="error_generic_playback">A playback error has occurred.</string>
-
-    <string name="no">No</string>
-    <string name="yes">Yes</string>
-    <string name="save_play_queue">Save play queue as playlist</string>
-    <string name="search_results">Search results</string>
-    <string name="disc">Disc</string>
-    <string name="check_fields_not_empty">Check none of the fields are empty</string>
-    <string name="details_saved">Details saved</string>
-    <string name="set_playlist_artwork">Set Playlist artwork</string>
-    <string name="playlist_information">Playlist information</string>
-    <string name="name">Name</string>
-    <string name="edit_playlist_information">Edit Playlist Information</string>
-    <string name="edit_playlist">Edit Playlist</string>
 </resources>
