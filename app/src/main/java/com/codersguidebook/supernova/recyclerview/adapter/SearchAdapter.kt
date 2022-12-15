@@ -14,24 +14,21 @@ import com.codersguidebook.supernova.*
 import com.codersguidebook.supernova.entities.Artist
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.params.SearchTypeConstants.Companion.ALBUM
+import com.codersguidebook.supernova.params.SearchTypeConstants.Companion.ARTIST
+import com.codersguidebook.supernova.params.SearchTypeConstants.Companion.PLAYLIST
+import com.codersguidebook.supernova.params.SearchTypeConstants.Companion.TRACK
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 import com.codersguidebook.supernova.ui.search.SearchFragmentDirections
 
 class SearchAdapter(private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    var songs = mutableListOf<Song>()
-    var albums = mutableListOf<Song>()
-    var artists = mutableListOf<Artist>()
-    var playlists = mutableListOf<Playlist>()
+    val songs = mutableListOf<Song>()
+    val albums = mutableListOf<Song>()
+    val artists = mutableListOf<Artist>()
+    val playlists = mutableListOf<Playlist>()
     var itemType = TRACK
-
-    companion object {
-        const val TRACK = 0
-        const val ALBUM = 1
-        const val ARTIST = 2
-        const val PLAYLIST = 3
-    }
 
     inner class ViewHolderItem(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
@@ -168,5 +165,145 @@ class SearchAdapter(private val activity: MainActivity): RecyclerView.Adapter<Re
         ARTIST -> artists.size
         PLAYLIST -> playlists.size
         else -> 0
+    }
+
+    /**
+     * Handle updates to the content of the RecyclerView. The below method will determine what
+     * changes are required when an element/elements is/are changed, inserted, or deleted.
+     *
+     * @param index - The index of the current iteration through the up-to-date content list.
+     * @param song - The Song object that should be displayed at the index.
+     */
+    fun processLoopIterationSong(index: Int, song: Song) {
+        when {
+            index >= songs.size -> {
+                songs.add(song)
+                notifyItemInserted(index)
+            }
+            song.songId != songs[index].songId -> {
+                var numberOfItemsRemoved = 0
+                do {
+                    songs.removeAt(index)
+                    ++numberOfItemsRemoved
+                } while (index < songs.size &&
+                    song.songId != songs[index].songId)
+
+                when {
+                    numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
+                    numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index, numberOfItemsRemoved)
+                }
+
+                processLoopIterationSong(index, song)
+            }
+            song != songs[index] -> {
+                songs[index] = song
+                notifyItemChanged(index)
+            }
+        }
+    }
+
+    /**
+     * Handle updates to the content of the RecyclerView. The below method will determine what
+     * changes are required when an element/elements is/are changed, inserted, or deleted.
+     *
+     * @param index - The index of the current iteration through the up-to-date content list.
+     * @param album - A Song object associated with the album that should be displayed at the index.
+     */
+    fun processLoopIterationAlbum(index: Int, album: Song) {
+        when {
+            index >= albums.size -> {
+                albums.add(album)
+                notifyItemInserted(index)
+            }
+            album.albumId != albums[index].albumId -> {
+                var numberOfItemsRemoved = 0
+                do {
+                    albums.removeAt(index)
+                    ++numberOfItemsRemoved
+                } while (index < albums.size &&
+                    album.albumId != albums[index].albumId)
+
+                when {
+                    numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
+                    numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index, numberOfItemsRemoved)
+                }
+
+                processLoopIterationAlbum(index, album)
+            }
+            album != albums[index] -> {
+                albums[index] = album
+                notifyItemChanged(index)
+            }
+        }
+    }
+
+    /**
+     * Handle updates to the content of the RecyclerView. The below method will determine what
+     * changes are required when an element/elements is/are changed, inserted, or deleted.
+     *
+     * @param index - The index of the current iteration through the up-to-date content list.
+     * @param artist - The Artist object that should be displayed at the index.
+     */
+    fun processLoopIterationArtist(index: Int, artist: Artist) {
+        when {
+            index >= artists.size -> {
+                artists.add(artist)
+                notifyItemInserted(index)
+            }
+            artist.artistName != artists[index].artistName -> {
+                var numberOfItemsRemoved = 0
+                do {
+                    artists.removeAt(index)
+                    ++numberOfItemsRemoved
+                } while (index < artists.size &&
+                    artist.artistName != artists[index].artistName)
+
+                when {
+                    numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
+                    numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index, numberOfItemsRemoved)
+                }
+
+                processLoopIterationArtist(index, artist)
+            }
+            artist != artists[index] -> {
+                artists[index] = artist
+                notifyItemChanged(index)
+            }
+        }
+    }
+
+    /**
+     * Handle updates to the content of the RecyclerView. The below method will determine what
+     * changes are required when an element/elements is/are changed, inserted, or deleted.
+     *
+     * @param index - The index of the current iteration through the up-to-date content list.
+     * @param playlist - The Playlist object that should be displayed at the index.
+     */
+    fun processLoopIterationPlaylist(index: Int, playlist: Playlist) {
+        when {
+            index >= playlists.size -> {
+                playlists.add(playlist)
+                notifyItemInserted(index)
+            }
+            playlist.playlistId != playlists[index].playlistId -> {
+                var numberOfItemsRemoved = 0
+                do {
+                    playlists.removeAt(index)
+                    ++numberOfItemsRemoved
+                } while (index < playlists.size &&
+                    playlist.playlistId != playlists[index].playlistId)
+
+                when {
+                    numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
+                    numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index, numberOfItemsRemoved)
+                }
+
+                processLoopIterationPlaylist(index, playlist)
+            }
+            playlist != playlists[index] -> {
+                playlists[index] = playlist
+                notifyItemChanged(index)
+            }
+        }
     }
 }

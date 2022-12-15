@@ -4,8 +4,11 @@ import android.os.Bundle
 import android.view.*
 import android.widget.SearchView
 import androidx.activity.OnBackPressedCallback
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DefaultItemAnimator
@@ -14,6 +17,10 @@ import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentSearchBinding
+import com.codersguidebook.supernova.params.SearchTypeConstants.Companion.ALBUM
+import com.codersguidebook.supernova.params.SearchTypeConstants.Companion.ARTIST
+import com.codersguidebook.supernova.params.SearchTypeConstants.Companion.PLAYLIST
+import com.codersguidebook.supernova.params.SearchTypeConstants.Companion.TRACK
 import com.codersguidebook.supernova.recyclerview.BaseRecyclerViewFragment
 import com.codersguidebook.supernova.recyclerview.adapter.SearchAdapter
 import kotlinx.coroutines.Dispatchers
@@ -28,17 +35,9 @@ class SearchFragment : BaseRecyclerViewFragment() {
 
     private var musicDatabase: MusicDatabase? = null
     private var query = ""
-    private var searchType = TRACK
     private var searchView: SearchView? = null
     override lateinit var adapter: SearchAdapter
     private lateinit var onBackPressedCallback: OnBackPressedCallback
-
-    companion object {
-        const val TRACK = 0
-        const val ALBUM = 1
-        const val ARTIST = 2
-        const val PLAYLIST = 3
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -46,50 +45,13 @@ class SearchFragment : BaseRecyclerViewFragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentSearchBinding.inflate(inflater, container, false)
-        setHasOptionsMenu(true)
-        musicDatabase = MusicDatabase.getDatabase(requireContext(), lifecycleScope)
+        return super.onCreateView(inflater, container, savedInstanceState)
+    }
 
-        binding.chipGroup.setOnCheckedChangeListener { _, checkedId ->
-            when (checkedId) {
-                R.id.trackChip -> {
-                    searchType = TRACK
-                    adapter.itemType = TRACK
-                }
-                R.id.albumChip -> {
-                    searchType = ALBUM
-                    adapter.itemType = ALBUM
-                }
-                R.id.artistChip -> {
-                    searchType = ARTIST
-                    adapter.itemType = ARTIST
-                }
-                R.id.playlistChip -> {
-                    searchType = PLAYLIST
-                    adapter.itemType = PLAYLIST
-                }
-            }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-            when {
-                adapter.songs.isNotEmpty() -> {
-                    adapter.notifyItemRangeRemoved(0, adapter.songs.size)
-                    adapter.songs = mutableListOf()
-                }
-                adapter.albums.isNotEmpty() -> {
-                    adapter.notifyItemRangeRemoved(0, adapter.albums.size)
-                    adapter.albums = mutableListOf()
-                }
-                adapter.artists.isNotEmpty() -> {
-                    adapter.notifyItemRangeRemoved(0, adapter.artists.size)
-                    adapter.artists = mutableListOf()
-                }
-                adapter.playlists.isNotEmpty() -> {
-                    adapter.notifyItemRangeRemoved(0, adapter.playlists.size)
-                    adapter.playlists = mutableListOf()
-                }
-            }
-
-            if (query.isNotEmpty()) search()
-        }
+        musicDatabase = MusicDatabase.getDatabase(mainActivity, lifecycleScope)
 
         onBackPressedCallback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -99,82 +61,64 @@ class SearchFragment : BaseRecyclerViewFragment() {
         }
 
         mainActivity.onBackPressedDispatcher.addCallback(viewLifecycleOwner, onBackPressedCallback)
-        
-        return super.onCreateView(inflater, container, savedInstanceState)
+
+        binding.recyclerView.layoutManager = LinearLayoutManager(activity)
+        binding.recyclerView.itemAnimator = DefaultItemAnimator()
+
+        binding.chipGroup.setOnCheckedStateChangeListener { _, checkedIds ->
+            if (adapter.itemCount > 0) clearRecyclerView()
+
+            val checkedId = if (checkedIds.isNotEmpty()) checkedIds[0]
+            else R.id.trackChip
+
+            adapter.itemType = when (checkedId) {
+                R.id.albumChip -> ALBUM
+                R.id.artistChip -> ARTIST
+                R.id.playlistChip -> PLAYLIST
+                else -> TRACK
+            }
+
+            if (query.isNotEmpty()) requestNewData()
+        }
+
+        setupMenu()
     }
 
     override fun initialiseAdapter() {
         adapter = SearchAdapter(mainActivity)
     }
 
-    override fun requestNewData() { }
-
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        val searchItem = menu.findItem(R.id.search)
-        searchView = searchItem.actionView as SearchView
-
-        val onQueryListener = object : SearchView.OnQueryTextListener {
-            override fun onQueryTextChange(newText: String): Boolean {
-                query = "%$newText%"
-                search()
-                return true
-            }
-            override fun onQueryTextSubmit(query: String): Boolean = true
-        }
-
-        searchView?.apply {
-            isIconifiedByDefault = false
-            queryHint = getString(R.string.search_hint)
-            setOnQueryTextListener(onQueryListener)
-        }
-
-        binding.recyclerView.layoutManager = LinearLayoutManager(activity)
-        binding.recyclerView.itemAnimator = DefaultItemAnimator()
-        binding.recyclerView.adapter = adapter
-
-        super.onCreateOptionsMenu(menu, inflater)
+    /** Clear the contents of the RecyclerView */
+    private fun clearRecyclerView() {
+        val itemCount = adapter.itemCount
+        adapter.songs.clear()
+        adapter.artists.clear()
+        adapter.albums.clear()
+        adapter.playlists.clear()
+        adapter.notifyItemRangeRemoved(0, itemCount)
     }
 
-    private fun search() {
-        when (searchType) {
+    override fun requestNewData() {
+        binding.noResults.isGone = true
+        when (adapter.itemType) {
             TRACK -> {
                 lifecycleScope.launch(Dispatchers.IO) {
                     val songs = musicDatabase!!.musicDao().findBySearchSongs(query).take(10)
 
                     lifecycleScope.launch(Dispatchers.Main) {
-                        val adapterSongs = adapter.songs
+                        if (songs.isEmpty()) binding.noResults.isVisible = true
+                        if (adapter.songs.isEmpty()) {
+                            adapter.songs.addAll(songs)
+                            adapter.notifyItemRangeInserted(0, songs.size)
+                        } else {
+                            for ((index, song) in songs.withIndex()) {
+                                adapter.processLoopIterationSong(index, song)
+                            }
 
-                        when {
-                            songs.isEmpty() -> {
-                                adapter.songs = mutableListOf()
-                                adapter.notifyDataSetChanged()
-                                binding.noResults.isVisible = true
-                            }
-                            adapterSongs.isEmpty() -> {
-                                binding.noResults.isGone = true
-                                adapter.songs = songs.toMutableList()
-                                adapter.notifyItemRangeInserted(0, songs.size)
-                            }
-                            else -> {
-                                binding.noResults.isGone = true
-                                val removeItems = adapterSongs - songs
-                                val addItems = songs - adapterSongs
-                                for (s in removeItems) {
-                                    val index = adapter.songs.indexOfFirst {
-                                        it.songId == s.songId
-                                    }
-                                    adapter.songs.removeAt(index)
-                                    adapter.notifyItemRemoved(index)
-                                    adapter.notifyItemChanged(index)
-                                }
-                                for (s in addItems) {
-                                    val index = songs.indexOfFirst {
-                                        it.songId == s.songId
-                                    }
-                                    adapter.songs.add(index, s)
-                                    adapter.notifyItemInserted(index)
-                                    adapter.notifyItemChanged(index)
-                                }
+                            if (adapter.songs.size > songs.size) {
+                                val numberItemsToRemove = adapter.songs.size - songs.size
+                                repeat(numberItemsToRemove) { adapter.songs.removeLast() }
+                                adapter.notifyItemRangeRemoved(songs.size, numberItemsToRemove)
                             }
                         }
                     }
@@ -183,44 +127,24 @@ class SearchFragment : BaseRecyclerViewFragment() {
             ALBUM -> {
                 lifecycleScope.launch(Dispatchers.IO) {
                     val songs = musicDatabase!!.musicDao().findBySearchSongs(query)
-                    val albums = songs.distinctBy { song ->
+                    val songsByAlbum = songs.distinctBy { song ->
                         song.albumName
                     }.take(10)
 
                     lifecycleScope.launch(Dispatchers.Main) {
-                        val adapterAlbums = adapter.albums
+                        if (songsByAlbum.isEmpty()) binding.noResults.isVisible = true
+                        if (adapter.albums.isEmpty()) {
+                            adapter.albums.addAll(songsByAlbum)
+                            adapter.notifyItemRangeInserted(0, songsByAlbum.size)
+                        } else {
+                            for ((index, album) in songsByAlbum.withIndex()) {
+                                adapter.processLoopIterationAlbum(index, album)
+                            }
 
-                        when {
-                            albums.isEmpty() -> {
-                                adapter.albums = mutableListOf()
-                                adapter.notifyDataSetChanged()
-                                binding.noResults.isVisible = true
-                            }
-                            adapterAlbums.isEmpty() -> {
-                                binding.noResults.isGone = true
-                                adapter.albums = albums.toMutableList()
-                                adapter.notifyItemRangeInserted(0, albums.size)
-                            }
-                            else -> {
-                                binding.noResults.isGone = true
-                                val removeItems = adapterAlbums - albums
-                                val addItems = albums - adapterAlbums
-                                for (a in removeItems) {
-                                    val index = adapter.albums.indexOfFirst {
-                                        it.songId == a.songId
-                                    }
-                                    adapter.albums.removeAt(index)
-                                    adapter.notifyItemRemoved(index)
-                                    adapter.notifyItemChanged(index)
-                                }
-                                for (a in addItems) {
-                                    val index = albums.indexOfFirst {
-                                        it.songId == a.songId
-                                    }
-                                    adapter.albums.add(index, a)
-                                    adapter.notifyItemInserted(index)
-                                    adapter.notifyItemChanged(index)
-                                }
+                            if (adapter.albums.size > songsByAlbum.size) {
+                                val numberItemsToRemove = adapter.albums.size - songsByAlbum.size
+                                repeat(numberItemsToRemove) { adapter.albums.removeLast() }
+                                adapter.notifyItemRangeRemoved(songsByAlbum.size, numberItemsToRemove)
                             }
                         }
                     }
@@ -231,39 +155,19 @@ class SearchFragment : BaseRecyclerViewFragment() {
                     val artists = musicDatabase!!.musicDao().findBySearchArtists(query)
 
                     lifecycleScope.launch(Dispatchers.Main) {
-                        val adapterArtists = adapter.artists
+                        if (artists.isEmpty()) binding.noResults.isVisible = true
+                        if (adapter.artists.isEmpty()) {
+                            adapter.artists.addAll(artists)
+                            adapter.notifyItemRangeInserted(0, artists.size)
+                        } else {
+                            for ((index, artist) in artists.withIndex()) {
+                                adapter.processLoopIterationArtist(index, artist)
+                            }
 
-                        when {
-                            artists.isEmpty() -> {
-                                adapter.artists = mutableListOf()
-                                adapter.notifyDataSetChanged()
-                                binding.noResults.isVisible = true
-                            }
-                            adapterArtists.isEmpty() -> {
-                                binding.noResults.isGone = true
-                                adapter.artists = artists.toMutableList()
-                                adapter.notifyItemRangeInserted(0, artists.size)
-                            }
-                            else -> {
-                                binding.noResults.isGone = true
-                                val removeItems = adapterArtists - artists
-                                val addItems = artists - adapterArtists
-                                for (a in removeItems) {
-                                    val index = adapter.artists.indexOfFirst {
-                                        it.artistName == a.artistName
-                                    }
-                                    adapter.artists.removeAt(index)
-                                    adapter.notifyItemRemoved(index)
-                                    adapter.notifyItemChanged(index)
-                                }
-                                for (a in addItems) {
-                                    val index = artists.indexOfFirst {
-                                        it.artistName == a.artistName
-                                    }
-                                    adapter.artists.add(index, a)
-                                    adapter.notifyItemInserted(index)
-                                    adapter.notifyItemChanged(index)
-                                }
+                            if (adapter.artists.size > artists.size) {
+                                val numberItemsToRemove = adapter.artists.size - artists.size
+                                repeat(numberItemsToRemove) { adapter.artists.removeLast() }
+                                adapter.notifyItemRangeRemoved(artists.size, numberItemsToRemove)
                             }
                         }
                     }
@@ -274,45 +178,55 @@ class SearchFragment : BaseRecyclerViewFragment() {
                     val playlists = musicDatabase!!.playlistDao().findBySearchPlaylists(query)
 
                     lifecycleScope.launch(Dispatchers.Main) {
-                        val adapterPlaylists = adapter.playlists
+                        if (playlists.isEmpty()) binding.noResults.isVisible = true
+                        if (adapter.playlists.isEmpty()) {
+                            adapter.playlists.addAll(playlists)
+                            adapter.notifyItemRangeInserted(0, playlists.size)
+                        } else {
+                            for ((index, playlist) in playlists.withIndex()) {
+                                adapter.processLoopIterationPlaylist(index, playlist)
+                            }
 
-                        when {
-                            playlists.isEmpty() -> {
-                                adapter.playlists = mutableListOf()
-                                adapter.notifyDataSetChanged()
-                                binding.noResults.isVisible = true
-                            }
-                            adapterPlaylists.isEmpty() -> {
-                                binding.noResults.isGone = true
-                                adapter.playlists = playlists.toMutableList()
-                                adapter.notifyItemRangeInserted(0, playlists.size)
-                            }
-                            else -> {
-                                binding.noResults.isGone = true
-                                val removeItems = adapterPlaylists - playlists
-                                val addItems = playlists - adapterPlaylists
-                                for (p in removeItems) {
-                                    val index = adapter.playlists.indexOfFirst {
-                                        it.playlistId == p.playlistId
-                                    }
-                                    adapter.playlists.removeAt(index)
-                                    adapter.notifyItemRemoved(index)
-                                    adapter.notifyItemChanged(index)
-                                }
-                                for (p in addItems) {
-                                    val index = playlists.indexOfFirst {
-                                        it.playlistId == p.playlistId
-                                    }
-                                    adapter.playlists.add(index, p)
-                                    adapter.notifyItemInserted(index)
-                                    adapter.notifyItemChanged(index)
-                                }
+                            if (adapter.playlists.size > playlists.size) {
+                                val numberItemsToRemove = adapter.playlists.size - playlists.size
+                                repeat(numberItemsToRemove) { adapter.playlists.removeLast() }
+                                adapter.notifyItemRangeRemoved(playlists.size, numberItemsToRemove)
                             }
                         }
                     }
                 }
             }
         }
+    }
+
+    private fun setupMenu() {
+        (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
+            override fun onPrepareMenu(menu: Menu) {
+                val searchItem = menu.findItem(R.id.search)
+                searchView = searchItem.actionView as SearchView
+
+                val onQueryListener = object : SearchView.OnQueryTextListener {
+                    override fun onQueryTextChange(newText: String): Boolean {
+                        query = "%$newText%"
+                        requestNewData()
+                        return true
+                    }
+                    override fun onQueryTextSubmit(query: String): Boolean = true
+                }
+
+                searchView?.apply {
+                    isIconifiedByDefault = false
+                    queryHint = getString(R.string.search_hint)
+                    setOnQueryTextListener(onQueryListener)
+                }
+
+                binding.recyclerView.adapter = adapter
+            }
+
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) { }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean = true
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
 
     override fun onStop() {
