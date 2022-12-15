@@ -1,8 +1,18 @@
 <resources>
     <!-- App details -->
+    <string name="acknowledgements">Acknowledgements</string>
+    <string name="acknowledgements_body">Warm thanks to the following people and organisations who\'s work has been used in this app:
+    \n
+    \nThe vinyl icon used as the app icon, for missing album and playlist artwork was made by Freepik from www.flaticon.com
+    \n
+    \nThe playback control icons (play, pause, skip forward and skip back) were made by Elias Bikbulatov from www.flaticon.com</string>
     <string name="app_name">Supernova</string>
+    <string name="app_info">App information</string>
+    <string name="developer">Developer</string>
+    <string name="developer_body">This app was developed by Adam Hawke. Contact: hello@codersguidebook.com</string>
 
     <!-- Navigation -->
+    <string name="about">About</string>
     <string name="albums">Albums</string>
     <string name="artists">Artists</string>
     <string name="home">Home</string>
@@ -15,18 +25,26 @@
     <!-- Actions -->
     <string name="add_que">Add to play queue</string>
     <string name="add_playlist">Add to playlist</string>
+    <string name="add_to_favourites">Add to favourites</string>
     <string name="cancel">Cancel</string>
     <string name="change_image">Change image</string>
     <string name="create_playlist">Create new playlist</string>
     <string name="delete_image">Delete image</string>
+    <string name="delete_playlist">Delete playlist</string>
     <string name="done">Done</string>
     <string name="edit_album">Edit album info</string>
     <string name="edit_music">Edit music info</string>
     <string name="more_settings">More settings</string>
     <string name="ok">OK</string>
+    <string name="options_menu">Options menu</string>
     <string name="play_next">Play next</string>
     <string name="play_pause">Play or pause</string>
     <string name="play_prev">Play previous</string>
+    <string name="refresh_song_of_the_day">Refresh today\'s song of the day</string>
+    <string name="remove_favourites">Remove from favourites</string>
+    <string name="remove_play_queue">Remove from play queue</string>
+    <string name="remove_playlist">Remove from playlist</string>
+    <string name="reorder_playlist">Reorder playlist</string>
     <string name="repeat_current_playlist">Repeat current playlist</string>
     <string name="save">Save</string>
     <string name="submit">Submit</string>
@@ -36,11 +54,21 @@
     <string name="album_title">Album title</string>
     <string name="album_year">Album year</string>
     <string name="artist">Artist</string>
+    <string name="artist_name">Artist name</string>
+    <string name="favourites">Favourites</string>
     <string name="library">My Library</string>
+    <string name="most_played">Most played</string>
+    <string name="n_plays">%1$d plays</string>
     <string name="no_results">No results found</string>
+    <string name="one_play">1 play</string>
+    <string name="played_n_times">Played %1$d times</string>
+    <string name="played_one_time">Played 1 time</string>
     <string name="playlist_name">Playlist name</string>
+    <string name="recently_played">Recently played</string>
     <string name="search_hint">Search music</string>
+    <string name="song_day">Song of the day</string>
     <string name="title">Title</string>
+    <string name="track">Track</string>
     <string name="year">Year</string>
 
     <!-- Accessibility -->
@@ -48,6 +76,7 @@
     <string name="album_information">Album information</string>
     <string name="close_currently_playing">Close currently playing</string>
     <string name="handle_view_desc">Icon that allows you to reorder songs in the current playback list.</string>
+    <string name="play_or_pause_current_track">Play or pause current track</string>
     <string name="set_album_artwork">Set album artwork</string>
     <string name="shuffle_playlist">Shuffle current playlist</string>
     <string name="shuffle_tracks">Shuffle tracks</string>
@@ -66,53 +95,31 @@
     <!-- Toast notifications -->
     <string name="changes_applied">Your changes will be applied to the next round of animations.</string>
 
-
-
-    <string name="play_or_pause_current_track">Play or pause current track</string>
-    <string name="options_menu">Options menu</string>
-    <string name="remove_from_queue">Remove from play queue</string>
-    <string name="favourites">Favourites</string>
-    <string name="recently_played">Recently played</string>
-    <string name="most_played">Most played</string>
-    <string name="song_day">Song of the day</string>
-    <string name="remove_playlist">Remove from playlist</string>
-    <string name="reorder_playlist">Reorder playlist</string>
-    <string name="delete_playlist">Delete playlist</string>
-    <string name="animation_colour">Colour</string>
-    <string name="red">Red</string>
-    <string name="blue">Blue</string>
-    <string name="pastel">Pastel</string>
-    <string name="animation_images">Images</string>
-    <string name="leaves">Leaves</string>
+    <!-- Animation labels -->
     <string name="animals">Animals</string>
-    <string name="space">Space</string>
+    <string name="animation_colour">Colour</string>
+    <string name="animation_images">Images</string>
+    <string name="animation_speed">Speed</string>
+    <string name="animations">Animations</string>
+    <string name="blue">Blue</string>
+    <string name="fast">Fast</string>
     <string name="flowers">Flowers</string>
-    <string name="mandala">Mandala</string>
     <string name="instruments">Musical instruments</string>
+    <string name="leaves">Leaves</string>
+    <string name="mandala">Mandala</string>
+    <string name="normal">Normal</string>
+    <string name="pastel">Pastel</string>
     <string name="playback_animations">Playback animations</string>
+    <string name="red">Red</string>
     <string name="show_animations">Show animations</string>
     <string name="show_hide_animations">Show/hide animations</string>
-    <string name="add_to_favourites">Add to favourites</string>
-    <string name="remove_favourites">Remove from favourites</string>
-    <string name="animation_speed">Speed</string>
     <string name="slow">Slow</string>
-    <string name="fast">Fast</string>
-    <string name="normal">Normal</string>
-    <string name="track">Track</string>
-    <string name="artist_name">Artist name</string>
-    <string name="about">About</string>
-    <string name="app_info">App information</string>
-    <string name="acknowledgements">Acknowledgements</string>
-    <string name="acknowledgements_body">Warm thanks to the following people and organisations who\'s work has been used in this app:
-    \n
-    \nThe vinyl icon used as the app icon, for missing album and playlist artwork was made by Freepik from www.flaticon.com
-    \n
-    \nThe playback control icons (play, pause, skip forward and skip back) were made by Elias Bikbulatov from www.flaticon.com</string>
-    <string name="developer">Developer</string>
-    <string name="developer_body">This app was developed by Adam Hawke. Contact: hello@codersguidebook.com</string>
+    <string name="space">Space</string>
+
+
     <string name="song_of_the_day_will_be_displayed_here">Song of the day will appear here once your library is built</string>
-    <string name="refresh_today_s_song_of_the_day">Refresh today\'s song of the day</string>
-    <string name="animations">Animations</string>
+
+
     <string name="more">More</string>
     <string name="all_songs">All songs</string>
     <string name="use_custom_image">Use custom image</string>
@@ -177,11 +184,6 @@
 
     <string name="one_album">1 album</string>
     <string name="n_albums">%1$d albums</string>
-
-    <string name="played_one_time">Played 1 time</string>
-    <string name="played_n_times">Played %1$d times</string>
-    <string name="one_play">1 play</string>
-    <string name="n_plays">%1$d plays</string>
 
     <string name="no">No</string>
     <string name="yes">Yes</string>
