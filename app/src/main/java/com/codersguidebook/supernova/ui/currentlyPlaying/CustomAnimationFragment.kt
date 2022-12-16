@@ -7,28 +7,35 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.view.*
 import androidx.appcompat.widget.PopupMenu
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
+import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_TYPE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_URI
+import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
+import com.codersguidebook.supernova.recyclerview.adapter.AlbumsAdapter
+import com.codersguidebook.supernova.ui.album.AlbumFragmentDirections
+import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import java.io.FileNotFoundException
 import java.io.IOException
 
-class CustomAnimationFragment : Fragment() {
+class CustomAnimationFragment : RecyclerViewFragment() {
 
-    private var _binding: FragmentWithRecyclerViewBinding? = null
-    private val binding get() = _binding!!
     var imageStrings = mutableListOf<String>()
+    override lateinit var adapter: AnimationAdapter
     private lateinit var sharedPreferences: SharedPreferences
-    private lateinit var animationAdapter: AnimationAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -36,33 +43,27 @@ class CustomAnimationFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentWithRecyclerViewBinding.inflate(inflater, container, false)
-        setHasOptionsMenu(true)
-
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
-        animationAdapter = AnimationAdapter(this)
-        val layoutManager = GridLayoutManager(context, 3)
-        binding.root.layoutManager = layoutManager
+        setupMenu()
+
+        binding.root.layoutManager = GridLayoutManager(context, 3)
         binding.root.itemAnimator = DefaultItemAnimator()
-        binding.root.adapter = animationAdapter
 
-        val customDrawableString = sharedPreferences.getString(ANIMATION_URI, null)
-        if (customDrawableString != null) {
+        return super.onCreateView(inflater, container, savedInstanceState)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        binding.root.adapter = adapter
+
+        sharedPreferences.getString(ANIMATION_URI, null)?.let {
             val listType = object : TypeToken<MutableList<String>>() {}.type
-            imageStrings = Gson().fromJson(customDrawableString, listType)
-            animationAdapter.imageStringList = imageStrings
-            animationAdapter.notifyDataSetChanged()
+            imageStrings = Gson().fromJson(it, listType)
+            adapter.imageStringList = imageStrings
+            adapter.notifyItemRangeInserted(0, imageStrings.size)
         }
-
-        return binding.root
     }
-
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        val search: MenuItem? = menu.findItem(R.id.search)
-        search?.let { it.isVisible = false }
-        super.onCreateOptionsMenu(menu, inflater)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean = findNavController().popBackStack()
 
     fun getPhoto(position: Int) {
         startActivityForResult(Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI), position)
@@ -99,33 +100,46 @@ class CustomAnimationFragment : Fragment() {
         super.onActivityResult(reqCode, resultCode, data)
     }
 
-    fun showPopup(view: View, position: Int) {
-        val popup = PopupMenu(requireContext(), view)
-        popup.inflate(R.menu.animation_menu)
-
-        popup.setOnMenuItemClickListener {
-            when (it.itemId) {
-                R.id.menu_change -> {
-                    getPhoto(position)
-                    true
-                }
-                else -> {
-                    animationAdapter.removeItem(position)
-                    true
-                }
+    private fun setupMenu() {
+        (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
+            override fun onPrepareMenu(menu: Menu) {
+                menu.findItem(R.id.search)?.isVisible = false
             }
-        }
 
-        popup.show()
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) { }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return findNavController().popBackStack()
+            }
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+    }
+
+    fun showPopup(view: View, position: Int) {
+        PopupMenu(requireContext(), view).apply {
+            inflate(R.menu.animation_menu)
+            setOnMenuItemClickListener {
+                when (it.itemId) {
+                    R.id.menu_change -> getPhoto(position)
+                    else -> adapter.removeItem(position)
+                }
+                true
+            }
+            show()
+        }
     }
 
     fun saveChanges() {
-        val editor = sharedPreferences.edit()
-        if (imageStrings.isEmpty()) editor.putString(ANIMATION_URI, null)
-        else {
-            val gPretty = GsonBuilder().setPrettyPrinting().create().toJson(imageStrings)
-            editor.putString(ANIMATION_URI, gPretty)
+        sharedPreferences.edit().apply {
+            if (imageStrings.isEmpty()) putString(ANIMATION_URI, null)
+            else {
+                val gPretty = GsonBuilder().setPrettyPrinting().create().toJson(imageStrings)
+                putString(ANIMATION_URI, gPretty)
+            }
+            apply()
         }
-        editor.apply()
+    }
+
+    override fun initialiseAdapter() {
+        adapter = AnimationAdapter(this)
     }
 }
