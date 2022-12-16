@@ -1,30 +1,25 @@
 package com.codersguidebook.supernova.ui.currentlyPlaying
 
-import android.app.Activity
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.*
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
-import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_TYPE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_URI
 import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
-import com.codersguidebook.supernova.recyclerview.adapter.AlbumsAdapter
-import com.codersguidebook.supernova.ui.album.AlbumFragmentDirections
-import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
@@ -33,9 +28,27 @@ import java.io.IOException
 
 class CustomAnimationFragment : RecyclerViewFragment() {
 
-    var imageStrings = mutableListOf<String>()
+    private var position: Int? = null
     override lateinit var adapter: AnimationAdapter
     private lateinit var sharedPreferences: SharedPreferences
+
+    private val registerResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == AppCompatActivity.RESULT_OK) {
+            try {
+                result.data?.data?.let { selectedImageUri ->
+                    if (position == null) adapter.setImage(selectedImageUri.toString())
+                    else adapter.setImage(selectedImageUri.toString(), position!!)
+                    sharedPreferences.edit().apply {
+                        putString(ANIMATION_TYPE, getString(R.string.custom_image))
+                        apply()
+                    }
+                    saveChanges()
+                }
+            } catch (_: FileNotFoundException) {
+            } catch (_: IOException) { }
+        }
+        position = null
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -59,45 +72,20 @@ class CustomAnimationFragment : RecyclerViewFragment() {
 
         sharedPreferences.getString(ANIMATION_URI, null)?.let {
             val listType = object : TypeToken<MutableList<String>>() {}.type
-            imageStrings = Gson().fromJson(it, listType)
-            adapter.imageStringList = imageStrings
+            val imageStrings: List<String> = Gson().fromJson(it, listType)
+            adapter.imageStrings.addAll(imageStrings)
             adapter.notifyItemRangeInserted(0, imageStrings.size)
         }
     }
 
+    /**
+     * Prompt the user to select an image from their device.
+     *
+     * @param position - The position in the adapter at which the image should be displayed.
+     */
     fun getPhoto(position: Int) {
-        startActivityForResult(Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI), position)
-    }
-
-    override fun onActivityResult(reqCode: Int, resultCode: Int, data: Intent?) {
-        if (resultCode == Activity.RESULT_OK) {
-            try {
-                val selectedImageUri = data!!.data
-                if (selectedImageUri != null) {
-                    val uriString = selectedImageUri.toString()
-
-                    if (reqCode >= imageStrings.size) {
-                        imageStrings.add(reqCode, uriString)
-                        animationAdapter.imageStringList = imageStrings
-                        animationAdapter.notifyItemInserted(reqCode)
-                        if (animationAdapter.imageStringList.size == 6) animationAdapter.notifyItemRangeChanged(reqCode, 6)
-                        else animationAdapter.notifyItemRangeChanged(reqCode, animationAdapter.imageStringList.size + 1)
-                    } else {
-                        imageStrings.removeAt(reqCode)
-                        imageStrings.add(reqCode, uriString)
-                        animationAdapter.imageStringList = imageStrings
-                        animationAdapter.notifyItemChanged(reqCode)
-                    }
-                    val editor = sharedPreferences.edit()
-                    editor.putString(ANIMATION_TYPE, getString(R.string.custom_image))
-                    editor.apply()
-                    saveChanges()
-                }
-            } catch (_: FileNotFoundException) { }
-            catch (_: IOException) {  }
-        }
-
-        super.onActivityResult(reqCode, resultCode, data)
+        this.position = position
+        registerResult.launch(Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI))
     }
 
     private fun setupMenu() {
@@ -130,10 +118,11 @@ class CustomAnimationFragment : RecyclerViewFragment() {
 
     fun saveChanges() {
         sharedPreferences.edit().apply {
-            if (imageStrings.isEmpty()) putString(ANIMATION_URI, null)
+            if (adapter.imageStrings.isEmpty()) putString(ANIMATION_URI, null)
             else {
-                val gPretty = GsonBuilder().setPrettyPrinting().create().toJson(imageStrings)
-                putString(ANIMATION_URI, gPretty)
+                val imagesJson = GsonBuilder().setPrettyPrinting().create()
+                    .toJson(adapter.imageStrings)
+                putString(ANIMATION_URI, imagesJson)
             }
             apply()
         }
@@ -141,5 +130,9 @@ class CustomAnimationFragment : RecyclerViewFragment() {
 
     override fun initialiseAdapter() {
         adapter = AnimationAdapter(this)
+    }
+
+    override fun requestNewData() {
+        TODO("Not yet implemented")
     }
 }
