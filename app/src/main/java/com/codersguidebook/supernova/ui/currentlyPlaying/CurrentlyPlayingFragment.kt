@@ -44,7 +44,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.File
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -281,19 +281,23 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
      * @param uris - The URIs leading to the user's custom animation images.
      */
     private fun setCustomDrawables(uris: List<Uri>) {
-        val validUris = uris.filter { uri ->  uri.path?.let { File(it).isFile } == true}
-
-        if (validUris.size != uris.size) {
-            customDrawablesNotFound(validUris)
+        val invalidUris = mutableListOf<Uri>()
+        val drawables = uris.mapNotNull { uri ->
+            try {
+                decodeDrawable(createSource(requireActivity().contentResolver, uri))
+            } catch (_: IOException) {
+                invalidUris.add(uri)
+                null
+            }
         }
 
-        if (validUris.isEmpty()) {
-            binding.animatedView.changeDrawable(getString(R.string.leaves), false)
+        if (invalidUris.isNotEmpty()) {
+            customDrawablesNotFound(uris.filterNot { uri -> invalidUris.contains(uri) })
+        }
+
+        if (drawables.isEmpty()) {
+            binding.animatedView.changeDrawable(getString(R.string.leaves), true)
             return
-        }
-
-        val drawables = validUris.map { uri ->
-            decodeDrawable(createSource(requireActivity().contentResolver, uri))
         }
 
         binding.animatedView.drawableList = drawables
@@ -312,9 +316,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
         var message = getString(R.string.error_custom_image_could_not_be_found)
         if (validUris.isEmpty()) {
             message = getString(R.string.error_no_custom_images_found)
-            editor.putString(ANIMATION_TYPE, getString(R.string.leaves))
             editor.putString(ANIMATION_URI, null)
-            binding.animatedView.usingCustomDrawable = false
         } else {
             val urisJson = GsonBuilder().setPrettyPrinting().create().toJson(validUris)
             editor.putString(ANIMATION_URI, urisJson)
@@ -430,9 +432,8 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
                             editor.apply()
                             val listType = object : TypeToken<List<String>>() {}.type
                             val imageStrings: List<String> = Gson().fromJson(customDrawableString, listType)
-                            val list = mutableListOf<Uri>()
-                            for (s in imageStrings)  list.add(Uri.parse(s))
-                            setCustomDrawables(list)
+                            val imageUris = imageStrings.map { Uri.parse(it) }
+                            setCustomDrawables(imageUris)
                             Toast.makeText(callingActivity, getString(R.string.changes_applied),
                                 Toast.LENGTH_SHORT).show()
                         } else {

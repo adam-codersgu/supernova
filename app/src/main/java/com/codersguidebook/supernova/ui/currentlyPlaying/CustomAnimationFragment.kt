@@ -76,7 +76,7 @@ class CustomAnimationFragment : BaseRecyclerViewFragment() {
         binding.root.adapter = adapter
 
         sharedPreferences.getString(ANIMATION_URI, null)?.let {
-            val listType = object : TypeToken<MutableList<String>>() {}.type
+            val listType = object : TypeToken<List<String>>() {}.type
             val imageStrings: List<String> = Gson().fromJson(it, listType)
             adapter.imageStrings.addAll(imageStrings)
             adapter.notifyItemRangeInserted(0, imageStrings.size)
@@ -126,8 +126,7 @@ class CustomAnimationFragment : BaseRecyclerViewFragment() {
         sharedPreferences.edit().apply {
             if (adapter.imageStrings.isEmpty()) putString(ANIMATION_URI, null)
             else {
-                val imagesJson = GsonBuilder().setPrettyPrinting().create()
-                    .toJson(adapter.imageStrings)
+                val imagesJson = GsonBuilder().create().toJson(adapter.imageStrings)
                 putString(ANIMATION_URI, imagesJson)
             }
             apply()
