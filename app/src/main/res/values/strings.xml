@@ -133,7 +133,6 @@
     <string name="image_set">Image set!</string>
     <string name="item_saved">%1$s saved</string>
     <string name="item_added_play_queue">%1$s has been added to the play queue</string>
-    <string name="no_custom_image">Custom image could not be found</string>
     <string name="no_songs_found">No songs were found for %1$s</string>
     <string name="play_queue_shuffled">Play queue shuffled</string>
     <string name="play_queue_unshuffled">Play queue unshuffled</string>
@@ -173,8 +172,10 @@
     <string name="space">Space</string>
 
     <!-- Error descriptions -->
+    <string name="error_custom_image_could_not_be_found">One or more of your custom images not be found</string>
     <string name="error_generic_playback">A playback error has occurred.</string>
     <string name="error_media_service_default">A playback error has occurred. If the song file has been moved or deleted please wait for the library to refresh.</string>
     <string name="error_media_service_empty_queue">A playback error has occurred. The play queue is empty.</string>
     <string name="error_media_service_player_state">A playback error has occurred. The media player must be restarted.</string>
+    <string name="error_no_custom_images_found">None of your custom images could be found</string>
 </resources>

@@ -2,8 +2,8 @@ package com.codersguidebook.supernova.ui.currentlyPlaying
 
 import android.content.Intent
 import android.content.SharedPreferences
-import android.graphics.ImageDecoder
-import android.graphics.drawable.Drawable
+import android.graphics.ImageDecoder.createSource
+import android.graphics.ImageDecoder.decodeDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -209,16 +209,15 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
             customDrawableString != null && animationPreference == getString(R.string.custom_image) -> {
                 val listType = object : TypeToken<List<String>>() {}.type
                 val imageStrings: List<String> = Gson().fromJson(customDrawableString, listType)
-                val list = mutableListOf<Uri>()
-                for (s in imageStrings)  list.add(Uri.parse(s))
-                setCustomDrawable(list)
+                val imageUris = imageStrings.map { Uri.parse(it) }
+                setCustomDrawables(imageUris)
             }
             animationPreference == getString(R.string.custom_image) -> {
                 sharedPreferences.edit().apply {
                     putString(ANIMATION_TYPE, getString(R.string.leaves))
                     apply()
                 }
-                Toast.makeText(activity, getString(R.string.no_custom_image), Toast.LENGTH_LONG).show()
+                Toast.makeText(activity, getString(R.string.error_custom_image_could_not_be_found), Toast.LENGTH_LONG).show()
                 binding.animatedView.changeDrawable(getString(R.string.leaves), false)
             }
             else -> binding.animatedView.changeDrawable(animationPreference!!, false)
@@ -281,30 +280,47 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
      *
      * @param uris - The URIs leading to the user's custom animation images.
      */
-    private fun setCustomDrawable(uris: MutableList<Uri>) {
-        fun removeUri(uri: Uri) {
-            uris.remove(uri)
-            val editor = sharedPreferences.edit()
-            if (uris.isEmpty()) {
-                editor.putString(ANIMATION_TYPE, getString(R.string.leaves))
-                editor.putString(ANIMATION_URI, null)
-                binding.animatedView.usingCustomDrawable = false
-            } else {
-                val gPretty = GsonBuilder().setPrettyPrinting().create().toJson(uris)
-                editor.putString(ANIMATION_URI, gPretty)
-            }
-            editor.apply()
-            Toast.makeText(activity, getString(R.string.no_custom_image), Toast.LENGTH_LONG).show()
+    private fun setCustomDrawables(uris: List<Uri>) {
+        val validUris = uris.filter { uri ->  uri.path?.let { File(it).isFile } == true}
+
+        if (validUris.size != uris.size) {
+            customDrawablesNotFound(validUris)
         }
-        val drawables = arrayListOf<Drawable?>()
-        for (uri in uris) {
-            if (uri.path?.let { File(it).isFile } == true) {
-                val source = ImageDecoder.createSource(requireActivity().contentResolver, uri)
-                drawables.add(ImageDecoder.decodeDrawable(source))
-            } else removeUri(uri)
+
+        if (validUris.isEmpty()) {
+            binding.animatedView.changeDrawable(getString(R.string.leaves), false)
+            return
         }
+
+        val drawables = validUris.map { uri ->
+            decodeDrawable(createSource(requireActivity().contentResolver, uri))
+        }
+
         binding.animatedView.drawableList = drawables
         binding.animatedView.usingCustomDrawable = true
+    }
+
+    /**
+     * Update the animation settings if one or more of the user's custom drawable images cannot
+     * be found.
+     *
+     * @param validUris - A list containing all remaining valid custom image URIs. This list can
+     * be empty.
+     */
+    private fun customDrawablesNotFound(validUris: List<Uri>) {
+        val editor = sharedPreferences.edit()
+        var message = getString(R.string.error_custom_image_could_not_be_found)
+        if (validUris.isEmpty()) {
+            message = getString(R.string.error_no_custom_images_found)
+            editor.putString(ANIMATION_TYPE, getString(R.string.leaves))
+            editor.putString(ANIMATION_URI, null)
+            binding.animatedView.usingCustomDrawable = false
+        } else {
+            val urisJson = GsonBuilder().setPrettyPrinting().create().toJson(validUris)
+            editor.putString(ANIMATION_URI, urisJson)
+        }
+        editor.apply()
+        Toast.makeText(activity, message, Toast.LENGTH_LONG).show()
     }
 
     override fun onResume() {
@@ -416,7 +432,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
                             val imageStrings: List<String> = Gson().fromJson(customDrawableString, listType)
                             val list = mutableListOf<Uri>()
                             for (s in imageStrings)  list.add(Uri.parse(s))
-                            setCustomDrawable(list)
+                            setCustomDrawables(list)
                             Toast.makeText(callingActivity, getString(R.string.changes_applied),
                                 Toast.LENGTH_SHORT).show()
                         } else {

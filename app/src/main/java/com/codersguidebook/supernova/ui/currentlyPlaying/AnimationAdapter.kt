@@ -34,7 +34,7 @@ class AnimationAdapter(private val fragment: CustomAnimationFragment):
                     .into(holder.itemView as ImageView)
 
                 holder.itemView.setOnClickListener {
-                    fragment.getPhoto(position)
+                    fragment.getPhoto()
                 }
             }
             else -> {
@@ -60,7 +60,7 @@ class AnimationAdapter(private val fragment: CustomAnimationFragment):
     fun removeItem(position: Int) {
         imageStrings.removeAt(position)
         notifyItemRemoved(position)
-        notifyItemChanged(imageStrings.size + 1)
+        notifyItemChanged(imageStrings.size)
         fragment.saveChanges()
     }
 
@@ -82,8 +82,8 @@ class AnimationAdapter(private val fragment: CustomAnimationFragment):
                 notifyItemChanged(5)
             }
             else -> {
-                imageStrings.add(uriString)
-                notifyItemInserted(imageStrings.size - 1)
+                imageStrings.add(0, uriString)
+                notifyItemInserted(0)
                 if (imageStrings.size >= 6) {
                     // If there are six images then remove the option to add new ones
                     notifyItemRemoved(7)

@@ -3,6 +3,7 @@ package com.codersguidebook.supernova
 import android.animation.TimeAnimator
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.Resources.NotFoundException
 import android.graphics.Canvas
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
@@ -77,7 +78,9 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
     private var selectedObject: MovingObject? = null
 
     init {
-        mBaseSize = drawableList[0]!!.intrinsicWidth.coerceAtLeast(drawableList[0]!!.intrinsicHeight) / 3f
+        if (drawableList.isNotEmpty()) {
+            mBaseSize = drawableList[0].intrinsicWidth.coerceAtLeast(drawableList[0].intrinsicHeight) / 3f
+        }
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -193,10 +196,10 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
         movingObject.y = -leafSize
 
         // set the drawable image
-        if (!drawableList.isNullOrEmpty()) movingObject.drawable = drawableList.random()!!
+        if (drawableList.isNotEmpty()) movingObject.drawable = drawableList.random()
 
         // set the drawable colour
-        if (!colourList.isNullOrEmpty()) movingObject.colour = colourList.random()
+        if (colourList.isNotEmpty()) movingObject.colour = colourList.random()
 
         // The alpha is determined by the scale of the star and a random multiplier.
         movingObject.alpha = ALPHA_SCALE_PART * movingObject.scale + ALPHA_RANDOM_PART * mRnd.nextFloat()
@@ -210,22 +213,20 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
         else movingObject.spin = -spin
     }
 
-    private fun colourListGenerator(colours: List<Int>): ArrayList<Int> {
-        val list = arrayListOf<Int>()
-        for (c in colours) {
-            val colour = ContextCompat.getColor(context, c)
-            list.add(colour)
+    private fun colourListGenerator(colours: List<Int>): List<Int> {
+        return colours.mapNotNull { colour ->
+            try {
+                ContextCompat.getColor(context, colour)
+            } catch (_: NotFoundException) {
+                null
+            }
         }
-        return list
     }
 
-    private fun drawableListGenerator(drawables: List<Int>): ArrayList<Drawable?> {
-        val list = arrayListOf<Drawable?>()
-        for (d in drawables) {
-            val drawable = ContextCompat.getDrawable(context, d)
-            list.add(drawable)
+    private fun drawableListGenerator(drawables: List<Int>): List<Drawable> {
+        return drawables.mapNotNull { drawable ->
+            ContextCompat.getDrawable(context, drawable)
         }
-        return list
     }
 
     fun changeDrawable(drawable: String, updatePreferences: Boolean) {

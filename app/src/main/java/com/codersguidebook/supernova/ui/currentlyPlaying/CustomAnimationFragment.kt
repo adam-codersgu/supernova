@@ -15,19 +15,24 @@ import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_TYPE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_URI
-import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
+import com.codersguidebook.supernova.recyclerview.BaseRecyclerViewFragment
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import java.io.FileNotFoundException
 import java.io.IOException
 
-class CustomAnimationFragment : RecyclerViewFragment() {
+class CustomAnimationFragment : BaseRecyclerViewFragment() {
 
+    override var _binding: ViewBinding? = null
+        get() = field as FragmentWithRecyclerViewBinding?
+    override val binding: FragmentWithRecyclerViewBinding
+        get() = _binding!! as FragmentWithRecyclerViewBinding
     private var position: Int? = null
     override lateinit var adapter: AnimationAdapter
     private lateinit var sharedPreferences: SharedPreferences
@@ -62,7 +67,7 @@ class CustomAnimationFragment : RecyclerViewFragment() {
         binding.root.layoutManager = GridLayoutManager(context, 3)
         binding.root.itemAnimator = DefaultItemAnimator()
 
-        return super.onCreateView(inflater, container, savedInstanceState)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -82,8 +87,9 @@ class CustomAnimationFragment : RecyclerViewFragment() {
      * Prompt the user to select an image from their device.
      *
      * @param position - The position in the adapter at which the image should be displayed.
+     * Default = Null (the image will be displayed at the next available position)
      */
-    fun getPhoto(position: Int) {
+    fun getPhoto(position: Int? = null) {
         this.position = position
         registerResult.launch(Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI))
     }
