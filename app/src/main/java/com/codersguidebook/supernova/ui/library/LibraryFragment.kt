@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import androidx.viewbinding.ViewBinding
 import androidx.viewpager2.widget.ViewPager2
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.ViewPagerAdapter
+import com.codersguidebook.supernova.recyclerview.adapter.ViewPagerAdapter
 import com.codersguidebook.supernova.databinding.FragmentLibraryBinding
 import com.codersguidebook.supernova.recyclerview.BaseFragment
 import com.google.android.material.navigation.NavigationView
