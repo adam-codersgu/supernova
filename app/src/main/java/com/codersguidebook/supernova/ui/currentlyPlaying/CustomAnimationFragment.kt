@@ -42,16 +42,10 @@ class CustomAnimationFragment : BaseRecyclerViewFragment() {
     private val registerResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == AppCompatActivity.RESULT_OK) {
             try {
-                // TODO: Don't forget you also need to update the PlaybackAnimator class on the new image loading method
                 result.data?.data?.let { uri ->
                     val bitmap = decodeBitmap(createSource(requireActivity().contentResolver, uri))
                     mainActivity.saveImageByResourceId("customAnimation", bitmap, imageIdToUse)
-
-                    // todo: the setImage method should see if there's an existing record under that id
-                    //      If so then replace it
-                    //      Otherwise attempt to add a new one
                     adapter.loadImageId(imageIdToUse)
-
                     sharedPreferences.edit().apply {
                         putString(ANIMATION_TYPE, getString(R.string.custom_image))
                         apply()

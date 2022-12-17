@@ -652,9 +652,8 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
     private fun getArtworkByAlbumId(albumId: String?): Bitmap {
         albumId?.let {
             try {
-                val contextWrapper = ContextWrapper(applicationContext)
-                val imageDirectory = contextWrapper.getDir("albumArt", Context.MODE_PRIVATE)
-                val imageFile = File(imageDirectory, "$albumId.jpg")
+                val directory = ContextWrapper(applicationContext).getDir("albumArt", Context.MODE_PRIVATE)
+                val imageFile = File(directory, "$albumId.jpg")
                 if (imageFile.exists()) {
                     return BitmapFactory.decodeStream(FileInputStream(imageFile))
                 }
