@@ -108,15 +108,15 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter() {
                 val albumIds = songs.map { it.albumId }
 
                 when {
-                    albumIds.size == 1 -> activity.insertArtwork(albumIds[0], holder.mArtwork)
+                    albumIds.size == 1 -> activity.loadImageByAlbumId(albumIds[0], holder.mArtwork)
                     albumIds.size > 1 -> {
                         holder.mArtwork.isGone = true
                         holder.mArtworkGrid.isVisible = true
                         val shuffledAlbumIds = albumIds.shuffled()
-                        activity.insertArtwork(shuffledAlbumIds[0], holder.mArtwork1)
-                        activity.insertArtwork(shuffledAlbumIds[1], holder.mArtwork2)
-                        if (albumIds.size > 2) activity.insertArtwork(shuffledAlbumIds[2], holder.mArtwork3)
-                        if (albumIds.size > 3) activity.insertArtwork(shuffledAlbumIds[3], holder.mArtwork4)
+                        activity.loadImageByAlbumId(shuffledAlbumIds[0], holder.mArtwork1)
+                        activity.loadImageByAlbumId(shuffledAlbumIds[1], holder.mArtwork2)
+                        if (albumIds.size > 2) activity.loadImageByAlbumId(shuffledAlbumIds[2], holder.mArtwork3)
+                        if (albumIds.size > 3) activity.loadImageByAlbumId(shuffledAlbumIds[3], holder.mArtwork4)
                     }
                 }
 
@@ -140,7 +140,7 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter() {
 
                 val current = songs[position -2]
 
-                activity.insertArtwork(current.albumId, holder.mArtwork)
+                activity.loadImageByAlbumId(current.albumId, holder.mArtwork)
 
                 holder.mTitle.text = current.albumName
                 holder.mYear.text = current.year

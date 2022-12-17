@@ -65,7 +65,7 @@ class EditPlaylistFragment : Fragment() {
 
                 if (!callingActivity.insertPlaylistArtwork(it, binding.artwork)) {
                     val playlistSongIDs = callingActivity.extractPlaylistSongIds(it.songs)
-                    callingActivity.insertArtwork(
+                    callingActivity.loadImageByAlbumId(
                         callingActivity.findFirstSongArtwork(
                             playlistSongIDs[0]
                         ), binding.artwork
@@ -128,7 +128,7 @@ class EditPlaylistFragment : Fragment() {
                         this.name = newPlaylistName
 
                         newArtwork?.let {
-                            callingActivity.changeArtwork("playlistArt", it,
+                            callingActivity.saveImageByResourceId("playlistArt", it,
                                 this.playlistId.toString())
                         }
 

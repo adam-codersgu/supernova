@@ -1,19 +1,20 @@
 package com.codersguidebook.supernova.ui.currentlyPlaying
 
-import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.bumptech.glide.Glide
+import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 
-class AnimationAdapter(private val fragment: CustomAnimationFragment):
-    RecyclerView.Adapter<ViewHolder>() {
+class AnimationAdapter(private val fragment: CustomAnimationFragment,
+    private val activity: MainActivity): RecyclerView.Adapter<ViewHolder>() {
 
-    val imageStrings = mutableListOf<String>()
+    val customAnimationImageIds = mutableListOf<String>()
 
     class ViewHolderAnimation(itemView: View) : ViewHolder(itemView) {
         init {
@@ -28,70 +29,66 @@ class AnimationAdapter(private val fragment: CustomAnimationFragment):
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         when {
-            imageStrings.size < 6 && position == imageStrings.size -> {
+            customAnimationImageIds.size < 6 && position == customAnimationImageIds.size -> {
                 Glide.with(fragment)
                     .load(R.drawable.ic_photo)
                     .into(holder.itemView as ImageView)
 
                 holder.itemView.setOnClickListener {
-                    fragment.getPhoto()
+                    if (customAnimationImageIds.size < 6) {
+                        fragment.getPhoto(customAnimationImageIds.size)
+                    } else Toast.makeText(activity,
+                        activity.getString(R.string.error_custom_animation_image_limit_reached),
+                        Toast.LENGTH_LONG).show()
                 }
             }
             else -> {
-                val current = imageStrings[position]
+                val current = customAnimationImageIds[position]
 
                 holder.itemView.setOnClickListener {
                     fragment.showPopup(it, position)
                 }
 
-                try {
-                    val uri = Uri.parse(current)
-                    Glide.with(fragment)
-                        .load(uri)
-                        .centerCrop()
-                        .into(holder.itemView as ImageView)
-                } catch (_: Exception) {
-                    removeItem(position)
-                }
+                activity.loadImageByCustomAnimationId(current, holder.itemView as ImageView)
             }
         }
-    }
-
-    fun removeItem(position: Int) {
-        imageStrings.removeAt(position)
-        notifyItemRemoved(position)
-        notifyItemChanged(imageStrings.size)
-        fragment.saveChanges()
     }
 
     /**
-     * Set the image that should be displayed at a given position in the adapter.
+     * Remove a given image from the adapter based on its ID.
      *
-     * @param uriString - A String representation of the image URI.
-     * @param position - The RecyclerView position at which the image should be displayed.
-     * Default value - The next available index in the imageStrings list
+     * @param imageId - The ID of the image.
      */
-    fun setImage(uriString: String, position: Int = imageStrings.size) {
-        when {
-            position < imageStrings.size -> {
-                imageStrings[position] = uriString
-                notifyItemChanged(position)
+    fun removeItemByImageId(imageId: String) {
+        val indexOfImage =  customAnimationImageIds.indexOfFirst { it == imageId }
+        if (indexOfImage == -1) return
+        customAnimationImageIds.removeAt(indexOfImage)
+        notifyItemRemoved(indexOfImage)
+        notifyItemChanged(customAnimationImageIds.size)
+        fragment.saveCustomAnimationImageIds()
+    }
+
+    /**
+     * Load an image into the adapter based on its ID. If the ID already exists in the adapter, then
+     * that image will be replaced. Otherwise, a new image will be added.
+     *
+     * @param imageId - The ID of the image to be displayed.
+     */
+    fun loadImageId(imageId: String) {
+        val indexOfImage =  customAnimationImageIds.indexOfFirst { it == imageId }
+        if (indexOfImage == -1) {
+            customAnimationImageIds.add(0, imageId)
+            notifyItemInserted(0)
+            if (customAnimationImageIds.size >= 6) {
+                // If there are six images then remove the option to add new ones
+                notifyItemRemoved(7)
             }
-            position >= 5 && imageStrings.size >= 6 -> {
-                imageStrings[5] = uriString
-                notifyItemChanged(5)
-            }
-            else -> {
-                imageStrings.add(0, uriString)
-                notifyItemInserted(0)
-                if (imageStrings.size >= 6) {
-                    // If there are six images then remove the option to add new ones
-                    notifyItemRemoved(7)
-                }
-            }
+        } else {
+            customAnimationImageIds[indexOfImage] = imageId
+            notifyItemChanged(indexOfImage)
         }
     }
 
-    override fun getItemCount() = if (imageStrings.size < 6) imageStrings.size + 1
+    override fun getItemCount() = if (customAnimationImageIds.size < 6) customAnimationImageIds.size + 1
     else 6
 }

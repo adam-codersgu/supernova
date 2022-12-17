@@ -35,7 +35,7 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_SPEED
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_SPIN
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_TYPE
-import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_URI
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CUSTOM_ANIMATION_IMAGE_IDS
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.codersguidebook.supernova.views.PullToCloseLayout
@@ -203,7 +203,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
         if (isAnimationVisible) binding.animatedView.visibility = View.VISIBLE
         else binding.animatedView.visibility = View.GONE
 
-        val customDrawableString = sharedPreferences.getString(ANIMATION_URI, null)
+        val customDrawableString = sharedPreferences.getString(CUSTOM_ANIMATION_IMAGE_IDS, null)
         val animationPreference = sharedPreferences.getString(ANIMATION_TYPE, getString(R.string.leaves))
         when {
             customDrawableString != null && animationPreference == getString(R.string.custom_image) -> {
@@ -316,10 +316,10 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
         var message = getString(R.string.error_custom_image_could_not_be_found)
         if (validUris.isEmpty()) {
             message = getString(R.string.error_no_custom_images_found)
-            editor.putString(ANIMATION_URI, null)
+            editor.putString(CUSTOM_ANIMATION_IMAGE_IDS, null)
         } else {
             val urisJson = GsonBuilder().setPrettyPrinting().create().toJson(validUris)
-            editor.putString(ANIMATION_URI, urisJson)
+            editor.putString(CUSTOM_ANIMATION_IMAGE_IDS, urisJson)
         }
         editor.apply()
         Toast.makeText(activity, message, Toast.LENGTH_LONG).show()
@@ -426,7 +426,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
                     R.id.animation_flower -> binding.animatedView.changeDrawable(getString(R.string.flowers), true)
                     R.id.animation_instruments -> binding.animatedView.changeDrawable(getString(R.string.instruments), true)
                     R.id.animation_custom -> {
-                        val customDrawableString = sharedPreferences.getString(ANIMATION_URI, null)
+                        val customDrawableString = sharedPreferences.getString(CUSTOM_ANIMATION_IMAGE_IDS, null)
                         if (customDrawableString != null) {
                             editor.putString(ANIMATION_TYPE, getString(R.string.custom_image))
                             editor.apply()

@@ -2,6 +2,8 @@ package com.codersguidebook.supernova.ui.currentlyPlaying
 
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.ImageDecoder.createSource
+import android.graphics.ImageDecoder.decodeBitmap
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.*
@@ -19,7 +21,7 @@ import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_TYPE
-import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_URI
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CUSTOM_ANIMATION_IMAGE_IDS
 import com.codersguidebook.supernova.recyclerview.BaseRecyclerViewFragment
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -33,26 +35,32 @@ class CustomAnimationFragment : BaseRecyclerViewFragment() {
         get() = field as FragmentWithRecyclerViewBinding?
     override val binding: FragmentWithRecyclerViewBinding
         get() = _binding!! as FragmentWithRecyclerViewBinding
-    private var position: Int? = null
+    private var imageIdToUse = "0"
     override lateinit var adapter: AnimationAdapter
     private lateinit var sharedPreferences: SharedPreferences
 
     private val registerResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == AppCompatActivity.RESULT_OK) {
             try {
-                result.data?.data?.let { selectedImageUri ->
-                    if (position == null) adapter.setImage(selectedImageUri.toString())
-                    else adapter.setImage(selectedImageUri.toString(), position!!)
+                // TODO: Don't forget you also need to update the PlaybackAnimator class on the new image loading method
+                result.data?.data?.let { uri ->
+                    val bitmap = decodeBitmap(createSource(requireActivity().contentResolver, uri))
+                    mainActivity.saveImageByResourceId("customAnimation", bitmap, imageIdToUse)
+
+                    // todo: the setImage method should see if there's an existing record under that id
+                    //      If so then replace it
+                    //      Otherwise attempt to add a new one
+                    adapter.loadImageId(imageIdToUse)
+
                     sharedPreferences.edit().apply {
                         putString(ANIMATION_TYPE, getString(R.string.custom_image))
                         apply()
                     }
-                    saveChanges()
+                    saveCustomAnimationImageIds()
                 }
             } catch (_: FileNotFoundException) {
             } catch (_: IOException) { }
         }
-        position = null
     }
 
     override fun onCreateView(
@@ -67,7 +75,7 @@ class CustomAnimationFragment : BaseRecyclerViewFragment() {
         binding.root.layoutManager = GridLayoutManager(context, 3)
         binding.root.itemAnimator = DefaultItemAnimator()
 
-        return binding.root
+        return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -75,22 +83,16 @@ class CustomAnimationFragment : BaseRecyclerViewFragment() {
 
         binding.root.adapter = adapter
 
-        sharedPreferences.getString(ANIMATION_URI, null)?.let {
-            val listType = object : TypeToken<List<String>>() {}.type
-            val imageStrings: List<String> = Gson().fromJson(it, listType)
-            adapter.imageStrings.addAll(imageStrings)
-            adapter.notifyItemRangeInserted(0, imageStrings.size)
-        }
+        requestNewData()
     }
 
     /**
      * Prompt the user to select an image from their device.
      *
-     * @param position - The position in the adapter at which the image should be displayed.
-     * Default = Null (the image will be displayed at the next available position)
+     * @param imageId - The ID that the image should have.
      */
-    fun getPhoto(position: Int? = null) {
-        this.position = position
+    fun getPhoto(imageId: Int) {
+        this.imageIdToUse = imageId.toString()
         registerResult.launch(Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI))
     }
 
@@ -108,13 +110,19 @@ class CustomAnimationFragment : BaseRecyclerViewFragment() {
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
 
-    fun showPopup(view: View, position: Int) {
+    /**
+     * Show a popup options menu when the user selects and image.
+     *
+     * @param view - The ImageView that the popup menu should appear over.
+     * @param imageId - The ID of the selected image.
+     */
+    fun showPopup(view: View, imageId: Int) {
         PopupMenu(requireContext(), view).apply {
             inflate(R.menu.animation_menu)
             setOnMenuItemClickListener {
                 when (it.itemId) {
-                    R.id.menu_change -> getPhoto(position)
-                    else -> adapter.removeItem(position)
+                    R.id.menu_change -> getPhoto(imageId)
+                    else -> adapter.removeItemByImageId(imageId.toString())
                 }
                 true
             }
@@ -122,22 +130,33 @@ class CustomAnimationFragment : BaseRecyclerViewFragment() {
         }
     }
 
-    fun saveChanges() {
+    /** Convert the list of custom animation image IDs to a JSON String and save them on a device */
+    fun saveCustomAnimationImageIds() {
         sharedPreferences.edit().apply {
-            if (adapter.imageStrings.isEmpty()) putString(ANIMATION_URI, null)
+            if (adapter.customAnimationImageIds.isEmpty()) putString(CUSTOM_ANIMATION_IMAGE_IDS, null)
             else {
-                val imagesJson = GsonBuilder().create().toJson(adapter.imageStrings)
-                putString(ANIMATION_URI, imagesJson)
+                val imagesJson = GsonBuilder().create().toJson(adapter.customAnimationImageIds)
+                putString(CUSTOM_ANIMATION_IMAGE_IDS, imagesJson)
             }
             apply()
         }
     }
 
     override fun initialiseAdapter() {
-        adapter = AnimationAdapter(this)
+        adapter = AnimationAdapter(this, mainActivity)
     }
 
     override fun requestNewData() {
-        TODO("Not yet implemented")
+        if (adapter.customAnimationImageIds.isNotEmpty()) {
+            val numberOfItemsToRemove = adapter.customAnimationImageIds.size
+            adapter.customAnimationImageIds.clear()
+            adapter.notifyItemRangeRemoved(0, numberOfItemsToRemove)
+        }
+        sharedPreferences.getString(CUSTOM_ANIMATION_IMAGE_IDS, null)?.let {
+            val listType = object : TypeToken<List<String>>() {}.type
+            val imageIds: List<String> = Gson().fromJson(it, listType)
+            adapter.customAnimationImageIds.addAll(imageIds)
+            adapter.notifyItemRangeInserted(0, imageIds.size)
+        }
     }
 }

@@ -72,7 +72,7 @@ class MostPlayedAdapter(private val mainActivity: MainActivity):
             }
         }
 
-        mainActivity.insertArtwork(current.albumId, holder.mArtwork)
+        mainActivity.loadImageByAlbumId(current.albumId, holder.mArtwork)
 
         holder.mTitle.text = current.title
         holder.mArtist.text = current.artist

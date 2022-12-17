@@ -660,7 +660,7 @@ class MainActivity : AppCompatActivity() {
      * the given song is available. For example, QueueItem objects may feature incomplete
      * song metadata.
      *
-     * @param songId
+     * @param songId - The ID of the song.
      */
     fun openAddToPlaylistDialogForSongById(songId: Long) {
         val song = getSongById(songId) ?: return
@@ -957,18 +957,38 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Create a File object for the image file associated with a given album ID
-     * and load the artwork into a user interface View.
+     * Load a custom animation image into a user interface View.
      *
-     * @param albumID - The ID of the album that artwork should be loaded for.
+     * @param animationId - The ID of the custom animation image that should be loaded.
      * @param view - The user interface View that the artwork should be displayed in.
      */
-    fun insertArtwork(albumID: String?, view: ImageView) {
+    fun loadImageByCustomAnimationId(animationId: String?, view: ImageView) {
+        loadImage("customAnimation", animationId, view)
+    }
+
+    /**
+     * Load album art into a user interface View.
+     *
+     * @param albumId - The ID of the album that artwork should be loaded for.
+     * @param view - The user interface View that the artwork should be displayed in.
+     */
+    fun loadImageByAlbumId(albumId: String?, view: ImageView) {
+        loadImage("albumArt", albumId, view)
+    }
+
+    /**
+     * Create a File object for the image file associated with a given resource ID
+     * and load the image into a user interface View.
+     *
+     * @param directoryName - The name of the directory storing the image.
+     * @param resourceId - The ID of the resource that an image should be loaded for.
+     * @param view - The user interface View that the artwork should be displayed in.
+     */
+    private fun loadImage(directoryName: String, resourceId: String?, view: ImageView) {
         var file: File? = null
-        if (albumID != null) {
-            val contextWrapper = ContextWrapper(this)
-            val directory = contextWrapper.getDir("albumArt", Context.MODE_PRIVATE)
-            file = File(directory, "$albumID.jpg")
+        if (resourceId != null) {
+            val directory = ContextWrapper(this).getDir(directoryName, Context.MODE_PRIVATE)
+            file = File(directory, "$resourceId.jpg")
         }
         runGlideByFile(file, view)
     }
@@ -1013,11 +1033,30 @@ class MainActivity : AppCompatActivity() {
             .into(view)
     }
 
-    fun changeArtwork(dirName: String, newArtwork: Bitmap, filename: String) {
-        val contextWrapper = ContextWrapper(application)
-        val directory = contextWrapper.getDir(dirName, Context.MODE_PRIVATE)
-        val path = File(directory, "$filename.jpg")
-        saveImage(newArtwork, path)
+    /**
+     * Create a File object for the image file associated with a given resource ID
+     * and save the image to a target directory.
+     *
+     * @param directoryName - The name of the directory storing the image.
+     * @param image - A Bitmap representation of the image to be saved.
+     * @param resourceId - The ID of the resource that an image should be loaded for.
+     */
+    fun saveImageByResourceId(directoryName: String, image: Bitmap, resourceId: String) {
+        val directory = ContextWrapper(application).getDir(directoryName, Context.MODE_PRIVATE)
+        val path = File(directory, "$resourceId.jpg")
+        saveImage(image, path)
+    }
+
+    /**
+     * Saves a bitmap representation of an image to a specified file path location.
+     *
+     * @param bitmap - The Bitmap instance to be saved.
+     * @param path - The location at which the image file should be saved.
+     */
+    private fun saveImage(bitmap: Bitmap, path: File) {
+        FileOutputStream(path).use {
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
+        }
     }
 
     /** Refresh the music library. Add new songs and remove deleted songs. */
@@ -1136,20 +1175,6 @@ class MainActivity : AppCompatActivity() {
             selectionArgs,
             sortOrder
         )
-    }
-
-    /**
-     * Saves a bitmap representation of an image to a specified file path location.
-     *
-     * @param bitmap - The Bitmap instance to be saved.
-     * @param path - The location at which the image file should be saved.
-     */
-    private fun saveImage(bitmap: Bitmap, path: File) {
-        try {
-            val fileOutputStream = FileOutputStream(path)
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream)
-            fileOutputStream.close()
-        } catch (_: Exception) { }
     }
 
     /**

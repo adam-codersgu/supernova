@@ -88,7 +88,7 @@ class AlbumsAdapter(private val activity: MainActivity): Adapter(),
         holder as ViewHolderAlbum
         val current = songsByAlbum[position]
 
-        activity.insertArtwork(current.albumId, holder.mArtwork)
+        activity.loadImageByAlbumId(current.albumId, holder.mArtwork)
 
         holder.mTitle.text = current.albumName
         holder.mArtist.text = current.artist

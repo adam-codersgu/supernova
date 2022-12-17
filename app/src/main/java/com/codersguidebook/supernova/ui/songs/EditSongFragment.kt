@@ -44,7 +44,7 @@ class EditSongFragment : Fragment() {
         callingActivity = activity as MainActivity
 
         // Retrieve the song's album artwork
-        callingActivity.insertArtwork(song!!.albumId, binding.editSongArtwork)
+        callingActivity.loadImageByAlbumId(song!!.albumId, binding.editSongArtwork)
         binding.editSongArtwork.setOnClickListener {
             startActivityForResult(Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI), 1)
         }
@@ -124,7 +124,7 @@ class EditSongFragment : Fragment() {
                     if (newTitle != song!!.title || newArtist != song!!.artist || completeTrack != song!!.track || newYear != song!!.year || newArtwork != null) {
 
                         // artwork has been changed
-                        if (newArtwork != null) callingActivity.changeArtwork("albumArt", newArtwork!!, song?.albumId!!)
+                        if (newArtwork != null) callingActivity.saveImageByResourceId("albumArt", newArtwork!!, song?.albumId!!)
 
                         song!!.title = newTitle
                         song!!.artist = newArtist

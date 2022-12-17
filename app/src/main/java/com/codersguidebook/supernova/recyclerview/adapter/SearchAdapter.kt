@@ -56,7 +56,7 @@ class SearchAdapter(private val activity: MainActivity): RecyclerView.Adapter<Re
                 val current = songs[position]
 
                 holder.mArtwork.isVisible = true
-                activity.insertArtwork(current.albumId, holder.mArtwork)
+                activity.loadImageByAlbumId(current.albumId, holder.mArtwork)
                 holder.mTitle.text = current.title
                 holder.mSubtitle.text = current.artist
                 holder.mMenu.setOnClickListener {
@@ -77,7 +77,7 @@ class SearchAdapter(private val activity: MainActivity): RecyclerView.Adapter<Re
                 val current = albums[position]
 
                 holder.mArtwork.isVisible = true
-                activity.insertArtwork(current.albumId, holder.mArtwork)
+                activity.loadImageByAlbumId(current.albumId, holder.mArtwork)
                 holder.mTitle.text = current.albumName
                 holder.mSubtitle.text = current.artist
                 holder.mMenu.setOnClickListener {
@@ -130,7 +130,7 @@ class SearchAdapter(private val activity: MainActivity): RecyclerView.Adapter<Re
                 val playlistSongIDs= activity.extractPlaylistSongIds(current.songs)
                 if (playlistSongIDs.isNotEmpty()){
                     val firstSongArtwork = activity.findFirstSongArtwork(playlistSongIDs[0])
-                    activity.insertArtwork(firstSongArtwork, holder.mArtwork)
+                    activity.loadImageByAlbumId(firstSongArtwork, holder.mArtwork)
                 }
 
                 holder.mTitle.text = current.name
