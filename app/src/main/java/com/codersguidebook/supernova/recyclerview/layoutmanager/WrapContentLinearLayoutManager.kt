@@ -1,4 +1,4 @@
-package com.codersguidebook.supernova
+package com.codersguidebook.supernova.recyclerview.layoutmanager
 
 import android.content.Context
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -8,6 +8,6 @@ class WrapContentLinearLayoutManager(context: Context, orientation: Int, reverse
     override fun onLayoutChildren(recycler: RecyclerView.Recycler, state: RecyclerView.State) {
         try {
             super.onLayoutChildren(recycler, state)
-        } catch (e: IndexOutOfBoundsException) { }
+        } catch (_: IndexOutOfBoundsException) { }
     }
 }

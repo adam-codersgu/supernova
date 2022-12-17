@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
 import com.codersguidebook.supernova.*
 import com.codersguidebook.supernova.databinding.FragmentHomeBinding
+import com.codersguidebook.supernova.recyclerview.layoutmanager.WrapContentLinearLayoutManager
 import com.codersguidebook.supernova.ui.playlists.PlaylistsFragmentDirections
 
 class HomeFragment : Fragment() {
