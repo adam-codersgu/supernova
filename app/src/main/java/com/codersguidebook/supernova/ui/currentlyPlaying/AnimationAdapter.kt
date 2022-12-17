@@ -8,11 +8,9 @@ import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.bumptech.glide.Glide
-import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 
-class AnimationAdapter(private val fragment: CustomAnimationFragment,
-    private val activity: MainActivity): RecyclerView.Adapter<ViewHolder>() {
+class AnimationAdapter(private val fragment: CustomAnimationFragment): RecyclerView.Adapter<ViewHolder>() {
 
     val customAnimationImageIds = mutableListOf<String>()
 
@@ -37,8 +35,8 @@ class AnimationAdapter(private val fragment: CustomAnimationFragment,
                 holder.itemView.setOnClickListener {
                     if (customAnimationImageIds.size < 6) {
                         fragment.getPhoto(customAnimationImageIds.size)
-                    } else Toast.makeText(activity,
-                        activity.getString(R.string.error_custom_animation_image_limit_reached),
+                    } else Toast.makeText(fragment.context,
+                        fragment.getString(R.string.error_custom_animation_image_limit_reached),
                         Toast.LENGTH_LONG).show()
                 }
             }
@@ -49,7 +47,7 @@ class AnimationAdapter(private val fragment: CustomAnimationFragment,
                     fragment.showPopup(it, position)
                 }
 
-                activity.loadImageByCustomAnimationId(current, holder.itemView as ImageView)
+                fragment.loadImage(current, holder.itemView as ImageView)
             }
         }
     }

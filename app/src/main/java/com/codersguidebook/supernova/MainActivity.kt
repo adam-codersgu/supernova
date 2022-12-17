@@ -957,38 +957,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Load a custom animation image into a user interface View.
-     *
-     * @param animationId - The ID of the custom animation image that should be loaded.
-     * @param view - The user interface View that the artwork should be displayed in.
-     */
-    fun loadImageByCustomAnimationId(animationId: String?, view: ImageView) {
-        loadImage("customAnimation", animationId, view)
-    }
-
-    /**
      * Load album art into a user interface View.
      *
      * @param albumId - The ID of the album that artwork should be loaded for.
      * @param view - The user interface View that the artwork should be displayed in.
      */
     fun loadImageByAlbumId(albumId: String?, view: ImageView) {
-        loadImage("albumArt", albumId, view)
-    }
-
-    /**
-     * Create a File object for the image file associated with a given resource ID
-     * and load the image into a user interface View.
-     *
-     * @param directoryName - The name of the directory storing the image.
-     * @param resourceId - The ID of the resource that an image should be loaded for.
-     * @param view - The user interface View that the artwork should be displayed in.
-     */
-    private fun loadImage(directoryName: String, resourceId: String?, view: ImageView) {
         var file: File? = null
-        if (resourceId != null) {
-            val directory = ContextWrapper(this).getDir(directoryName, Context.MODE_PRIVATE)
-            file = File(directory, "$resourceId.jpg")
+        if (albumId != null) {
+            val directory = ContextWrapper(this).getDir("albumArt", Context.MODE_PRIVATE)
+            file = File(directory, "$albumId.jpg")
         }
         runGlideByFile(file, view)
     }

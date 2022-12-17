@@ -1,12 +1,16 @@
 package com.codersguidebook.supernova.ui.currentlyPlaying
 
+import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Bitmap
 import android.graphics.ImageDecoder.createSource
 import android.graphics.ImageDecoder.decodeBitmap
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.*
+import android.widget.ImageView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
@@ -18,6 +22,9 @@ import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.viewbinding.ViewBinding
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
+import com.bumptech.glide.signature.ObjectKey
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_TYPE
@@ -26,7 +33,9 @@ import com.codersguidebook.supernova.recyclerview.BaseRecyclerViewFragment
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
+import java.io.File
 import java.io.FileNotFoundException
+import java.io.FileOutputStream
 import java.io.IOException
 
 class CustomAnimationFragment : BaseRecyclerViewFragment() {
@@ -44,7 +53,7 @@ class CustomAnimationFragment : BaseRecyclerViewFragment() {
             try {
                 result.data?.data?.let { uri ->
                     val bitmap = decodeBitmap(createSource(requireActivity().contentResolver, uri))
-                    mainActivity.saveImageByResourceId("customAnimation", bitmap, imageIdToUse)
+                    saveImageByResourceId(bitmap, imageIdToUse)
                     adapter.loadImageId(imageIdToUse)
                     sharedPreferences.edit().apply {
                         putString(ANIMATION_TYPE, getString(R.string.custom_image))
@@ -69,7 +78,7 @@ class CustomAnimationFragment : BaseRecyclerViewFragment() {
         binding.root.layoutManager = GridLayoutManager(context, 3)
         binding.root.itemAnimator = DefaultItemAnimator()
 
-        return super.onCreateView(inflater, container, savedInstanceState)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -136,8 +145,51 @@ class CustomAnimationFragment : BaseRecyclerViewFragment() {
         }
     }
 
+    /**
+     * Create a File object for the image file associated with a given resource ID
+     * and save the image to a target directory.
+     *
+     * @param image - A Bitmap representation of the image to be saved.
+     * @param resourceId - The ID of the resource that an image should be loaded for.
+     */
+    // TODO: Ultimately image saving resource operations should be moved to a utils class that references application context
+    //      This is also needed for operations currently handled by MainActivity
+    private fun saveImageByResourceId(image: Bitmap, resourceId: String) {
+        val directory = ContextWrapper(requireActivity().application).getDir("customAnimation", Context.MODE_PRIVATE)
+        val path = File(directory, "$resourceId.jpg")
+        FileOutputStream(path).use {
+            image.compress(Bitmap.CompressFormat.PNG, 100, it)
+        }
+    }
+
+    // TODO: Ultimately image rendering operations should be moved to a utils class that references application context
+    //      This is also needed for operations currently handled by MainActivity
+    /**
+     * Create a File object for the image file associated with a given resource ID
+     * and load the image into a user interface View.
+     *
+     * @param resourceId - The ID of the resource that an image should be loaded for.
+     * @param view - The user interface View that the artwork should be displayed in.
+     */
+    fun loadImage(resourceId: String?, view: ImageView) {
+        var file: File? = null
+        if (resourceId != null) {
+            val directory = ContextWrapper(requireActivity().application)
+                .getDir("customAnimation", Context.MODE_PRIVATE)
+            file = File(directory, "$resourceId.jpg")
+        }
+        Glide.with(this)
+            .load(file ?: R.drawable.no_album_artwork)
+            .transition(DrawableTransitionOptions.withCrossFade())
+            .centerCrop()
+            .signature(ObjectKey(file?.path + file?.lastModified()))
+            .override(600, 600)
+            .error(R.drawable.no_album_artwork)
+            .into(view)
+    }
+
     override fun initialiseAdapter() {
-        adapter = AnimationAdapter(this, mainActivity)
+        adapter = AnimationAdapter(this)
     }
 
     override fun requestNewData() {
