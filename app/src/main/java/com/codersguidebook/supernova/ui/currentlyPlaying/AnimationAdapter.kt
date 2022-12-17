@@ -34,7 +34,14 @@ class AnimationAdapter(private val fragment: CustomAnimationFragment): RecyclerV
 
                 holder.itemView.setOnClickListener {
                     if (customAnimationImageIds.size < 6) {
-                        fragment.getPhoto(customAnimationImageIds.size)
+                        var imageIdToUse = 6
+                        for (i in 1..6) {
+                            if (!customAnimationImageIds.contains(i.toString())) {
+                                imageIdToUse = i
+                                break
+                            }
+                        }
+                        fragment.getPhoto(imageIdToUse.toString())
                     } else Toast.makeText(fragment.context,
                         fragment.getString(R.string.error_custom_animation_image_limit_reached),
                         Toast.LENGTH_LONG).show()
@@ -44,7 +51,7 @@ class AnimationAdapter(private val fragment: CustomAnimationFragment): RecyclerV
                 val current = customAnimationImageIds[position]
 
                 holder.itemView.setOnClickListener {
-                    fragment.showPopup(it, position)
+                    fragment.showPopup(it, current)
                 }
 
                 fragment.loadImage(current, holder.itemView as ImageView)

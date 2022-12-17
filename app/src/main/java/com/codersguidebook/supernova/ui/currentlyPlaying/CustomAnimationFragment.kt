@@ -94,8 +94,8 @@ class CustomAnimationFragment : BaseRecyclerViewFragment() {
      *
      * @param imageId - The ID that the image should have.
      */
-    fun getPhoto(imageId: Int) {
-        this.imageIdToUse = imageId.toString()
+    fun getPhoto(imageId: String) {
+        this.imageIdToUse = imageId
         registerResult.launch(Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI))
     }
 
@@ -119,13 +119,13 @@ class CustomAnimationFragment : BaseRecyclerViewFragment() {
      * @param view - The ImageView that the popup menu should appear over.
      * @param imageId - The ID of the selected image.
      */
-    fun showPopup(view: View, imageId: Int) {
+    fun showPopup(view: View, imageId: String) {
         PopupMenu(requireContext(), view).apply {
             inflate(R.menu.animation_menu)
             setOnMenuItemClickListener {
                 when (it.itemId) {
                     R.id.menu_change -> getPhoto(imageId)
-                    else -> adapter.removeItemByImageId(imageId.toString())
+                    else -> adapter.removeItemByImageId(imageId)
                 }
                 true
             }
