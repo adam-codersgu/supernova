@@ -58,7 +58,7 @@ class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter() 
                 holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.preview_background))
 
                 if (songs.isNotEmpty()){
-                    activity.insertArtwork(songs[0].albumId, holder.mArtwork)
+                    activity.loadImageByAlbumId(songs[0].albumId, holder.mArtwork)
                     holder.mTitle.text = songs[0].albumName
                     holder.mArtist.text = songs[0].artist
                     val songCountInt = songs.size

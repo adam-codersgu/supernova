@@ -90,12 +90,12 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                         albumIds.size > 1 -> {
                             holder.mArtwork.isGone = true
                             holder.mArtworkGrid.isVisible = true
-                            activity.insertArtwork(albumIds[0], holder.mArtwork1)
-                            activity.insertArtwork(albumIds[1], holder.mArtwork2)
-                            if (albumIds.size > 2) activity.insertArtwork(albumIds[2], holder.mArtwork3)
-                            if (albumIds.size > 3)  activity.insertArtwork(albumIds[3], holder.mArtwork4)
+                            activity.loadImageByAlbumId(albumIds[0], holder.mArtwork1)
+                            activity.loadImageByAlbumId(albumIds[1], holder.mArtwork2)
+                            if (albumIds.size > 2) activity.loadImageByAlbumId(albumIds[2], holder.mArtwork3)
+                            if (albumIds.size > 3)  activity.loadImageByAlbumId(albumIds[3], holder.mArtwork4)
                         }
-                        songs.isNotEmpty() -> activity.insertArtwork(albumIds[0], holder.mArtwork)
+                        songs.isNotEmpty() -> activity.loadImageByAlbumId(albumIds[0], holder.mArtwork)
                     }
                 }
 
@@ -132,7 +132,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                     holder.mArtwork.setOnTouchListener { _, _ ->
                         return@setOnTouchListener true
                     }
-                    activity.insertArtwork(current.albumId, holder.mArtwork)
+                    activity.loadImageByAlbumId(current.albumId, holder.mArtwork)
                 }
 
                 holder.mTitle.text = current.title

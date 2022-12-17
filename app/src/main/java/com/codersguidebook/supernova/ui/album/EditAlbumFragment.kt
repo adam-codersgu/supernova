@@ -66,7 +66,7 @@ class EditAlbumFragment : Fragment() {
             binding.editAlbumYear.text = editable
         }
 
-        callingActivity.insertArtwork(albumID, binding.editAlbumArtwork)
+        callingActivity.loadImageByAlbumId(albumID, binding.editAlbumArtwork)
         binding.editAlbumArtwork.setOnClickListener {
             startActivityForResult(
                 Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI), GET_ARTWORK
@@ -122,7 +122,7 @@ class EditAlbumFragment : Fragment() {
                             getString(R.string.album_year_cannot_be_empty), Toast.LENGTH_SHORT).show()
                         else -> {
                             newAlbumArtwork?.let {
-                                callingActivity.changeArtwork("albumArt", it, albumID!!)
+                                callingActivity.saveImageByResourceId("albumArt", it, albumID!!)
                             }
 
                             if (newAlbumTitle != albumSongs[0].title || newAlbumYear != albumSongs[0].year) {

@@ -1,85 +1,99 @@
 package com.codersguidebook.supernova.ui.currentlyPlaying
 
-import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.TextView
-import androidx.core.view.isGone
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.bumptech.glide.Glide
 import com.codersguidebook.supernova.R
-import java.io.FileNotFoundException
-import java.lang.reflect.InvocationTargetException
 
-class AnimationAdapter(private val fragment: CustomAnimationFragment):
-    RecyclerView.Adapter<AnimationAdapter.AnimationViewHolder>() {
+class AnimationAdapter(private val fragment: CustomAnimationFragment): RecyclerView.Adapter<ViewHolder>() {
 
-    var imageStringList = mutableListOf<String>()
+    val customAnimationImageIds = mutableListOf<String>()
 
-    class AnimationViewHolder(itemView: View) :
-        RecyclerView.ViewHolder(itemView) {
-
-        internal var mArtwork = itemView.findViewById<View>(R.id.smallSongArtwork) as ImageView
-        internal var mPlaylistName = itemView.findViewById<View>(R.id.smallSongTitle) as TextView
-        internal var mPlaylistSongCount = itemView.findViewById<View>(R.id.smallSongArtistOrCount) as TextView
-
+    class ViewHolderAnimation(itemView: View) : ViewHolder(itemView) {
         init {
             itemView.isClickable = true
         }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AnimationViewHolder {
-        return AnimationViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.small_recycler_grid_preview, parent, false))
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolderAnimation {
+        return ViewHolderAnimation(LayoutInflater.from(parent.context)
+            .inflate(R.layout.image_view, parent, false))
     }
 
-    override fun onBindViewHolder(holder: AnimationViewHolder, position: Int) {
-        holder.mPlaylistName.isGone = true
-        holder.mPlaylistSongCount.isGone = true
-
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         when {
-            imageStringList.size < 6 && position == imageStringList.size -> {
+            customAnimationImageIds.size < 6 && position == customAnimationImageIds.size -> {
                 Glide.with(fragment)
                     .load(R.drawable.ic_photo)
-                    .into(holder.mArtwork)
+                    .into(holder.itemView as ImageView)
 
                 holder.itemView.setOnClickListener {
-                    fragment.getPhoto(position)
+                    if (customAnimationImageIds.size < 6) {
+                        var imageIdToUse = 6
+                        for (i in 1..6) {
+                            if (!customAnimationImageIds.contains(i.toString())) {
+                                imageIdToUse = i
+                                break
+                            }
+                        }
+                        fragment.getPhoto(imageIdToUse.toString())
+                    } else Toast.makeText(fragment.context,
+                        fragment.getString(R.string.error_custom_animation_image_limit_reached),
+                        Toast.LENGTH_LONG).show()
                 }
             }
             else -> {
-                val current = imageStringList[position]
+                val current = customAnimationImageIds[position]
 
                 holder.itemView.setOnClickListener {
-                    fragment.showPopup(it, position)
+                    fragment.showPopup(it, current)
                 }
 
-                try {
-                    val uri = Uri.parse(current)
-                    Glide.with(fragment)
-                        .load(uri)
-                        .centerCrop()
-                        .into(holder.mArtwork)
-                } catch (e: InvocationTargetException) {
-                    removeItem(position)
-                } catch (e: FileNotFoundException) {
-                    removeItem(position)
-                } catch (e: SecurityException) {
-                    removeItem(position)
-                }
+                fragment.loadImage(current, holder.itemView as ImageView)
             }
         }
     }
 
-    fun removeItem(position: Int) {
-        fragment.imageStrings.removeAt(position)
-        fragment.saveChanges()
-        imageStringList = fragment.imageStrings
-        notifyItemRemoved(position)
-        notifyItemRangeChanged(position, imageStringList.size + 1)
+    /**
+     * Remove a given image from the adapter based on its ID.
+     *
+     * @param imageId - The ID of the image.
+     */
+    fun removeItemByImageId(imageId: String) {
+        val indexOfImage =  customAnimationImageIds.indexOfFirst { it == imageId }
+        if (indexOfImage == -1) return
+        customAnimationImageIds.removeAt(indexOfImage)
+        notifyItemRemoved(indexOfImage)
+        notifyItemChanged(customAnimationImageIds.size)
+        fragment.saveCustomAnimationImageIds()
     }
 
-    override fun getItemCount() = if (imageStringList.size < 6) imageStringList.size + 1
+    /**
+     * Load an image into the adapter based on its ID. If the ID already exists in the adapter, then
+     * that image will be replaced. Otherwise, a new image will be added.
+     *
+     * @param imageId - The ID of the image to be displayed.
+     */
+    fun loadImageId(imageId: String) {
+        val indexOfImage =  customAnimationImageIds.indexOfFirst { it == imageId }
+        if (indexOfImage == -1) {
+            customAnimationImageIds.add(0, imageId)
+            notifyItemInserted(0)
+            if (customAnimationImageIds.size >= 6) {
+                // If there are six images then remove the option to add new ones
+                notifyItemRemoved(7)
+            }
+        } else {
+            customAnimationImageIds[indexOfImage] = imageId
+            notifyItemChanged(indexOfImage)
+        }
+    }
+
+    override fun getItemCount() = if (customAnimationImageIds.size < 6) customAnimationImageIds.size + 1
     else 6
 }

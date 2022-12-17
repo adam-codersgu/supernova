@@ -1,10 +1,10 @@
 package com.codersguidebook.supernova.ui.currentlyPlaying
 
+import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.content.SharedPreferences
-import android.graphics.ImageDecoder
 import android.graphics.drawable.Drawable
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.support.v4.media.MediaMetadataCompat
@@ -35,12 +35,11 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_SPEED
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_SPIN
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_TYPE
-import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_URI
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CUSTOM_ANIMATION_IMAGE_IDS
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.codersguidebook.supernova.views.PullToCloseLayout
 import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -203,22 +202,20 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
         if (isAnimationVisible) binding.animatedView.visibility = View.VISIBLE
         else binding.animatedView.visibility = View.GONE
 
-        val customDrawableString = sharedPreferences.getString(ANIMATION_URI, null)
+        val customDrawableString = sharedPreferences.getString(CUSTOM_ANIMATION_IMAGE_IDS, null)
         val animationPreference = sharedPreferences.getString(ANIMATION_TYPE, getString(R.string.leaves))
         when {
             customDrawableString != null && animationPreference == getString(R.string.custom_image) -> {
                 val listType = object : TypeToken<List<String>>() {}.type
-                val imageStrings: List<String> = Gson().fromJson(customDrawableString, listType)
-                val list = mutableListOf<Uri>()
-                for (s in imageStrings)  list.add(Uri.parse(s))
-                setCustomDrawable(list)
+                val imageIds: List<String> = Gson().fromJson(customDrawableString, listType)
+                setCustomDrawables(imageIds)
             }
             animationPreference == getString(R.string.custom_image) -> {
                 sharedPreferences.edit().apply {
                     putString(ANIMATION_TYPE, getString(R.string.leaves))
                     apply()
                 }
-                Toast.makeText(activity, getString(R.string.no_custom_image), Toast.LENGTH_LONG).show()
+                Toast.makeText(activity, getString(R.string.error_custom_animation_image_not_found), Toast.LENGTH_LONG).show()
                 binding.animatedView.changeDrawable(getString(R.string.leaves), false)
             }
             else -> binding.animatedView.changeDrawable(animationPreference!!, false)
@@ -279,30 +276,25 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
     /**
      * Set a list of custom image URIs as the animation images.
      *
-     * @param uris - The URIs leading to the user's custom animation images.
+     * @param imageIds - The IDs of the user's custom animation images.
      */
-    private fun setCustomDrawable(uris: MutableList<Uri>) {
-        fun removeUri(uri: Uri) {
-            uris.remove(uri)
-            val editor = sharedPreferences.edit()
-            if (uris.isEmpty()) {
-                editor.putString(ANIMATION_TYPE, getString(R.string.leaves))
-                editor.putString(ANIMATION_URI, null)
-                binding.animatedView.usingCustomDrawable = false
-            } else {
-                val gPretty = GsonBuilder().setPrettyPrinting().create().toJson(uris)
-                editor.putString(ANIMATION_URI, gPretty)
+    private fun setCustomDrawables(imageIds: List<String>) {
+        val directory = ContextWrapper(callingActivity).getDir("customAnimation", Context.MODE_PRIVATE)
+        val drawables = imageIds.mapNotNull { id ->
+            val imageFile = File(directory, "$id.jpg")
+            Drawable.createFromPath(imageFile.path)
+        }
+
+        if (drawables.size != imageIds.size) {
+            sharedPreferences.edit().apply {
+                putString(CUSTOM_ANIMATION_IMAGE_IDS, null)
+                apply()
             }
-            editor.apply()
-            Toast.makeText(activity, getString(R.string.no_custom_image), Toast.LENGTH_LONG).show()
+            Toast.makeText(activity, getString(R.string.error_custom_animation_image_not_found), Toast.LENGTH_LONG).show()
+            binding.animatedView.changeDrawable(getString(R.string.leaves), true)
+            return
         }
-        val drawables = arrayListOf<Drawable?>()
-        for (uri in uris) {
-            if (uri.path?.let { File(it).isFile } == true) {
-                val source = ImageDecoder.createSource(requireActivity().contentResolver, uri)
-                drawables.add(ImageDecoder.decodeDrawable(source))
-            } else removeUri(uri)
-        }
+
         binding.animatedView.drawableList = drawables
         binding.animatedView.usingCustomDrawable = true
     }
@@ -408,15 +400,13 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
                     R.id.animation_flower -> binding.animatedView.changeDrawable(getString(R.string.flowers), true)
                     R.id.animation_instruments -> binding.animatedView.changeDrawable(getString(R.string.instruments), true)
                     R.id.animation_custom -> {
-                        val customDrawableString = sharedPreferences.getString(ANIMATION_URI, null)
+                        val customDrawableString = sharedPreferences.getString(CUSTOM_ANIMATION_IMAGE_IDS, null)
                         if (customDrawableString != null) {
                             editor.putString(ANIMATION_TYPE, getString(R.string.custom_image))
                             editor.apply()
                             val listType = object : TypeToken<List<String>>() {}.type
-                            val imageStrings: List<String> = Gson().fromJson(customDrawableString, listType)
-                            val list = mutableListOf<Uri>()
-                            for (s in imageStrings)  list.add(Uri.parse(s))
-                            setCustomDrawable(list)
+                            val imageIds: List<String> = Gson().fromJson(customDrawableString, listType)
+                            setCustomDrawables(imageIds)
                             Toast.makeText(callingActivity, getString(R.string.changes_applied),
                                 Toast.LENGTH_SHORT).show()
                         } else {

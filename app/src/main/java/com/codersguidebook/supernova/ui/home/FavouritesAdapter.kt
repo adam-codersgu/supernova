@@ -45,7 +45,7 @@ class FavouritesAdapter(private val mainActivity: MainActivity):
     override fun onBindViewHolder(holder: SongsViewHolder, position: Int) {
         val current = songs[position]
 
-        mainActivity.insertArtwork(current.albumId, holder.mArtwork)
+        mainActivity.loadImageByAlbumId(current.albumId, holder.mArtwork)
 
         holder.mTitle.text = current.title
         holder.mArtist.text = current.artist
