@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="acknowledgements">Agradecimientos</string>
+    <string name="acknowledgements_body">Un cálido agradecimiento a las siguientes personas y organizaciones cuyo trabajo se ha utilizado en esta aplicación:
+    \n
+    \nEl ícono de vinil utilizado como ícono de la aplicación, para el álbum faltante y el arte de la lista de reproducción, fue creado por Freepik de www.flaticon.com
+    \n
+    \nLos íconos de control de reproducción (reproducir, pausar, avanzar y retroceder) fueron creados por Elias Bikbulatov de www.flaticon.com</string>
+    <string name="app_name">Supernova</string>
+</resources>
