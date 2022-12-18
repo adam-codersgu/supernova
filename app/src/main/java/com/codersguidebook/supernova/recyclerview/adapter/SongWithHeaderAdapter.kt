@@ -9,7 +9,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.R
 
-abstract class SongWithHeaderAdapter(): SongAdapter() {
+abstract class SongWithHeaderAdapter: SongAdapter() {
 
     companion object {
         const val HEADER = 1

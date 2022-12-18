@@ -1,5 +1,6 @@
 package com.codersguidebook.supernova.recyclerview.adapter
 
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,6 +14,7 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Artist
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
+
 
 class ArtistsAdapter(private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>(),
     FastScrollRecyclerView.SectionedAdapter {
@@ -30,6 +32,9 @@ class ArtistsAdapter(private val activity: MainActivity): RecyclerView.Adapter<R
         private var mMenu = itemView.findViewById<ImageButton>(R.id.menu)
 
         init {
+            val outValue = TypedValue()
+            activity.theme.resolveAttribute(android.R.attr.selectableItemBackground, outValue, true)
+            itemView.setBackgroundResource(outValue.resourceId)
             itemView.isClickable = true
             itemView.setOnClickListener {
                 val action = ArtistsFragmentDirections.actionSelectArtist(artists[layoutPosition].artistName!!)
