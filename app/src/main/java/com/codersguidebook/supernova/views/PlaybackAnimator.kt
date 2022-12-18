@@ -1,4 +1,4 @@
-package com.codersguidebook.supernova
+package com.codersguidebook.supernova.views
 
 import android.animation.TimeAnimator
 import android.annotation.SuppressLint
@@ -13,6 +13,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
+import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_COLOUR
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_QUANTITY
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_SPEED
@@ -43,22 +44,55 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
         lateinit var drawable: Drawable
     }
 
-    private val redColours = listOf(R.color.red1, R.color.red2, R.color.red3,
-        R.color.red4, R.color.red5, R.color.red6, R.color.red7)
+    private val redColours = listOf(
+        R.color.red1, R.color.red2, R.color.red3,
+        R.color.red4, R.color.red5, R.color.red6, R.color.red7
+    )
     private val blueColours = listOf(
         R.color.blue1, R.color.blue2, R.color.blue3,
-        R.color.blue4, R.color.blue5, R.color.blue6, R.color.blue7)
+        R.color.blue4, R.color.blue5, R.color.blue6, R.color.blue7
+    )
     private val nightColours = listOf(
         R.color.night1, R.color.night2, R.color.night3,
-        R.color.night4, R.color.night5, R.color.night6, R.color.night7)
-    private val pastelColours = listOf(R.color.nav_home, R.color.nav_playing, R.color.nav_playlists,
-        R.color.nav_artists, R.color.nav_albums, R.color.nav_songs, R.color.nav_settings)
+        R.color.night4, R.color.night5, R.color.night6, R.color.night7
+    )
+    private val pastelColours = listOf(
+        R.color.nav_home, R.color.nav_playing, R.color.nav_playlists,
+        R.color.nav_artists, R.color.nav_albums, R.color.nav_songs, R.color.nav_settings
+    )
     private val leavesDrawables = listOf(R.drawable.leaf)
-    private val instrumentsDrawables = listOf(R.drawable.drums, R.drawable.piano, R.drawable.saxophone, R.drawable.saxophone)
-    private val spaceDrawables = listOf(R.drawable.star, R.drawable.star, R.drawable.earth, R.drawable.planet, R.drawable.saturn)
-    private val mandalaDrawables = listOf(R.drawable.mandala1, R.drawable.mandala2, R.drawable.mandala3, R.drawable.mandala4)
-    private val animalDrawables = listOf(R.drawable.cat, R.drawable.dolphin, R.drawable.elephant, R.drawable.peacock, R.drawable.wolf)
-    private val flowerDrawables = listOf(R.drawable.flower, R.drawable.poppy, R.drawable.rose1, R.drawable.rose2)
+    private val instrumentsDrawables = listOf(
+        R.drawable.drums,
+        R.drawable.piano,
+        R.drawable.saxophone,
+        R.drawable.saxophone
+    )
+    private val spaceDrawables = listOf(
+        R.drawable.star,
+        R.drawable.star,
+        R.drawable.earth,
+        R.drawable.planet,
+        R.drawable.saturn
+    )
+    private val mandalaDrawables = listOf(
+        R.drawable.mandala1,
+        R.drawable.mandala2,
+        R.drawable.mandala3,
+        R.drawable.mandala4
+    )
+    private val animalDrawables = listOf(
+        R.drawable.cat,
+        R.drawable.dolphin,
+        R.drawable.elephant,
+        R.drawable.peacock,
+        R.drawable.wolf
+    )
+    private val flowerDrawables = listOf(
+        R.drawable.flower,
+        R.drawable.poppy,
+        R.drawable.rose1,
+        R.drawable.rose2
+    )
     private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
     private val count = sharedPreferences.getInt(ANIMATION_QUANTITY, 6)
     var objectList = arrayOfNulls<MovingObject>(count)
