@@ -68,8 +68,8 @@ class PullToCloseLayout(context: Context, attributeSet: AttributeSet?) : FrameLa
         return dragHelper.capturedView != null
     }
 
-    fun setListener(l: Listener) {
-        listener = l
+    fun setListener(listener: Listener) {
+        this.listener = listener
     }
 
     inner class ViewDragCallback(layout: PullToCloseLayout) : Callback() {
@@ -106,11 +106,11 @@ class PullToCloseLayout(context: Context, attributeSet: AttributeSet?) : FrameLa
 
         override fun onViewDragStateChanged(state: Int) {
             if (state == ViewDragHelper.STATE_DRAGGING) {
-                pullToCloseLayout.listener?.isDragging(true)
-            } else pullToCloseLayout.listener?.isDragging(false)
+                pullToCloseLayout.listener?.pullToCloseIsDragging(true)
+            } else pullToCloseLayout.listener?.pullToCloseIsDragging(false)
 
             if (isDismissed && state == ViewDragHelper.STATE_IDLE) {
-                pullToCloseLayout.listener?.onDismissed()
+                pullToCloseLayout.listener?.pullToCloseDismissed()
             }
         }
 
@@ -118,7 +118,6 @@ class PullToCloseLayout(context: Context, attributeSet: AttributeSet?) : FrameLa
             isDismissed = dragPercent >= 0.50f ||
                     abs(xvel) > pullToCloseLayout.minFlingVelocity && dragPercent > 0.20f
             if (!isDismissed) pullToCloseLayout.dragHelper.settleCapturedViewAt(0, startTop)
-            // fixme - or maybe try just commenting out the below?? Or only run below if isDismissed
             pullToCloseLayout.invalidate()
         }
     }
@@ -130,9 +129,9 @@ class PullToCloseLayout(context: Context, attributeSet: AttributeSet?) : FrameLa
          * @param dragging - A Boolean indicating whether the layout is being dragged (true)
          * or has been released (false)
          */
-        fun isDragging(dragging: Boolean)
+        fun pullToCloseIsDragging(dragging: Boolean)
 
         /** Layout is pulled down to dismiss */
-        fun onDismissed()
+        fun pullToCloseDismissed()
     }
 }

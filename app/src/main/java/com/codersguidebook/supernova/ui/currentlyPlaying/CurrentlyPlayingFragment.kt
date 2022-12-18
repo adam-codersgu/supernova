@@ -1,5 +1,6 @@
 package com.codersguidebook.supernova.ui.currentlyPlaying
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
@@ -38,6 +39,7 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CUSTOM_ANIMATION_IMAGE_IDS
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
+import com.codersguidebook.supernova.views.PlaybackAnimator
 import com.codersguidebook.supernova.views.PullToCloseLayout
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -47,14 +49,15 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
-class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
+class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, PlaybackAnimator.Listener {
 
+    private var animationObjectIsDragging = false
     private val playQueueViewModel: PlayQueueViewModel by activityViewModels()
     private var currentSong: Song? = null
     private var _binding: FragmentCurrentlyPlayingBinding? = null
     private val binding get() = _binding!!
     private var isAnimationVisible = true
-    private var isDragging = false
+    private var pullToCloseIsDragging = false
     private var fastForwarding = false
     private var fastRewinding = false
     private lateinit var callingActivity: MainActivity
@@ -73,21 +76,29 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
                               savedInstanceState: Bundle?): View {
         _binding = FragmentCurrentlyPlayingBinding.inflate(inflater, container, false)
         binding.root.setListener(this)
+        binding.animatedView.setListener(this)
         callingActivity = activity as MainActivity
 
         onBackPressedCallback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                this@CurrentlyPlayingFragment.onDismissed()
+                this@CurrentlyPlayingFragment.pullToCloseDismissed()
             }
         }
-
-        callingActivity.onBackPressedDispatcher.addCallback(viewLifecycleOwner, onBackPressedCallback)
 
         return binding.root
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        callingActivity.onBackPressedDispatcher.addCallback(viewLifecycleOwner, onBackPressedCallback)
+
+        // The onTouch event should only be propogated to the PullToClose view if a custom animation object
+        // is not being dragged.
+        binding.root.setOnTouchListener { _, _ ->
+            isAnimationVisible && animationObjectIsDragging
+        }
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
 
@@ -106,7 +117,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
         }
 
         playQueueViewModel.playbackPosition.observe(viewLifecycleOwner) {
-            if (isDragging) return@observe
+            if (pullToCloseIsDragging) return@observe
             binding.currentSeekBar.progress = it
             binding.currentPosition.text = SimpleDateFormat("mm:ss", Locale.UK).format(it)
         }
@@ -169,7 +180,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
             }
         }
 
-        binding.currentClose.setOnClickListener { this.onDismissed() }
+        binding.currentClose.setOnClickListener { this.pullToCloseDismissed() }
 
         binding.currentSettings.setOnClickListener { showSettingsPopup() }
 
@@ -433,11 +444,15 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener {
         }
     }
 
-    override fun isDragging(dragging: Boolean) {
-        isDragging = dragging
+    override fun pullToCloseIsDragging(dragging: Boolean) {
+        pullToCloseIsDragging = dragging
     }
 
-    override fun onDismissed() {
+    override fun pullToCloseDismissed() {
         findNavController().popBackStack()
+    }
+
+    override fun animationObjectIsDragging(dragging: Boolean) {
+        animationObjectIsDragging = dragging
     }
 }

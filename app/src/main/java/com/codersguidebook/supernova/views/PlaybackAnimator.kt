@@ -32,7 +32,7 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
         private const val ALPHA_RANDOM_PART = 0.5f
     }
 
-    class MovingObject {
+    inner class MovingObject {
         var selected = false
         var x = 0f
         var y = 0f
@@ -44,6 +44,7 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
         lateinit var drawable: Drawable
     }
 
+    private var listener: Listener? = null
     private val redColours = listOf(
         R.color.red1, R.color.red2, R.color.red3,
         R.color.red4, R.color.red5, R.color.red6, R.color.red7
@@ -315,31 +316,29 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-
         val x = event?.x ?: 0f
         val y = event?.y ?: 0f
 
         when (event?.action) {
             MotionEvent.ACTION_DOWN -> {
-                val index = getTouchedObject(x, y)
-                if (index != null) {
-                    selectedObject = objectList[index]
-                    if (selectedObject != null) selectedObject!!.selected = true
+                getTouchedObject(x, y)?.let {
+                    selectedObject = objectList[it]?.apply {
+                        this.selected = true
+                    }
                     return true
                 }
             }
             MotionEvent.ACTION_MOVE -> {
-                if (selectedObject != null) {
-                    selectedObject!!.x = x
-                    selectedObject!!.y = y
+                selectedObject?.apply {
+                    this.x = x
+                    this.y = y
                 }
             }
-            MotionEvent.ACTION_UP -> {
-                if (selectedObject != null) selectedObject!!.selected = false
+            else -> {
+                selectedObject?.selected = false
                 selectedObject = null
             }
         }
-
 
         return super.onTouchEvent(event)
     }
@@ -356,5 +355,19 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
             }
         }
         return null
+    }
+
+    fun setListener(listener: Listener) {
+        this.listener = listener
+    }
+
+    interface Listener {
+        /**
+         * A method called when an object is being dragged or released.
+         *
+         * @param dragging - A Boolean indicating whether an object is being dragged (true)
+         * or has been released (false)
+         */
+        fun animationObjectIsDragging(dragging: Boolean)
     }
 }
