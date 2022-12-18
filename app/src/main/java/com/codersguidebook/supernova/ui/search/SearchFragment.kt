@@ -128,7 +128,7 @@ class SearchFragment : BaseRecyclerViewFragment() {
                 lifecycleScope.launch(Dispatchers.IO) {
                     val songs = musicDatabase!!.musicDao().findBySearchSongs(query)
                     val songsByAlbum = songs.distinctBy { song ->
-                        song.albumName
+                        song.albumId
                     }.take(10)
 
                     lifecycleScope.launch(Dispatchers.Main) {

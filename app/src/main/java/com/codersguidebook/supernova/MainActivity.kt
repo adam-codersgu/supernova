@@ -1094,7 +1094,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 else -> 1001
             }
-        } catch (e: NumberFormatException) {
+        } catch (_: NumberFormatException) {
             // If the Track value is unusual (e.g. you can get stuff like "12/23") then use 1001
             1001
         }
