@@ -1,12 +1,10 @@
 package com.codersguidebook.supernova
 
-import android.Manifest
 import android.app.Activity
 import android.app.ActivityManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.*
-import android.content.pm.PackageManager
 import android.database.Cursor
 import android.graphics.Bitmap
 import android.media.AudioManager
@@ -14,7 +12,6 @@ import android.media.session.PlaybackState
 import android.net.Uri
 import android.os.*
 import android.provider.MediaStore
-import android.provider.Settings
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
@@ -31,8 +28,6 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -68,6 +63,7 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SONG_OF_THE_DAY_LAST_UPDATED
 import com.codersguidebook.supernova.utils.MediaDescriptionCompatManager
 import com.codersguidebook.supernova.utils.MediaStoreContentObserver
+import com.codersguidebook.supernova.utils.StorageAccessPermissionHelper
 import com.google.android.material.navigation.NavigationView
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -281,8 +277,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        if (MusicPermissionHelper.hasReadPermission(this)) refreshMusicLibrary()
-        else MusicPermissionHelper.requestPermissions(this)
+        if (StorageAccessPermissionHelper.hasReadPermission(this)) refreshMusicLibrary()
+        else StorageAccessPermissionHelper.requestPermissions(this)
     }
 
     override fun onStart() {
@@ -1227,48 +1223,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Helper to ask storage permission.  */
-    object MusicPermissionHelper {
-        private const val READ_STORAGE_PERMISSION_CODE = 100
-        private const val READ_PERMISSION = Manifest.permission.READ_EXTERNAL_STORAGE
-
-        /** Check to see we have the necessary permissions for this app.  */
-        fun hasReadPermission(activity: Activity): Boolean {
-            return ContextCompat.checkSelfPermission(activity, READ_PERMISSION) == PackageManager.PERMISSION_GRANTED
-        }
-
-        /** Check to see we have the necessary permissions for this app, and ask for them if we don't.  */
-        fun requestPermissions(activity: Activity) {
-            ActivityCompat.requestPermissions(
-                activity,
-                arrayOf(READ_PERMISSION),
-                READ_STORAGE_PERMISSION_CODE
-            )
-        }
-
-        /** Check to see if we need to show the rationale for this permission.  */
-        fun shouldShowRequestPermissionRationale(activity: Activity): Boolean {
-            return ActivityCompat.shouldShowRequestPermissionRationale(activity, READ_PERMISSION)
-        }
-
-        /** Launch Application Setting to grant permission.  */
-        fun launchPermissionSettings(activity: Activity) {
-            val intent = Intent()
-            intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-            intent.data = Uri.fromParts("package", activity.packageName, null)
-            activity.startActivity(intent)
-        }
-    }
-
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>,
                                             grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (!MusicPermissionHelper.hasReadPermission(this)) {
+        if (!StorageAccessPermissionHelper.hasReadPermission(this)) {
             Toast.makeText(this, getString(R.string.storage_permission_needed),
                 Toast.LENGTH_LONG).show()
-            if (!MusicPermissionHelper.shouldShowRequestPermissionRationale(this)) {
+            if (!StorageAccessPermissionHelper.shouldShowRequestPermissionRationale(this)) {
                 // Permission denied with checking "Do not ask again".
-                MusicPermissionHelper.launchPermissionSettings(this)
+                StorageAccessPermissionHelper.launchPermissionSettings(this)
             }
             finish()
         } else refreshMusicLibrary()
