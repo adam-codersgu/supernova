@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.SongOptions
+import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
 class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter() {
 
@@ -58,7 +59,8 @@ class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter() 
                 holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.preview_background))
 
                 if (songs.isNotEmpty()){
-                    activity.loadImageByAlbumId(songs[0].albumId, holder.mArtwork)
+                    ImageHandlingHelper.loadImageByAlbumId(activity.application,
+                        songs[0].albumId, holder.mArtwork)
                     holder.mTitle.text = songs[0].albumName
                     holder.mArtist.text = songs[0].artist
                     val songCountInt = songs.size

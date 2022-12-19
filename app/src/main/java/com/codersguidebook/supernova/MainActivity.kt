@@ -86,7 +86,6 @@ class MainActivity : AppCompatActivity() {
     private var mediaStoreContentObserver: MediaStoreContentObserver? = null
     private var musicDatabase: MusicDatabase? = null
     var completeLibrary = listOf<Song>()
-    private lateinit var imageHelper: ImageHandlingHelper
     private lateinit var mediaBrowser: MediaBrowserCompat
     private lateinit var musicLibraryViewModel: MusicLibraryViewModel
     private lateinit var searchView: SearchView
@@ -179,7 +178,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
 
-        imageHelper = ImageHandlingHelper(application)
         storagePermissionHelper = StorageAccessPermissionHelper(this)
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         musicDatabase = MusicDatabase.getDatabase(this, lifecycleScope)
@@ -1030,7 +1028,7 @@ class MainActivity : AppCompatActivity() {
                 application.contentResolver.loadThumbnail(uri,
                     Size(640, 640), null)
             } catch (_: FileNotFoundException) { null }
-            albumArt?.let { imageHelper.saveImage(it, path) }
+            albumArt?.let { ImageHandlingHelper.saveImage(it, path) }
         }
 
         return Song(id, track, title, artist, album, albumID, year)

@@ -638,6 +638,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             putString(MediaMetadataCompat.METADATA_KEY_ALBUM, albumName)
             val albumId = extras?.getString("album_id")
             putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, getArtworkByAlbumId(albumId))
+            putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, albumId)
         }
         mediaSessionCompat.setMetadata(metadataBuilder.build())
     }

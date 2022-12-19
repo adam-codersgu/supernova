@@ -12,6 +12,7 @@ import com.codersguidebook.supernova.PlaylistOptions
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.ui.playlists.PlaylistsFragmentDirections
+import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
 class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     var playlists = mutableListOf<Playlist>()
@@ -47,8 +48,10 @@ class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter
 
         val playlistSongIDs = activity.extractPlaylistSongIds(current.songs)
         // FIXME: Maybe find another way to handle artwork for playlists with no songs
-        if (!activity.insertPlaylistArtwork(current, holder.mArtwork) && playlistSongIDs.isNotEmpty()) {
-            activity.loadImageByAlbumId(activity.findFirstSongArtwork(playlistSongIDs[0]), holder.mArtwork)
+        if (!ImageHandlingHelper.loadImageByPlaylist(activity.application,
+                current, holder.mArtwork) && playlistSongIDs.isNotEmpty()) {
+            ImageHandlingHelper.loadImageByAlbumId(activity.application,
+                activity.findFirstSongArtwork(playlistSongIDs[0]), holder.mArtwork)
         }
 
         val songCountInt = playlistSongIDs.size

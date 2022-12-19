@@ -13,6 +13,7 @@ import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
+import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
 
 class AlbumsAdapter(private val activity: MainActivity): Adapter(),
@@ -88,7 +89,7 @@ class AlbumsAdapter(private val activity: MainActivity): Adapter(),
         holder as ViewHolderAlbum
         val current = songsByAlbum[position]
 
-        activity.loadImageByAlbumId(current.albumId, holder.mArtwork)
+        ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId, holder.mArtwork)
 
         holder.mTitle.text = current.albumName
         holder.mArtist.text = current.artist

@@ -14,42 +14,42 @@ import java.io.File
 import java.io.FileOutputStream
 
 /** Helper that assists with the rendering and storage of image files. */
-class ImageHandlingHelper(private val application: Application) {
+object ImageHandlingHelper {
 
-    companion object {
-        private const val ALBUM_ART_DIRECTORY = "albumArt"
-        private const val ANIMATION_IMAGE_DIRECTORY = ""
-        private const val PLAYLIST_ART_DIRECTORY = "playlistArt"
-    }
+    private const val ALBUM_ART_DIRECTORY = "albumArt"
+    private const val ANIMATION_IMAGE_DIRECTORY = ""
+    private const val PLAYLIST_ART_DIRECTORY = "playlistArt"
 
     /**
      * Load album art into a user interface View.
      *
+     * @param application - The application that should serve as the context.
      * @param albumId - The ID of the album that artwork should be loaded for.
      * @param view - The user interface View that the artwork should be displayed in.
      */
-    fun loadImageByAlbumId(albumId: String?, view: ImageView) {
+    fun loadImageByAlbumId(application: Application, albumId: String?, view: ImageView) {
         var file: File? = null
         if (albumId != null) {
             val directory = ContextWrapper(application).getDir(ALBUM_ART_DIRECTORY, Context.MODE_PRIVATE)
             file = File(directory, "$albumId.jpg")
         }
-        displayImageByFile(file, view)
+        displayImageByFile(application, file, view)
     }
 
     /**
      * Create a File object for the image file associated with a given playlist
      * and load the artwork into a user interface View.
      *
+     * @param application - The application that should serve as the context.
      * @param playlist - The Playlist object that artwork should be loaded for.
      * @param view - The user interface View that the artwork should be displayed in.
      * @return A Boolean indicating whether artwork was successfully found and loaded.
      */
-    fun insertPlaylistArtwork(playlist: Playlist, view: ImageView) : Boolean {
+    fun loadImageByPlaylist(application: Application, playlist: Playlist, view: ImageView) : Boolean {
         val directory = ContextWrapper(application).getDir(PLAYLIST_ART_DIRECTORY, Context.MODE_PRIVATE)
         val file = File(directory, playlist.playlistId.toString() + ".jpg")
         return if (file.exists()) {
-            displayImageByFile(file, view)
+            displayImageByFile(application, file, view)
             true
         } else false
     }
@@ -57,10 +57,11 @@ class ImageHandlingHelper(private val application: Application) {
     /**
      * Display a given image using Glide.
      *
+     * @param application - The application that should serve as the context.
      * @param file - A File object that references the image to be displayed.
      * @param view - The user interface View in which the image should be rendered.
      */
-    private fun displayImageByFile(file: File?, view: ImageView) {
+    private fun displayImageByFile(application: Application, file: File?, view: ImageView) {
         Glide.with(application)
             .load(file ?: R.drawable.no_album_artwork)
             .transition(DrawableTransitionOptions.withCrossFade())
@@ -75,11 +76,12 @@ class ImageHandlingHelper(private val application: Application) {
      * Create a File object for the image file associated with a given resource ID
      * and save the image to a target directory.
      *
+     * @param application - The application that should serve as the context.
      * @param directoryName - The name of the directory storing the image.
      * @param image - A Bitmap representation of the image to be saved.
      * @param resourceId - The ID of the resource that an image should be loaded for.
      */
-    fun saveImageByResourceId(directoryName: String, image: Bitmap, resourceId: String) {
+    fun saveImageByResourceId(application: Application, directoryName: String, image: Bitmap, resourceId: String) {
         val directory = ContextWrapper(application).getDir(directoryName, Context.MODE_PRIVATE)
         val path = File(directory, "$resourceId.jpg")
         saveImage(image, path)

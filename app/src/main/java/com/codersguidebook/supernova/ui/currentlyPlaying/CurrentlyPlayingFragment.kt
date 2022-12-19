@@ -39,6 +39,7 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CUSTOM_ANIMATION_IMAGE_IDS
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
+import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.codersguidebook.supernova.views.PlaybackAnimator
 import com.codersguidebook.supernova.views.PullToCloseLayout
 import com.google.gson.Gson
@@ -259,8 +260,8 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
         binding.album.text = metadata?.getString(MediaMetadataCompat.METADATA_KEY_ALBUM)
 
         if (metadata != null) {
-            callingActivity.runGlideByBitmap(
-                metadata.getBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART), binding.artwork)
+            val albumId = metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI)
+            ImageHandlingHelper.loadImageByAlbumId(callingActivity.application, albumId, binding.artwork)
         } else {
             Glide.with(callingActivity)
                 .clear(binding.artwork)

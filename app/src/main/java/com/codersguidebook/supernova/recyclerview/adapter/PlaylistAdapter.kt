@@ -18,6 +18,7 @@ import com.codersguidebook.supernova.PlaylistSongOptions
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.ui.playlist.PlaylistFragment
+import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
 class PlaylistAdapter(private val fragment: PlaylistFragment,
                       private val activity: MainActivity
@@ -83,19 +84,25 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
 
                 holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.preview_background))
 
-                if (!activity.insertPlaylistArtwork(playlist ?: return, holder.mArtwork)) {
+                if (!ImageHandlingHelper.loadImageByPlaylist(activity.application,
+                        playlist ?: return, holder.mArtwork)) {
                     val albumIds = songs.map { it.albumId }.shuffled()
 
                     when {
                         albumIds.size > 1 -> {
                             holder.mArtwork.isGone = true
                             holder.mArtworkGrid.isVisible = true
-                            activity.loadImageByAlbumId(albumIds[0], holder.mArtwork1)
-                            activity.loadImageByAlbumId(albumIds[1], holder.mArtwork2)
-                            if (albumIds.size > 2) activity.loadImageByAlbumId(albumIds[2], holder.mArtwork3)
-                            if (albumIds.size > 3)  activity.loadImageByAlbumId(albumIds[3], holder.mArtwork4)
+                            ImageHandlingHelper.loadImageByAlbumId(activity.application,
+                                albumIds[0], holder.mArtwork1)
+                            ImageHandlingHelper.loadImageByAlbumId(activity.application,
+                                albumIds[1], holder.mArtwork2)
+                            if (albumIds.size > 2) ImageHandlingHelper.loadImageByAlbumId(activity.application,
+                                albumIds[2], holder.mArtwork3)
+                            if (albumIds.size > 3)  ImageHandlingHelper.loadImageByAlbumId(activity.application,
+                                albumIds[3], holder.mArtwork4)
                         }
-                        songs.isNotEmpty() -> activity.loadImageByAlbumId(albumIds[0], holder.mArtwork)
+                        songs.isNotEmpty() -> ImageHandlingHelper.loadImageByAlbumId(activity.application,
+                            albumIds[0], holder.mArtwork)
                     }
                 }
 
@@ -132,7 +139,8 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                     holder.mArtwork.setOnTouchListener { _, _ ->
                         return@setOnTouchListener true
                     }
-                    activity.loadImageByAlbumId(current.albumId, holder.mArtwork)
+                    ImageHandlingHelper.loadImageByAlbumId(activity.application,
+                        current.albumId, holder.mArtwork)
                 }
 
                 holder.mTitle.text = current.title

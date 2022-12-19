@@ -6,38 +6,38 @@ import android.support.v4.media.session.PlaybackStateCompat.STATE_PLAYING
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
+import androidx.viewbinding.ViewBinding
 import com.bumptech.glide.Glide
-import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.PlayQueueViewModel
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.PlayerControlsBinding
+import com.codersguidebook.supernova.recyclerview.BaseFragment
+import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class ControlsFragment : Fragment() {
-
-    private var _binding: PlayerControlsBinding? = null
-    private val binding get() = _binding!!
+class ControlsFragment : BaseFragment() {
+    
+    override var _binding: ViewBinding? = null
+        get() = field as PlayerControlsBinding?
+    override val binding: PlayerControlsBinding
+        get() = _binding!! as PlayerControlsBinding
     private var fastForwarding = false
     private var fastRewinding = false
     private val playQueueViewModel: PlayQueueViewModel by activityViewModels()
-    private lateinit var callingActivity: MainActivity
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?): View {
         _binding = PlayerControlsBinding.inflate(inflater, container, false)
-        return binding.root
+        return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        callingActivity = activity as MainActivity
 
         playQueueViewModel.currentlyPlayingSongMetadata.observe(viewLifecycleOwner) {
             updateCurrentlyDisplayedMetadata(it)
@@ -57,19 +57,19 @@ class ControlsFragment : Fragment() {
         }
 
         binding.btnPlay.setOnClickListener {
-            callingActivity.playPauseControl()
+            mainActivity.playPauseControl()
         }
 
         binding.btnBackward.setOnClickListener{
             if (fastRewinding) fastRewinding = false
-            else callingActivity.skipBack()
+            else mainActivity.skipBack()
         }
 
         binding.btnBackward.setOnLongClickListener {
             fastRewinding = true
             lifecycleScope.launch {
                 do {
-                    callingActivity.fastRewind()
+                    mainActivity.fastRewind()
                     delay(500)
                 } while (fastRewinding)
             }
@@ -78,14 +78,14 @@ class ControlsFragment : Fragment() {
 
         binding.btnForward.setOnClickListener{
             if (fastForwarding) fastForwarding = false
-            else callingActivity.skipForward()
+            else mainActivity.skipForward()
         }
 
         binding.btnForward.setOnLongClickListener {
             fastForwarding = true
             lifecycleScope.launch {
                 do {
-                    callingActivity.fastForward()
+                    mainActivity.fastForward()
                     delay(500)
                 } while (fastForwarding)
             }
@@ -115,11 +115,6 @@ class ControlsFragment : Fragment() {
         binding.songProgressBar.progress = playQueueViewModel.playbackPosition.value ?: 0
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
-
     /**
      * Use the currently playing song's metadata to update the user interface.
      *
@@ -132,10 +127,10 @@ class ControlsFragment : Fragment() {
         binding.album.text = metadata?.getString(MediaMetadataCompat.METADATA_KEY_ALBUM)
 
         if (metadata != null) {
-            callingActivity.runGlideByBitmap(
-                metadata.getBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART), binding.artwork)
+            val albumId = metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI)
+            ImageHandlingHelper.loadImageByAlbumId(mainActivity.application, albumId, binding.artwork)
         } else {
-            Glide.with(callingActivity)
+            Glide.with(mainActivity)
                 .clear(binding.artwork)
         }
     }
