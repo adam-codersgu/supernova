@@ -44,6 +44,7 @@ import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_REPEAT_MODE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_SHUFFLE_MODE
@@ -75,7 +76,6 @@ import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
-    private val channelID = "supernova"
     private var currentPlaybackPosition = 0
     private var currentPlaybackDuration = 0
     private var currentQueueItemId = -1L
@@ -940,7 +940,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun createChannelForMediaPlayerNotification() {
         val channel = NotificationChannel(
-            channelID, "Notifications",
+            NOTIFICATION_CHANNEL_ID, "Notifications",
             NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
             description = "All app notifications"
