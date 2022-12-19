@@ -21,6 +21,7 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentEditAlbumBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
+import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import java.io.FileNotFoundException
 import java.io.IOException
 
@@ -66,7 +67,7 @@ class EditAlbumFragment : Fragment() {
             binding.editAlbumYear.text = editable
         }
 
-        callingActivity.loadImageByAlbumId(albumID, binding.editAlbumArtwork)
+        ImageHandlingHelper.loadImageByAlbumId(callingActivity.application, albumID, binding.editAlbumArtwork)
         binding.editAlbumArtwork.setOnClickListener {
             startActivityForResult(
                 Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI), GET_ARTWORK
@@ -116,13 +117,14 @@ class EditAlbumFragment : Fragment() {
                     val newAlbumYear = binding.editAlbumYear.text.toString()
 
                     when {
-                        newAlbumTitle.isEmpty() -> Toast.makeText(activity,
+                        newAlbumTitle.isEmpty() -> Toast.makeText(callingActivity,
                             getString(R.string.album_name_cannot_be_empty), Toast.LENGTH_SHORT).show()
-                        newAlbumYear.isEmpty() -> Toast.makeText(activity,
+                        newAlbumYear.isEmpty() -> Toast.makeText(callingActivity,
                             getString(R.string.album_year_cannot_be_empty), Toast.LENGTH_SHORT).show()
                         else -> {
-                            newAlbumArtwork?.let {
-                                callingActivity.saveImageByResourceId("albumArt", it, albumID!!)
+                            newAlbumArtwork?.let { albumArt ->
+                                ImageHandlingHelper.saveAlbumArtByResourceId(callingActivity.application,
+                                    albumID!!, albumArt)
                             }
 
                             if (newAlbumTitle != albumSongs[0].title || newAlbumYear != albumSongs[0].year) {

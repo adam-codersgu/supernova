@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.SongOptions
+import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
 
 class SongsAdapter(private val activity: MainActivity): SongAdapter(),
@@ -53,7 +54,7 @@ class SongsAdapter(private val activity: MainActivity): SongAdapter(),
         holder as ViewHolderSong
         val current = songs[position]
 
-        activity.loadImageByAlbumId(current.albumId, holder.mArtwork)
+        ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId, holder.mArtwork)
 
         holder.mTitle.text = current.title
         holder.mArtist.text = current.artist

@@ -88,6 +88,18 @@ object ImageHandlingHelper {
     }
 
     /**
+     * Save an image to the album art directory.
+     *
+     * @param application - The application that should serve as the context.
+     * @param resourceId - The ID of the resource that an image should be loaded for.
+     * @param image - A Bitmap representation of the image to be saved.
+     */
+    fun saveAlbumArtByResourceId(application: Application, resourceId: String, image: Bitmap) {
+        val directory = ContextWrapper(application).getDir(ALBUM_ART_DIRECTORY, Context.MODE_PRIVATE)
+        createFileAndSaveImage(directory, resourceId, image)
+    }
+
+    /**
      * Save an image to the custom animation directory.
      *
      * @param application - The application that should serve as the context.
