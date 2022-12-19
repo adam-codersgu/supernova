@@ -11,26 +11,26 @@ import androidx.core.content.ContextCompat.checkSelfPermission
 import com.codersguidebook.supernova.params.PermissionConstants.Companion.EXTERNAL_STORAGE_PERMISSION
 
 /** Helper to access the device's storage. */
-object StorageAccessPermissionHelper {
+class StorageAccessPermissionHelper(private val activity: Activity) {
 
     /** Check to see we have the necessary permissions for this app. */
-    fun hasReadPermission(activity: Activity): Boolean {
+    fun hasReadPermission(): Boolean {
         return checkSelfPermission(activity, READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
     }
 
     /** Check to see we have the necessary permissions for this app, and ask for them if we don't. */
-    fun requestPermissions(activity: Activity) {
+    fun requestPermissions() {
         ActivityCompat.requestPermissions(activity, arrayOf(READ_EXTERNAL_STORAGE),
             EXTERNAL_STORAGE_PERMISSION)
     }
 
     /** Check to see if we need to show the rationale for this permission. */
-    fun shouldShowRequestPermissionRationale(activity: Activity): Boolean {
+    fun shouldShowRequestPermissionRationale(): Boolean {
         return ActivityCompat.shouldShowRequestPermissionRationale(activity, READ_EXTERNAL_STORAGE)
     }
 
     /** Launch Application Setting to grant permission. */
-    fun launchPermissionSettings(activity: Activity) {
+    fun launchPermissionSettings() {
         val intent = Intent().apply {
             this.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
             this.data = Uri.fromParts("package", activity.packageName, null)

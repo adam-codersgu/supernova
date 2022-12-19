@@ -6,7 +6,6 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.*
 import android.database.Cursor
-import android.graphics.Bitmap
 import android.media.AudioManager
 import android.media.session.PlaybackState
 import android.net.Uri
@@ -22,7 +21,6 @@ import android.util.Size
 import android.view.Menu
 import android.view.View
 import android.view.inputmethod.InputMethodManager
-import android.widget.ImageView
 import android.widget.SearchView
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -42,9 +40,6 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import androidx.preference.PreferenceManager
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
-import com.bumptech.glide.signature.ObjectKey
 import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
@@ -61,6 +56,7 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SONG_OF_THE_DAY_LAST_UPDATED
+import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.codersguidebook.supernova.utils.MediaDescriptionCompatManager
 import com.codersguidebook.supernova.utils.MediaStoreContentObserver
 import com.codersguidebook.supernova.utils.StorageAccessPermissionHelper
@@ -74,7 +70,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileNotFoundException
-import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -91,10 +86,12 @@ class MainActivity : AppCompatActivity() {
     private var mediaStoreContentObserver: MediaStoreContentObserver? = null
     private var musicDatabase: MusicDatabase? = null
     var completeLibrary = listOf<Song>()
+    private lateinit var imageHelper: ImageHandlingHelper
     private lateinit var mediaBrowser: MediaBrowserCompat
     private lateinit var musicLibraryViewModel: MusicLibraryViewModel
     private lateinit var searchView: SearchView
     private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var storagePermissionHelper: StorageAccessPermissionHelper
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
 
@@ -182,6 +179,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
 
+        imageHelper = ImageHandlingHelper(application)
+        storagePermissionHelper = StorageAccessPermissionHelper(this)
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         musicDatabase = MusicDatabase.getDatabase(this, lifecycleScope)
         musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
@@ -277,8 +276,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        if (StorageAccessPermissionHelper.hasReadPermission(this)) refreshMusicLibrary()
-        else StorageAccessPermissionHelper.requestPermissions(this)
+        if (storagePermissionHelper.hasReadPermission()) refreshMusicLibrary()
+        else storagePermissionHelper.requestPermissions()
     }
 
     override fun onStart() {
@@ -952,87 +951,6 @@ class MainActivity : AppCompatActivity() {
         notificationManager.createNotificationChannel(channel)
     }
 
-    /**
-     * Load album art into a user interface View.
-     *
-     * @param albumId - The ID of the album that artwork should be loaded for.
-     * @param view - The user interface View that the artwork should be displayed in.
-     */
-    fun loadImageByAlbumId(albumId: String?, view: ImageView) {
-        var file: File? = null
-        if (albumId != null) {
-            val directory = ContextWrapper(this).getDir("albumArt", Context.MODE_PRIVATE)
-            file = File(directory, "$albumId.jpg")
-        }
-        runGlideByFile(file, view)
-    }
-
-    /**
-     * Create a File object for the image file associated with a given playlist
-     * and load the artwork into a user interface View.
-     *
-     * @param playlist - The Playlist object that artwork should be loaded for.
-     * @param view - The user interface View that the artwork should be displayed in.
-     * @return A Boolean indicating whether artwork was successfully found and loaded.
-     */
-    fun insertPlaylistArtwork(playlist: Playlist, view: ImageView) : Boolean {
-        val contextWrapper = ContextWrapper(this)
-        val directory = contextWrapper.getDir("playlistArt", Context.MODE_PRIVATE)
-        val file = File(directory, playlist.playlistId.toString() + ".jpg")
-        return if (file.exists()) {
-            runGlideByFile(file, view)
-            true
-        } else false
-    }
-
-    private fun runGlideByFile(file: File?, view: ImageView) {
-        Glide.with(this)
-            .load(file ?: R.drawable.no_album_artwork)
-            .transition(DrawableTransitionOptions.withCrossFade())
-            .centerCrop()
-            .signature(ObjectKey(file?.path + file?.lastModified()))
-            .override(600, 600)
-            .error(R.drawable.no_album_artwork)
-            .into(view)
-    }
-
-    fun runGlideByBitmap(bitmap: Bitmap?, view: ImageView) {
-        Glide.with(this)
-            .load(bitmap ?: R.drawable.no_album_artwork)
-            .transition(DrawableTransitionOptions.withCrossFade())
-            .centerCrop()
-            .signature(ObjectKey(bitmap?.generationId ?: R.drawable.no_album_artwork))
-            .override(600, 600)
-            .error(R.drawable.no_album_artwork)
-            .into(view)
-    }
-
-    /**
-     * Create a File object for the image file associated with a given resource ID
-     * and save the image to a target directory.
-     *
-     * @param directoryName - The name of the directory storing the image.
-     * @param image - A Bitmap representation of the image to be saved.
-     * @param resourceId - The ID of the resource that an image should be loaded for.
-     */
-    fun saveImageByResourceId(directoryName: String, image: Bitmap, resourceId: String) {
-        val directory = ContextWrapper(application).getDir(directoryName, Context.MODE_PRIVATE)
-        val path = File(directory, "$resourceId.jpg")
-        saveImage(image, path)
-    }
-
-    /**
-     * Saves a bitmap representation of an image to a specified file path location.
-     *
-     * @param bitmap - The Bitmap instance to be saved.
-     * @param path - The location at which the image file should be saved.
-     */
-    private fun saveImage(bitmap: Bitmap, path: File) {
-        FileOutputStream(path).use {
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
-        }
-    }
-
     /** Refresh the music library. Add new songs and remove deleted songs. */
     private fun refreshMusicLibrary() = lifecycleScope.launch(Dispatchers.Main) {
         val cursor = getMediaStoreCursorAsync().await()
@@ -1112,7 +1030,7 @@ class MainActivity : AppCompatActivity() {
                 application.contentResolver.loadThumbnail(uri,
                     Size(640, 640), null)
             } catch (_: FileNotFoundException) { null }
-            albumArt?.let { saveImage(it, path) }
+            albumArt?.let { imageHelper.saveImage(it, path) }
         }
 
         return Song(id, track, title, artist, album, albumID, year)
@@ -1226,12 +1144,12 @@ class MainActivity : AppCompatActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>,
                                             grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (!StorageAccessPermissionHelper.hasReadPermission(this)) {
+        if (!storagePermissionHelper.hasReadPermission()) {
             Toast.makeText(this, getString(R.string.storage_permission_needed),
                 Toast.LENGTH_LONG).show()
-            if (!StorageAccessPermissionHelper.shouldShowRequestPermissionRationale(this)) {
+            if (!storagePermissionHelper.shouldShowRequestPermissionRationale()) {
                 // Permission denied with checking "Do not ask again".
-                StorageAccessPermissionHelper.launchPermissionSettings(this)
+                storagePermissionHelper.launchPermissionSettings()
             }
             finish()
         } else refreshMusicLibrary()
