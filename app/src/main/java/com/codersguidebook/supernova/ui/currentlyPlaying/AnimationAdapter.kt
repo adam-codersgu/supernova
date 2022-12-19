@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.bumptech.glide.Glide
 import com.codersguidebook.supernova.R
+import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
 class AnimationAdapter(private val fragment: CustomAnimationFragment): RecyclerView.Adapter<ViewHolder>() {
 
@@ -54,7 +55,9 @@ class AnimationAdapter(private val fragment: CustomAnimationFragment): RecyclerV
                     fragment.showPopup(it, current)
                 }
 
-                fragment.loadImage(current, holder.itemView as ImageView)
+                ImageHandlingHelper.loadImageByCustomAnimationImageId(
+                    fragment.requireActivity().application, current, holder.itemView as ImageView
+                )
             }
         }
     }

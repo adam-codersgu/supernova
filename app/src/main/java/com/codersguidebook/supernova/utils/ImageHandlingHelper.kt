@@ -17,7 +17,7 @@ import java.io.FileOutputStream
 object ImageHandlingHelper {
 
     private const val ALBUM_ART_DIRECTORY = "albumArt"
-    private const val ANIMATION_IMAGE_DIRECTORY = ""
+    private const val ANIMATION_IMAGE_DIRECTORY = "customAnimation"
     private const val PLAYLIST_ART_DIRECTORY = "playlistArt"
 
     /**
@@ -55,6 +55,21 @@ object ImageHandlingHelper {
     }
 
     /**
+     * Create a File object for the image file associated with a given custom
+     * animation object and load the image into a user interface View.
+     *
+     * @param application - The application that should serve as the context.
+     * @param imageId - The image ID that an image should be loaded for.
+     * @param view - The user interface View that the artwork should be displayed in.
+     * @return A Boolean indicating whether artwork was successfully found and loaded.
+     */
+    fun loadImageByCustomAnimationImageId(application: Application, imageId: String, view: ImageView) {
+        val directory = ContextWrapper(application).getDir(ANIMATION_IMAGE_DIRECTORY, Context.MODE_PRIVATE)
+        val file = File(directory, "$imageId.jpg")
+        displayImageByFile(application, file, view)
+    }
+
+    /**
      * Display a given image using Glide.
      *
      * @param application - The application that should serve as the context.
@@ -73,16 +88,25 @@ object ImageHandlingHelper {
     }
 
     /**
-     * Create a File object for the image file associated with a given resource ID
-     * and save the image to a target directory.
+     * Save an image to the custom animation directory.
      *
      * @param application - The application that should serve as the context.
-     * @param directoryName - The name of the directory storing the image.
-     * @param image - A Bitmap representation of the image to be saved.
      * @param resourceId - The ID of the resource that an image should be loaded for.
+     * @param image - A Bitmap representation of the image to be saved.
      */
-    fun saveImageByResourceId(application: Application, directoryName: String, image: Bitmap, resourceId: String) {
-        val directory = ContextWrapper(application).getDir(directoryName, Context.MODE_PRIVATE)
+    fun saveCustomAnimationImageByResourceId(application: Application, resourceId: String, image: Bitmap) {
+        val directory = ContextWrapper(application).getDir(ANIMATION_IMAGE_DIRECTORY, Context.MODE_PRIVATE)
+        createFileAndSaveImage(directory, resourceId, image)
+    }
+
+    /**
+     * Create a File object for a given directory path and save an image to that directory.
+     *
+     * @param directory - A File object detailing the directory in which the image should be saved.
+     * @param resourceId - The resource ID that should be used in the file name.
+     * @param image - A Bitmap representation of the image to be saved.
+     */
+    private fun createFileAndSaveImage(directory: File, resourceId: String, image: Bitmap) {
         val path = File(directory, "$resourceId.jpg")
         saveImage(image, path)
     }
