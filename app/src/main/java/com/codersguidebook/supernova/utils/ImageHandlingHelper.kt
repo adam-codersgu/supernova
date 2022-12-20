@@ -88,6 +88,18 @@ object ImageHandlingHelper {
     }
 
     /**
+     * Delete the image file associated with a given album ID (if the file exists).
+     *
+     * @param application - The application that should serve as the context.
+     * @param resourceId - The ID of the resource that should be evaluated.
+     */
+    fun deleteAlbumArtByResourceId(application: Application, resourceId: String) {
+        val directory = ContextWrapper(application).getDir(ALBUM_ART_DIRECTORY, Context.MODE_PRIVATE)
+        val path = File(directory, "$resourceId.jpg")
+        if (path.exists()) path.delete()
+    }
+
+    /**
      * Determines whether an image file matching a given resource ID is present in the album
      * art directory.
      *

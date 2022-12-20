@@ -268,6 +268,15 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        musicLibraryViewModel.deletedSongIds.observe(this) { songIds ->
+            if (songIds.isEmpty()) return@observe
+            for (songId in songIds) {
+                val queueItemsToRemove = playQueue.filter { it.description.mediaId == songId.toString() }
+                for (item in queueItemsToRemove) removeQueueItemById(item.queueId)
+            }
+            musicLibraryViewModel.deletedSongIds.value?.removeAll(songIds)
+        }
+
         if (storagePermissionHelper.hasReadPermission()) {
             musicLibraryViewModel.refreshMusicLibrary()
         } else storagePermissionHelper.requestPermissions()
@@ -917,31 +926,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Check if the album artwork associated with a song that has been removed from the music library
-     * is still required. If the artwork is no longer used elsewhere, then the image  can be deleted.
-     *
-     * @param song - The Song object that has been removed from the music library.
-     */
-    private suspend fun deleteRedundantArtworkBySong(song: Song) {
-        val contextWrapper = ContextWrapper(application)
-        val directory = contextWrapper.getDir("albumArt", Context.MODE_PRIVATE)
-        val songsWithAlbumId = musicDatabase!!.musicDao().getSongWithAlbumId(song.albumId)
-        if (songsWithAlbumId.isEmpty()){
-            val path = File(directory, song.albumId + ".jpg")
-            if (path.exists()) path.delete()
-        }
-    }
-
-    /**
-     * Delete a given song from the music library.
-     *
-     * @param song - The Song object to be deleted.
-     */
-    private suspend fun deleteSong(song: Song) = lifecycleScope.launch(Dispatchers.Default) {
-
-    }
-
-    /**
      * Hides the soft input keyboard, which can sometimes obstruct views.
      *
      * @param activity - The activity that currently has focus
@@ -984,10 +968,9 @@ class MainActivity : AppCompatActivity() {
         val queueItemPairsJson = sharedPreferences.getString(PLAY_QUEUE_ITEM_PAIRS, null) ?: return@launch
         val currentQueueItemId = sharedPreferences.getLong(CURRENT_QUEUE_ITEM_ID, -1L)
 
-        val gson = Gson()
         val itemType = object : TypeToken<List<Pair<Long, Long>>>() {}.type
         // Pair mapping is <Long, Long> -> <QueueId, songId>
-        val queueItemPairs = gson.fromJson<List<Pair<Long, Long>>>(queueItemPairsJson, itemType)
+        val queueItemPairs = Gson().fromJson<List<Pair<Long, Long>>>(queueItemPairsJson, itemType)
 
         val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
         for (pair in queueItemPairs) {

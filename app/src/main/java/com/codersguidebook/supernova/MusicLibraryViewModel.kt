@@ -2,11 +2,14 @@ package com.codersguidebook.supernova
 
 import android.app.Application
 import android.content.ContentUris
+import android.content.Context
+import android.content.ContextWrapper
 import android.database.Cursor
 import android.provider.MediaStore
 import android.util.Size
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.codersguidebook.supernova.entities.Artist
 import com.codersguidebook.supernova.entities.Playlist
@@ -16,6 +19,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import java.io.File
 import java.io.FileNotFoundException
 
 class MusicLibraryViewModel(application: Application) : AndroidViewModel(application) {
@@ -25,6 +29,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     val mostPlayedSongsById: LiveData<List<Long>>
     val allArtists: LiveData<List<Artist>>
     val allPlaylists: LiveData<List<Playlist>>
+    val deletedSongIds = MutableLiveData<MutableList<Long>>()
 
     init {
         val musicDao = MusicDatabase.getDatabase(application, viewModelScope).musicDao()
@@ -36,44 +41,46 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
         allPlaylists = repository.allPlaylists
     }
 
-    private fun deleteSong(song: Song) = viewModelScope.launch(Dispatchers.IO) {
-        repository.deleteSong(song)
+    private fun deleteSong(song: Song) = viewModelScope.launch(Dispatchers.Default) {
+        allPlaylists.value?.let { playlists ->
+            if (playlists.isNotEmpty()) {
+                val updatedPlaylists = mutableListOf<Playlist>()
+                for (playlist in playlists) {
+                    if (playlist.songs != null) {
+                        // fixme: fix below errors with a PlaylistHelper object
+                        val newSongIDList = extractPlaylistSongIds(playlist.songs)
 
-        if (allPlaylists.isNotEmpty()) {
-            val updatedPlaylists = mutableListOf<Playlist>()
-            for (playlist in allPlaylists) {
-                if (playlist.songs != null) {
-                    val newSongIDList = extractPlaylistSongIds(playlist.songs)
-
-                    var playlistModified = false
-                    fun findIndex(): Int {
-                        return newSongIDList.indexOfFirst {
-                            it == song.songId
+                        var playlistModified = false
+                        fun findIndex(): Int {
+                            return newSongIDList.indexOfFirst {
+                                it == song.songId
+                            }
                         }
-                    }
 
-                    // Remove all instances of the song from the playlist
-                    do {
-                        val index = findIndex()
-                        if (index != -1) {
-                            newSongIDList.removeAt(index)
-                            playlistModified = true
+                        // Remove all instances of the song from the playlist
+                        do {
+                            val index = findIndex()
+                            if (index != -1) {
+                                newSongIDList.removeAt(index)
+                                playlistModified = true
+                            }
+                        } while (index != -1)
+
+                        if (playlistModified) {
+                            playlist.songs = convertSongIdListToJson(newSongIDList)
+                            updatedPlaylists.add(playlist)
                         }
-                    } while (index != -1)
-
-                    if (playlistModified) {
-                        playlist.songs = convertSongIdListToJson(newSongIDList)
-                        updatedPlaylists.add(playlist)
                     }
                 }
+                if (updatedPlaylists.isNotEmpty()) updatePlaylists(updatedPlaylists)
             }
-            if (updatedPlaylists.isNotEmpty()) musicLibraryViewModel.updatePlaylists(updatedPlaylists)
         }
 
-        val queueItemsToRemove = playQueue.filter { it.description.mediaId == song.songId.toString() }
-        for (item in queueItemsToRemove) removeQueueItemById(item.queueId)
+        launch(Dispatchers.IO) {
+            repository.deleteSong(song)
+            deletedSongIds.value?.add(song.songId)
+        }
 
-        musicLibraryViewModel.deleteSong(song)
         deleteRedundantArtworkBySong(song)
     }
 
@@ -247,6 +254,19 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
                     deleteSong(existingSong)
                 }
             }
+        }
+    }
+
+    /**
+     * Check if the album artwork associated with a song that has been removed from the music library
+     * is still required. If the artwork is no longer used elsewhere, then the image  can be deleted.
+     *
+     * @param song - The Song object that has been removed from the music library.
+     */
+    private suspend fun deleteRedundantArtworkBySong(song: Song) {
+        val songsWithAlbumId = repository.getSongByAlbumId(song.albumId)
+        if (songsWithAlbumId.isEmpty()) {
+            ImageHandlingHelper.deleteAlbumArtByResourceId(getApplication(), song.albumId)
         }
     }
 

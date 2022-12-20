@@ -28,10 +28,14 @@ class MusicRepository(private val musicDao: MusicDao, private val playlistDao: P
         playlistDao.delete(playlist)
     }
 
-    suspend fun updateMusicInfo(songs: List<Song>){
+    suspend fun updateMusicInfo(songs: List<Song>) {
         for (s in songs) {
             musicDao.updateSongInfo(s)
         }
+    }
+
+    suspend fun getSongByAlbumId(albumID: String): List<Song> {
+        return musicDao.getSongByAlbumId(albumID)
     }
 
     fun updatePlaylist(playlists: List<Playlist>){

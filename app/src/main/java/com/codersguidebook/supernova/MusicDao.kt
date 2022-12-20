@@ -18,7 +18,7 @@ interface MusicDao {
     suspend fun insert(song: Song)
 
     @Query("SELECT * from music_library WHERE song_album_id = :albumID LIMIT 1")
-    suspend fun getSongWithAlbumId(albumID: String): List<Song>
+    suspend fun getSongByAlbumId(albumID: String): List<Song>
 
     @Query("SELECT SUM(song_plays) FROM music_library WHERE song_artist = :artistName")
     fun getSongPlaysByArtist(artistName: String): Int
