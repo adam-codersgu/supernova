@@ -12,6 +12,7 @@ import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.SongOptions
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
 class MostPlayedAdapter(private val mainActivity: MainActivity):
     RecyclerView.Adapter<MostPlayedAdapter.SongsViewHolder>() {
@@ -72,7 +73,7 @@ class MostPlayedAdapter(private val mainActivity: MainActivity):
             }
         }
 
-        mainActivity.loadImageByAlbumId(current.albumId, holder.mArtwork)
+        ImageHandlingHelper.loadImageByAlbumId(mainActivity.application, current.albumId, holder.mArtwork)
 
         holder.mTitle.text = current.title
         holder.mArtist.text = current.artist

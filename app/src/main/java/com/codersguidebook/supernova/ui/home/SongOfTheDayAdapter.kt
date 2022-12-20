@@ -10,6 +10,7 @@ import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.SongOptions
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
 class SongOfTheDayAdapter(private val mainActivity: MainActivity):
     RecyclerView.Adapter<SongOfTheDayAdapter.SongsViewHolder>() {
@@ -43,7 +44,7 @@ class SongOfTheDayAdapter(private val mainActivity: MainActivity):
     }
 
     override fun onBindViewHolder(holder: SongsViewHolder, position: Int) {
-        mainActivity.loadImageByAlbumId(song?.albumId, holder.mArtwork)
+        ImageHandlingHelper.loadImageByAlbumId(mainActivity.application, song?.albumId, holder.mArtwork)
         holder.mTitle.text = song?.title
         holder.mArtist.text = song?.artist
         holder.mAlbum.text = song?.albumName
