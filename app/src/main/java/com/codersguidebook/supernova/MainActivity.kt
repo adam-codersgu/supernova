@@ -5,7 +5,6 @@ import android.app.ActivityManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.*
-import android.database.Cursor
 import android.media.AudioManager
 import android.media.session.PlaybackState
 import android.net.Uri
@@ -17,7 +16,6 @@ import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.media.session.PlaybackStateCompat.*
-import android.util.Size
 import android.view.Menu
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -57,7 +55,6 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SONG_OF_THE_DAY_LAST_UPDATED
-import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.codersguidebook.supernova.utils.MediaDescriptionCompatManager
 import com.codersguidebook.supernova.utils.MediaStoreContentObserver
 import com.codersguidebook.supernova.utils.StorageAccessPermissionHelper
@@ -65,12 +62,9 @@ import com.google.android.material.navigation.NavigationView
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.io.File
-import java.io.FileNotFoundException
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -274,8 +268,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        if (storagePermissionHelper.hasReadPermission()) refreshMusicLibrary()
-        else storagePermissionHelper.requestPermissions()
+        if (storagePermissionHelper.hasReadPermission()) {
+            musicLibraryViewModel.refreshMusicLibrary()
+        } else storagePermissionHelper.requestPermissions()
     }
 
     override fun onStart() {
@@ -321,7 +316,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-        } catch (_: NumberFormatException) { refreshMusicLibrary() }
+        } catch (_: NumberFormatException) { musicLibraryViewModel.refreshMusicLibrary() }
     }
 
     /** Fetch and save an up-to-date version of the play queue from the media controller. */
@@ -949,124 +944,6 @@ class MainActivity : AppCompatActivity() {
         notificationManager.createNotificationChannel(channel)
     }
 
-    /** Refresh the music library. Add new songs and remove deleted songs. */
-    private fun refreshMusicLibrary() = lifecycleScope.launch(Dispatchers.Main) {
-        val cursor = getMediaStoreCursorAsync().await()
-
-        val songsToAddToMusicLibrary = mutableListOf<Song>()
-        cursor?.use {
-            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-            val songsToBeDeleted = completeLibrary.toMutableList()
-            while (cursor.moveToNext()) {
-                val existingSong = getSongById(cursor.getLong(idColumn))
-                if (existingSong != null) songsToBeDeleted.remove(existingSong)
-                else {
-                    val song = createSongFromCursor(cursor)
-                    songsToAddToMusicLibrary.add(song)
-                }
-            }
-
-            val chunksToAddToMusicLibrary = songsToAddToMusicLibrary.chunked(25)
-            for (chunk in chunksToAddToMusicLibrary) musicLibraryViewModel.insertSongs(chunk)
-
-            for (song in songsToBeDeleted) deleteSong(song)
-        }
-    }
-
-    /**
-     * Use the media metadata from an entry in a Cursor object to construct a Song object.
-     *
-     * @param cursor - A Cursor object that is set to the row containing the metadata that a Song
-     * object should be constructed for.
-     */
-    private fun createSongFromCursor(cursor: Cursor): Song {
-        val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-        val trackColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
-        val titleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
-        val artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
-        val albumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
-        val albumIDColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
-        val yearColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
-
-        val id = cursor.getLong(idColumn)
-        var trackString = cursor.getString(trackColumn) ?: "1001"
-
-        // The Track value will be stored in the format 1xxx where the first digit is the disc number
-        val track = try {
-            when (trackString.length) {
-                4 -> trackString.toInt()
-                in 1..3 -> {
-                    val numberNeeded = 4 - trackString.length
-                    trackString = when (numberNeeded) {
-                        1 -> "1$trackString"
-                        2 -> "10$trackString"
-                        else -> "100$trackString"
-                    }
-                    trackString.toInt()
-                }
-                else -> 1001
-            }
-        } catch (_: NumberFormatException) {
-            // If the Track value is unusual (e.g. you can get stuff like "12/23") then use 1001
-            1001
-        }
-
-        val title = cursor.getString(titleColumn) ?: "Unknown song"
-        val artist = cursor.getString(artistColumn) ?: "Unknown artist"
-        val album = cursor.getString(albumColumn) ?: "Unknown album"
-        val year = cursor.getString(yearColumn) ?: "2000"
-        val albumID = cursor.getString(albumIDColumn) ?: "unknown_album_ID"
-        val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
-
-        val contextWrapper = ContextWrapper(application)
-        // path to /data/data/this_app/app_data/albumArt
-        val directory = contextWrapper.getDir("albumArt", Context.MODE_PRIVATE)
-        val path = File(directory, "$albumID.jpg")
-        // If artwork is not saved then try and find some
-        if (!path.exists()) {
-            val albumArt = try {
-                application.contentResolver.loadThumbnail(uri,
-                    Size(640, 640), null)
-            } catch (_: FileNotFoundException) { null }
-            albumArt?.let { ImageHandlingHelper.saveImage(it, path) }
-        }
-
-        return Song(id, track, title, artist, album, albumID, year)
-    }
-
-    /**
-     * Obtain a Cursor featuring all music entries in the media store that fulfil a given
-     * selection criteria.
-     *
-     * @param selection - The WHERE clause for the media store query.
-     * Default = standard WHERE clause that selects only music entries.
-     * @param selectionArgs - An array of String selection arguments that filter the results
-     * that are returned in the Cursor.
-     * Default = null (no selection arguments).
-     * @return A Cursor object detailing all the relevant media store entries.
-     */
-    private fun getMediaStoreCursorAsync(selection: String = MediaStore.Audio.Media.IS_MUSIC,
-                                         selectionArgs: Array<String>? = null)
-        : Deferred<Cursor?> = lifecycleScope.async(Dispatchers.IO) {
-        val projection = arrayOf(
-            MediaStore.Audio.Media._ID,
-            MediaStore.Audio.Media.TRACK,
-            MediaStore.Audio.Media.TITLE,
-            MediaStore.Audio.Media.ARTIST,
-            MediaStore.Audio.Media.ALBUM,
-            MediaStore.Audio.Media.ALBUM_ID,
-            MediaStore.Audio.Media.YEAR
-        )
-        val sortOrder = MediaStore.Audio.Media.TITLE + " ASC"
-        return@async application.contentResolver.query(
-            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-            projection,
-            selection,
-            selectionArgs,
-            sortOrder
-        )
-    }
-
     /**
      * Check if the album artwork associated with a song that has been removed from the music library
      * is still required. If the artwork is no longer used elsewhere, then the image  can be deleted.
@@ -1150,7 +1027,7 @@ class MainActivity : AppCompatActivity() {
                 storagePermissionHelper.launchPermissionSettings()
             }
             finish()
-        } else refreshMusicLibrary()
+        } else musicLibraryViewModel.refreshMusicLibrary()
     }
 
     /** Restore the play queue and playback state from the last save. */

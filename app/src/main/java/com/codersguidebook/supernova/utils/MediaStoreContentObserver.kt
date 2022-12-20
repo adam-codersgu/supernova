@@ -5,13 +5,7 @@ import android.net.Uri
 import android.os.Handler
 import com.codersguidebook.supernova.MainActivity
 
-class MediaStoreContentObserver(handler: Handler, activity: MainActivity): ContentObserver(handler) {
-
-    private val activity: MainActivity
-
-    init {
-        this.activity = activity
-    }
+class MediaStoreContentObserver(handler: Handler, private val activity: MainActivity): ContentObserver(handler) {
 
     override fun onChange(selfChange: Boolean, uri: Uri?) {
         super.onChange(selfChange, uri)

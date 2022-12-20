@@ -88,6 +88,19 @@ object ImageHandlingHelper {
     }
 
     /**
+     * Determines whether an image file matching a given resource ID is present in the album
+     * art directory.
+     *
+     * @param application - The application that should serve as the context.
+     * @param resourceId - The ID of the resource that should be evaluated.
+     * @return A Boolean indicating whether a matching image file was found.
+     */
+    fun doesAlbumArtExistByResourceId(application: Application, resourceId: String) : Boolean {
+        val directory = ContextWrapper(application).getDir(ALBUM_ART_DIRECTORY, Context.MODE_PRIVATE)
+        return File(directory, "$resourceId.jpg").exists()
+    }
+
+    /**
      * Save an image to the album art directory.
      *
      * @param application - The application that should serve as the context.
@@ -132,18 +145,8 @@ object ImageHandlingHelper {
      */
     private fun createFileAndSaveImage(directory: File, resourceId: String, image: Bitmap) {
         val path = File(directory, "$resourceId.jpg")
-        saveImage(image, path)
-    }
-
-    /**
-     * Saves a bitmap representation of an image to a specified file path location.
-     *
-     * @param bitmap - The Bitmap instance to be saved.
-     * @param path - The location at which the image file should be saved.
-     */
-    fun saveImage(bitmap: Bitmap, path: File) {
         FileOutputStream(path).use {
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
+            image.compress(Bitmap.CompressFormat.PNG, 100, it)
         }
     }
 }
