@@ -639,17 +639,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Retrieve the Song objects associated with a given album ID.
-     *
-     * @param albumId - The ID of the album.
-     * @return A list of the associated Song objects sorted by track number.
-     */
-    @Deprecated("Areas that use this function should access the view model directly")
-    fun getSongsByAlbumId(albumId: String) : List<Song> = completeLibrary.filter {
-        it.albumId == albumId
-    }.sortedBy { it.track }
-
-    /**
      * Opens a dialog window allowing the user to add a list of songs to new and existing
      * playlists.
      *

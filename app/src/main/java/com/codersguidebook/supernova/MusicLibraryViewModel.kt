@@ -21,6 +21,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileNotFoundException
+import java.util.Locale.filter
 
 class MusicLibraryViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -277,4 +278,14 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @return The associated Song object, or null.
      */
     fun getSongById(songId: Long) : Song? = allSongs.value?.find { it.songId == songId }
+
+    /**
+     * Retrieve the Song objects associated with a given album ID.
+     *
+     * @param albumId - The ID of the album.
+     * @return A list of the associated Song objects sorted by track number.
+     */
+    fun getSongsByAlbumId(albumId: String) : List<Song> = allSongs.value?.filter {
+        it.albumId == albumId
+    }?.sortedBy { it.track } ?: listOf()
 }

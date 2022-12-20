@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isGone
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
 import com.codersguidebook.supernova.databinding.OptionsLayoutBinding
 import com.codersguidebook.supernova.ui.album.AlbumFragmentDirections
@@ -14,9 +15,11 @@ class AlbumOptions(private val albumId: String) : DialogFragment() {
 
     private var _binding: OptionsLayoutBinding? = null
     private val binding get() = _binding!!
+    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val callingActivity = activity as MainActivity
+        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
 
         val inflater = callingActivity.layoutInflater
         _binding = OptionsLayoutBinding.inflate(inflater)
@@ -24,7 +27,7 @@ class AlbumOptions(private val albumId: String) : DialogFragment() {
         val builder = AlertDialog.Builder(callingActivity)
             .setView(binding.root)
 
-        val songs = callingActivity.getSongsByAlbumId(albumId)
+        val songs = musicLibraryViewModel.getSongsByAlbumId(albumId)
         if (songs.isEmpty()) return builder.create()
 
         binding.optionsTitle.text = songs[0].albumName
