@@ -75,7 +75,6 @@ class MainActivity : AppCompatActivity() {
     private var currentQueueItemId = -1L
     private var playQueue = listOf<QueueItem>()
     private val playQueueViewModel: PlayQueueViewModel by viewModels()
-    private var allPlaylists = listOf<Playlist>()
     private val mediaDescriptionManager = MediaDescriptionCompatManager()
     private var mediaStoreContentObserver: MediaStoreContentObserver? = null
     private var musicDatabase: MusicDatabase? = null
@@ -245,10 +244,6 @@ class MainActivity : AppCompatActivity() {
         mediaStoreContentObserver = MediaStoreContentObserver(handler, this).also {
             this.contentResolver.registerContentObserver(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 true, it)
-        }
-
-        musicLibraryViewModel.allPlaylists.observe(this) {
-            this.allPlaylists = it
         }
 
         musicLibraryViewModel.mostPlayedSongsById.observe(this) {
@@ -652,7 +647,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Retrieving all the user-created playlists
-        val userPlaylists = allPlaylists.filterNot { it.isDefault }
+        val userPlaylists = musicLibraryViewModel.allPlaylists.value?.filterNot {
+            it.isDefault
+        } ?: listOf()
 
         // If the user has not created any playlists then skip straight to the create new playlist dialog
         if (userPlaylists.isEmpty()) {
@@ -730,7 +727,7 @@ class MainActivity : AppCompatActivity() {
      * @return The associated Playlist object or null if no match found.
      */
     private fun findPlaylist(playlistName: String): Playlist? {
-        return allPlaylists.find { it.name == playlistName }
+        return musicLibraryViewModel.allPlaylists.value?.find { it.name == playlistName }
     }
 
     /**
@@ -887,10 +884,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun saveNewPlaylist(playlist: Playlist): Boolean{
-        val index = allPlaylists.indexOfFirst { item: Playlist ->
-            item.name == playlist.name
+        val index = musicLibraryViewModel.allPlaylists.value?.indexOfFirst {
+            it.name == playlist.name
         }
-        // checking if playlist name is unique
+        // The playlist name must be unique
         return if (index == -1) {
             musicLibraryViewModel.insertPlaylist(playlist)
             true
