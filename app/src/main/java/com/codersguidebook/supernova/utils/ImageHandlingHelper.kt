@@ -112,6 +112,18 @@ object ImageHandlingHelper {
     }
 
     /**
+     * Save an image to the playlist art directory.
+     *
+     * @param application - The application that should serve as the context.
+     * @param resourceId - The ID of the resource that an image should be loaded for.
+     * @param image - A Bitmap representation of the image to be saved.
+     */
+    fun savePlaylistArtByResourceId(application: Application, resourceId: String, image: Bitmap) {
+        val directory = ContextWrapper(application).getDir(PLAYLIST_ART_DIRECTORY, Context.MODE_PRIVATE)
+        createFileAndSaveImage(directory, resourceId, image)
+    }
+
+    /**
      * Create a File object for a given directory path and save an image to that directory.
      *
      * @param directory - A File object detailing the directory in which the image should be saved.

@@ -22,6 +22,7 @@ import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentEditPlaylistBinding
 import com.codersguidebook.supernova.entities.Playlist
+import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import java.io.FileNotFoundException
 import java.io.IOException
 
@@ -63,13 +64,11 @@ class EditPlaylistFragment : Fragment() {
                 val editable: Editable = SpannableStringBuilder(it.name)
                 binding.editPlaylistName.text = editable
 
-                if (!callingActivity.insertPlaylistArtwork(it, binding.artwork)) {
+                if (!ImageHandlingHelper.loadImageByPlaylist(callingActivity.application, it,
+                        binding.artwork)) {
                     val playlistSongIDs = callingActivity.extractPlaylistSongIds(it.songs)
-                    callingActivity.loadImageByAlbumId(
-                        callingActivity.findFirstSongArtwork(
-                            playlistSongIDs[0]
-                        ), binding.artwork
-                    )
+                    ImageHandlingHelper.loadImageByAlbumId(callingActivity.application,
+                        callingActivity.findFirstSongArtwork(playlistSongIDs[0]), binding.artwork)
                 }
             }
         }
@@ -128,8 +127,8 @@ class EditPlaylistFragment : Fragment() {
                         this.name = newPlaylistName
 
                         newArtwork?.let {
-                            callingActivity.saveImageByResourceId("playlistArt", it,
-                                this.playlistId.toString())
+                            ImageHandlingHelper.savePlaylistArtByResourceId(
+                                callingActivity.application, this.playlistId.toString(), it)
                         }
 
                         musicLibraryViewModel.updatePlaylists(listOf(this))
