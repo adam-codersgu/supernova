@@ -79,7 +79,6 @@ class MainActivity : AppCompatActivity() {
     private val mediaDescriptionManager = MediaDescriptionCompatManager()
     private var mediaStoreContentObserver: MediaStoreContentObserver? = null
     private var musicDatabase: MusicDatabase? = null
-    var completeLibrary = listOf<Song>()
     private lateinit var mediaBrowser: MediaBrowserCompat
     private lateinit var musicLibraryViewModel: MusicLibraryViewModel
     private lateinit var searchView: SearchView
@@ -246,11 +245,6 @@ class MainActivity : AppCompatActivity() {
         mediaStoreContentObserver = MediaStoreContentObserver(handler, this).also {
             this.contentResolver.registerContentObserver(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 true, it)
-        }
-
-        musicLibraryViewModel.allSongs.observe(this) {
-            completeLibrary = it.toMutableList()
-            refreshSongOfTheDay()
         }
 
         musicLibraryViewModel.allPlaylists.observe(this) {
@@ -650,6 +644,7 @@ class MainActivity : AppCompatActivity() {
      * @param albumId - The ID of the album.
      * @return A list of the associated Song objects sorted by track number.
      */
+    @Deprecated("Areas that use this function should access the view model directly")
     fun getSongsByAlbumId(albumId: String) : List<Song> = completeLibrary.filter {
         it.albumId == albumId
     }.sortedBy { it.track }
@@ -707,7 +702,7 @@ class MainActivity : AppCompatActivity() {
      * Default = false.
      */
     fun refreshSongOfTheDay(forceUpdate: Boolean = false) {
-        if (completeLibrary.isEmpty()) return
+        if (musicLibraryViewModel.allSongs.value?.isNotEmpty() != true) return
         val playlist = findPlaylist(getString(R.string.song_day)) ?: Playlist(
             0,
             getString(R.string.song_day),
@@ -720,7 +715,7 @@ class MainActivity : AppCompatActivity() {
         val lastUpdate = sharedPreferences.getString(SONG_OF_THE_DAY_LAST_UPDATED, null)
         when {
             date != lastUpdate -> {
-                val song = completeLibrary.random()
+                val song = musicLibraryViewModel.allSongs.value?.random() ?: return
                 songIDList.add(0, song.songId)
                 if (songIDList.size > 30) songIDList.removeAt(songIDList.size - 1)
                 savePlaylistWithSongIds(playlist, songIDList)
@@ -732,7 +727,7 @@ class MainActivity : AppCompatActivity() {
             forceUpdate -> {
                 // could use removeLast but that command is still experimental at the moment
                 if (songIDList.isNotEmpty()) songIDList.removeAt(0)
-                val song = completeLibrary.random()
+                val song = musicLibraryViewModel.allSongs.value?.random() ?: return
                 songIDList.add(0, song.songId)
                 savePlaylistWithSongIds(playlist, songIDList)
             }
@@ -859,6 +854,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @Deprecated("Areas that use this function should access the view model directly",
+        ReplaceWith("completeLibrary.find { it.songId == songID }?.albumId")
+    )
     fun findFirstSongArtwork(songID: Long): String? {
         return completeLibrary.find {
             it.songId == songID
@@ -921,7 +919,7 @@ class MainActivity : AppCompatActivity() {
             setSound(null, null)
             setShowBadge(false)
         }
-        val notificationManager: NotificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(channel)
     }
 
@@ -974,8 +972,7 @@ class MainActivity : AppCompatActivity() {
 
         val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
         for (pair in queueItemPairs) {
-            val song = completeLibrary.find { it.songId == pair.second }
-            song?.let {
+            musicLibraryViewModel.getSongById(pair.second)?.let { song ->
                 val queueId = pair.first
                 val songDesc = mediaDescriptionManager.buildDescription(song, queueId)
                 mediaControllerCompat.addQueueItem(songDesc)

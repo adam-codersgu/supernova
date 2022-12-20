@@ -7,6 +7,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isGone
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
@@ -18,13 +19,14 @@ class PlaylistSongOptions(private val songs: MutableList<Song>,
                           private val playlist: Playlist
 ) : DialogFragment() {
 
+    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
         val builder = AlertDialog.Builder(this.requireActivity())
-
         val inflater = requireActivity().layoutInflater
-
         val dialogView = inflater.inflate(R.layout.options_layout, null as ViewGroup?)
+        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
 
         val txtTitle = dialogView.findViewById(R.id.optionsTitle) as TextView
         val txtPlayNext = dialogView.findViewById(R.id.option1) as TextView
@@ -42,13 +44,11 @@ class PlaylistSongOptions(private val songs: MutableList<Song>,
         txtRemovePlaylist.text = getString(R.string.remove_playlist)
 
         val callingActivity = activity as MainActivity
-        val updatedSong = callingActivity.completeLibrary.find {
-            it.songId == songs[position].songId
-        }
+        val song = musicLibraryViewModel.getSongById(songs[position].songId)
 
         builder.setView(dialogView)
 
-        txtTitle.text = updatedSong?.title
+        txtTitle.text = song?.title
 
         txtPlayNext.setOnClickListener{
             callingActivity.addSongsToPlayQueue(listOf(songs[position]), true)
@@ -60,11 +60,11 @@ class PlaylistSongOptions(private val songs: MutableList<Song>,
             dismiss()
         }
 
-        if (updatedSong?.isFavourite == true) txtAddFavourites.text = getString(R.string.remove_favourites)
+        if (song?.isFavourite == true) txtAddFavourites.text = getString(R.string.remove_favourites)
         else txtAddFavourites.text = getString(R.string.add_to_favourites)
 
         txtAddFavourites.setOnClickListener {
-            callingActivity.toggleSongFavouriteStatus(updatedSong!!)
+            callingActivity.toggleSongFavouriteStatus(song!!)
             dismiss()
         }
 

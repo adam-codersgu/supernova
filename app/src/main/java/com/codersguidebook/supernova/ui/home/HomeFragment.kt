@@ -13,7 +13,10 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
-import com.codersguidebook.supernova.*
+import com.codersguidebook.supernova.MainActivity
+import com.codersguidebook.supernova.MusicDatabase
+import com.codersguidebook.supernova.MusicLibraryViewModel
+import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentHomeBinding
 import com.codersguidebook.supernova.recyclerview.layoutmanager.WrapContentLinearLayoutManager
 import com.codersguidebook.supernova.ui.playlists.PlaylistsFragmentDirections
@@ -77,9 +80,15 @@ class HomeFragment : Fragment() {
         // TODO: Find a better way of updating the playlists in this fragment that is not so dependent on other classes e.g. MainActivity and the view model loading data
         var isLoaded = false
         musicLibraryViewModel.allSongs.observe(viewLifecycleOwner) {
-            if (it.isNotEmpty() && !isLoaded) {
-                loadPlaylists()
-                isLoaded = true
+            if (it.isNotEmpty()) {
+                if (!isLoaded) {
+                    loadPlaylists()
+                    isLoaded = true
+                }
+
+                if (binding.songOfTheDayNoContent.isGone) {
+                    callingActivity.refreshSongOfTheDay()
+                }
             }
         }
     }
