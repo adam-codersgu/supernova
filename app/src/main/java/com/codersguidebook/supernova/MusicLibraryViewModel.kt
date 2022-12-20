@@ -36,15 +36,52 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
         allPlaylists = repository.allPlaylists
     }
 
-    fun deleteSong(song: Song) = viewModelScope.launch(Dispatchers.IO) {
+    private fun deleteSong(song: Song) = viewModelScope.launch(Dispatchers.IO) {
         repository.deleteSong(song)
+
+        if (allPlaylists.isNotEmpty()) {
+            val updatedPlaylists = mutableListOf<Playlist>()
+            for (playlist in allPlaylists) {
+                if (playlist.songs != null) {
+                    val newSongIDList = extractPlaylistSongIds(playlist.songs)
+
+                    var playlistModified = false
+                    fun findIndex(): Int {
+                        return newSongIDList.indexOfFirst {
+                            it == song.songId
+                        }
+                    }
+
+                    // Remove all instances of the song from the playlist
+                    do {
+                        val index = findIndex()
+                        if (index != -1) {
+                            newSongIDList.removeAt(index)
+                            playlistModified = true
+                        }
+                    } while (index != -1)
+
+                    if (playlistModified) {
+                        playlist.songs = convertSongIdListToJson(newSongIDList)
+                        updatedPlaylists.add(playlist)
+                    }
+                }
+            }
+            if (updatedPlaylists.isNotEmpty()) musicLibraryViewModel.updatePlaylists(updatedPlaylists)
+        }
+
+        val queueItemsToRemove = playQueue.filter { it.description.mediaId == song.songId.toString() }
+        for (item in queueItemsToRemove) removeQueueItemById(item.queueId)
+
+        musicLibraryViewModel.deleteSong(song)
+        deleteRedundantArtworkBySong(song)
     }
 
     fun deletePlaylist(playlist: Playlist) = viewModelScope.launch(Dispatchers.IO) {
         repository.deletePlaylist(playlist)
     }
 
-    fun insertSongs(songs: List<Song>) = viewModelScope.launch(Dispatchers.IO) {
+    private fun insertSongs(songs: List<Song>) = viewModelScope.launch(Dispatchers.IO) {
         repository.insertSongs(songs)
     }
 
@@ -75,7 +112,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
             while (cursor.moveToNext()) {
                 val songId = cursor.getLong(idColumn)
                 songIds.add(songId)
-                val existingSong = allSongs.value?.find { it.songId == songId }
+                val existingSong = getSongById(songId)
                 if (existingSong == null) {
                     val song = createSongFromCursor(cursor)
                     songsToAddToMusicLibrary.add(song)
@@ -183,4 +220,41 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
 
         return Song(id, track, title, artist, album, albumId, year)
     }
+
+    /**
+     * The content observer has been notified that a given media store record has been
+     * inserted, deleted or modified. This method evaluates the appropriate action to take
+     * based on the media store record's media ID.
+     *
+     * @param mediaId - The ID of the target media store record
+     */
+    fun handleFileUpdateByMediaId(mediaId: Long) = viewModelScope.launch {
+        val selection = MediaStore.Audio.Media._ID + "=?"
+        val selectionArgs = arrayOf(mediaId.toString())
+        val cursor = getMediaStoreCursorAsync(selection, selectionArgs).await()
+
+        val existingSong = getSongById(mediaId)
+        when {
+            existingSong == null && cursor?.count!! > 0 -> {
+                cursor.apply {
+                    this.moveToNext()
+                    val createdSong = createSongFromCursor(this)
+                    insertSongs(listOf(createdSong))
+                }
+            }
+            cursor?.count == 0 -> {
+                existingSong?.let {
+                    deleteSong(existingSong)
+                }
+            }
+        }
+    }
+
+    /**
+     * Retrieve the Song object associated with a given ID.
+     *
+     * @param songId - The ID of the song.
+     * @return The associated Song object, or null.
+     */
+    fun getSongById(songId: Long) : Song? = allSongs.value?.find { it.songId == songId }
 }

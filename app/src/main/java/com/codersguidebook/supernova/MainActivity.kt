@@ -290,32 +290,12 @@ class MainActivity : AppCompatActivity() {
      *
      * @param uri - The content URI associated with the change.
      */
-    fun handleChangeToContentUri(uri: Uri) = lifecycleScope.launch {
+    fun handleChangeToContentUri(uri: Uri) {
         val songIdString = uri.toString().removePrefix(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + "/")
-
         try {
             val songId = songIdString.toLong()
-
-            val selection = MediaStore.Audio.Media._ID + "=?"
-            val selectionArgs = arrayOf(songIdString)
-            val cursor = getMediaStoreCursorAsync(selection, selectionArgs).await()
-
-            val existingSong = getSongById(songId)
-            when {
-                existingSong == null && cursor?.count!! > 0 -> {
-                    cursor.apply {
-                        this.moveToNext()
-                        val createdSong = createSongFromCursor(this)
-                        musicLibraryViewModel.insertSongs(listOf(createdSong))
-                    }
-                }
-                cursor?.count == 0 -> {
-                    existingSong?.let {
-                        deleteSong(existingSong)
-                    }
-                }
-            }
+            musicLibraryViewModel.handleFileUpdateByMediaId(songId)
         } catch (_: NumberFormatException) { musicLibraryViewModel.refreshMusicLibrary() }
     }
 
@@ -651,17 +631,9 @@ class MainActivity : AppCompatActivity() {
      * @param songId - The ID of the song.
      */
     fun openAddToPlaylistDialogForSongById(songId: Long) {
-        val song = getSongById(songId) ?: return
+        val song = musicLibraryViewModel.getSongById(songId) ?: return
         openAddToPlaylistDialog(listOf(song))
     }
-
-    /**
-     * Retrieve the Song object associated with a given ID.
-     *
-     * @param songId - The ID of the song.
-     * @return The associated Song object, or null.
-     */
-    fun getSongById(songId: Long) : Song? = completeLibrary.find { it.songId == songId }
 
     /**
      * Retrieve the Song objects associated with a given album ID.
@@ -913,7 +885,7 @@ class MainActivity : AppCompatActivity() {
         val songIdList = extractPlaylistSongIds(json)
         val playlistSongs = mutableListOf<Song>()
         for (id in songIdList) {
-            getSongById(id)?.let { playlistSongs.add(it) }
+            musicLibraryViewModel.getSongById(id)?.let { playlistSongs.add(it) }
         }
         return playlistSongs
     }
@@ -966,42 +938,7 @@ class MainActivity : AppCompatActivity() {
      * @param song - The Song object to be deleted.
      */
     private suspend fun deleteSong(song: Song) = lifecycleScope.launch(Dispatchers.Default) {
-        if (allPlaylists.isNotEmpty()) {
-            val updatedPlaylists = mutableListOf<Playlist>()
-            for (playlist in allPlaylists) {
-                if (playlist.songs != null) {
-                    val newSongIDList = extractPlaylistSongIds(playlist.songs)
 
-                    var playlistModified = false
-                    fun findIndex(): Int {
-                        return newSongIDList.indexOfFirst {
-                            it == song.songId
-                        }
-                    }
-
-                    // Remove all instances of the song from the playlist
-                    do {
-                        val index = findIndex()
-                        if (index != -1) {
-                            newSongIDList.removeAt(index)
-                            playlistModified = true
-                        }
-                    } while (index != -1)
-
-                    if (playlistModified) {
-                        playlist.songs = convertSongIdListToJson(newSongIDList)
-                        updatedPlaylists.add(playlist)
-                    }
-                }
-            }
-            if (updatedPlaylists.isNotEmpty()) musicLibraryViewModel.updatePlaylists(updatedPlaylists)
-        }
-
-        val queueItemsToRemove = playQueue.filter { it.description.mediaId == song.songId.toString() }
-        for (item in queueItemsToRemove) removeQueueItemById(item.queueId)
-
-        musicLibraryViewModel.deleteSong(song)
-        deleteRedundantArtworkBySong(song)
     }
 
     /**

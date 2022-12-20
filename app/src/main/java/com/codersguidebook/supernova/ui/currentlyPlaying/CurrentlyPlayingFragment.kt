@@ -22,6 +22,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
@@ -62,6 +63,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
     private var fastForwarding = false
     private var fastRewinding = false
     private lateinit var callingActivity: MainActivity
+    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
     private lateinit var onBackPressedCallback: OnBackPressedCallback
     private lateinit var sharedPreferences: SharedPreferences
 
@@ -79,6 +81,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
         binding.root.setListener(this)
         binding.animatedView.setListener(this)
         callingActivity = activity as MainActivity
+        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
 
         onBackPressedCallback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -250,7 +253,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
      */
     private fun updateCurrentlyDisplayedMetadata(metadata: MediaMetadataCompat?) {
         val currentMediaId = metadata?.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)?.toLong()
-        currentSong = if (currentMediaId != null) callingActivity.getSongById(currentMediaId)
+        currentSong = if (currentMediaId != null)  musicLibraryViewModel.getSongById(currentMediaId)
         else null
 
         setFavouriteButtonStyle(currentSong?.isFavourite ?: false)
