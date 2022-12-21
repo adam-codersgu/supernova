@@ -12,11 +12,11 @@ class MusicRepository(private val musicDao: MusicDao, private val playlistDao: P
     val mostPlayedSongsById: LiveData<List<Long>> = musicDao.findMostPlayedSongsById()
     val allPlaylists: LiveData<List<Playlist>> = playlistDao.getAllPlaylists()
 
-    suspend fun insertSongs(songs: List<Song>) {
-        for (s in songs) musicDao.insert(s)
+    suspend fun saveSongs(songs: List<Song>) {
+        for (song in songs) musicDao.insert(song)
     }
 
-    suspend fun insertPlaylist(playlist: Playlist) {
+    suspend fun savePlaylist(playlist: Playlist) {
         playlistDao.insert(playlist)
     }
 
@@ -28,10 +28,8 @@ class MusicRepository(private val musicDao: MusicDao, private val playlistDao: P
         playlistDao.delete(playlist)
     }
 
-    suspend fun updateMusicInfo(songs: List<Song>) {
-        for (s in songs) {
-            musicDao.updateSongInfo(s)
-        }
+    suspend fun updateSongs(songs: List<Song>) {
+        for (song in songs) musicDao.updateSong(song)
     }
 
     suspend fun getSongByAlbumId(albumID: String): List<Song> {
@@ -39,9 +37,7 @@ class MusicRepository(private val musicDao: MusicDao, private val playlistDao: P
     }
 
     fun updatePlaylist(playlists: List<Playlist>){
-        for (p in playlists) {
-            playlistDao.updatePlaylist(p)
-        }
+        for (playlist in playlists) playlistDao.updatePlaylist(playlist)
     }
 
     fun increaseSongPlaysBySongId(songId: Long) {

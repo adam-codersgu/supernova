@@ -132,7 +132,7 @@ class EditAlbumFragment : Fragment() {
                                     song.albumName = newAlbumTitle
                                     song.year = newAlbumYear
                                 }
-                                callingActivity.updateSongInfo(albumSongs)
+                                callingActivity.updateSongs(albumSongs)
                             }
 
                             val action = AlbumsFragmentDirections.actionFinishEditAlbum(albumID!!)

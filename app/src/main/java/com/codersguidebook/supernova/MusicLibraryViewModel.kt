@@ -100,16 +100,25 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
         ImageHandlingHelper.deletePlaylistArtByResourceId(getApplication(), playlist.playlistId.toString())
     }
 
-    private fun insertSongs(songs: List<Song>) = viewModelScope.launch(Dispatchers.IO) {
-        repository.insertSongs(songs)
+    private fun saveSongs(songs: List<Song>) = viewModelScope.launch(Dispatchers.IO) {
+        repository.saveSongs(songs)
     }
 
-    fun insertPlaylist(playlist: Playlist) = viewModelScope.launch(Dispatchers.IO) {
-        repository.insertPlaylist(playlist)
+    fun savePlaylist(playlist: Playlist): Boolean {
+        val existingPlaylist = allPlaylists.value?.firstOrNull {
+            it.name == playlist.name
+        }
+
+        return if (existingPlaylist == null) {
+            viewModelScope.launch(Dispatchers.IO) {
+                repository.savePlaylist(playlist)
+            }
+            true
+        } else false
     }
 
-    fun updateMusicInfo(songs: List<Song>) = viewModelScope.launch(Dispatchers.IO) {
-        repository.updateMusicInfo(songs)
+    fun updateSongs(songs: List<Song>) = viewModelScope.launch(Dispatchers.IO) {
+        repository.updateSongs(songs)
     }
 
     fun updatePlaylists(playlists: List<Playlist>) = viewModelScope.launch(Dispatchers.IO) {
@@ -139,7 +148,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
             }
 
             val chunksToAddToMusicLibrary = songsToAddToMusicLibrary.chunked(25)
-            for (chunk in chunksToAddToMusicLibrary) insertSongs(chunk)
+            for (chunk in chunksToAddToMusicLibrary) saveSongs(chunk)
 
             val songsToBeDeleted = allSongs.value?.filterNot { songIds.contains(it.songId) }
             songsToBeDeleted?.let {
@@ -258,7 +267,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
                 cursor.apply {
                     this.moveToNext()
                     val createdSong = createSongFromCursor(this)
-                    insertSongs(listOf(createdSong))
+                    saveSongs(listOf(createdSong))
                 }
             }
             cursor?.count == 0 -> {

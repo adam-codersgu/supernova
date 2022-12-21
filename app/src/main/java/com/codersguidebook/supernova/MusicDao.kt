@@ -42,7 +42,7 @@ interface MusicDao {
     fun increaseSongPlaysBySongId(songId: Long)
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun updateSongInfo(song: Song)
+    suspend fun updateSong(song: Song)
 
     @Delete
     suspend fun delete(song: Song)

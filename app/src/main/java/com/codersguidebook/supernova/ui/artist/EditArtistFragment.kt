@@ -69,7 +69,7 @@ class EditArtistFragment : Fragment() {
                         Toast.LENGTH_SHORT).show()
                     else -> {
                         for (song in artistsSongs) song.artist = newName
-                        callingActivity.updateSongInfo(artistsSongs)
+                        callingActivity.updateSongs(artistsSongs)
                         Toast.makeText(activity, getString(R.string.artist_updated),
                             Toast.LENGTH_SHORT).show()
                     }

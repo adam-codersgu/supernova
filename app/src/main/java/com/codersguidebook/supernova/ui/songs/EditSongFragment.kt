@@ -134,7 +134,7 @@ class EditSongFragment : Fragment() {
                         song!!.track = completeTrack
                         song!!.year = newYear
 
-                        callingActivity.updateSongInfo(listOf(song!!))
+                        callingActivity.updateSongs(listOf(song!!))
                     }
 
                     val action = AlbumsFragmentDirections.actionSelectAlbum(song?.albumId!!)

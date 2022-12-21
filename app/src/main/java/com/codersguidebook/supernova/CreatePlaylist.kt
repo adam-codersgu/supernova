@@ -33,7 +33,7 @@ class CreatePlaylist (private val songIds: List<Long>) : DialogFragment() {
 
                 val newPlaylist = Playlist(0, playlistName, songListJSON, false)
 
-                if (callingActivity.saveNewPlaylist(newPlaylist)) {
+                if (callingActivity.savePlaylist(newPlaylist)) {
                     Toast.makeText(activity, getString(R.string.item_saved, playlistName), Toast.LENGTH_SHORT).show()
                     dismiss()
                 } else Toast.makeText(activity, getString(R.string.playlist_already_exists), Toast.LENGTH_SHORT).show()

@@ -1,6 +1,5 @@
 package com.codersguidebook.supernova
 
-import android.app.Activity
 import android.app.ActivityManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -17,17 +16,13 @@ import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.media.session.PlaybackStateCompat.*
 import android.view.Menu
-import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.SearchView
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.GravityCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.*
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -65,7 +60,6 @@ import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -237,8 +231,6 @@ class MainActivity : AppCompatActivity() {
             true
         }
         binding.navView.setNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
-
-        // Prevent icon tints from being overwritten
         binding.navView.itemIconTintList = null
 
         val handler = Handler(Looper.getMainLooper())
@@ -576,22 +568,21 @@ class MainActivity : AppCompatActivity() {
             windowInsetsController.hide(WindowInsetsCompat.Type.statusBars())
 
             // Hide the toolbar to prevent the SearchView keyboard inadvertently popping up
-            binding.toolbar.visibility = View.GONE
+            binding.toolbar.isGone = true
         } else {
             supportActionBar?.setDisplayShowTitleEnabled(true)
             windowInsetsController.systemBarsBehavior =
                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE
             windowInsetsController.show(WindowInsetsCompat.Type.statusBars())
 
-            binding.toolbar.visibility = View.VISIBLE
+            binding.toolbar.isVisible = true
         }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main, menu)
 
-        val searchItem = menu.findItem(R.id.search)
-        searchView = searchItem!!.actionView as SearchView
+        searchView = menu.findItem(R.id.search).actionView as SearchView
         searchView.setOnSearchClickListener {
             findNavController(R.id.nav_host_fragment).navigate(R.id.nav_search)
         }
@@ -655,9 +646,9 @@ class MainActivity : AppCompatActivity() {
             setTitle(getString(R.string.select_playlist))
             setItems(userPlaylistNames) { _, index ->
                 val playlist = userPlaylists[index]
-                val playlistSongIds = extractPlaylistSongIds(playlist.songs)
+                val playlistSongIds = PlaylistHelper.extractSongIds(playlist.songs)
                 playlistSongIds.addAll(songIds)
-                savePlaylistWithSongIds(playlist, playlistSongIds)
+                musicLibraryViewModel.savePlaylistWithSongIds(playlist, playlistSongIds)
 
                 if (songs.size == 1) Toast.makeText(applicationContext, getString(R.string.song_added_playlist,
                     songs[0].title, playlist.name), Toast.LENGTH_SHORT
@@ -711,10 +702,9 @@ class MainActivity : AppCompatActivity() {
      * Save updates to song metadata to the database. Also update the play queue (if necessary)
      *
      * @param songs - The list of Song objects containing updated metadata.
-     * @return
      */
-    fun updateSongInfo(songs: List<Song>) = lifecycleScope.launch(Dispatchers.Default) {
-        musicLibraryViewModel.updateMusicInfo(songs)
+    fun updateSongs(songs: List<Song>) = lifecycleScope.launch(Dispatchers.Default) {
+        musicLibraryViewModel.updateSongs(songs)
 
         for (song in songs) {
             // All occurrences of the song need to be updated in the play queue
@@ -756,7 +746,7 @@ class MainActivity : AppCompatActivity() {
                 this.songs = newSongListJSON
             } else this.songs = null
             musicLibraryViewModel.updatePlaylists(listOf(this))
-            updateSongInfo(listOf(song))
+            updateSongs(listOf(song))
             if (song.isFavourite) {
                 Toast.makeText(this@MainActivity, getString(R.string.added_to_favourites),
                     Toast.LENGTH_SHORT).show()
@@ -780,19 +770,9 @@ class MainActivity : AppCompatActivity() {
         }?.albumId
     }
 
-    fun saveNewPlaylist(playlist: Playlist): Boolean{
-        val index = musicLibraryViewModel.allPlaylists.value?.indexOfFirst {
-            it.name == playlist.name
-        }
-        // The playlist name must be unique
-        return if (index == -1) {
-            musicLibraryViewModel.insertPlaylist(playlist)
-            true
-        } else false
-    }
-
     fun openDialog(dialog: DialogFragment) = dialog.show(supportFragmentManager, "")
 
+    /** Create a channel for displaying application notifications */
     private fun createChannelForMediaPlayerNotification() {
         val channel = NotificationChannel(
             NOTIFICATION_CHANNEL_ID, "Notifications",
