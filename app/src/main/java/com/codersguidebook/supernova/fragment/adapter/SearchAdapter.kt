@@ -1,4 +1,4 @@
-package com.codersguidebook.supernova.recyclerview.adapter
+package com.codersguidebook.supernova.fragment.adapter
 
 import android.view.LayoutInflater
 import android.view.View
@@ -22,6 +22,7 @@ import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 import com.codersguidebook.supernova.ui.search.SearchFragmentDirections
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
+import com.codersguidebook.supernova.utils.PlaylistHelper
 
 class SearchAdapter(private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
@@ -128,16 +129,16 @@ class SearchAdapter(private val activity: MainActivity): RecyclerView.Adapter<Re
                 val current = playlists[position]
 
                 holder.mArtwork.isVisible = true
-                val playlistSongIDs= activity.extractPlaylistSongIds(current.songs)
-                if (playlistSongIDs.isNotEmpty()){
-                    val firstSongArtwork = activity.findAlbumIdBySongId(playlistSongIDs[0])
+                val playlistSongIds = PlaylistHelper.extractSongIds(current.songs)
+                if (playlistSongIds.isNotEmpty()){
+                    val firstSongArtwork = activity.findAlbumIdBySongId(playlistSongIds[0])
                     ImageHandlingHelper.loadImageByAlbumId(activity.application,
                         firstSongArtwork, holder.mArtwork)
                 }
 
                 holder.mTitle.text = current.name
 
-                val songCountInt = playlistSongIDs.size
+                val songCountInt = playlistSongIds.size
                 holder.mSubtitle.text = if (songCountInt == 1) {
                     activity.getString(R.string.displayed_song)
                 } else {

@@ -10,8 +10,8 @@ import androidx.navigation.fragment.findNavController
 import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Song
-import com.codersguidebook.supernova.recyclerview.RecyclerViewWithFabFragment
-import com.codersguidebook.supernova.recyclerview.adapter.AlbumAdapter
+import com.codersguidebook.supernova.fragment.RecyclerViewWithFabFragment
+import com.codersguidebook.supernova.fragment.adapter.AlbumAdapter
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 
 class AlbumFragment : RecyclerViewWithFabFragment() {

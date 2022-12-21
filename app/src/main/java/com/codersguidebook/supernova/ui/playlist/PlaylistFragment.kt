@@ -6,16 +6,18 @@ import android.widget.Toast
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MusicDatabase
+import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
-import com.codersguidebook.supernova.recyclerview.RecyclerViewWithFabFragment
-import com.codersguidebook.supernova.recyclerview.adapter.PlaylistAdapter
+import com.codersguidebook.supernova.fragment.RecyclerViewWithFabFragment
+import com.codersguidebook.supernova.fragment.adapter.PlaylistAdapter
 
 class PlaylistFragment : RecyclerViewWithFabFragment() {
 
@@ -24,6 +26,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
     private lateinit var reorderPlaylist: MenuItem
     private lateinit var finishedReorder: MenuItem
     private lateinit var musicDatabase: MusicDatabase
+    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
 
     private val itemTouchHelper by lazy {
         val simpleItemTouchCallback =
@@ -41,7 +44,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
                     viewHolder.itemView.alpha = 1.0f
                     playlist?.let {
                         val songIds = adapter.songs.map { song -> song.songId }
-                        mainActivity.savePlaylistWithSongIds(it, songIds)
+                        musicLibraryViewModel.savePlaylistWithSongIds(it, songIds)
                     }
                 }
                 override fun onMove(recyclerView: RecyclerView,
@@ -74,6 +77,8 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
             playlistName = safeArgs.playlistName
         }
 
+        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
+
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
@@ -85,7 +90,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
             musicDatabase.playlistDao().findPlaylist(playlistName).observe(viewLifecycleOwner) {
                 playlist = it
                 (adapter as PlaylistAdapter).playlist = it
-                val songs = mainActivity.extractPlaylistSongs(it?.songs)
+                val songs = musicLibraryViewModel.extractPlaylistSongs(it?.songs)
                 updateRecyclerView(songs)
             }
         }
@@ -104,7 +109,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
 
     override fun requestNewData() {
         musicDatabase.playlistDao().findPlaylist(playlistName ?: return).value?.let {
-            val songs = mainActivity.extractPlaylistSongs(it.songs)
+            val songs = musicLibraryViewModel.extractPlaylistSongs(it.songs)
             updateRecyclerView(songs)
         }
     }

@@ -6,8 +6,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.entities.Playlist
-import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
-import com.codersguidebook.supernova.recyclerview.adapter.PlaylistsAdapter
+import com.codersguidebook.supernova.fragment.RecyclerViewFragment
+import com.codersguidebook.supernova.fragment.adapter.PlaylistsAdapter
 
 class PlaylistsFragment : RecyclerViewFragment() {
 

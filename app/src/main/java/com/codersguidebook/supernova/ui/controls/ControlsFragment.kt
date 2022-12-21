@@ -15,7 +15,7 @@ import com.bumptech.glide.Glide
 import com.codersguidebook.supernova.PlayQueueViewModel
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.PlayerControlsBinding
-import com.codersguidebook.supernova.recyclerview.BaseFragment
+import com.codersguidebook.supernova.fragment.BaseFragment
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

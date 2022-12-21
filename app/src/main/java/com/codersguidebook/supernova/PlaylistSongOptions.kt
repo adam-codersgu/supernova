@@ -91,7 +91,7 @@ class PlaylistSongOptions(private val songs: MutableList<Song>,
             txtRemovePlaylist.setOnClickListener{
                 songs.removeAt(position)
                 val songIds = songs.map { song -> song.songId }
-                callingActivity.savePlaylistWithSongIds(playlist, songIds)
+                musicLibraryViewModel.savePlaylistWithSongIds(playlist, songIds)
                 dismiss()
             }
         }

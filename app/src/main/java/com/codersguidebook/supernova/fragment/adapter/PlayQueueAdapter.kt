@@ -1,4 +1,4 @@
-package com.codersguidebook.supernova.recyclerview.adapter
+package com.codersguidebook.supernova.fragment.adapter
 
 import android.annotation.SuppressLint
 import android.support.v4.media.session.MediaSessionCompat.QueueItem

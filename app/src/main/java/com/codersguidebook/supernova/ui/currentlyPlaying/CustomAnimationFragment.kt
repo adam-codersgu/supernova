@@ -22,7 +22,7 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_TYPE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CUSTOM_ANIMATION_IMAGE_IDS
-import com.codersguidebook.supernova.recyclerview.BaseRecyclerViewFragment
+import com.codersguidebook.supernova.fragment.BaseRecyclerViewFragment
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder

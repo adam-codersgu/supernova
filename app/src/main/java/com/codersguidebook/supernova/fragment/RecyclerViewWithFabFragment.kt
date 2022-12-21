@@ -1,4 +1,4 @@
-package com.codersguidebook.supernova.recyclerview
+package com.codersguidebook.supernova.fragment
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
 import com.codersguidebook.supernova.entities.Song
-import com.codersguidebook.supernova.recyclerview.adapter.SongAdapter
+import com.codersguidebook.supernova.fragment.adapter.SongAdapter
 
 abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
 

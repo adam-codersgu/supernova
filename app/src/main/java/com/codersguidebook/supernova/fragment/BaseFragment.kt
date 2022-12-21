@@ -1,4 +1,4 @@
-package com.codersguidebook.supernova.recyclerview
+package com.codersguidebook.supernova.fragment
 
 import android.os.Bundle
 import android.view.LayoutInflater

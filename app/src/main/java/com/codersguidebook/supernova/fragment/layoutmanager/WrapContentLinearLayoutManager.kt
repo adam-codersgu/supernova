@@ -1,4 +1,4 @@
-package com.codersguidebook.supernova.recyclerview.layoutmanager
+package com.codersguidebook.supernova.fragment.layoutmanager
 
 import android.content.Context
 import androidx.recyclerview.widget.LinearLayoutManager

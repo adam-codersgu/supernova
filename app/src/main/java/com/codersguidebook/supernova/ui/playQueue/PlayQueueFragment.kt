@@ -18,8 +18,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.CreatePlaylist
 import com.codersguidebook.supernova.PlayQueueViewModel
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
-import com.codersguidebook.supernova.recyclerview.adapter.PlayQueueAdapter
+import com.codersguidebook.supernova.fragment.RecyclerViewFragment
+import com.codersguidebook.supernova.fragment.adapter.PlayQueueAdapter
 
 class PlayQueueFragment : RecyclerViewFragment() {
     private val playQueueViewModel: PlayQueueViewModel by activityViewModels()

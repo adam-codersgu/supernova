@@ -18,7 +18,7 @@ import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentHomeBinding
-import com.codersguidebook.supernova.recyclerview.layoutmanager.WrapContentLinearLayoutManager
+import com.codersguidebook.supernova.fragment.layoutmanager.WrapContentLinearLayoutManager
 import com.codersguidebook.supernova.ui.playlists.PlaylistsFragmentDirections
 
 class HomeFragment : Fragment() {
@@ -97,7 +97,7 @@ class HomeFragment : Fragment() {
         val musicDatabase = MusicDatabase.getDatabase(callingActivity, lifecycleScope)
         musicDatabase.playlistDao().findPlaylist(getString(R.string.song_day)).observe(viewLifecycleOwner) { playlist ->
             playlist?.let {
-                val songs = callingActivity.extractPlaylistSongs(it.songs)
+                val songs = musicLibraryViewModel.extractPlaylistSongs(it.songs)
                 if (songs.isEmpty()) binding.songOfTheDayNoContent.isVisible = true
                 else {
                     binding.songOfTheDayNoContent.isGone = true
@@ -117,7 +117,7 @@ class HomeFragment : Fragment() {
         musicDatabase.playlistDao().findPlaylist(getString(R.string.favourites)).observe(viewLifecycleOwner) { playlist ->
             playlist?.let {
                 val previousSongs = favouritesAdapter.previousSongs
-                val songs = callingActivity.extractPlaylistSongs(it.songs)
+                val songs = musicLibraryViewModel.extractPlaylistSongs(it.songs)
                 val adapterSongs = songs.asReversed().take(10)
                 if (songs.isEmpty()) binding.homeFavourites.isGone = true
                 else {
@@ -149,7 +149,7 @@ class HomeFragment : Fragment() {
 
         musicDatabase.playlistDao().findPlaylist(getString(R.string.most_played)).observe(viewLifecycleOwner) { playlist ->
             playlist?.let {
-                val songs = callingActivity.extractPlaylistSongs(it.songs)
+                val songs = musicLibraryViewModel.extractPlaylistSongs(it.songs)
                 if (songs.isEmpty()) binding.homeMostPlayed.isGone = true
                 else {
                     binding.homeMostPlayed.isVisible = true
@@ -171,7 +171,7 @@ class HomeFragment : Fragment() {
 
         musicDatabase.playlistDao().findPlaylist(getString(R.string.recently_played)).observe(viewLifecycleOwner) { playlist ->
             playlist?.let {
-                val songs = callingActivity.extractPlaylistSongs(it.songs)
+                val songs = musicLibraryViewModel.extractPlaylistSongs(it.songs)
                 if (songs.isEmpty()) binding.homeRecentlyPlayed.isGone = true
                 else {
                     binding.homeRecentlyPlayed.isVisible = true

@@ -4,6 +4,7 @@ import android.app.Dialog
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
 import com.codersguidebook.supernova.databinding.OptionsLayoutBinding
 import com.codersguidebook.supernova.entities.Song
@@ -15,8 +16,10 @@ class SongOptions(private val song: Song) : DialogFragment() {
 
     private var _binding: OptionsLayoutBinding? = null
     private val binding get() = _binding!!
+    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
         val callingActivity = activity as MainActivity
         val inflater = callingActivity.layoutInflater
         _binding = OptionsLayoutBinding.inflate(inflater)
@@ -32,9 +35,7 @@ class SongOptions(private val song: Song) : DialogFragment() {
         binding.option6.text = getString(R.string.add_playlist)
         binding.option7.text = getString(R.string.edit_music)
 
-        val updatedSong = callingActivity.completeLibrary.find {
-            it.songId == song.songId
-        }
+        val updatedSong = musicLibraryViewModel.getSongById(song.songId)
 
         binding.option1.setOnClickListener{
             callingActivity.addSongsToPlayQueue(listOf(song), true)

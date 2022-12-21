@@ -1,4 +1,4 @@
-package com.codersguidebook.supernova.recyclerview.adapter
+package com.codersguidebook.supernova.fragment.adapter
 
 import android.view.LayoutInflater
 import android.view.View
@@ -13,6 +13,7 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.ui.playlists.PlaylistsFragmentDirections
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
+import com.codersguidebook.supernova.utils.PlaylistHelper
 
 class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     var playlists = mutableListOf<Playlist>()
@@ -46,7 +47,7 @@ class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter
 
         holder.mPlaylistName.text = current.name
 
-        val playlistSongIDs = activity.extractPlaylistSongIds(current.songs)
+        val playlistSongIDs = PlaylistHelper.extractSongIds(current.songs)
         // FIXME: Maybe find another way to handle artwork for playlists with no songs
         if (!ImageHandlingHelper.loadImageByPlaylist(activity.application,
                 current, holder.mArtwork) && playlistSongIDs.isNotEmpty()) {

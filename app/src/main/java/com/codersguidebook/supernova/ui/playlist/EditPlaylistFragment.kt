@@ -23,6 +23,7 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentEditPlaylistBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
+import com.codersguidebook.supernova.utils.PlaylistHelper
 import java.io.FileNotFoundException
 import java.io.IOException
 
@@ -66,7 +67,7 @@ class EditPlaylistFragment : Fragment() {
 
                 if (!ImageHandlingHelper.loadImageByPlaylist(callingActivity.application, it,
                         binding.artwork)) {
-                    val playlistSongIDs = callingActivity.extractPlaylistSongIds(it.songs)
+                    val playlistSongIDs = PlaylistHelper.extractSongIds(it.songs)
                     ImageHandlingHelper.loadImageByAlbumId(callingActivity.application,
                         callingActivity.findAlbumIdBySongId(playlistSongIDs[0]), binding.artwork)
                 }
