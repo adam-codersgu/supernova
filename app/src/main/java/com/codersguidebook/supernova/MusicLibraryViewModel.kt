@@ -2,44 +2,55 @@ package com.codersguidebook.supernova
 
 import android.app.Application
 import android.content.ContentUris
-import android.content.Context
-import android.content.ContextWrapper
 import android.database.Cursor
 import android.provider.MediaStore
 import android.util.Size
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.codersguidebook.supernova.entities.Artist
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
+import com.codersguidebook.supernova.utils.PlaylistHelper
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import java.io.File
 import java.io.FileNotFoundException
-import java.util.Locale.filter
 
 class MusicLibraryViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: MusicRepository
     val allSongs: LiveData<List<Song>>
-    val mostPlayedSongsById: LiveData<List<Long>>
     val allArtists: LiveData<List<Artist>>
     val allPlaylists: LiveData<List<Playlist>>
     val deletedSongIds = MutableLiveData<MutableList<Long>>()
+
+    private val mostPlayedSongsObserver: Observer<List<Long>> = Observer<List<Long>> {
+        getPlaylistByName(application.getString(R.string.most_played))?.apply {
+            val mostPlayedSongs = PlaylistHelper.serialiseSongIds(it)
+            if (mostPlayedSongs != this.songs){
+                this.songs = mostPlayedSongs
+                updatePlaylists(listOf(this))
+            }
+        }
+    }
 
     init {
         val musicDao = MusicDatabase.getDatabase(application, viewModelScope).musicDao()
         val playlistDao = MusicDatabase.getDatabase(application, viewModelScope).playlistDao()
         repository = MusicRepository(musicDao, playlistDao)
         allSongs = repository.allSongs
-        mostPlayedSongsById = repository.mostPlayedSongsById
         allArtists = repository.allArtists
         allPlaylists = repository.allPlaylists
+
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.mostPlayedSongsById.observeForever(mostPlayedSongsObserver)
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        repository.mostPlayedSongsById.removeObserver(mostPlayedSongsObserver)
     }
 
     private fun deleteSong(song: Song) = viewModelScope.launch(Dispatchers.Default) {
@@ -48,12 +59,11 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
                 val updatedPlaylists = mutableListOf<Playlist>()
                 for (playlist in playlists) {
                     if (playlist.songs != null) {
-                        // fixme: fix below errors with a PlaylistHelper object
-                        val newSongIDList = extractPlaylistSongIds(playlist.songs)
+                        val songIds = PlaylistHelper.extractSongIds(playlist.songs)
 
                         var playlistModified = false
                         fun findIndex(): Int {
-                            return newSongIDList.indexOfFirst {
+                            return songIds.indexOfFirst {
                                 it == song.songId
                             }
                         }
@@ -62,13 +72,13 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
                         do {
                             val index = findIndex()
                             if (index != -1) {
-                                newSongIDList.removeAt(index)
+                                songIds.removeAt(index)
                                 playlistModified = true
                             }
                         } while (index != -1)
 
                         if (playlistModified) {
-                            playlist.songs = convertSongIdListToJson(newSongIDList)
+                            playlist.songs = PlaylistHelper.serialiseSongIds(songIds)
                             updatedPlaylists.add(playlist)
                         }
                     }
@@ -288,4 +298,31 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     fun getSongsByAlbumId(albumId: String) : List<Song> = allSongs.value?.filter {
         it.albumId == albumId
     }?.sortedBy { it.track } ?: listOf()
+
+    /**
+     * Find the Playlist object associated with a given name.
+     *
+     * @param name - The playlist's name.
+     * @return The associated Playlist object or null if no match found.
+     */
+    fun getPlaylistByName(name: String): Playlist? = allPlaylists.value?.find { it.name == name }
+
+    /**
+     * Add a song to the Recently Played playlist.
+     *
+     * @param songId - The media ID of the song.
+     */
+    fun addSongByIdToRecentlyPlayedPlaylist(songId: Long) = viewModelScope.launch(Dispatchers.Main) {
+        getPlaylistByName(getApplication<Application>().getString(R.string.recently_played))?.apply {
+            val songIdList = PlaylistHelper.extractSongIds(this.songs)
+            if (songIdList.isNotEmpty()) {
+                val index = songIdList.indexOfFirst { it == songId }
+                if (index != -1) songIdList.removeAt(index)
+                songIdList.add(0, songId)
+                if (songIdList.size > 30) songIdList.removeAt(songIdList.size - 1)
+            } else songIdList.add(songId)
+            this.songs = PlaylistHelper.serialiseSongIds(songIdList)
+            updatePlaylists(listOf(this))
+        }
+    }
 }

@@ -57,6 +57,7 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SONG_OF_THE_DAY_LAST_UPDATED
 import com.codersguidebook.supernova.utils.MediaDescriptionCompatManager
 import com.codersguidebook.supernova.utils.MediaStoreContentObserver
+import com.codersguidebook.supernova.utils.PlaylistHelper
 import com.codersguidebook.supernova.utils.StorageAccessPermissionHelper
 import com.google.android.material.navigation.NavigationView
 import com.google.gson.Gson
@@ -144,7 +145,7 @@ class MainActivity : AppCompatActivity() {
                         val finishedSongId = it.getLong("finishedSongId", -1L)
                         if (finishedSongId == -1L) return@let
                         musicLibraryViewModel.increaseSongPlaysBySongId(finishedSongId)
-                        addSongByIdToRecentlyPlayedPlaylist(finishedSongId)
+                        musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(finishedSongId)
                     }
                 }
                 else -> return
@@ -246,17 +247,6 @@ class MainActivity : AppCompatActivity() {
                 true, it)
         }
 
-        musicLibraryViewModel.mostPlayedSongsById.observe(this) {
-            val playlist = findPlaylist(getString(R.string.most_played))
-            if (playlist != null) {
-                val mostPlayedSongs = convertSongIdListToJson(it)
-                if (mostPlayedSongs != playlist.songs){
-                    playlist.songs = mostPlayedSongs
-                    musicLibraryViewModel.updatePlaylists(listOf(playlist))
-                }
-            }
-        }
-
         musicLibraryViewModel.deletedSongIds.observe(this) { songIds ->
             if (songIds.isEmpty()) return@observe
             for (songId in songIds) {
@@ -327,7 +317,9 @@ class MainActivity : AppCompatActivity() {
             PlaybackState.STATE_PLAYING -> mediaController.transportControls.pause()
             else -> {
                 // Load and play the user's music library if the play queue is empty
-                if (playQueue.isEmpty()) playNewPlayQueue(completeLibrary)
+                if (playQueue.isEmpty()) {
+                    playNewPlayQueue(musicLibraryViewModel.allSongs.value ?: return)
+                }
                 else {
                     // It's possible a queue has been built without ever pressing play.
                     // In which case, commence playback
@@ -689,7 +681,7 @@ class MainActivity : AppCompatActivity() {
      */
     fun refreshSongOfTheDay(forceUpdate: Boolean = false) {
         if (musicLibraryViewModel.allSongs.value?.isNotEmpty() != true) return
-        val playlist = findPlaylist(getString(R.string.song_day)) ?: Playlist(
+        val playlist = musicLibraryViewModel.getPlaylistByName(getString(R.string.song_day)) ?: Playlist(
             0,
             getString(R.string.song_day),
             null,
@@ -718,16 +710,6 @@ class MainActivity : AppCompatActivity() {
                 savePlaylistWithSongIds(playlist, songIDList)
             }
         }
-    }
-
-    /**
-     * Find the Playlist object associated with a given name.
-     *
-     * @param playlistName - The playlist's name.
-     * @return The associated Playlist object or null if no match found.
-     */
-    private fun findPlaylist(playlistName: String): Playlist? {
-        return musicLibraryViewModel.allPlaylists.value?.find { it.name == playlistName }
     }
 
     /**
@@ -788,9 +770,8 @@ class MainActivity : AppCompatActivity() {
     fun toggleSongFavouriteStatus(song: Song?): Boolean {
         if (song == null) return false
 
-        val favouritesPlaylist = findPlaylist(getString(R.string.favourites))
-        if (favouritesPlaylist != null) {
-            val songIdList = extractPlaylistSongIds(favouritesPlaylist.songs)
+        musicLibraryViewModel.getPlaylistByName(getString(R.string.favourites))?.apply {
+            val songIdList = PlaylistHelper.extractSongIds(this.songs)
             val matchingSong = songIdList.firstOrNull { it == song.songId }
 
             if (matchingSong == null) {
@@ -802,10 +783,10 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (songIdList.isNotEmpty()) {
-                val newSongListJSON = convertSongIdListToJson(songIdList)
-                favouritesPlaylist.songs = newSongListJSON
-            } else favouritesPlaylist.songs = null
-            musicLibraryViewModel.updatePlaylists(listOf(favouritesPlaylist))
+                val newSongListJSON = PlaylistHelper.serialiseSongIds(songIdList)
+                this.songs = newSongListJSON
+            } else this.songs = null
+            musicLibraryViewModel.updatePlaylists(listOf(this))
             updateSongInfo(listOf(song))
             if (song.isFavourite) {
                 Toast.makeText(this@MainActivity, getString(R.string.added_to_favourites),
@@ -818,28 +799,6 @@ class MainActivity : AppCompatActivity() {
         return song.isFavourite
     }
 
-    /**
-     * Add a song to the Recently Played playlist.
-     *
-     * @param songId - The media ID of the song.
-     * @return
-     */
-    private fun addSongByIdToRecentlyPlayedPlaylist(songId: Long) = lifecycleScope.launch(Dispatchers.Main) {
-        findPlaylist(getString(R.string.recently_played))?.apply {
-            val songIDList = extractPlaylistSongIds(this.songs)
-            if (songIDList.isNotEmpty()) {
-                val index = songIDList.indexOfFirst {
-                    it == songId
-                }
-                if (index != -1) songIDList.removeAt(index)
-                songIDList.add(0, songId)
-                if (songIDList.size > 30) songIDList.removeAt(songIDList.size - 1)
-            } else songIDList.add(songId)
-            this.songs = convertSongIdListToJson(songIDList)
-            musicLibraryViewModel.updatePlaylists(listOf(this))
-        }
-    }
-
     @Deprecated("Areas that use this function should access the view model directly",
         ReplaceWith("completeLibrary.find { it.songId == songID }?.albumId")
     )
@@ -849,23 +808,7 @@ class MainActivity : AppCompatActivity() {
         }?.albumId
     }
 
-    fun convertSongIdListToJson(songIdList: List<Long>): String {
-        val gPretty = GsonBuilder().setPrettyPrinting().create()
-        return gPretty.toJson(songIdList)
-    }
-
-    /**
-     * Convert a JSON String representing a playlist's songs to a list of song IDs.
-     *
-     * @param json - The JSON String representation of a playlist's songs.
-     * @return - A list of song IDs.
-     */
-    fun extractPlaylistSongIds(json: String?): MutableList<Long> {
-        return if (json != null) {
-            val listType = object : TypeToken<List<Long>>() {}.type
-            Gson().fromJson(json, listType)
-        } else mutableListOf()
-    }
+    
 
     /**
      * Extract the corresponding Song objects for a list of Song IDs that have been
