@@ -68,7 +68,7 @@ class EditPlaylistFragment : Fragment() {
                         binding.artwork)) {
                     val playlistSongIDs = callingActivity.extractPlaylistSongIds(it.songs)
                     ImageHandlingHelper.loadImageByAlbumId(callingActivity.application,
-                        callingActivity.findFirstSongArtwork(playlistSongIDs[0]), binding.artwork)
+                        callingActivity.findAlbumIdBySongId(playlistSongIDs[0]), binding.artwork)
                 }
             }
         }

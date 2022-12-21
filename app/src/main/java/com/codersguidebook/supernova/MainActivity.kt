@@ -681,61 +681,30 @@ class MainActivity : AppCompatActivity() {
      */
     fun refreshSongOfTheDay(forceUpdate: Boolean = false) {
         if (musicLibraryViewModel.allSongs.value?.isNotEmpty() != true) return
-        val playlist = musicLibraryViewModel.getPlaylistByName(getString(R.string.song_day)) ?: Playlist(
-            0,
-            getString(R.string.song_day),
-            null,
-            false
-        )
-        val songIDList = extractPlaylistSongIds(playlist.songs)
-        // updating the song of the day, if one has not already been set for today's date
-        val date = SimpleDateFormat.getDateInstance().format(Date())
+        val playlist = musicLibraryViewModel.getPlaylistByName(getString(R.string.song_day))
+            ?: Playlist(0, getString(R.string.song_day), null, false)
+        val songIdList = PlaylistHelper.extractSongIds(playlist.songs)
+
+        val todayDate = SimpleDateFormat.getDateInstance().format(Date())
         val lastUpdate = sharedPreferences.getString(SONG_OF_THE_DAY_LAST_UPDATED, null)
         when {
-            date != lastUpdate -> {
+            todayDate != lastUpdate -> {
                 val song = musicLibraryViewModel.allSongs.value?.random() ?: return
-                songIDList.add(0, song.songId)
-                if (songIDList.size > 30) songIDList.removeAt(songIDList.size - 1)
-                savePlaylistWithSongIds(playlist, songIDList)
+                songIdList.add(0, song.songId)
+                if (songIdList.size > 30) songIdList.removeAt(songIdList.size - 1)
+                musicLibraryViewModel.savePlaylistWithSongIds(playlist, songIdList)
                 sharedPreferences.edit().apply {
-                    putString(SONG_OF_THE_DAY_LAST_UPDATED, date)
+                    putString(SONG_OF_THE_DAY_LAST_UPDATED, todayDate)
                     apply()
                 }
             }
             forceUpdate -> {
-                // could use removeLast but that command is still experimental at the moment
-                if (songIDList.isNotEmpty()) songIDList.removeAt(0)
+                if (songIdList.isNotEmpty()) songIdList.removeAt(0)
                 val song = musicLibraryViewModel.allSongs.value?.random() ?: return
-                songIDList.add(0, song.songId)
-                savePlaylistWithSongIds(playlist, songIDList)
+                songIdList.add(0, song.songId)
+                musicLibraryViewModel.savePlaylistWithSongIds(playlist, songIdList)
             }
         }
-    }
-
-    /**
-     * Update the list of songs associated with a given playlist.
-     *
-     * @param playlist - The target playlist.
-     * @param songIds - The list of song IDs to be saved with the playlist.
-     */
-    fun savePlaylistWithSongIds(playlist: Playlist, songIds: List<Long>) {
-        if (songIds.isNotEmpty()) {
-            playlist.songs = convertSongIdListToJson(songIds)
-        } else playlist.songs = null
-        musicLibraryViewModel.updatePlaylists(listOf(playlist))
-    }
-
-    /**
-     * Delete a given playlist from the app database and any associated artwork.
-     *
-     * @param playlist - The Playlist object to be deleted.
-     */
-    fun deletePlaylist(playlist: Playlist) {
-        musicLibraryViewModel.deletePlaylist(playlist)
-        val cw = ContextWrapper(application)
-        val directory = cw.getDir("playlistArt", Context.MODE_PRIVATE)
-        val path = File(directory, playlist.playlistId.toString() + ".jpg")
-        if (path.exists()) path.delete()
     }
 
     /**
@@ -799,31 +768,16 @@ class MainActivity : AppCompatActivity() {
         return song.isFavourite
     }
 
-    @Deprecated("Areas that use this function should access the view model directly",
-        ReplaceWith("completeLibrary.find { it.songId == songID }?.albumId")
-    )
-    fun findFirstSongArtwork(songID: Long): String? {
-        return completeLibrary.find {
-            it.songId == songID
-        }?.albumId
-    }
-
-    
-
     /**
-     * Extract the corresponding Song objects for a list of Song IDs that have been
-     * saved in JSON format. This method helps restore a playlist.
+     * Find the corresponding album ID for a given song.
      *
-     * @param json - A JSON String representation of a list of song IDs.
-     * @return A list of Song objects
+     * @param songId - The ID of the target song.
+     * @return The song's album ID or null.
      */
-    fun extractPlaylistSongs(json: String?): MutableList<Song> {
-        val songIdList = extractPlaylistSongIds(json)
-        val playlistSongs = mutableListOf<Song>()
-        for (id in songIdList) {
-            musicLibraryViewModel.getSongById(id)?.let { playlistSongs.add(it) }
-        }
-        return playlistSongs
+    fun findAlbumIdBySongId(songId: Long): String? {
+        return musicLibraryViewModel.allSongs.value?.find {
+            it.songId == songId
+        }?.albumId
     }
 
     fun saveNewPlaylist(playlist: Playlist): Boolean{
@@ -852,14 +806,10 @@ class MainActivity : AppCompatActivity() {
         notificationManager.createNotificationChannel(channel)
     }
 
-    /**
-     * Hides the soft input keyboard, which can sometimes obstruct views.
-     *
-     * @param activity - The activity that currently has focus
-     */
-    fun hideKeyboard(activity: Activity) {
-        activity.currentFocus?.let {
-            val inputManager = activity.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+    /** Hides the soft input keyboard, which can sometimes obstruct views. */
+    fun hideKeyboard() {
+        this.currentFocus?.let {
+            val inputManager = this.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             inputManager.hideSoftInputFromWindow(it.windowToken, InputMethodManager.HIDE_NOT_ALWAYS)
         }
     }

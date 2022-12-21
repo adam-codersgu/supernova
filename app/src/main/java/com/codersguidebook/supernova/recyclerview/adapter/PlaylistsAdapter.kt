@@ -51,7 +51,7 @@ class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter
         if (!ImageHandlingHelper.loadImageByPlaylist(activity.application,
                 current, holder.mArtwork) && playlistSongIDs.isNotEmpty()) {
             ImageHandlingHelper.loadImageByAlbumId(activity.application,
-                activity.findFirstSongArtwork(playlistSongIDs[0]), holder.mArtwork)
+                activity.findAlbumIdBySongId(playlistSongIDs[0]), holder.mArtwork)
         }
 
         val songCountInt = playlistSongIDs.size

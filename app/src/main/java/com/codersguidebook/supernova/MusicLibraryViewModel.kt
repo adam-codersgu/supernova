@@ -97,6 +97,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
 
     fun deletePlaylist(playlist: Playlist) = viewModelScope.launch(Dispatchers.IO) {
         repository.deletePlaylist(playlist)
+        ImageHandlingHelper.deletePlaylistArtByResourceId(getApplication(), playlist.playlistId.toString())
     }
 
     private fun insertSongs(songs: List<Song>) = viewModelScope.launch(Dispatchers.IO) {
@@ -306,6 +307,32 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @return The associated Playlist object or null if no match found.
      */
     fun getPlaylistByName(name: String): Playlist? = allPlaylists.value?.find { it.name == name }
+
+    /**
+     * Extract the corresponding Song objects for a list of Song IDs that have been
+     * saved in JSON format. This method helps restore a playlist.
+     *
+     * @param json - A JSON String representation of the playlist's song IDs.
+     * @return A mutable list of Song objects or an empty mutable list.
+     */
+    fun extractPlaylistSongs(json: String?): MutableList<Song> {
+        return PlaylistHelper.extractSongIds(json).mapNotNull { songId ->
+            getSongById(songId)
+        }.toMutableList()
+    }
+
+    /**
+     * Update the list of songs associated with a given playlist.
+     *
+     * @param playlist - The target playlist.
+     * @param songIds - The list of song IDs to be saved with the playlist.
+     */
+    fun savePlaylistWithSongIds(playlist: Playlist, songIds: List<Long>) {
+        if (songIds.isNotEmpty()) {
+            playlist.songs = PlaylistHelper.serialiseSongIds(songIds)
+        } else playlist.songs = null
+        updatePlaylists(listOf(playlist))
+    }
 
     /**
      * Add a song to the Recently Played playlist.

@@ -88,13 +88,34 @@ object ImageHandlingHelper {
     }
 
     /**
-     * Delete the image file associated with a given album ID (if the file exists).
+     * Delete the image file associated with a given album ID.
      *
      * @param application - The application that should serve as the context.
      * @param resourceId - The ID of the resource that should be evaluated.
      */
     fun deleteAlbumArtByResourceId(application: Application, resourceId: String) {
         val directory = ContextWrapper(application).getDir(ALBUM_ART_DIRECTORY, Context.MODE_PRIVATE)
+        deleteFileIfExists(directory, resourceId)
+    }
+
+    /**
+     * Delete the image file associated with a given playlist ID.
+     *
+     * @param application - The application that should serve as the context.
+     * @param resourceId - The ID of the resource that an image should be loaded for.
+     */
+    fun deletePlaylistArtByResourceId(application: Application, resourceId: String) {
+        val directory = ContextWrapper(application).getDir(PLAYLIST_ART_DIRECTORY, Context.MODE_PRIVATE)
+        deleteFileIfExists(directory, resourceId)
+    }
+
+    /**
+     * Delete a given file if it exists.
+     *
+     * @param directory - A File object detailing the directory that contains the file to delete.
+     * @param resourceId - The ID that identifies the file to delete.
+     */
+    private fun deleteFileIfExists(directory: File, resourceId: String) {
         val path = File(directory, "$resourceId.jpg")
         if (path.exists()) path.delete()
     }

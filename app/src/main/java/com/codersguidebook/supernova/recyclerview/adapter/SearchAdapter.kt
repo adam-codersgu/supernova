@@ -130,7 +130,7 @@ class SearchAdapter(private val activity: MainActivity): RecyclerView.Adapter<Re
                 holder.mArtwork.isVisible = true
                 val playlistSongIDs= activity.extractPlaylistSongIds(current.songs)
                 if (playlistSongIDs.isNotEmpty()){
-                    val firstSongArtwork = activity.findFirstSongArtwork(playlistSongIDs[0])
+                    val firstSongArtwork = activity.findAlbumIdBySongId(playlistSongIDs[0])
                     ImageHandlingHelper.loadImageByAlbumId(activity.application,
                         firstSongArtwork, holder.mArtwork)
                 }
