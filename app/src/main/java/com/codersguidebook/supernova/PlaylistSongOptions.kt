@@ -44,11 +44,11 @@ class PlaylistSongOptions(private val songs: MutableList<Song>,
         txtRemovePlaylist.text = getString(R.string.remove_playlist)
 
         val callingActivity = activity as MainActivity
-        val song = musicLibraryViewModel.getSongById(songs[position].songId)
+        val song = songs[position]
 
         builder.setView(dialogView)
 
-        txtTitle.text = song?.title
+        txtTitle.text = song.title
 
         txtPlayNext.setOnClickListener{
             callingActivity.addSongsToPlayQueue(listOf(songs[position]), true)
@@ -60,11 +60,11 @@ class PlaylistSongOptions(private val songs: MutableList<Song>,
             dismiss()
         }
 
-        if (song?.isFavourite == true) txtAddFavourites.text = getString(R.string.remove_favourites)
+        if (song.isFavourite) txtAddFavourites.text = getString(R.string.remove_favourites)
         else txtAddFavourites.text = getString(R.string.add_to_favourites)
 
         txtAddFavourites.setOnClickListener {
-            callingActivity.toggleSongFavouriteStatus(song!!)
+            callingActivity.toggleSongFavouriteStatus(song)
             dismiss()
         }
 

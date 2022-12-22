@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.ContentUris
 import android.database.Cursor
 import android.provider.MediaStore
+import android.util.Log
 import android.util.Size
 import androidx.lifecycle.*
 import com.codersguidebook.supernova.entities.Artist
@@ -43,9 +44,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
         allArtists = repository.allArtists
         allPlaylists = repository.allPlaylists
 
-        viewModelScope.launch(Dispatchers.IO) {
-            repository.mostPlayedSongsById.observeForever(mostPlayedSongsObserver)
-        }
+        repository.mostPlayedSongsById.observeForever(mostPlayedSongsObserver)
     }
 
     override fun onCleared() {
@@ -297,7 +296,17 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param songId - The ID of the song.
      * @return The associated Song object, or null.
      */
-    fun getSongById(songId: Long) : Song? = allSongs.value?.find { it.songId == songId }
+    fun getSongById(songId: Long) : Song? {
+        // fixme: there are problems with this function. Need to ensure
+        //  it only runs when allSongs is available, or that is queries the database directly
+        //  using a query. If going for the latter option, need to test what happens when no
+        //  result found
+        Log.e("DEBUGGING", "The supplied song ID is $songId")
+        Log.e("DEBUGGING", "The size of allSongs is " + allSongs.value?.size)
+        val song = allSongs.value?.find { it.songId == songId }
+        Log.e("DEBUGGING", "The found song title is " + song?.title)
+        return song
+    }
 
     /**
      * Retrieve the Song objects associated with a given album ID.

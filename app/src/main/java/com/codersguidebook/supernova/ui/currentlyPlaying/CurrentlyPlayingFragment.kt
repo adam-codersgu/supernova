@@ -253,7 +253,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
      */
     private fun updateCurrentlyDisplayedMetadata(metadata: MediaMetadataCompat?) {
         val currentMediaId = metadata?.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)?.toLong()
-        currentSong = if (currentMediaId != null)  musicLibraryViewModel.getSongById(currentMediaId)
+        currentSong = if (currentMediaId != null) musicLibraryViewModel.getSongById(currentMediaId)
         else null
 
         setFavouriteButtonStyle(currentSong?.isFavourite ?: false)
