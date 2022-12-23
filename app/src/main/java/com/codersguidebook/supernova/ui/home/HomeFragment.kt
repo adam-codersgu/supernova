@@ -20,6 +20,9 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentHomeBinding
 import com.codersguidebook.supernova.fragment.layoutmanager.WrapContentLinearLayoutManager
 import com.codersguidebook.supernova.ui.playlists.PlaylistsFragmentDirections
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class HomeFragment : Fragment() {
 
@@ -97,18 +100,22 @@ class HomeFragment : Fragment() {
         val musicDatabase = MusicDatabase.getDatabase(callingActivity, lifecycleScope)
         musicDatabase.playlistDao().findPlaylist(getString(R.string.song_day)).observe(viewLifecycleOwner) { playlist ->
             playlist?.let {
-                val songs = musicLibraryViewModel.extractPlaylistSongs(it.songs)
-                if (songs.isEmpty()) binding.songOfTheDayNoContent.isVisible = true
-                else {
-                    binding.songOfTheDayNoContent.isGone = true
-                    if (songOfTheDayAdapter.song == null ||
-                        songOfTheDayAdapter.song?.songId != songs[0].songId) {
-                        songOfTheDayAdapter.changeItem(songs[0])
+                lifecycleScope.launch(Dispatchers.Main) {
+                    val songs = withContext(Dispatchers.IO) {
+                        musicLibraryViewModel.extractPlaylistSongs(it.songs)
                     }
-                    binding.textViewSongOfTheDay.setOnClickListener {
-                        val action =
-                            PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.song_day))
-                        findNavController().navigate(action)
+                    if (songs.isEmpty()) binding.songOfTheDayNoContent.isVisible = true
+                    else {
+                        binding.songOfTheDayNoContent.isGone = true
+                        if (songOfTheDayAdapter.song == null ||
+                            songOfTheDayAdapter.song?.songId != songs[0].songId) {
+                            songOfTheDayAdapter.changeItem(songs[0])
+                        }
+                        binding.textViewSongOfTheDay.setOnClickListener {
+                            val action =
+                                PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.song_day))
+                            findNavController().navigate(action)
+                        }
                     }
                 }
             }
@@ -116,84 +123,99 @@ class HomeFragment : Fragment() {
 
         musicDatabase.playlistDao().findPlaylist(getString(R.string.favourites)).observe(viewLifecycleOwner) { playlist ->
             playlist?.let {
-                val previousSongs = favouritesAdapter.previousSongs
-                val songs = musicLibraryViewModel.extractPlaylistSongs(it.songs)
-                val adapterSongs = songs.asReversed().take(10)
-                if (songs.isEmpty()) binding.homeFavourites.isGone = true
-                else {
-                    binding.homeFavourites.isVisible = true
-                    binding.textViewFavourites.setOnClickListener {
-                        val action =
-                            PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.favourites))
-                        findNavController().navigate(action)
+                lifecycleScope.launch(Dispatchers.Main) {
+                    val previousSongs = favouritesAdapter.previousSongs
+                    val songs = withContext(Dispatchers.IO) {
+                        musicLibraryViewModel.extractPlaylistSongs(it.songs)
                     }
+                    val adapterSongs = songs.asReversed().take(10)
+                    if (songs.isEmpty()) binding.homeFavourites.isGone = true
+                    else {
+                        binding.homeFavourites.isVisible = true
+                        binding.textViewFavourites.setOnClickListener {
+                            val action =
+                                PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.favourites))
+                            findNavController().navigate(action)
+                        }
+                    }
+                    when {
+                        favouritesAdapter.songs.isEmpty() -> {
+                            favouritesAdapter.songs = adapterSongs.toMutableList()
+                            favouritesAdapter.notifyItemRangeInserted(0, favouritesAdapter.songs.size)
+                        }
+                        favouritesAdapter.previousSongs.size != songs.size -> {
+                            if (songs.size > previousSongs.size) {
+                                favouritesAdapter.processSongs(adapterSongs, true)
+                                (binding.favouritesRecyclerView.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
+                                    0,
+                                    0
+                                )
+                            } else favouritesAdapter.processSongs(adapterSongs, false)
+                        }
+                    }
+                    favouritesAdapter.previousSongs = songs
                 }
-                when {
-                    favouritesAdapter.songs.isEmpty() -> {
-                        favouritesAdapter.songs = adapterSongs.toMutableList()
-                        favouritesAdapter.notifyItemRangeInserted(0, favouritesAdapter.songs.size)
-                    }
-                    favouritesAdapter.previousSongs.size != songs.size -> {
-                        if (songs.size > previousSongs.size) {
-                            favouritesAdapter.processSongs(adapterSongs, true)
-                            (binding.favouritesRecyclerView.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
-                                0,
-                                0
-                            )
-                        } else favouritesAdapter.processSongs(adapterSongs, false)
-                    }
-                }
-                favouritesAdapter.previousSongs = songs
             }
         }
 
         musicDatabase.playlistDao().findPlaylist(getString(R.string.most_played)).observe(viewLifecycleOwner) { playlist ->
             playlist?.let {
-                val songs = musicLibraryViewModel.extractPlaylistSongs(it.songs)
-                if (songs.isEmpty()) binding.homeMostPlayed.isGone = true
-                else {
-                    binding.homeMostPlayed.isVisible = true
-                    binding.textViewMostPlayed.setOnClickListener {
-                        val action =
-                            PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.most_played))
-                        findNavController().navigate(action)
+                lifecycleScope.launch(Dispatchers.Main) {
+                    val songs = withContext(Dispatchers.IO) {
+                        musicLibraryViewModel.extractPlaylistSongs(it.songs)
                     }
-                }
-                when {
-                    mostPlayedAdapter.songs.isEmpty() -> {
-                        mostPlayedAdapter.songs = songs.take(10).toMutableList()
-                        mostPlayedAdapter.notifyItemRangeInserted(0, mostPlayedAdapter.songs.size)
+                    if (songs.isEmpty()) binding.homeMostPlayed.isGone = true
+                    else {
+                        binding.homeMostPlayed.isVisible = true
+                        binding.textViewMostPlayed.setOnClickListener {
+                            val action =
+                                PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.most_played))
+                            findNavController().navigate(action)
+                        }
                     }
-                    else -> mostPlayedAdapter.processSongs(songs.take(10))
+                    when {
+                        mostPlayedAdapter.songs.isEmpty() -> {
+                            mostPlayedAdapter.songs = songs.take(10).toMutableList()
+                            mostPlayedAdapter.notifyItemRangeInserted(
+                                0,
+                                mostPlayedAdapter.songs.size
+                            )
+                        }
+                        else -> mostPlayedAdapter.processSongs(songs.take(10))
+                    }
                 }
             }
         }
 
         musicDatabase.playlistDao().findPlaylist(getString(R.string.recently_played)).observe(viewLifecycleOwner) { playlist ->
             playlist?.let {
-                val songs = musicLibraryViewModel.extractPlaylistSongs(it.songs)
-                if (songs.isEmpty()) binding.homeRecentlyPlayed.isGone = true
-                else {
-                    binding.homeRecentlyPlayed.isVisible = true
-                    binding.textViewRecentlyPlayed.setOnClickListener {
-                        val action =
-                            PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.recently_played))
-                        findNavController().navigate(action)
+                lifecycleScope.launch(Dispatchers.Main) {
+                    val songs = withContext(Dispatchers.IO) {
+                        musicLibraryViewModel.extractPlaylistSongs(it.songs)
                     }
-                }
-                when {
-                    recentlyPlayedAdapter.songs.isEmpty() -> {
-                        recentlyPlayedAdapter.songs = songs.take(10).toMutableList()
-                        recentlyPlayedAdapter.notifyItemRangeInserted(
-                            0,
-                            recentlyPlayedAdapter.songs.size
-                        )
+                    if (songs.isEmpty()) binding.homeRecentlyPlayed.isGone = true
+                    else {
+                        binding.homeRecentlyPlayed.isVisible = true
+                        binding.textViewRecentlyPlayed.setOnClickListener {
+                            val action =
+                                PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.recently_played))
+                            findNavController().navigate(action)
+                        }
                     }
-                    else -> {
-                        recentlyPlayedAdapter.processSongs(songs.take(10))
-                        (binding.recentlyPlayedRecyclerView.layoutManager as LinearLayoutManager).scrollToPosition(
-                            0
-                        )
+                    when {
+                        recentlyPlayedAdapter.songs.isEmpty() -> {
+                            recentlyPlayedAdapter.songs = songs.take(10).toMutableList()
+                            recentlyPlayedAdapter.notifyItemRangeInserted(
+                                0,
+                                recentlyPlayedAdapter.songs.size
+                            )
+                        }
+                        else -> {
+                            recentlyPlayedAdapter.processSongs(songs.take(10))
+                            (binding.recentlyPlayedRecyclerView.layoutManager as LinearLayoutManager).scrollToPosition(
+                                0
+                            )
+                        }
                     }
                 }
             }

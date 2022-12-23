@@ -41,6 +41,9 @@ interface MusicDao {
     @Query("UPDATE music_library SET song_plays = song_plays + 1 WHERE songId = :songId")
     fun increaseSongPlaysBySongId(songId: Long)
 
+    @Query("SELECT * FROM music_library WHERE songId = :songId")
+    suspend fun findSongById(songId: Long): Song?
+
     @Update(onConflict = OnConflictStrategy.REPLACE)
     suspend fun updateSong(song: Song)
 

@@ -7,10 +7,14 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isGone
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import com.codersguidebook.supernova.databinding.OptionsLayoutBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.ui.playlist.PlaylistFragmentDirections
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PlaylistOptions(private val playlist: Playlist) : DialogFragment() {
 
@@ -41,20 +45,28 @@ class PlaylistOptions(private val playlist: Playlist) : DialogFragment() {
             binding.option4.isGone = true
         }
 
-        binding.option1.setOnClickListener{
-            if (playlist.songs != null){
-                val playlistSongs = musicLibraryViewModel.extractPlaylistSongs(playlist.songs)
-                callingActivity.addSongsToPlayQueue(playlistSongs, true)
-            } else Toast.makeText(requireActivity(), getString(R.string.playlist_contains_zero_songs), Toast.LENGTH_SHORT).show()
-            dismiss()
+        binding.option1.setOnClickListener {
+            lifecycleScope.launch {
+                if (playlist.songs != null) {
+                    val playlistSongs = withContext(Dispatchers.IO) {
+                        musicLibraryViewModel.extractPlaylistSongs(playlist.songs)
+                    }
+                    callingActivity.addSongsToPlayQueue(playlistSongs, true)
+                } else Toast.makeText(requireActivity(), getString(R.string.playlist_contains_zero_songs), Toast.LENGTH_SHORT).show()
+                dismiss()
+            }
         }
 
         binding.option2.setOnClickListener{
-            if (playlist.songs != null){
-                val playlistSongs = musicLibraryViewModel.extractPlaylistSongs(playlist.songs)
-                callingActivity.addSongsToPlayQueue(playlistSongs)
-            } else Toast.makeText(requireActivity(), getString(R.string.playlist_contains_zero_songs), Toast.LENGTH_SHORT).show()
-            dismiss()
+            lifecycleScope.launch {
+                if (playlist.songs != null) {
+                    val playlistSongs = withContext(Dispatchers.IO) {
+                        musicLibraryViewModel.extractPlaylistSongs(playlist.songs)
+                    }
+                    callingActivity.addSongsToPlayQueue(playlistSongs)
+                } else Toast.makeText(requireActivity(), getString(R.string.playlist_contains_zero_songs), Toast.LENGTH_SHORT).show()
+                dismiss()
+            }
         }
 
         binding.option3.setOnClickListener{

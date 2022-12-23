@@ -18,6 +18,9 @@ import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.RecyclerViewWithFabFragment
 import com.codersguidebook.supernova.fragment.adapter.PlaylistAdapter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PlaylistFragment : RecyclerViewWithFabFragment() {
 
@@ -88,10 +91,14 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
         playlistName?.let { playlistName ->
             musicDatabase = MusicDatabase.getDatabase(mainActivity, lifecycleScope)
             musicDatabase.playlistDao().findPlaylist(playlistName).observe(viewLifecycleOwner) {
-                playlist = it
-                (adapter as PlaylistAdapter).playlist = it
-                val songs = musicLibraryViewModel.extractPlaylistSongs(it?.songs)
-                updateRecyclerView(songs)
+                lifecycleScope.launch(Dispatchers.Main) {
+                    playlist = it
+                    (adapter as PlaylistAdapter).playlist = it
+                    val songs = withContext(Dispatchers.IO) {
+                        musicLibraryViewModel.extractPlaylistSongs(it?.songs)
+                    }
+                    updateRecyclerView(songs)
+                }
             }
         }
     }
@@ -108,9 +115,15 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
     }
 
     override fun requestNewData() {
+        // TODO: For areas of the codebase like this, can we use a view model method that itself finds the playlist
+        //  and extracts their songs in one go? This would save the coroutine code duplication
         musicDatabase.playlistDao().findPlaylist(playlistName ?: return).value?.let {
-            val songs = musicLibraryViewModel.extractPlaylistSongs(it.songs)
-            updateRecyclerView(songs)
+            lifecycleScope.launch(Dispatchers.Main) {
+                val songs = withContext(Dispatchers.IO) {
+                    musicLibraryViewModel.extractPlaylistSongs(it.songs)
+                }
+                updateRecyclerView(songs)
+            }
         }
     }
 

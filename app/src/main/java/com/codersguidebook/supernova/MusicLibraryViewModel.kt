@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.ContentUris
 import android.database.Cursor
 import android.provider.MediaStore
-import android.util.Log
 import android.util.Size
 import androidx.lifecycle.*
 import com.codersguidebook.supernova.entities.Artist
@@ -296,17 +295,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param songId - The ID of the song.
      * @return The associated Song object, or null.
      */
-    fun getSongById(songId: Long) : Song? {
-        // fixme: there are problems with this function. Need to ensure
-        //  it only runs when allSongs is available, or that is queries the database directly
-        //  using a query. If going for the latter option, need to test what happens when no
-        //  result found
-        Log.e("DEBUGGING", "The supplied song ID is $songId")
-        Log.e("DEBUGGING", "The size of allSongs is " + allSongs.value?.size)
-        val song = allSongs.value?.find { it.songId == songId }
-        Log.e("DEBUGGING", "The found song title is " + song?.title)
-        return song
-    }
+    suspend fun getSongById(songId: Long) : Song? = repository.findSongById(songId)
 
     /**
      * Retrieve the Song objects associated with a given album ID.
@@ -333,7 +322,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param json - A JSON String representation of the playlist's song IDs.
      * @return A mutable list of Song objects or an empty mutable list.
      */
-    fun extractPlaylistSongs(json: String?): MutableList<Song> {
+    suspend fun extractPlaylistSongs(json: String?): MutableList<Song> {
         return PlaylistHelper.extractSongIds(json).mapNotNull { songId ->
             getSongById(songId)
         }.toMutableList()

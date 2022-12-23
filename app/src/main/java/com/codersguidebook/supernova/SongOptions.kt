@@ -42,6 +42,7 @@ class SongOptions(private val song: Song) : DialogFragment() {
             dismiss()
         }
 
+        // todo: test that the right text is always displayed
         if (song.isFavourite)  binding.option3.text = getString(R.string.remove_favourites)
         else  binding.option3.text = getString(R.string.add_to_favourites)
 

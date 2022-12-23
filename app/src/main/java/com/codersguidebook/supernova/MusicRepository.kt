@@ -43,4 +43,6 @@ class MusicRepository(private val musicDao: MusicDao, private val playlistDao: P
     fun increaseSongPlaysBySongId(songId: Long) {
         musicDao.increaseSongPlaysBySongId(songId)
     }
+
+    suspend fun findSongById(songId: Long): Song? = musicDao.findSongById(songId)
 }

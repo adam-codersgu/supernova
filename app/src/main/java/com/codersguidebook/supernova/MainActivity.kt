@@ -60,6 +60,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -611,8 +612,10 @@ class MainActivity : AppCompatActivity() {
      *
      * @param songId - The ID of the song.
      */
-    fun openAddToPlaylistDialogForSongById(songId: Long) {
-        val song = musicLibraryViewModel.getSongById(songId) ?: return
+    fun openAddToPlaylistDialogForSongById(songId: Long) = lifecycleScope.launch(Dispatchers.Main) {
+        val song = withContext(Dispatchers.IO) {
+            musicLibraryViewModel.getSongById(songId)
+        } ?: return@launch
         openAddToPlaylistDialog(listOf(song))
     }
 

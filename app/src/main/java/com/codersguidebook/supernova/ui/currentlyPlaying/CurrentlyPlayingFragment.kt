@@ -45,8 +45,10 @@ import com.codersguidebook.supernova.views.PlaybackAnimator
 import com.codersguidebook.supernova.views.PullToCloseLayout
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -251,10 +253,12 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
      * @param metadata - MediaMetadataCompat object detailing the currently playing song's metadata, or null
      * if playback has stopped and any loaded metadata should be cleared.
      */
-    private fun updateCurrentlyDisplayedMetadata(metadata: MediaMetadataCompat?) {
+    private fun updateCurrentlyDisplayedMetadata(metadata: MediaMetadataCompat?) = lifecycleScope.launch(Dispatchers.Main) {
         val currentMediaId = metadata?.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)?.toLong()
-        currentSong = if (currentMediaId != null) musicLibraryViewModel.getSongById(currentMediaId)
-        else null
+        currentSong = withContext(Dispatchers.IO) {
+            if (currentMediaId != null) musicLibraryViewModel.getSongById(currentMediaId)
+            else null
+        }
 
         setFavouriteButtonStyle(currentSong?.isFavourite ?: false)
 
