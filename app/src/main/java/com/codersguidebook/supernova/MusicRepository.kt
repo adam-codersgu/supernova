@@ -46,5 +46,7 @@ class MusicRepository(private val musicDao: MusicDao, private val playlistDao: P
 
     suspend fun findSongById(songId: Long): Song? = musicDao.findSongById(songId)
 
+    fun findPlaylistByNameLiveData(name: String): LiveData<Playlist?> = playlistDao.findPlaylistByNameLiveData(name)
+
     suspend fun findPlaylistByName(name: String): Playlist? = playlistDao.findPlaylistByName(name)
 }

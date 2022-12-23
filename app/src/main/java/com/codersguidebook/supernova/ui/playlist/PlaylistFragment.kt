@@ -89,16 +89,14 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
         playlistName?.let { name ->
             // TODO: For areas of the codebase like this, can we use a view model method that itself finds the playlist
             //  and extracts their songs in one go? This would save the coroutine code duplication
-            lifecycleScope.launch(Dispatchers.IO) {
-                musicLibraryViewModel.getPlaylistByName(name).observe(viewLifecycleOwner) {
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        playlist = it
-                        (adapter as PlaylistAdapter).playlist = it
-                        val songs = withContext(Dispatchers.IO) {
-                            musicLibraryViewModel.extractPlaylistSongs(it?.songs)
-                        }
-                        updateRecyclerView(songs)
+            musicLibraryViewModel.getPlaylistByNameLiveData(name).observe(viewLifecycleOwner) {
+                lifecycleScope.launch(Dispatchers.Main) {
+                    playlist = it
+                    (adapter as PlaylistAdapter).playlist = it
+                    val songs = withContext(Dispatchers.IO) {
+                        musicLibraryViewModel.extractPlaylistSongs(it?.songs)
                     }
+                    updateRecyclerView(songs)
                 }
             }
         }
@@ -116,16 +114,14 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
     }
 
     override fun requestNewData() {
-        lifecycleScope.launch(Dispatchers.IO) {
-            musicLibraryViewModel.getPlaylistByName(playlistName ?: return@launch).value?.let {
+        musicLibraryViewModel.getPlaylistByNameLiveData(playlistName ?: return).value?.let {
+            lifecycleScope.launch(Dispatchers.Main) {
                 val songs = withContext(Dispatchers.IO) {
                     musicLibraryViewModel.extractPlaylistSongs(it.songs)
                 }
-                launch(Dispatchers.Main) {
-                    // TODO: Could format requestNewData to always use IO coroutine scope
-                    //  And updateRecyclerView to always use Main coroutine scope
-                    updateRecyclerView(songs)
-                }
+                // TODO: Could format requestNewData to always use IO coroutine scope
+                //  And updateRecyclerView to always use Main coroutine scope
+                updateRecyclerView(songs)
             }
         }
     }

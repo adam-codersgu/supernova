@@ -27,7 +27,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
 
     private val mostPlayedSongsObserver: Observer<List<Long>> = Observer<List<Long>> {
         viewModelScope.launch(Dispatchers.IO) {
-            getPlaylistByName(application.getString(R.string.most_played)).value?.apply {
+            getPlaylistByNameLiveData(application.getString(R.string.most_played)).value?.apply {
                 val mostPlayedSongs = PlaylistHelper.serialiseSongIds(it)
                 if (mostPlayedSongs != this.songs){
                     this.songs = mostPlayedSongs
@@ -315,7 +315,15 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param name - The playlist's name.
      * @return The associated Playlist object or null if no match found.
      */
-    suspend fun getPlaylistByName(name: String): LiveData<Playlist?> = repository.findPlaylistByName(name)
+    fun getPlaylistByNameLiveData(name: String): LiveData<Playlist?> = repository.findPlaylistByNameLiveData(name)
+
+    /**
+     * Find the Playlist object associated with a given name.
+     *
+     * @param name - The playlist's name.
+     * @return The associated Playlist object or null if no match found.
+     */
+    suspend fun getPlaylistByName(name: String): Playlist? = repository.findPlaylistByName(name)
 
     /**
      * Extract the corresponding Song objects for a list of Song IDs that have been
@@ -349,7 +357,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param songId - The media ID of the song.
      */
     fun addSongByIdToRecentlyPlayedPlaylist(songId: Long) = viewModelScope.launch(Dispatchers.IO) {
-        getPlaylistByName(getApplication<Application>().getString(R.string.recently_played)).value?.apply {
+        getPlaylistByNameLiveData(getApplication<Application>().getString(R.string.recently_played)).value?.apply {
             val songIdList = PlaylistHelper.extractSongIds(this.songs)
             if (songIdList.isNotEmpty()) {
                 val index = songIdList.indexOfFirst { it == songId }

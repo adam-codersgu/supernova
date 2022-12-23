@@ -14,7 +14,6 @@ import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
 import com.codersguidebook.supernova.MainActivity
-import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentHomeBinding
@@ -45,6 +44,7 @@ class HomeFragment : Fragment() {
         musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
 
         songOfTheDayAdapter = SongOfTheDayAdapter(callingActivity)
+        // todo: can you create multiple instances of the same adapter actually for these bottom 3?
         favouritesAdapter = FavouritesAdapter(callingActivity)
         mostPlayedAdapter = MostPlayedAdapter(callingActivity)
         recentlyPlayedAdapter = RecentlyPlayedAdapter(callingActivity)
@@ -97,8 +97,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun loadPlaylists() {
-        val musicDatabase = MusicDatabase.getDatabase(callingActivity, lifecycleScope)
-        musicDatabase.playlistDao().findPlaylist(getString(R.string.song_day)).observe(viewLifecycleOwner) { playlist ->
+        musicLibraryViewModel.getPlaylistByNameLiveData(getString(R.string.song_day)).observe(viewLifecycleOwner) { playlist ->
             playlist?.let {
                 lifecycleScope.launch(Dispatchers.Main) {
                     val songs = withContext(Dispatchers.IO) {
@@ -121,7 +120,7 @@ class HomeFragment : Fragment() {
             }
         }
 
-        musicDatabase.playlistDao().findPlaylist(getString(R.string.favourites)).observe(viewLifecycleOwner) { playlist ->
+        musicLibraryViewModel.getPlaylistByNameLiveData(getString(R.string.favourites)).observe(viewLifecycleOwner) { playlist ->
             playlist?.let {
                 lifecycleScope.launch(Dispatchers.Main) {
                     val previousSongs = favouritesAdapter.previousSongs
@@ -158,7 +157,7 @@ class HomeFragment : Fragment() {
             }
         }
 
-        musicDatabase.playlistDao().findPlaylist(getString(R.string.most_played)).observe(viewLifecycleOwner) { playlist ->
+        musicLibraryViewModel.getPlaylistByNameLiveData(getString(R.string.most_played)).observe(viewLifecycleOwner) { playlist ->
             playlist?.let {
                 lifecycleScope.launch(Dispatchers.Main) {
                     val songs = withContext(Dispatchers.IO) {
@@ -187,7 +186,7 @@ class HomeFragment : Fragment() {
             }
         }
 
-        musicDatabase.playlistDao().findPlaylist(getString(R.string.recently_played)).observe(viewLifecycleOwner) { playlist ->
+        musicLibraryViewModel.getPlaylistByNameLiveData(getString(R.string.recently_played)).observe(viewLifecycleOwner) { playlist ->
             playlist?.let {
                 lifecycleScope.launch(Dispatchers.Main) {
                     val songs = withContext(Dispatchers.IO) {

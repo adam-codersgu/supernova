@@ -676,7 +676,7 @@ class MainActivity : AppCompatActivity() {
      */
     fun refreshSongOfTheDay(forceUpdate: Boolean = false) {
         if (musicLibraryViewModel.allSongs.value?.isNotEmpty() != true) return
-        val playlist = musicLibraryViewModel.getPlaylistByName(getString(R.string.song_day))
+        val playlist = musicLibraryViewModel.getPlaylistByNameLiveData(getString(R.string.song_day)).value
             ?: Playlist(0, getString(R.string.song_day), null, false)
         val songIdList = PlaylistHelper.extractSongIds(playlist.songs)
 
@@ -731,10 +731,10 @@ class MainActivity : AppCompatActivity() {
      * @return A Boolean indicating the new value of the isFavourite field.
      */
     fun toggleSongFavouriteStatus(song: Song?): Boolean {
-        Log.e("DEBUGGING", "The received song is " + song?.title + " and its favourte status is " + song?.isFavourite)
+        Log.e("DEBUGGING", "The received song is " + song?.title + " and its favourite status is " + song?.isFavourite)
         if (song == null) return false
 
-        musicLibraryViewModel.getPlaylistByName(getString(R.string.favourites))?.apply {
+        musicLibraryViewModel.getPlaylistByNameLiveData(getString(R.string.favourites)).value?.apply {
             val songIdList = PlaylistHelper.extractSongIds(this.songs)
             Log.e("DEBUGGING", "The song ID list size is " + songIdList.size)
             val matchingSong = songIdList.firstOrNull { it == song.songId }

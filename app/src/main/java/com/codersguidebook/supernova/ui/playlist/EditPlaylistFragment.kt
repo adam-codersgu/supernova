@@ -62,7 +62,7 @@ class EditPlaylistFragment : Fragment() {
 
         lifecycleScope.launch(Dispatchers.Main) {
             playlist = withContext(Dispatchers.IO) {
-                musicLibraryViewModel.getPlaylistByName(playlistName ?: "").value
+                musicLibraryViewModel.getPlaylistByNameLiveData(playlistName ?: "").value
             }
             playlist?.let {
                 val editable: Editable = SpannableStringBuilder(it.name)
