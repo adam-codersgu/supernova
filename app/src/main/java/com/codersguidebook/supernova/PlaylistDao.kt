@@ -15,12 +15,11 @@ interface PlaylistDao {
     @Update(onConflict = OnConflictStrategy.REPLACE)
     fun updatePlaylist(playlist: Playlist)
 
-    @Transaction
     @Query("SELECT * from playlists ORDER BY playlist_name ASC")
     fun getAllPlaylists(): LiveData<List<Playlist>>
 
-    @Query("SELECT * FROM playlists WHERE playlist_name = :playlistName")
-    fun findPlaylist(playlistName: String): LiveData<Playlist?>
+    @Query("SELECT * FROM playlists WHERE playlist_name = :name")
+    fun findPlaylistByName(name: String): Playlist?
 
     @Query("SELECT * FROM playlists WHERE playlist_name LIKE :search LIMIT 10")
     suspend fun findBySearchPlaylists(search: String): List<Playlist>

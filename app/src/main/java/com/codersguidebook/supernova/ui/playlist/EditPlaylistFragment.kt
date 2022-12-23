@@ -17,13 +17,15 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import com.bumptech.glide.Glide
 import com.codersguidebook.supernova.MainActivity
-import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentEditPlaylistBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
 import java.io.IOException
 
@@ -58,10 +60,11 @@ class EditPlaylistFragment : Fragment() {
         musicLibraryViewModel = ViewModelProvider(this).get(MusicLibraryViewModel::class.java)
         setHasOptionsMenu(true)
 
-        val musicDatabase = MusicDatabase.getDatabase(requireContext(), lifecycleScope)
-        musicDatabase.playlistDao().findPlaylist(playlistName ?: "").observe(viewLifecycleOwner) { p ->
-            p?.let {
-                playlist = it
+        lifecycleScope.launch(Dispatchers.Main) {
+            playlist = withContext(Dispatchers.IO) {
+                musicLibraryViewModel.getPlaylistByName(playlistName ?: "").value
+            }
+            playlist?.let {
                 val editable: Editable = SpannableStringBuilder(it.name)
                 binding.editPlaylistName.text = editable
 

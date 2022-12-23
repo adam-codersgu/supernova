@@ -15,6 +15,7 @@ import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.media.session.PlaybackStateCompat.*
+import android.util.Log
 import android.view.Menu
 import android.view.inputmethod.InputMethodManager
 import android.widget.SearchView
@@ -706,7 +707,7 @@ class MainActivity : AppCompatActivity() {
      *
      * @param songs - The list of Song objects containing updated metadata.
      */
-    fun updateSongs(songs: List<Song>) = lifecycleScope.launch(Dispatchers.Default) {
+    fun updateSongs(songs: List<Song>) {
         musicLibraryViewModel.updateSongs(songs)
 
         for (song in songs) {
@@ -730,10 +731,12 @@ class MainActivity : AppCompatActivity() {
      * @return A Boolean indicating the new value of the isFavourite field.
      */
     fun toggleSongFavouriteStatus(song: Song?): Boolean {
+        Log.e("DEBUGGING", "The received song is " + song?.title + " and its favourte status is " + song?.isFavourite)
         if (song == null) return false
 
         musicLibraryViewModel.getPlaylistByName(getString(R.string.favourites))?.apply {
             val songIdList = PlaylistHelper.extractSongIds(this.songs)
+            Log.e("DEBUGGING", "The song ID list size is " + songIdList.size)
             val matchingSong = songIdList.firstOrNull { it == song.songId }
 
             if (matchingSong == null) {

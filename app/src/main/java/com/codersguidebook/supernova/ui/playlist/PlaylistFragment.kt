@@ -11,7 +11,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Playlist
@@ -28,7 +27,6 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
     private var playlist: Playlist? = null
     private lateinit var reorderPlaylist: MenuItem
     private lateinit var finishedReorder: MenuItem
-    private lateinit var musicDatabase: MusicDatabase
     private lateinit var musicLibraryViewModel: MusicLibraryViewModel
 
     private val itemTouchHelper by lazy {
@@ -88,16 +86,19 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        playlistName?.let { playlistName ->
-            musicDatabase = MusicDatabase.getDatabase(mainActivity, lifecycleScope)
-            musicDatabase.playlistDao().findPlaylist(playlistName).observe(viewLifecycleOwner) {
-                lifecycleScope.launch(Dispatchers.Main) {
-                    playlist = it
-                    (adapter as PlaylistAdapter).playlist = it
-                    val songs = withContext(Dispatchers.IO) {
-                        musicLibraryViewModel.extractPlaylistSongs(it?.songs)
+        playlistName?.let { name ->
+            // TODO: For areas of the codebase like this, can we use a view model method that itself finds the playlist
+            //  and extracts their songs in one go? This would save the coroutine code duplication
+            lifecycleScope.launch(Dispatchers.IO) {
+                musicLibraryViewModel.getPlaylistByName(name).observe(viewLifecycleOwner) {
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        playlist = it
+                        (adapter as PlaylistAdapter).playlist = it
+                        val songs = withContext(Dispatchers.IO) {
+                            musicLibraryViewModel.extractPlaylistSongs(it?.songs)
+                        }
+                        updateRecyclerView(songs)
                     }
-                    updateRecyclerView(songs)
                 }
             }
         }
@@ -115,14 +116,16 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
     }
 
     override fun requestNewData() {
-        // TODO: For areas of the codebase like this, can we use a view model method that itself finds the playlist
-        //  and extracts their songs in one go? This would save the coroutine code duplication
-        musicDatabase.playlistDao().findPlaylist(playlistName ?: return).value?.let {
-            lifecycleScope.launch(Dispatchers.Main) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            musicLibraryViewModel.getPlaylistByName(playlistName ?: return@launch).value?.let {
                 val songs = withContext(Dispatchers.IO) {
                     musicLibraryViewModel.extractPlaylistSongs(it.songs)
                 }
-                updateRecyclerView(songs)
+                launch(Dispatchers.Main) {
+                    // TODO: Could format requestNewData to always use IO coroutine scope
+                    //  And updateRecyclerView to always use Main coroutine scope
+                    updateRecyclerView(songs)
+                }
             }
         }
     }
