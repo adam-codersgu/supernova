@@ -169,7 +169,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
         val shuffleMode = sharedPreferences.getInt(SHUFFLE_MODE, SHUFFLE_MODE_NONE)
         setShuffleButtonAppearance(shuffleMode)
 
-        binding.currentButtonShuffle.setOnClickListener{
+        binding.currentButtonShuffle.setOnClickListener {
             setShuffleButtonAppearance(callingActivity.toggleShuffleMode())
         }
         

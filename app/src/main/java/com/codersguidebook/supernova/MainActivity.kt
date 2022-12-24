@@ -730,11 +730,15 @@ class MainActivity : AppCompatActivity() {
      * @param song - The target Song object.
      * @return A Boolean indicating the new value of the isFavourite field.
      */
-    fun toggleSongFavouriteStatus(song: Song?): Boolean {
+    suspend fun toggleSongFavouriteStatus(song: Song?): Boolean {
         Log.e("DEBUGGING", "The received song is " + song?.title + " and its favourite status is " + song?.isFavourite)
         if (song == null) return false
 
-        musicLibraryViewModel.getPlaylistByNameLiveData(getString(R.string.favourites)).value?.apply {
+        val favouritesPlaylist = withContext(Dispatchers.IO) {
+            musicLibraryViewModel.getPlaylistByName(getString(R.string.favourites))
+        }
+
+        favouritesPlaylist?.apply {
             val songIdList = PlaylistHelper.extractSongIds(this.songs)
             Log.e("DEBUGGING", "The song ID list size is " + songIdList.size)
             val matchingSong = songIdList.firstOrNull { it == song.songId }
@@ -753,12 +757,14 @@ class MainActivity : AppCompatActivity() {
             } else this.songs = null
             musicLibraryViewModel.updatePlaylists(listOf(this))
             updateSongs(listOf(song))
-            if (song.isFavourite) {
-                Toast.makeText(this@MainActivity, getString(R.string.added_to_favourites),
-                    Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this@MainActivity, getString(R.string.removed_from_favourites),
-                    Toast.LENGTH_SHORT).show()
+            lifecycleScope.launch(Dispatchers.Main) {
+                if (song.isFavourite) {
+                    Toast.makeText(this@MainActivity, getString(R.string.added_to_favourites),
+                        Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this@MainActivity, getString(R.string.removed_from_favourites),
+                        Toast.LENGTH_SHORT).show()
+                }
             }
         }
         return song.isFavourite
