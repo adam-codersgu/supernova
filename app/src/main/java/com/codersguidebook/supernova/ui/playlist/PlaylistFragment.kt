@@ -6,12 +6,10 @@ import android.widget.Toast
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
@@ -27,7 +25,6 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
     private var playlist: Playlist? = null
     private lateinit var reorderPlaylist: MenuItem
     private lateinit var finishedReorder: MenuItem
-    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
 
     private val itemTouchHelper by lazy {
         val simpleItemTouchCallback =
@@ -77,8 +74,6 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
             val safeArgs = PlaylistFragmentArgs.fromBundle(it)
             playlistName = safeArgs.playlistName
         }
-
-        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
 
         return super.onCreateView(inflater, container, savedInstanceState)
     }

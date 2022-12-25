@@ -2,9 +2,7 @@ package com.codersguidebook.supernova.ui.albums
 
 import android.os.Bundle
 import android.view.View
-import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.RecyclerViewFragment
 import com.codersguidebook.supernova.fragment.adapter.AlbumsAdapter
@@ -12,12 +10,10 @@ import com.codersguidebook.supernova.fragment.adapter.AlbumsAdapter
 class AlbumsFragment : RecyclerViewFragment() {
 
     override lateinit var adapter: AlbumsAdapter
-    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
         musicLibraryViewModel.allSongs.observe(viewLifecycleOwner) {
             updateRecyclerView(it)
         }

@@ -5,6 +5,7 @@ import android.content.ContentUris
 import android.database.Cursor
 import android.provider.MediaStore
 import android.util.Size
+import android.widget.Toast
 import androidx.lifecycle.*
 import com.codersguidebook.supernova.entities.Artist
 import com.codersguidebook.supernova.entities.Playlist
@@ -297,7 +298,9 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param songId - The ID of the song.
      * @return The associated Song object, or null.
      */
-    suspend fun getSongById(songId: Long) : Song? = repository.findSongById(songId)
+    // fixme
+    // suspend fun getSongById(songId: Long) : Song? = repository.findSongById(songId)
+    fun getSongById(songId: Long) : Song? = allSongs.value?.find { it.songId == songId }
 
     /**
      * Retrieve the Song objects associated with a given album ID.
@@ -308,6 +311,43 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     fun getSongsByAlbumId(albumId: String) : List<Song> = allSongs.value?.filter {
         it.albumId == albumId
     }?.sortedBy { it.track } ?: listOf()
+
+    /**
+     * Toggle the isFavourite field for a given Song object. Also update the favourites
+     * playlist accordingly.
+     *
+     * @param song - The Song object that should be favourited/unfavourited.
+     */
+    fun toggleSongFavouriteStatus(song: Song) {
+        getPlaylistByName(getApplication<Application>().getString(R.string.favourites))?.apply {
+            val songIdList = PlaylistHelper.extractSongIds(this.songs)
+            val matchingSong = songIdList.firstOrNull { it == song.songId }
+
+            if (matchingSong == null) {
+                song.isFavourite = true
+                songIdList.add(song.songId)
+            } else {
+                song.isFavourite = false
+                songIdList.remove(matchingSong)
+            }
+
+            if (songIdList.isNotEmpty()) {
+                val newSongListJSON = PlaylistHelper.serialiseSongIds(songIdList)
+                this.songs = newSongListJSON
+            } else this.songs = null
+            updatePlaylists(listOf(this))
+            updateSongs(listOf(song))
+            if (song.isFavourite) {
+                Toast.makeText(getApplication(),
+                    getApplication<Application>().getString(R.string.added_to_favourites),
+                    Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(getApplication(),
+                    getApplication<Application>().getString(R.string.removed_from_favourites),
+                    Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     /**
      * Find the Playlist object associated with a given name.
@@ -323,7 +363,9 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param name - The playlist's name.
      * @return The associated Playlist object or null if no match found.
      */
-    suspend fun getPlaylistByName(name: String): Playlist? = repository.findPlaylistByName(name)
+    // fixme
+    // suspend fun getPlaylistByName(name: String): Playlist? = repository.findPlaylistByName(name)
+    fun getPlaylistByName(name: String): Playlist? = allPlaylists.value?.find { it.name == name }
 
     /**
      * Extract the corresponding Song objects for a list of Song IDs that have been

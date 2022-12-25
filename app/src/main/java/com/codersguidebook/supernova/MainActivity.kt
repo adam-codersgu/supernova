@@ -15,7 +15,6 @@ import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.media.session.PlaybackStateCompat.*
-import android.util.Log
 import android.view.Menu
 import android.view.inputmethod.InputMethodManager
 import android.widget.SearchView
@@ -192,7 +191,6 @@ class MainActivity : AppCompatActivity() {
 
         mediaBrowser = MediaBrowserCompat(this, ComponentName(this, MediaPlaybackService::class.java),
             connectionCallbacks, intent.extras)
-        mediaBrowser.connect()
 
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
@@ -257,6 +255,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
+        mediaBrowser.connect()
         refreshSongOfTheDay()
     }
 
@@ -729,42 +728,8 @@ class MainActivity : AppCompatActivity() {
      *
      * @param song - The target Song object.
      */
-    fun toggleSongFavouriteStatus(song: Song?) = lifecycleScope.launch(Dispatchers.Main) {
-        Log.e("DEBUGGING", "The received song is " + song?.title + " and its favourite status is " + song?.isFavourite)
-        if (song == null) return@launch
-
-        val favouritesPlaylist = withContext(Dispatchers.IO) {
-            musicLibraryViewModel.getPlaylistByName(getString(R.string.favourites))
-        }
-
-        favouritesPlaylist?.apply {
-            val songIdList = PlaylistHelper.extractSongIds(this.songs)
-            Log.e("DEBUGGING", "The song ID list size is " + songIdList.size)
-            val matchingSong = songIdList.firstOrNull { it == song.songId }
-
-            if (matchingSong == null) {
-                song.isFavourite = true
-                songIdList.add(song.songId)
-            } else {
-                song.isFavourite = false
-                songIdList.remove(matchingSong)
-            }
-
-            if (songIdList.isNotEmpty()) {
-                val newSongListJSON = PlaylistHelper.serialiseSongIds(songIdList)
-                this.songs = newSongListJSON
-            } else this.songs = null
-            musicLibraryViewModel.updatePlaylists(listOf(this))
-            updateSongs(listOf(song))
-            if (song.isFavourite) {
-                Toast.makeText(this@MainActivity, getString(R.string.added_to_favourites),
-                    Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this@MainActivity, getString(R.string.removed_from_favourites),
-                    Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
+    @Deprecated("Use MusicLibraryViewModel method instead")
+    fun toggleSongFavouriteStatus(song: Song?) {  }
 
     /**
      * Find the corresponding album ID for a given song.
