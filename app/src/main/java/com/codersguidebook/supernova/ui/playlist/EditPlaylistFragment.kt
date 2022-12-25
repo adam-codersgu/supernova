@@ -57,7 +57,7 @@ class EditPlaylistFragment : Fragment() {
         _binding = FragmentEditPlaylistBinding.inflate(inflater, container, false)
 
         callingActivity = activity as MainActivity
-        musicLibraryViewModel = ViewModelProvider(this).get(MusicLibraryViewModel::class.java)
+        musicLibraryViewModel = ViewModelProvider(callingActivity)[MusicLibraryViewModel::class.java]
         setHasOptionsMenu(true)
 
         lifecycleScope.launch(Dispatchers.Main) {

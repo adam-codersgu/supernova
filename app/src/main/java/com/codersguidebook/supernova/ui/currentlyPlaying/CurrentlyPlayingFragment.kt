@@ -83,7 +83,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
         binding.root.setListener(this)
         binding.animatedView.setListener(this)
         callingActivity = activity as MainActivity
-        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
+        musicLibraryViewModel = ViewModelProvider(callingActivity)[MusicLibraryViewModel::class.java]
 
         onBackPressedCallback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -163,8 +163,8 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
         }
 
         binding.currentFavourite.setOnClickListener {
-            lifecycleScope.launch(Dispatchers.Main) {
-                setFavouriteButtonStyle(callingActivity.toggleSongFavouriteStatus(currentSong))
+            currentSong?.let { song ->
+                setFavouriteButtonStyle(musicLibraryViewModel.toggleSongFavouriteStatus(song))
             }
         }
 

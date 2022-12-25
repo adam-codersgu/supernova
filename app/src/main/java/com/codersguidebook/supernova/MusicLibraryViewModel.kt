@@ -317,8 +317,9 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * playlist accordingly.
      *
      * @param song - The Song object that should be favourited/unfavourited.
+     * @return A Boolean indicating whether the song is currently favourited.
      */
-    fun toggleSongFavouriteStatus(song: Song) {
+    fun toggleSongFavouriteStatus(song: Song): Boolean {
         getPlaylistByName(getApplication<Application>().getString(R.string.favourites))?.apply {
             val songIdList = PlaylistHelper.extractSongIds(this.songs)
             val matchingSong = songIdList.firstOrNull { it == song.songId }
@@ -347,6 +348,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
                     Toast.LENGTH_SHORT).show()
             }
         }
+        return song.isFavourite
     }
 
     /**

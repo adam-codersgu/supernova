@@ -19,7 +19,7 @@ class AlbumOptions(private val albumId: String) : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val callingActivity = activity as MainActivity
-        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
+        musicLibraryViewModel = ViewModelProvider(callingActivity)[MusicLibraryViewModel::class.java]
 
         val inflater = callingActivity.layoutInflater
         _binding = OptionsLayoutBinding.inflate(inflater)

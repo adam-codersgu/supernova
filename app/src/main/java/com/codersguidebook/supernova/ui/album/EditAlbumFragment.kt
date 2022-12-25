@@ -55,7 +55,7 @@ class EditAlbumFragment : Fragment() {
         callingActivity = activity as MainActivity
         setHasOptionsMenu(true)
 
-        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
+        musicLibraryViewModel = ViewModelProvider(callingActivity)[MusicLibraryViewModel::class.java]
         musicLibraryViewModel.allSongs.observe(viewLifecycleOwner) {
             this.albumSongs = it.filter { song ->
                 song.albumId == albumID

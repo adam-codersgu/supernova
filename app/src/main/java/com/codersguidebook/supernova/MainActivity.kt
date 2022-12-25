@@ -723,15 +723,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Toggle the isFavourite field for a given Song object. Also update the favourites
-     * playlist accordingly.
-     *
-     * @param song - The target Song object.
-     */
-    @Deprecated("Use MusicLibraryViewModel method instead")
-    fun toggleSongFavouriteStatus(song: Song?) {  }
-
-    /**
      * Find the corresponding album ID for a given song.
      *
      * @param songId - The ID of the target song.
