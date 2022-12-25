@@ -728,11 +728,10 @@ class MainActivity : AppCompatActivity() {
      * playlist accordingly.
      *
      * @param song - The target Song object.
-     * @return A Boolean indicating the new value of the isFavourite field.
      */
-    suspend fun toggleSongFavouriteStatus(song: Song?): Boolean {
+    fun toggleSongFavouriteStatus(song: Song?) = lifecycleScope.launch(Dispatchers.Main) {
         Log.e("DEBUGGING", "The received song is " + song?.title + " and its favourite status is " + song?.isFavourite)
-        if (song == null) return false
+        if (song == null) return@launch
 
         val favouritesPlaylist = withContext(Dispatchers.IO) {
             musicLibraryViewModel.getPlaylistByName(getString(R.string.favourites))
@@ -757,17 +756,14 @@ class MainActivity : AppCompatActivity() {
             } else this.songs = null
             musicLibraryViewModel.updatePlaylists(listOf(this))
             updateSongs(listOf(song))
-            lifecycleScope.launch(Dispatchers.Main) {
-                if (song.isFavourite) {
-                    Toast.makeText(this@MainActivity, getString(R.string.added_to_favourites),
-                        Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this@MainActivity, getString(R.string.removed_from_favourites),
-                        Toast.LENGTH_SHORT).show()
-                }
+            if (song.isFavourite) {
+                Toast.makeText(this@MainActivity, getString(R.string.added_to_favourites),
+                    Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this@MainActivity, getString(R.string.removed_from_favourites),
+                    Toast.LENGTH_SHORT).show()
             }
         }
-        return song.isFavourite
     }
 
     /**

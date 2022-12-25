@@ -4,12 +4,15 @@ import android.app.Dialog
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import com.codersguidebook.supernova.databinding.OptionsLayoutBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 import com.codersguidebook.supernova.ui.songs.SongsFragmentDirections
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class SongOptions(private val song: Song) : DialogFragment() {
 
@@ -47,8 +50,10 @@ class SongOptions(private val song: Song) : DialogFragment() {
         else  binding.option3.text = getString(R.string.add_to_favourites)
 
         binding.option3.setOnClickListener {
-            callingActivity.toggleSongFavouriteStatus(song)
-            dismiss()
+            lifecycleScope.launch(Dispatchers.Main) {
+                callingActivity.toggleSongFavouriteStatus(song)
+                dismiss()
+            }
         }
 
         binding.option4.setOnClickListener{

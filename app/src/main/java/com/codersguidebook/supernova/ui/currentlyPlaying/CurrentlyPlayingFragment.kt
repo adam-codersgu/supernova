@@ -163,7 +163,9 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
         }
 
         binding.currentFavourite.setOnClickListener {
-            setFavouriteButtonStyle(callingActivity.toggleSongFavouriteStatus(currentSong))
+            lifecycleScope.launch(Dispatchers.Main) {
+                setFavouriteButtonStyle(callingActivity.toggleSongFavouriteStatus(currentSong))
+            }
         }
 
         val shuffleMode = sharedPreferences.getInt(SHUFFLE_MODE, SHUFFLE_MODE_NONE)

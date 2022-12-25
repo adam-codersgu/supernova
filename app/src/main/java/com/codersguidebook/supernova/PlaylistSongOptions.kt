@@ -8,11 +8,14 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isGone
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class PlaylistSongOptions(private val songs: MutableList<Song>,
                           private val position: Int,
@@ -51,12 +54,12 @@ class PlaylistSongOptions(private val songs: MutableList<Song>,
         txtTitle.text = song.title
 
         txtPlayNext.setOnClickListener{
-            callingActivity.addSongsToPlayQueue(listOf(songs[position]), true)
+            callingActivity.addSongsToPlayQueue(listOf(song), true)
             dismiss()
         }
 
         txtAddQueue.setOnClickListener{
-            callingActivity.addSongsToPlayQueue(listOf(songs[position]))
+            callingActivity.addSongsToPlayQueue(listOf(song))
             dismiss()
         }
 
@@ -64,8 +67,10 @@ class PlaylistSongOptions(private val songs: MutableList<Song>,
         else txtAddFavourites.text = getString(R.string.add_to_favourites)
 
         txtAddFavourites.setOnClickListener {
-            callingActivity.toggleSongFavouriteStatus(song)
-            dismiss()
+            lifecycleScope.launch(Dispatchers.Main) {
+                callingActivity.toggleSongFavouriteStatus(song)
+                dismiss()
+            }
         }
 
         txtViewArtist.setOnClickListener{
