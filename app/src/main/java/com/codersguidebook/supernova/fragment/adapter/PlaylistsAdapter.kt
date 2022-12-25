@@ -47,15 +47,15 @@ class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter
 
         holder.mPlaylistName.text = current.name
 
-        val playlistSongIDs = PlaylistHelper.extractSongIds(current.songs)
+        val playlistSongIds = PlaylistHelper.extractSongIds(current.songs)
         // FIXME: Maybe find another way to handle artwork for playlists with no songs
-        if (!ImageHandlingHelper.loadImageByPlaylist(activity.application,
-                current, holder.mArtwork) && playlistSongIDs.isNotEmpty()) {
+        if (!ImageHandlingHelper.loadImageByPlaylist(activity.application, current, holder.mArtwork)) {
+            // todo: resume
             ImageHandlingHelper.loadImageByAlbumId(activity.application,
-                activity.findAlbumIdBySongId(playlistSongIDs[0]), holder.mArtwork)
+                activity.findAlbumIdBySongId(playlistSongIds[0]), holder.mArtwork)
         }
 
-        val songCountInt = playlistSongIDs.size
+        val songCountInt = playlistSongIds.size
         holder.mSongCount.text = if (songCountInt == 1) activity.getString(R.string.displayed_song)
         else activity.getString(R.string.displayed_songs, songCountInt)
     }

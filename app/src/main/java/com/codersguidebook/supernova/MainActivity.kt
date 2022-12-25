@@ -191,6 +191,7 @@ class MainActivity : AppCompatActivity() {
 
         mediaBrowser = MediaBrowserCompat(this, ComponentName(this, MediaPlaybackService::class.java),
             connectionCallbacks, intent.extras)
+        mediaBrowser.connect()
 
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
@@ -255,7 +256,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        mediaBrowser.connect()
         refreshSongOfTheDay()
     }
 

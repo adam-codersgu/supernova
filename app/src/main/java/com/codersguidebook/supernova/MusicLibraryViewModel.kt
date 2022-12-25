@@ -298,9 +298,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param songId - The ID of the song.
      * @return The associated Song object, or null.
      */
-    // fixme
-    // suspend fun getSongById(songId: Long) : Song? = repository.findSongById(songId)
-    fun getSongById(songId: Long) : Song? = allSongs.value?.find { it.songId == songId }
+    suspend fun getSongById(songId: Long) : Song? = repository.findSongById(songId)
 
     /**
      * Retrieve the Song objects associated with a given album ID.
