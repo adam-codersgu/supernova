@@ -7,9 +7,12 @@ import android.provider.MediaStore
 import android.util.Size
 import android.widget.Toast
 import androidx.lifecycle.*
+import androidx.lifecycle.Observer
+import androidx.preference.PreferenceManager
 import com.codersguidebook.supernova.entities.Artist
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.params.SharedPreferencesConstants
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
 import kotlinx.coroutines.Deferred
@@ -17,12 +20,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.io.FileNotFoundException
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MusicLibraryViewModel(application: Application) : AndroidViewModel(application) {
 
     private val musicDao = MusicDatabase.getDatabase(application, viewModelScope).musicDao()
     private val playlistDao = MusicDatabase.getDatabase(application, viewModelScope).playlistDao()
     private val repository = MusicRepository(musicDao, playlistDao)
+    private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(application)
     val allSongs: LiveData<List<Song>> = repository.allSongs
     val allArtists: LiveData<List<Artist>> = repository.allArtists
     val allPlaylists: LiveData<List<Playlist>> = repository.allPlaylists
@@ -157,9 +163,9 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * Obtain a Cursor featuring all music entries in the media store that fulfil a given
      * selection criteria.
      *
-     * @param selection - The WHERE clause for the media store query.
+     * @param selection The WHERE clause for the media store query.
      * Default = standard WHERE clause that selects only music entries.
-     * @param selectionArgs - An array of String selection arguments that filter the results
+     * @param selectionArgs An array of String selection arguments that filter the results
      * that are returned in the Cursor.
      * Default = null (no selection arguments).
      * @return A Cursor object detailing all the relevant media store entries.
@@ -189,7 +195,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     /**
      * Use the media metadata from an entry in a Cursor object to construct a Song object.
      *
-     * @param cursor - A Cursor object that is set to the row containing the metadata that a Song
+     * @param cursor A Cursor object that is set to the row containing the metadata that a Song
      * object should be constructed for.
      */
     private fun createSongFromCursor(cursor: Cursor): Song {
@@ -250,7 +256,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * inserted, deleted or modified. This method evaluates the appropriate action to take
      * based on the media store record's media ID.
      *
-     * @param mediaId - The ID of the target media store record
+     * @param mediaId The ID of the target media store record
      */
     fun handleFileUpdateByMediaId(mediaId: Long) = viewModelScope.launch {
         val selection = MediaStore.Audio.Media._ID + "=?"
@@ -278,7 +284,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * Check if the album artwork associated with a song that has been removed from the music library
      * is still required. If the artwork is no longer used elsewhere, then the image  can be deleted.
      *
-     * @param song - The Song object that has been removed from the music library.
+     * @param song The Song object that has been removed from the music library.
      */
     private suspend fun deleteRedundantArtworkBySong(song: Song) {
         val songsWithAlbumId = repository.getSongByAlbumId(song.albumId)
@@ -290,7 +296,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     /**
      * Retrieve the Song object associated with a given ID.
      *
-     * @param songId - The ID of the song.
+     * @param songId The ID of the song.
      * @return The associated Song object, or null.
      */
     suspend fun getSongById(songId: Long) : Song? = repository.findSongById(songId)
@@ -309,7 +315,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * Toggle the isFavourite field for a given Song object. Also update the favourites
      * playlist accordingly.
      *
-     * @param song - The Song object that should be favourited/unfavourited.
+     * @param song The Song object that should be favourited/unfavourited.
      */
     fun toggleSongFavouriteStatus(song: Song) = viewModelScope.launch(Dispatchers.IO) {
         repository.findPlaylistByName(getApplication<Application>().getString(R.string.favourites))?.apply {
@@ -351,13 +357,14 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @return A LiveData representation of the associated Playlist object or null if no match found.
      */
     // fixme: a bad practice is used here. Fix it in lines with https://developer.android.com/topic/libraries/architecture/livedata#transform_livedata
+    //  set an active playlist to observe
     fun getPlaylistByName(name: String): LiveData<Playlist?> = repository.findPlaylistByNameLiveData(name)
 
     /**
      * Extract the corresponding Song objects for a list of Song IDs that have been
      * saved in JSON format. This method helps restore a playlist.
      *
-     * @param json - A JSON String representation of the playlist's song IDs.
+     * @param json A JSON String representation of the playlist's song IDs.
      * @return A mutable list of Song objects or an empty mutable list.
      */
     suspend fun extractPlaylistSongs(json: String?): MutableList<Song> {
@@ -369,8 +376,8 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     /**
      * Update the list of songs associated with a given playlist.
      *
-     * @param playlist - The target playlist.
-     * @param songIds - The list of song IDs to be saved with the playlist.
+     * @param playlist The target playlist.
+     * @param songIds The list of song IDs to be saved with the playlist.
      */
     fun savePlaylistWithSongIds(playlist: Playlist, songIds: List<Long>) {
         if (songIds.isNotEmpty()) {
@@ -382,7 +389,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     /**
      * Add a song to the Recently Played playlist.
      *
-     * @param songId - The media ID of the song.
+     * @param songId The media ID of the song.
      */
     fun addSongByIdToRecentlyPlayedPlaylist(songId: Long) = viewModelScope.launch(Dispatchers.IO) {
         repository.findPlaylistByName(getApplication<Application>().getString(R.string.recently_played))?.apply {
@@ -395,6 +402,42 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
             } else songIdList.add(songId)
             this.songs = PlaylistHelper.serialiseSongIds(songIdList)
             updatePlaylists(listOf(this))
+        }
+    }
+
+    /**
+     * Refresh the song of the day.
+     *
+     * @param forceUpdate Whether the song of the day should be refreshed even if it has already
+     * been updated for the current day (i.e. the refresh is user-initiated).
+     * Default = false.
+     */
+    fun refreshSongOfTheDay(forceUpdate: Boolean = false) = viewModelScope.launch(Dispatchers.IO) {
+        if (allSongs.value?.isNotEmpty() != true) return@launch
+        val playlist = repository.findPlaylistByName(getApplication<Application>()
+            .getString(R.string.song_day)) ?: Playlist(0, getApplication<Application>()
+            .getString(R.string.song_day), null, false)
+        val songIdList = PlaylistHelper.extractSongIds(playlist.songs)
+
+        val todayDate = SimpleDateFormat.getDateInstance().format(Date())
+        val lastUpdate = sharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null)
+        when {
+            todayDate != lastUpdate -> {
+                val song = allSongs.value?.random() ?: return@launch
+                songIdList.add(0, song.songId)
+                if (songIdList.size > 30) songIdList.removeAt(songIdList.size - 1)
+                savePlaylistWithSongIds(playlist, songIdList)
+                sharedPreferences.edit().apply {
+                    putString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, todayDate)
+                    apply()
+                }
+            }
+            forceUpdate -> {
+                if (songIdList.isNotEmpty()) songIdList.removeAt(0)
+                val song = allSongs.value?.random() ?: return@launch
+                songIdList.add(0, song.songId)
+                savePlaylistWithSongIds(playlist, songIdList)
+            }
         }
     }
 }

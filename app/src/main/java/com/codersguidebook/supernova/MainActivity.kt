@@ -35,7 +35,6 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import androidx.preference.PreferenceManager
 import com.codersguidebook.supernova.databinding.ActivityMainBinding
-import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
@@ -50,7 +49,6 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAY_QUEUE_ITEM_PAIRS
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
-import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SONG_OF_THE_DAY_LAST_UPDATED
 import com.codersguidebook.supernova.utils.*
 import com.google.android.material.navigation.NavigationView
 import com.google.gson.Gson
@@ -59,8 +57,6 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
-import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -255,7 +251,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        refreshSongOfTheDay()
+        musicLibraryViewModel.refreshSongOfTheDay()
     }
 
     override fun onResume() {
@@ -678,41 +674,6 @@ class MainActivity : AppCompatActivity() {
             setNegativeButton(R.string.cancel) { _, _ -> return@setNegativeButton }
             setPositiveButton(R.string.create_playlist, positiveButtonClick)
             show()
-        }
-    }
-
-    /**
-     * Refresh the song of the day.
-     *
-     * @param forceUpdate - Whether the song of the day should be refreshed even if it has already
-     * been updated for the current day (i.e. the refresh is user-initiated).
-     * Default = false.
-     */
-    fun refreshSongOfTheDay(forceUpdate: Boolean = false) {
-        if (musicLibraryViewModel.allSongs.value?.isNotEmpty() != true) return
-        val playlist = musicLibraryViewModel.getPlaylistByName(getString(R.string.song_day)).value
-            ?: Playlist(0, getString(R.string.song_day), null, false)
-        val songIdList = PlaylistHelper.extractSongIds(playlist.songs)
-
-        val todayDate = SimpleDateFormat.getDateInstance().format(Date())
-        val lastUpdate = sharedPreferences.getString(SONG_OF_THE_DAY_LAST_UPDATED, null)
-        when {
-            todayDate != lastUpdate -> {
-                val song = musicLibraryViewModel.allSongs.value?.random() ?: return
-                songIdList.add(0, song.songId)
-                if (songIdList.size > 30) songIdList.removeAt(songIdList.size - 1)
-                musicLibraryViewModel.savePlaylistWithSongIds(playlist, songIdList)
-                sharedPreferences.edit().apply {
-                    putString(SONG_OF_THE_DAY_LAST_UPDATED, todayDate)
-                    apply()
-                }
-            }
-            forceUpdate -> {
-                if (songIdList.isNotEmpty()) songIdList.removeAt(0)
-                val song = musicLibraryViewModel.allSongs.value?.random() ?: return
-                songIdList.add(0, song.songId)
-                musicLibraryViewModel.savePlaylistWithSongIds(playlist, songIdList)
-            }
         }
     }
 

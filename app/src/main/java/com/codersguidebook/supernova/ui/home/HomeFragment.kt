@@ -78,7 +78,7 @@ class HomeFragment : BaseFragment() {
         binding.recentlyPlayedRecyclerView.adapter = recentlyPlayedAdapter
 
         binding.refreshSongOfTheDay.setOnClickListener {
-            mainActivity.refreshSongOfTheDay(true)
+            musicLibraryViewModel.refreshSongOfTheDay(true)
         }
 
         binding.textViewSongOfTheDay.setOnClickListener {
@@ -102,6 +102,7 @@ class HomeFragment : BaseFragment() {
         }
 
         musicLibraryViewModel.allPlaylists.observe(viewLifecycleOwner) { playlists ->
+            // TODO: Implement the BaseRecyclerViewFragment system to prevent duplicate requests
             playlists.find { it.name == getString(R.string.song_day) }?.let {
                 processPlaylist(it, songOfTheDayAdapter, binding.homeSongOfTheDay)
             }
