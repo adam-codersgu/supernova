@@ -45,6 +45,7 @@ class HomeFragment : Fragment() {
 
         songOfTheDayAdapter = SongOfTheDayAdapter(callingActivity)
         // todo: can you create multiple instances of the same adapter actually for these bottom 3?
+        //  May not be possible because not the most played adapter needs to display the song count and colour system
         favouritesAdapter = FavouritesAdapter(callingActivity)
         mostPlayedAdapter = MostPlayedAdapter(callingActivity)
         recentlyPlayedAdapter = RecentlyPlayedAdapter(callingActivity)
@@ -97,7 +98,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun loadPlaylists() {
-        musicLibraryViewModel.getPlaylistByNameLiveData(getString(R.string.song_day)).observe(viewLifecycleOwner) { playlist ->
+        musicLibraryViewModel.getPlaylistByName(getString(R.string.song_day)).observe(viewLifecycleOwner) { playlist ->
             playlist?.let {
                 lifecycleScope.launch(Dispatchers.Main) {
                     val songs = withContext(Dispatchers.IO) {
@@ -120,7 +121,7 @@ class HomeFragment : Fragment() {
             }
         }
 
-        musicLibraryViewModel.getPlaylistByNameLiveData(getString(R.string.favourites)).observe(viewLifecycleOwner) { playlist ->
+        musicLibraryViewModel.getPlaylistByName(getString(R.string.favourites)).observe(viewLifecycleOwner) { playlist ->
             playlist?.let {
                 lifecycleScope.launch(Dispatchers.Main) {
                     val previousSongs = favouritesAdapter.previousSongs
@@ -157,7 +158,7 @@ class HomeFragment : Fragment() {
             }
         }
 
-        musicLibraryViewModel.getPlaylistByNameLiveData(getString(R.string.most_played)).observe(viewLifecycleOwner) { playlist ->
+        musicLibraryViewModel.getPlaylistByName(getString(R.string.most_played)).observe(viewLifecycleOwner) { playlist ->
             playlist?.let {
                 lifecycleScope.launch(Dispatchers.Main) {
                     val songs = withContext(Dispatchers.IO) {
@@ -172,21 +173,30 @@ class HomeFragment : Fragment() {
                             findNavController().navigate(action)
                         }
                     }
-                    when {
-                        mostPlayedAdapter.songs.isEmpty() -> {
-                            mostPlayedAdapter.songs = songs.take(10).toMutableList()
-                            mostPlayedAdapter.notifyItemRangeInserted(
-                                0,
-                                mostPlayedAdapter.songs.size
-                            )
+
+                    val mostPlayedSongsSelection = songs.take(10)
+                    // todo: the below code may be reusable across adapters. e.g. function that accepts
+                    //  a list of songs and an adapter (assuming all adapters are subclasses of SongAdapter)
+                    if (mostPlayedAdapter.songs.isEmpty()) {
+                        mostPlayedAdapter.songs.addAll(mostPlayedSongsSelection)
+                        mostPlayedAdapter.notifyItemRangeInserted(0, mostPlayedSongsSelection.size)
+                    } else {
+                        for ((index, song) in mostPlayedSongsSelection.withIndex()) {
+                            mostPlayedAdapter.processLoopIteration(index, song)
                         }
-                        else -> mostPlayedAdapter.processSongs(songs.take(10))
+
+                        if (mostPlayedAdapter.songs.size > mostPlayedSongsSelection.size) {
+                            val numberItemsToRemove = mostPlayedAdapter.songs.size - mostPlayedSongsSelection.size
+                            repeat(numberItemsToRemove) { mostPlayedAdapter.songs.removeLast() }
+                            mostPlayedAdapter.notifyItemRangeRemoved(
+                                mostPlayedAdapter.getRecyclerViewIndex(songs.size), numberItemsToRemove)
+                        }
                     }
                 }
             }
         }
 
-        musicLibraryViewModel.getPlaylistByNameLiveData(getString(R.string.recently_played)).observe(viewLifecycleOwner) { playlist ->
+        musicLibraryViewModel.getPlaylistByName(getString(R.string.recently_played)).observe(viewLifecycleOwner) { playlist ->
             playlist?.let {
                 lifecycleScope.launch(Dispatchers.Main) {
                     val songs = withContext(Dispatchers.IO) {

@@ -47,7 +47,7 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
     /**
      * Refresh the content displayed in the RecyclerView.
      *
-     * @param songs - The up-to-date list of Song objects that should be displayed.
+     * @param songs The up-to-date list of Song objects that should be displayed.
      */
     open fun updateRecyclerView(songs: List<Song>) {
         setIsUpdatingTrue()

@@ -86,7 +86,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
 
                 if (!ImageHandlingHelper.loadImageByPlaylist(activity.application,
                         playlist ?: return, holder.mArtwork)) {
-                    val albumIds = songs.map { it.albumId }.shuffled()
+                    val albumIds = songs.map { it.albumId }.distinct().shuffled()
 
                     when {
                         albumIds.size > 1 -> {

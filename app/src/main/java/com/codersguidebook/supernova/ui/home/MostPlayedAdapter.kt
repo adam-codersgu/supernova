@@ -11,15 +11,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.SongOptions
-import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.fragment.adapter.SongAdapter
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
-class MostPlayedAdapter(private val mainActivity: MainActivity):
-    RecyclerView.Adapter<MostPlayedAdapter.SongsViewHolder>() {
+class MostPlayedAdapter(private val activity: MainActivity): SongAdapter() {
 
-    var songs = mutableListOf<Song>()
-
-    inner class SongsViewHolder(itemView: View) :
+    inner class ViewHolderSong(itemView: View) :
         RecyclerView.ViewHolder(itemView),
         View.OnClickListener {
 
@@ -32,95 +29,59 @@ class MostPlayedAdapter(private val mainActivity: MainActivity):
             itemView.isClickable = true
             itemView.setOnClickListener(this)
             itemView.setOnLongClickListener{
-                mainActivity.openDialog(SongOptions(songs[layoutPosition]))
+                activity.openDialog(SongOptions(songs[layoutPosition]))
                 return@setOnLongClickListener true
             }
         }
 
         override fun onClick(view: View) {
-            mainActivity.playNewPlayQueue(songs, layoutPosition)
+            activity.playNewPlayQueue(songs, layoutPosition)
         }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SongsViewHolder {
-        return SongsViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.small_song_preview, parent, false))
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return ViewHolderSong(LayoutInflater.from(parent.context).inflate(R.layout.small_song_preview, parent, false))
     }
 
-    override fun onBindViewHolder(holder: SongsViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        holder as ViewHolderSong
+
         val current = songs[position]
         holder.mPlays.isVisible = true
 
         when (position) {
             0 -> {
-                holder.mTitle.setTextColor(ContextCompat.getColor(mainActivity, R.color.gold))
-                holder.mArtist.setTextColor(ContextCompat.getColor(mainActivity, R.color.gold60))
-                holder.mPlays.setTextColor(ContextCompat.getColor(mainActivity, R.color.gold60))
+                holder.mTitle.setTextColor(ContextCompat.getColor(activity, R.color.gold))
+                holder.mArtist.setTextColor(ContextCompat.getColor(activity, R.color.gold60))
+                holder.mPlays.setTextColor(ContextCompat.getColor(activity, R.color.gold60))
             }
             1 -> {
-                holder.mTitle.setTextColor(ContextCompat.getColor(mainActivity, R.color.silver))
-                holder.mArtist.setTextColor(ContextCompat.getColor(mainActivity, R.color.silver60))
-                holder.mPlays.setTextColor(ContextCompat.getColor(mainActivity, R.color.silver60))
+                holder.mTitle.setTextColor(ContextCompat.getColor(activity, R.color.silver))
+                holder.mArtist.setTextColor(ContextCompat.getColor(activity, R.color.silver60))
+                holder.mPlays.setTextColor(ContextCompat.getColor(activity, R.color.silver60))
             }
             2 -> {
-                holder.mTitle.setTextColor(ContextCompat.getColor(mainActivity, R.color.bronze))
-                holder.mArtist.setTextColor(ContextCompat.getColor(mainActivity, R.color.bronze60))
-                holder.mPlays.setTextColor(ContextCompat.getColor(mainActivity, R.color.bronze60))
+                holder.mTitle.setTextColor(ContextCompat.getColor(activity, R.color.bronze))
+                holder.mArtist.setTextColor(ContextCompat.getColor(activity, R.color.bronze60))
+                holder.mPlays.setTextColor(ContextCompat.getColor(activity, R.color.bronze60))
             }
             else -> {
-                holder.mTitle.setTextColor(ContextCompat.getColor(mainActivity, android.R.color.white))
-                holder.mArtist.setTextColor(ContextCompat.getColor(mainActivity, R.color.onSurface60))
-                holder.mPlays.setTextColor(ContextCompat.getColor(mainActivity, R.color.onSurface60))
+                holder.mTitle.setTextColor(ContextCompat.getColor(activity, android.R.color.white))
+                holder.mArtist.setTextColor(ContextCompat.getColor(activity, R.color.onSurface60))
+                holder.mPlays.setTextColor(ContextCompat.getColor(activity, R.color.onSurface60))
             }
         }
 
-        ImageHandlingHelper.loadImageByAlbumId(mainActivity.application, current.albumId, holder.mArtwork)
+        ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId, holder.mArtwork)
 
         holder.mTitle.text = current.title
         holder.mArtist.text = current.artist
 
         val plays = current.plays
-        val playsText = if (plays == 1) "1 play"
-        else "$plays plays"
-        holder.mPlays.text = playsText
-    }
-
-    internal fun processSongs(songList: List<Song>) {
-        try {
-            for ((i, s) in songList.withIndex()) {
-                if (s.songId != songs[i].songId) {
-                    val index = songs.indexOfFirst {
-                        it.songId == s.songId
-                    }
-                    if (index != -1) {
-                        songs.removeAt(index)
-                        songs.add(i, s)
-                        notifyItemMoved(index, i)
-                        notifyItemChanged(index)
-                    } else {
-                        songs.add(i, s)
-                        if (songs.size > 10) {
-                            songs.removeAt(songs.size - 1)
-                            notifyItemRemoved(10)
-                            notifyItemInserted(i)
-                        } else notifyItemInserted(i)
-                    }
-                    notifyItemChanged(i)
-                    if (i < 3) notifyItemRangeChanged(0, 4)
-                }
-            }
-        } catch (e: IndexOutOfBoundsException) {
-            val song = songList[songList.size - 1]
-            if (songs.size >= 10) {
-                songs.removeAt(songs.size -1)
-                songs.add(song)
-                notifyItemChanged(songs.size - 1)
-            } else {
-                songs.add(song)
-                notifyItemInserted(songs.size)
-                notifyItemChanged(songs.size)
-            }
+        holder.mPlays.text = if (plays == 1) {
+            activity.getString(R.string.one_play)
+        } else {
+            activity.getString(R.string.n_plays, plays)
         }
     }
-
-    override fun getItemCount() = songs.size
 }

@@ -62,7 +62,7 @@ class EditPlaylistFragment : Fragment() {
             // TODO: For areas of the codebase like this, can we use a view model method that itself finds the playlist
             //  and extracts their songs in one go? This would save the coroutine code duplication
             //  e.g. see edit playlist fragment
-            musicLibraryViewModel.getPlaylistByNameLiveData(name).observe(viewLifecycleOwner) {
+            musicLibraryViewModel.getPlaylistByName(name).observe(viewLifecycleOwner) {
                 lifecycleScope.launch(Dispatchers.Main) {
                     playlist = it
                     playlist?.let {

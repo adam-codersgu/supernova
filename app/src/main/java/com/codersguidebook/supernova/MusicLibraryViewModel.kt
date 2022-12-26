@@ -20,17 +20,19 @@ import java.io.FileNotFoundException
 
 class MusicLibraryViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository: MusicRepository
-    val allSongs: LiveData<List<Song>>
-    val allArtists: LiveData<List<Artist>>
-    val allPlaylists: LiveData<List<Playlist>>
+    private val musicDao = MusicDatabase.getDatabase(application, viewModelScope).musicDao()
+    private val playlistDao = MusicDatabase.getDatabase(application, viewModelScope).playlistDao()
+    private val repository = MusicRepository(musicDao, playlistDao)
+    val allSongs: LiveData<List<Song>> = repository.allSongs
+    val allArtists: LiveData<List<Artist>> = repository.allArtists
+    val allPlaylists: LiveData<List<Playlist>> = repository.allPlaylists
     val deletedSongIds = MutableLiveData<MutableList<Long>>()
 
     private val mostPlayedSongsObserver: Observer<List<Long>> = Observer<List<Long>> {
         viewModelScope.launch(Dispatchers.IO) {
-            getPlaylistByNameLiveData(application.getString(R.string.most_played)).value?.apply {
+            repository.findPlaylistByName(getApplication<Application>().getString(R.string.most_played))?.apply {
                 val mostPlayedSongs = PlaylistHelper.serialiseSongIds(it)
-                if (mostPlayedSongs != this.songs){
+                if (mostPlayedSongs != this.songs) {
                     this.songs = mostPlayedSongs
                     updatePlaylists(listOf(this))
                 }
@@ -39,13 +41,6 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     }
 
     init {
-        val musicDao = MusicDatabase.getDatabase(application, viewModelScope).musicDao()
-        val playlistDao = MusicDatabase.getDatabase(application, viewModelScope).playlistDao()
-        repository = MusicRepository(musicDao, playlistDao)
-        allSongs = repository.allSongs
-        allArtists = repository.allArtists
-        allPlaylists = repository.allPlaylists
-
         repository.mostPlayedSongsById.observeForever(mostPlayedSongsObserver)
     }
 
@@ -303,7 +298,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     /**
      * Retrieve the Song objects associated with a given album ID.
      *
-     * @param albumId - The ID of the album.
+     * @param albumId The ID of the album.
      * @return A list of the associated Song objects sorted by track number.
      */
     fun getSongsByAlbumId(albumId: String) : List<Song> = allSongs.value?.filter {
@@ -318,7 +313,9 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @return A Boolean indicating whether the song is currently favourited.
      */
     fun toggleSongFavouriteStatus(song: Song): Boolean {
-        getPlaylistByName(getApplication<Application>().getString(R.string.favourites))?.apply {
+        allPlaylists.value?.find {
+            it.name == getApplication<Application>().getString(R.string.favourites)
+        }?.apply {
             val songIdList = PlaylistHelper.extractSongIds(this.songs)
             val matchingSong = songIdList.firstOrNull { it == song.songId }
 
@@ -352,20 +349,11 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     /**
      * Find the Playlist object associated with a given name.
      *
-     * @param name - The playlist's name.
-     * @return The associated Playlist object or null if no match found.
+     * @param name The playlist's name.
+     * @return A LiveData representation of the associated Playlist object or null if no match found.
      */
-    fun getPlaylistByNameLiveData(name: String): LiveData<Playlist?> = repository.findPlaylistByNameLiveData(name)
-
-    /**
-     * Find the Playlist object associated with a given name.
-     *
-     * @param name - The playlist's name.
-     * @return The associated Playlist object or null if no match found.
-     */
-    // fixme
-    // suspend fun getPlaylistByName(name: String): Playlist? = repository.findPlaylistByName(name)
-    fun getPlaylistByName(name: String): Playlist? = allPlaylists.value?.find { it.name == name }
+    // fixme: a bad practice is used here. Fix it in lines with https://developer.android.com/topic/libraries/architecture/livedata#transform_livedata
+    fun getPlaylistByName(name: String): LiveData<Playlist?> = repository.findPlaylistByNameLiveData(name)
 
     /**
      * Extract the corresponding Song objects for a list of Song IDs that have been
@@ -399,7 +387,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param songId - The media ID of the song.
      */
     fun addSongByIdToRecentlyPlayedPlaylist(songId: Long) = viewModelScope.launch(Dispatchers.IO) {
-        getPlaylistByNameLiveData(getApplication<Application>().getString(R.string.recently_played)).value?.apply {
+        repository.findPlaylistByName(getApplication<Application>().getString(R.string.recently_played))?.apply {
             val songIdList = PlaylistHelper.extractSongIds(this.songs)
             if (songIdList.isNotEmpty()) {
                 val index = songIdList.indexOfFirst { it == songId }

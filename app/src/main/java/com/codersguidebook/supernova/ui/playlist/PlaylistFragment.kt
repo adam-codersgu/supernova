@@ -87,7 +87,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
             //  e.g. see edit playlist fragment
             // TODO: Need to test if this observer actually works. e.g. when playlist fragment is open, and a
             //  given song within that playlist is deleted from the device, does the UI update?
-            musicLibraryViewModel.getPlaylistByNameLiveData(name).observe(viewLifecycleOwner) {
+            musicLibraryViewModel.getPlaylistByName(name).observe(viewLifecycleOwner) {
                 lifecycleScope.launch(Dispatchers.Main) {
                     playlist = it
                     (adapter as PlaylistAdapter).playlist = it
@@ -112,7 +112,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
     }
 
     override fun requestNewData() {
-        musicLibraryViewModel.getPlaylistByNameLiveData(playlistName ?: return).value?.let {
+        musicLibraryViewModel.getPlaylistByName(playlistName ?: return).value?.let {
             lifecycleScope.launch(Dispatchers.Main) {
                 val songs = withContext(Dispatchers.IO) {
                     musicLibraryViewModel.extractPlaylistSongs(it.songs)

@@ -238,6 +238,7 @@ class MainActivity : AppCompatActivity() {
                 true, it)
         }
 
+        // todo: test this
         musicLibraryViewModel.deletedSongIds.observe(this) { songIds ->
             if (songIds.isEmpty()) return@observe
             for (songId in songIds) {
@@ -689,7 +690,7 @@ class MainActivity : AppCompatActivity() {
      */
     fun refreshSongOfTheDay(forceUpdate: Boolean = false) {
         if (musicLibraryViewModel.allSongs.value?.isNotEmpty() != true) return
-        val playlist = musicLibraryViewModel.getPlaylistByNameLiveData(getString(R.string.song_day)).value
+        val playlist = musicLibraryViewModel.getPlaylistByName(getString(R.string.song_day)).value
             ?: Playlist(0, getString(R.string.song_day), null, false)
         val songIdList = PlaylistHelper.extractSongIds(playlist.songs)
 
