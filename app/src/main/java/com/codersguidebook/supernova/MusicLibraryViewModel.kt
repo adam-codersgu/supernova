@@ -55,6 +55,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
         repository.mostPlayedSongsById.removeObserver(mostPlayedSongsObserver)
     }
 
+    // todo: the library refresh and cleanup methodology needs to be tested
     private fun deleteSong(song: Song) = viewModelScope.launch(Dispatchers.Default) {
         allPlaylists.value?.let { playlists ->
             if (playlists.isNotEmpty()) {
@@ -413,7 +414,6 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * Default = false.
      */
     fun refreshSongOfTheDay(forceUpdate: Boolean = false) = viewModelScope.launch(Dispatchers.IO) {
-        if (allSongs.value?.isNotEmpty() != true) return@launch
         val playlist = repository.findPlaylistByName(getApplication<Application>()
             .getString(R.string.song_day)) ?: Playlist(0, getApplication<Application>()
             .getString(R.string.song_day), null, false)
@@ -423,7 +423,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
         val lastUpdate = sharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null)
         when {
             todayDate != lastUpdate -> {
-                val song = allSongs.value?.random() ?: return@launch
+                val song = repository.findRandomSong() ?: return@launch
                 songIdList.add(0, song.songId)
                 if (songIdList.size > 30) songIdList.removeAt(songIdList.size - 1)
                 savePlaylistWithSongIds(playlist, songIdList)
@@ -434,7 +434,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
             }
             forceUpdate -> {
                 if (songIdList.isNotEmpty()) songIdList.removeAt(0)
-                val song = allSongs.value?.random() ?: return@launch
+                val song = repository.findRandomSong() ?: return@launch
                 songIdList.add(0, song.songId)
                 savePlaylistWithSongIds(playlist, songIdList)
             }

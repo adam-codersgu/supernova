@@ -44,6 +44,9 @@ interface MusicDao {
     @Query("SELECT * FROM music_library WHERE songId = :songId")
     suspend fun findSongById(songId: Long): Song?
 
+    @Query("SELECT * FROM music_library ORDER BY RANDOM() LIMIT 1")
+    suspend fun findRandomSong(): Song?
+
     @Update(onConflict = OnConflictStrategy.REPLACE)
     suspend fun updateSong(song: Song)
 
