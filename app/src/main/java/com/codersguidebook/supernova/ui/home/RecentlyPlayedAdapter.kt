@@ -9,14 +9,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.SongOptions
-import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.fragment.adapter.SongAdapter
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
-class RecentlyPlayedAdapter(private val mainActivity: MainActivity):
-    RecyclerView.Adapter<RecentlyPlayedAdapter.SongsViewHolder>() {
-    var songs = mutableListOf<Song>()
+class RecentlyPlayedAdapter(private val mainActivity: MainActivity): SongAdapter() {
 
-    inner class SongsViewHolder(itemView: View) :
+    inner class ViewHolderSong(itemView: View) :
         RecyclerView.ViewHolder(itemView),
         View.OnClickListener {
 
@@ -38,55 +36,16 @@ class RecentlyPlayedAdapter(private val mainActivity: MainActivity):
         }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SongsViewHolder {
-        return SongsViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.small_song_preview, parent, false))
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return ViewHolderSong(LayoutInflater.from(parent.context).inflate(R.layout.small_song_preview, parent, false))
     }
 
-    override fun onBindViewHolder(holder: SongsViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        holder as ViewHolderSong
+
         val current = songs[position]
         ImageHandlingHelper.loadImageByAlbumId(mainActivity.application, current.albumId, holder.mArtwork)
         holder.mTitle.text = current.title
         holder.mArtist.text = current.artist
     }
-
-    internal fun processSongs(songList: List<Song>) {
-        try {
-            for ((i, s) in songList.withIndex()) {
-                if (s.songId != songs[i].songId) {
-                    val index = songs.indexOfFirst {
-                        it.songId == s.songId
-                    }
-                    if (index != -1) {
-                        songs.removeAt(index)
-                        songs.add(i, s)
-                        notifyItemMoved(index, i)
-                    } else {
-                        songs.add(i, s)
-                        if (songs.size > 10) {
-                            songs.removeAt(songs.size - 1)
-                            notifyItemRemoved(10)
-                            notifyItemInserted(i)
-                        } else {
-                            notifyItemInserted(i)
-                            notifyItemChanged(i)
-                        }
-                    }
-                    break
-                }
-            }
-        } catch (e: IndexOutOfBoundsException) {
-            val song = songList[songList.size - 1]
-            if (songs.size >= 10) {
-                songs.removeAt(songs.size -1)
-                songs.add(song)
-                notifyItemChanged(songs.size - 1)
-            } else {
-                songs.add(song)
-                notifyItemInserted(songs.size)
-                notifyItemChanged(songs.size)
-            }
-        }
-    }
-
-    override fun getItemCount() = songs.size
 }

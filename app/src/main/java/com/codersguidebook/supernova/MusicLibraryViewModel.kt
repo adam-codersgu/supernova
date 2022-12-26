@@ -310,12 +310,9 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * playlist accordingly.
      *
      * @param song - The Song object that should be favourited/unfavourited.
-     * @return A Boolean indicating whether the song is currently favourited.
      */
-    fun toggleSongFavouriteStatus(song: Song): Boolean {
-        allPlaylists.value?.find {
-            it.name == getApplication<Application>().getString(R.string.favourites)
-        }?.apply {
+    fun toggleSongFavouriteStatus(song: Song) = viewModelScope.launch(Dispatchers.IO) {
+        repository.findPlaylistByName(getApplication<Application>().getString(R.string.favourites))?.apply {
             val songIdList = PlaylistHelper.extractSongIds(this.songs)
             val matchingSong = songIdList.firstOrNull { it == song.songId }
 
@@ -333,17 +330,18 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
             } else this.songs = null
             updatePlaylists(listOf(this))
             updateSongs(listOf(song))
-            if (song.isFavourite) {
-                Toast.makeText(getApplication(),
-                    getApplication<Application>().getString(R.string.added_to_favourites),
-                    Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(getApplication(),
-                    getApplication<Application>().getString(R.string.removed_from_favourites),
-                    Toast.LENGTH_SHORT).show()
+            launch(Dispatchers.Main) {
+                if (song.isFavourite) {
+                    Toast.makeText(getApplication(),
+                        getApplication<Application>().getString(R.string.added_to_favourites),
+                        Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(getApplication(),
+                        getApplication<Application>().getString(R.string.removed_from_favourites),
+                        Toast.LENGTH_SHORT).show()
+                }
             }
         }
-        return song.isFavourite
     }
 
     /**

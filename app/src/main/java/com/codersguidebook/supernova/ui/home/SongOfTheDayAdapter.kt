@@ -9,14 +9,15 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.SongOptions
-import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.fragment.adapter.SongAdapter
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
-class SongOfTheDayAdapter(private val mainActivity: MainActivity):
-    RecyclerView.Adapter<SongOfTheDayAdapter.SongsViewHolder>() {
-    var song: Song? = null
+class SongOfTheDayAdapter(private val mainActivity: MainActivity): SongAdapter() {
 
-    inner class SongsViewHolder(itemView: View) :
+    // TODO: Perhaps add header pane that displays the no content layout if no contents in the adapter
+    //  binding.songOfTheDayNoContent.isVisible = true
+
+    inner class ViewHolderSong(itemView: View) :
         RecyclerView.ViewHolder(itemView),
         View.OnClickListener {
 
@@ -29,37 +30,28 @@ class SongOfTheDayAdapter(private val mainActivity: MainActivity):
             itemView.isClickable = true
             itemView.setOnClickListener(this)
             itemView.setOnLongClickListener{
-                mainActivity.openDialog(SongOptions(song!!))
+                mainActivity.openDialog(SongOptions(songs[layoutPosition]))
                 return@setOnLongClickListener true
             }
         }
 
         override fun onClick(view: View) {
-            song?.let { mainActivity.playNewPlayQueue(listOf(it)) }
+            mainActivity.playNewPlayQueue(songs, layoutPosition)
         }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SongsViewHolder {
-        return SongsViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.large_preview, parent, false))
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return ViewHolderSong(LayoutInflater.from(parent.context).inflate(R.layout.large_preview, parent, false))
     }
 
-    override fun onBindViewHolder(holder: SongsViewHolder, position: Int) {
-        ImageHandlingHelper.loadImageByAlbumId(mainActivity.application, song?.albumId, holder.mArtwork)
-        holder.mTitle.text = song?.title
-        holder.mArtist.text = song?.artist
-        holder.mAlbum.text = song?.albumName
-    }
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        holder as ViewHolderSong
 
-    internal fun changeItem(newSong: Song) {
-        if (song == null) {
-            song = newSong
-            notifyItemInserted(0)
-        } else {
-            song = newSong
-            notifyItemChanged(0)
-        }
-    }
+        val song = songs[position]
 
-    override fun getItemCount() = if (song != null) 1
-    else 0
+        ImageHandlingHelper.loadImageByAlbumId(mainActivity.application, song.albumId, holder.mArtwork)
+        holder.mTitle.text = song.title
+        holder.mArtist.text = song.artist
+        holder.mAlbum.text = song.albumName
+    }
 }
