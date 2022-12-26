@@ -84,6 +84,9 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
         playlistName?.let { name ->
             // TODO: For areas of the codebase like this, can we use a view model method that itself finds the playlist
             //  and extracts their songs in one go? This would save the coroutine code duplication
+            //  e.g. see edit playlist fragment
+            // TODO: Need to test if this observer actually works. e.g. when playlist fragment is open, and a
+            //  given song within that playlist is deleted from the device, does the UI update?
             musicLibraryViewModel.getPlaylistByNameLiveData(name).observe(viewLifecycleOwner) {
                 lifecycleScope.launch(Dispatchers.Main) {
                     playlist = it

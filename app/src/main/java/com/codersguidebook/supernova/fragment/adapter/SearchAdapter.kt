@@ -129,11 +129,10 @@ class SearchAdapter(private val activity: MainActivity): RecyclerView.Adapter<Re
                 val current = playlists[position]
 
                 holder.mArtwork.isVisible = true
+
                 val playlistSongIds = PlaylistHelper.extractSongIds(current.songs)
-                if (playlistSongIds.isNotEmpty()){
-                    val firstSongArtwork = activity.findAlbumIdBySongId(playlistSongIds[0])
-                    ImageHandlingHelper.loadImageByAlbumId(activity.application,
-                        firstSongArtwork, holder.mArtwork)
+                if (!ImageHandlingHelper.loadImageByPlaylist(activity.application, current, holder.mArtwork)) {
+                    activity.loadRandomArtworkBySongIds(playlistSongIds, holder.mArtwork)
                 }
 
                 holder.mTitle.text = current.name

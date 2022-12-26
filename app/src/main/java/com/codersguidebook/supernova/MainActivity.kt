@@ -17,6 +17,7 @@ import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.media.session.PlaybackStateCompat.*
 import android.view.Menu
 import android.view.inputmethod.InputMethodManager
+import android.widget.ImageView
 import android.widget.SearchView
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -50,10 +51,7 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SONG_OF_THE_DAY_LAST_UPDATED
-import com.codersguidebook.supernova.utils.MediaDescriptionCompatManager
-import com.codersguidebook.supernova.utils.MediaStoreContentObserver
-import com.codersguidebook.supernova.utils.PlaylistHelper
-import com.codersguidebook.supernova.utils.StorageAccessPermissionHelper
+import com.codersguidebook.supernova.utils.*
 import com.google.android.material.navigation.NavigationView
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -554,6 +552,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
+     * Load backup art for a playlist based on the artwork associated with a given song within
+     * that playlist. If the playlist does not contain any songs, then default art will be displayed.
+     *
+     * @param songIds - A list of song IDs that artwork can be randomly sourced from. The list can be empty.
+     * @param view The ImageView widget that the artwork should be rendered in.
+     */
+    fun loadRandomArtworkBySongIds(songIds: List<Long>, view: ImageView) = lifecycleScope.launch(Dispatchers.Main) {
+        val songId = if (songIds.isNotEmpty()) songIds.random()
+        else null
+        val albumId = if (songId != null) withContext(Dispatchers.IO) {
+            musicLibraryViewModel.getSongById(songId)
+        }?.albumId else null
+        ImageHandlingHelper.loadImageByAlbumId(application, albumId, view)
+    }
+
+    /**
      * Hide/reveal the status bars. If the status bars are hidden, then they can be transiently
      * revealed using a swipe motion.
      *
@@ -720,18 +734,6 @@ class MainActivity : AppCompatActivity() {
                 mediaController.sendCommand(UPDATE_QUEUE_ITEM, mediaDescriptionBundle, null)
             }
         }
-    }
-
-    /**
-     * Find the corresponding album ID for a given song.
-     *
-     * @param songId - The ID of the target song.
-     * @return The song's album ID or null.
-     */
-    fun findAlbumIdBySongId(songId: Long): String? {
-        return musicLibraryViewModel.allSongs.value?.find {
-            it.songId == songId
-        }?.albumId
     }
 
     fun openDialog(dialog: DialogFragment) = dialog.show(supportFragmentManager, "")

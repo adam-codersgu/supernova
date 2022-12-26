@@ -7,7 +7,6 @@ import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
-import android.text.Editable
 import android.text.SpannableStringBuilder
 import android.view.*
 import android.widget.Toast
@@ -25,7 +24,6 @@ import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
 import java.io.IOException
 
@@ -60,19 +58,24 @@ class EditPlaylistFragment : Fragment() {
         musicLibraryViewModel = ViewModelProvider(callingActivity)[MusicLibraryViewModel::class.java]
         setHasOptionsMenu(true)
 
-        lifecycleScope.launch(Dispatchers.Main) {
-            playlist = withContext(Dispatchers.IO) {
-                musicLibraryViewModel.getPlaylistByNameLiveData(playlistName ?: "").value
-            }
-            playlist?.let {
-                val editable: Editable = SpannableStringBuilder(it.name)
-                binding.editPlaylistName.text = editable
+        playlistName?.let { name ->
+            // TODO: For areas of the codebase like this, can we use a view model method that itself finds the playlist
+            //  and extracts their songs in one go? This would save the coroutine code duplication
+            //  e.g. see edit playlist fragment
+            musicLibraryViewModel.getPlaylistByNameLiveData(name).observe(viewLifecycleOwner) {
+                lifecycleScope.launch(Dispatchers.Main) {
+                    playlist = it
+                    playlist?.let {
+                        // fixme
+                        // val editable: Editable = SpannableStringBuilder(it.name)
+                        // binding.editPlaylistName.text = editable
+                        binding.editPlaylistName.text = SpannableStringBuilder(it.name)
 
-                if (!ImageHandlingHelper.loadImageByPlaylist(callingActivity.application, it,
-                        binding.artwork)) {
-                    val playlistSongIDs = PlaylistHelper.extractSongIds(it.songs)
-                    ImageHandlingHelper.loadImageByAlbumId(callingActivity.application,
-                        callingActivity.findAlbumIdBySongId(playlistSongIDs[0]), binding.artwork)
+                        val playlistSongIds = PlaylistHelper.extractSongIds(it.songs)
+                        if (!ImageHandlingHelper.loadImageByPlaylist(callingActivity.application, it, binding.artwork)) {
+                            callingActivity.loadRandomArtworkBySongIds(playlistSongIds, binding.artwork)
+                        }
+                    }
                 }
             }
         }
