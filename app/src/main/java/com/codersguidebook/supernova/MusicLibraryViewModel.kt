@@ -92,7 +92,9 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
 
         launch(Dispatchers.IO) {
             repository.deleteSong(song)
-            deletedSongIds.value?.add(song.songId)
+            val songIds = deletedSongIds.value ?: mutableListOf()
+            songIds.add(song.songId)
+            deletedSongIds.postValue(songIds)
         }
 
         deleteRedundantArtworkBySong(song)

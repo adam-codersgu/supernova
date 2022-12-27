@@ -236,7 +236,7 @@ class MainActivity : AppCompatActivity() {
                 true, it)
         }
 
-        // todo: test this
+        // Remove deleted songs from the play queue
         musicLibraryViewModel.deletedSongIds.observe(this) { songIds ->
             if (songIds.isEmpty()) return@observe
             for (songId in songIds) {
