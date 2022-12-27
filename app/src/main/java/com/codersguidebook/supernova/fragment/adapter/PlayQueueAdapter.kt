@@ -89,19 +89,18 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
                 notifyItemInserted(index)
             }
             queueItem.queueId != playQueue[index].queueId -> {
-                var numberOfItemsRemoved = 0
-                do {
-                    playQueue.removeAt(index)
-                    ++numberOfItemsRemoved
-                } while (index < playQueue.size &&
-                    queueItem.queueId != playQueue[index].queueId)
-
-                when {
-                    numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
-                    numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index, numberOfItemsRemoved)
+                // Check if the item has been moved
+                val oldIndex = playQueue.indexOfFirst {
+                    it.queueId == queueItem.queueId
                 }
-
-                processLoopIteration(index, queueItem)
+                if (oldIndex != -1) {
+                    playQueue.removeAt(oldIndex)
+                    playQueue.add(index, queueItem)
+                    notifyItemMoved(oldIndex, index)
+                } else {
+                    playQueue.add(index, queueItem)
+                    notifyItemInserted(index)
+                }
             }
             queueItem.description.title != playQueue[index].description.title ||
                     queueItem.description.subtitle != playQueue[index].description.subtitle -> {

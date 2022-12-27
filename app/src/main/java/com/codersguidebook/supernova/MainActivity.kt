@@ -7,7 +7,10 @@ import android.content.*
 import android.media.AudioManager
 import android.media.session.PlaybackState
 import android.net.Uri
-import android.os.*
+import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
@@ -42,7 +45,6 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMO
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_REPEAT_MODE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_SHUFFLE_MODE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.UPDATE_QUEUE_ITEM
-import com.codersguidebook.supernova.params.ResultReceiverConstants.Companion.SUCCESS
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_ID
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_DURATION
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_POSITION
@@ -354,15 +356,7 @@ class MainActivity : AppCompatActivity() {
             putInt(SHUFFLE_MODE, shuffleMode)
         }
 
-        val resultReceiver = object : ResultReceiver(Handler(Looper.getMainLooper())) {
-            override fun onReceiveResult(resultCode: Int, resultData: Bundle) {
-                if (resultCode == SUCCESS) {
-                    playQueueViewModel.refreshPlayQueue.postValue(true)
-                }
-            }
-        }
-
-        mediaController.sendCommand(SET_SHUFFLE_MODE, bundle, resultReceiver)
+        mediaController.sendCommand(SET_SHUFFLE_MODE, bundle, null)
     }
 
     /**
@@ -519,15 +513,7 @@ class MainActivity : AppCompatActivity() {
                 putLong("queueItemId", queueItemId)
             }
 
-            val resultReceiver = object : ResultReceiver(Handler(Looper.getMainLooper())) {
-                override fun onReceiveResult(resultCode: Int, resultData: Bundle) {
-                    if (resultCode == SUCCESS) {
-                        playQueueViewModel.refreshPlayQueue.postValue(true)
-                    }
-                }
-            }
-
-            mediaController.sendCommand(REMOVE_QUEUE_ITEM_BY_ID, bundle, resultReceiver)
+            mediaController.sendCommand(REMOVE_QUEUE_ITEM_BY_ID, bundle, null)
         }
     }
 

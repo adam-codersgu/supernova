@@ -35,7 +35,6 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMO
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_REPEAT_MODE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_SHUFFLE_MODE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.UPDATE_QUEUE_ITEM
-import com.codersguidebook.supernova.params.ResultReceiverConstants.Companion.SUCCESS
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import java.io.File
@@ -305,7 +304,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         val queueItem = playQueue[oldIndex]
                         playQueue.removeAt(oldIndex)
                         playQueue.add(newIndex, queueItem)
-                        setPlayQueue()
+                        mediaSessionCompat.setQueue(playQueue)
                     }
                 }
                 REMOVE_QUEUE_ITEM_BY_ID -> {
@@ -317,7 +316,6 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         }
                         playQueue.removeIf { it.queueId == queueItemId }
                         setPlayQueue()
-                        cb?.send(SUCCESS, Bundle())
                     }
                 }
                 SET_REPEAT_MODE -> {
@@ -342,7 +340,6 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         }
 
                         setPlayQueue()
-                        cb?.send(SUCCESS, Bundle())
                     }
                 }
                 UPDATE_QUEUE_ITEM -> {
@@ -512,7 +509,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
     /** Set the play queue for the media session and notify all observers of the playback state. */
     private fun setPlayQueue() {
         mediaSessionCompat.setQueue(playQueue)
-        setMediaPlaybackState(STATE_NONE, 0, 0f, null)
+        setMediaPlaybackState(mediaSessionCompat.controller.playbackState.state, 0, 0f, null)
     }
 
     override fun onCreate() {
