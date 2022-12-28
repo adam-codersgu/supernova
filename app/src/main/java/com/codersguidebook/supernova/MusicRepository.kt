@@ -34,8 +34,8 @@ class MusicRepository(private val musicDao: MusicDao, private val playlistDao: P
         for (song in songs) musicDao.updateSong(song)
     }
 
-    suspend fun getSongByAlbumId(albumID: String): List<Song> {
-        return musicDao.getSongByAlbumId(albumID)
+    suspend fun getSongsByAlbumIdOrderByTrack(albumId: String): List<Song> {
+        return musicDao.getSongsByAlbumIdOrderByTrack(albumId)
     }
 
     suspend fun getAllPlaylists(): List<Playlist> = playlistDao.getAllPlaylists()

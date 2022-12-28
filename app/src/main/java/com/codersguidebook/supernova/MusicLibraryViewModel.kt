@@ -295,8 +295,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param song The Song object that has been removed from the music library.
      */
     private suspend fun deleteRedundantArtworkBySong(song: Song) {
-        val songsWithAlbumId = repository.getSongByAlbumId(song.albumId)
-        if (songsWithAlbumId.isEmpty()) {
+        if (getSongsByAlbumId(song.albumId).isEmpty()) {
             ImageHandlingHelper.deleteAlbumArtByResourceId(getApplication(), song.albumId)
         }
     }
@@ -315,10 +314,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param albumId The ID of the album.
      * @return A list of the associated Song objects sorted by track number.
      */
-    // fixme - query repo direct
-    fun getSongsByAlbumId(albumId: String) : List<Song> = allSongs.value?.filter {
-        it.albumId == albumId
-    }?.sortedBy { it.track } ?: listOf()
+    suspend fun getSongsByAlbumId(albumId: String) : List<Song> = repository.getSongsByAlbumIdOrderByTrack(albumId)
 
     /**
      * Toggle the isFavourite field for a given Song object. Also update the favourites
