@@ -33,6 +33,16 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     val allPlaylists: LiveData<List<Playlist>> = repository.allPlaylists
     val deletedSongIds = MutableLiveData<MutableList<Long>>()
 
+    private val activePlaylistName = MutableLiveData<String>()
+    private val activePlaylist: LiveData<Playlist?> = Transformations.switchMap(activePlaylistName) {
+        name -> repository.findPlaylistByNameLiveData(name)
+    }
+    val activePlaylistSongs: LiveData<List<Song>> = Transformations.switchMap(activePlaylist) { playlist ->
+        liveData {
+            emit(extractPlaylistSongs(playlist?.songs))
+        }
+    }
+
     private val mostPlayedSongsObserver: Observer<List<Long>> = Observer<List<Long>> {
         viewModelScope.launch(Dispatchers.IO) {
             repository.findPlaylistByName(getApplication<Application>().getString(R.string.most_played))?.apply {
@@ -367,6 +377,10 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     //  and extracts their songs in one go? This would save the coroutine code duplication
     //  e.g. see edit playlist fragment
     fun getPlaylistByName(name: String): LiveData<Playlist?> = repository.findPlaylistByNameLiveData(name)
+
+    fun setActivePlaylistByName(name: String) {
+        activePlaylistName.value = name
+    }
 
     /**
      * Extract the corresponding Song objects for a list of Song IDs that have been
