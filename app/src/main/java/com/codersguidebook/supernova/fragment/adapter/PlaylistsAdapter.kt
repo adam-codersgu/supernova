@@ -78,8 +78,7 @@ class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter
 
                 processLoopIteration(index, playlist)
             }
-            playlist.name != playlists[index].name ||
-                    playlist.songs != playlists[index].songs -> {
+            playlist != playlists[index] -> {
                 playlists[index] = playlist
                 notifyItemChanged(index)
             }

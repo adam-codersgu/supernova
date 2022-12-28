@@ -54,10 +54,9 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
         repository.mostPlayedSongsById.removeObserver(mostPlayedSongsObserver)
     }
 
-    // todo: the library refresh and cleanup methodology needs to be tested
     private fun deleteSong(song: Song) = viewModelScope.launch(Dispatchers.Default) {
         val playlists = withContext(Dispatchers.IO) {
-            playlistDao.getAllPlaylists()
+            repository.getAllPlaylists()
         }
 
         val updatedPlaylists = mutableListOf<Playlist>()
@@ -108,18 +107,23 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
         repository.saveSongs(songs)
     }
 
-    // todo: this needs to be tested
-    fun savePlaylist(playlist: Playlist): Boolean {
-        val existingPlaylist = allPlaylists.value?.firstOrNull {
-            it.name == playlist.name
-        }
+    /**
+     * Check whether a Playlist listed under a given name exists in the database.
+     *
+     * @param name The name of the playlist.
+     * @return A Boolean indicating whether a corresponding playlist exists.
+     */
+    suspend fun doesPlaylistExistByName(name: String): Boolean {
+        return repository.findPlaylistByName(name) != null
+    }
 
-        return if (existingPlaylist == null) {
-            viewModelScope.launch(Dispatchers.IO) {
-                repository.savePlaylist(playlist)
-            }
-            true
-        } else false
+    /**
+     * Save a new Playlist to the database.
+     *
+     * @param playlist The playlist to be saved.
+     */
+    fun savePlaylist(playlist: Playlist) = viewModelScope.launch(Dispatchers.IO) {
+        repository.savePlaylist(playlist)
     }
 
     fun updateSongs(songs: List<Song>) = viewModelScope.launch(Dispatchers.IO) {
@@ -311,6 +315,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param albumId The ID of the album.
      * @return A list of the associated Song objects sorted by track number.
      */
+    // fixme - query repo direct
     fun getSongsByAlbumId(albumId: String) : List<Song> = allSongs.value?.filter {
         it.albumId == albumId
     }?.sortedBy { it.track } ?: listOf()
