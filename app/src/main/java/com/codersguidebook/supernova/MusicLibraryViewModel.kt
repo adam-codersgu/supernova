@@ -367,6 +367,9 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      */
     // fixme: a bad practice is used here. Fix it in lines with https://developer.android.com/topic/libraries/architecture/livedata#transform_livedata
     //  set an active playlist to observe
+    // TODO: For areas of the codebase like this, can we use a view model method that itself finds the playlist
+    //  and extracts their songs in one go? This would save the coroutine code duplication
+    //  e.g. see edit playlist fragment
     fun getPlaylistByName(name: String): LiveData<Playlist?> = repository.findPlaylistByNameLiveData(name)
 
     /**

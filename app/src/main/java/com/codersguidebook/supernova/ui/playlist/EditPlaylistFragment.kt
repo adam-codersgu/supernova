@@ -66,9 +66,6 @@ class EditPlaylistFragment : Fragment() {
                 lifecycleScope.launch(Dispatchers.Main) {
                     playlist = it
                     playlist?.let {
-                        // fixme
-                        // val editable: Editable = SpannableStringBuilder(it.name)
-                        // binding.editPlaylistName.text = editable
                         binding.editPlaylistName.text = SpannableStringBuilder(it.name)
 
                         val playlistSongIds = PlaylistHelper.extractSongIds(it.songs)

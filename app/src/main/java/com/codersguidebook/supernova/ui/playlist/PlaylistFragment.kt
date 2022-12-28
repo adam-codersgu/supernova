@@ -112,13 +112,14 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
     }
 
     override fun requestNewData() {
+        // TODO: For areas of the codebase like this, can we use a view model method that itself finds the playlist
+        //  and extracts their songs in one go? This would save the coroutine code duplication
+        //  e.g. see edit playlist fragment
         musicLibraryViewModel.getPlaylistByName(playlistName ?: return).value?.let {
             lifecycleScope.launch(Dispatchers.Main) {
                 val songs = withContext(Dispatchers.IO) {
                     musicLibraryViewModel.extractPlaylistSongs(it.songs)
                 }
-                // TODO: Could format requestNewData to always use IO coroutine scope
-                //  And updateRecyclerView to always use Main coroutine scope
                 updateRecyclerView(songs)
             }
         }
