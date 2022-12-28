@@ -15,10 +15,9 @@ import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.params.SharedPreferencesConstants
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -57,38 +56,38 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
 
     // todo: the library refresh and cleanup methodology needs to be tested
     private fun deleteSong(song: Song) = viewModelScope.launch(Dispatchers.Default) {
-        allPlaylists.value?.let { playlists ->
-            if (playlists.isNotEmpty()) {
-                val updatedPlaylists = mutableListOf<Playlist>()
-                for (playlist in playlists) {
-                    if (playlist.songs != null) {
-                        val songIds = PlaylistHelper.extractSongIds(playlist.songs)
+        val playlists = withContext(Dispatchers.IO) {
+            playlistDao.getAllPlaylists()
+        }
 
-                        var playlistModified = false
-                        fun findIndex(): Int {
-                            return songIds.indexOfFirst {
-                                it == song.songId
-                            }
-                        }
+        val updatedPlaylists = mutableListOf<Playlist>()
+        for (playlist in playlists) {
+            playlist.songs?.let { json ->
+                val songIds = PlaylistHelper.extractSongIds(json)
 
-                        // Remove all instances of the song from the playlist
-                        do {
-                            val index = findIndex()
-                            if (index != -1) {
-                                songIds.removeAt(index)
-                                playlistModified = true
-                            }
-                        } while (index != -1)
-
-                        if (playlistModified) {
-                            playlist.songs = PlaylistHelper.serialiseSongIds(songIds)
-                            updatedPlaylists.add(playlist)
-                        }
+                var playlistModified = false
+                fun findIndex(): Int {
+                    return songIds.indexOfFirst {
+                        it == song.songId
                     }
                 }
-                if (updatedPlaylists.isNotEmpty()) updatePlaylists(updatedPlaylists)
+
+                // Remove all instances of the song from the playlist
+                do {
+                    val index = findIndex()
+                    if (index != -1) {
+                        songIds.removeAt(index)
+                        playlistModified = true
+                    }
+                } while (index != -1)
+
+                if (playlistModified) {
+                    playlist.songs = PlaylistHelper.serialiseSongIds(songIds)
+                    updatedPlaylists.add(playlist)
+                }
             }
         }
+        if (updatedPlaylists.isNotEmpty()) updatePlaylists(updatedPlaylists)
 
         launch(Dispatchers.IO) {
             repository.deleteSong(song)
@@ -109,6 +108,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
         repository.saveSongs(songs)
     }
 
+    // todo: this needs to be tested
     fun savePlaylist(playlist: Playlist): Boolean {
         val existingPlaylist = allPlaylists.value?.firstOrNull {
             it.name == playlist.name
@@ -135,11 +135,10 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     }
 
     /** Refresh the music library. Add new songs and remove deleted songs. */
-    fun refreshMusicLibrary() = viewModelScope.launch(Dispatchers.Main) {
-        val cursor = getMediaStoreCursorAsync().await()
-
+    fun refreshMusicLibrary() = viewModelScope.launch(Dispatchers.Default) {
         val songsToAddToMusicLibrary = mutableListOf<Song>()
-        cursor?.use {
+
+        getMediaStoreCursor()?.use { cursor ->
             val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
             val songIds = mutableListOf<Long>()
             while (cursor.moveToNext()) {
@@ -155,8 +154,11 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
             val chunksToAddToMusicLibrary = songsToAddToMusicLibrary.chunked(25)
             for (chunk in chunksToAddToMusicLibrary) saveSongs(chunk)
 
-            val songsToBeDeleted = allSongs.value?.filterNot { songIds.contains(it.songId) }
-            songsToBeDeleted?.let {
+            val songs = withContext(Dispatchers.IO) {
+                repository.getAllSongs()
+            }
+            val songsToBeDeleted = songs.filterNot { songIds.contains(it.songId) }
+            songsToBeDeleted.let {
                 for (song in songsToBeDeleted) deleteSong(song)
             }
         }
@@ -173,9 +175,8 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * Default = null (no selection arguments).
      * @return A Cursor object detailing all the relevant media store entries.
      */
-    private fun getMediaStoreCursorAsync(selection: String = MediaStore.Audio.Media.IS_MUSIC,
-                                         selectionArgs: Array<String>? = null)
-            : Deferred<Cursor?> = viewModelScope.async(Dispatchers.IO) {
+    private fun getMediaStoreCursor(selection: String = MediaStore.Audio.Media.IS_MUSIC,
+                                    selectionArgs: Array<String>? = null): Cursor? {
         val projection = arrayOf(
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.TRACK,
@@ -186,7 +187,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
             MediaStore.Audio.Media.YEAR
         )
         val sortOrder = MediaStore.Audio.Media.TITLE + " ASC"
-        return@async getApplication<Application>().contentResolver.query(
+        return getApplication<Application>().contentResolver.query(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
             projection,
             selection,
@@ -261,10 +262,10 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      *
      * @param mediaId The ID of the target media store record
      */
-    fun handleFileUpdateByMediaId(mediaId: Long) = viewModelScope.launch {
+    fun handleFileUpdateByMediaId(mediaId: Long) = viewModelScope.launch(Dispatchers.IO) {
         val selection = MediaStore.Audio.Media._ID + "=?"
         val selectionArgs = arrayOf(mediaId.toString())
-        val cursor = getMediaStoreCursorAsync(selection, selectionArgs).await()
+        val cursor = getMediaStoreCursor(selection, selectionArgs)
 
         val existingSong = getSongById(mediaId)
         when {

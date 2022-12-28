@@ -6,6 +6,9 @@ import com.codersguidebook.supernova.entities.Playlist
 
 @Dao
 interface PlaylistDao {
+    @Query("SELECT * from playlists")
+    suspend fun getAllPlaylists(): List<Playlist>
+
     @Delete
     suspend fun delete(playlist: Playlist)
 
@@ -16,7 +19,7 @@ interface PlaylistDao {
     fun updatePlaylist(playlist: Playlist)
 
     @Query("SELECT * from playlists ORDER BY playlist_name ASC")
-    fun getAllPlaylists(): LiveData<List<Playlist>>
+    fun getAllPlaylistsByName(): LiveData<List<Playlist>>
 
     @Query("SELECT * FROM playlists WHERE playlist_name = :name")
     fun findPlaylistByNameLiveData(name: String): LiveData<Playlist?>

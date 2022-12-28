@@ -8,6 +8,9 @@ import com.codersguidebook.supernova.entities.Song
 @Dao
 interface MusicDao {
 
+    @Query("SELECT * from music_library")
+    suspend fun getAllSongs(): List<Song>
+
     @Query("SELECT song_artist, count(*) FROM music_library GROUP BY song_artist")
     fun getAlphabetizedArtists(): LiveData<List<Artist>>
 
