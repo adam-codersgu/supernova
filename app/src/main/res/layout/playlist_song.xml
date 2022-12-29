@@ -15,7 +15,7 @@
         android:contentDescription="@string/album_artwork" />
 
     <include layout="@layout/item_details"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_width="0dp"
         app:layout_constraintEnd_toStartOf="@+id/plays"
         app:layout_constraintStart_toEndOf="@id/artwork"

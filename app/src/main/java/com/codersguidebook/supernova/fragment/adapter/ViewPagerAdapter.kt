@@ -1,4 +1,4 @@
-package com.codersguidebook.supernova.recyclerview.adapter
+package com.codersguidebook.supernova.fragment.adapter
 
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter

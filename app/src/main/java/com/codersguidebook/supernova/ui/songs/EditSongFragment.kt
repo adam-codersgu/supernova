@@ -15,9 +15,10 @@ import androidx.navigation.findNavController
 import com.bumptech.glide.Glide
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.databinding.FragmentEditSongBinding
+import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
+import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import java.io.FileNotFoundException
 import java.io.IOException
 
@@ -43,8 +44,8 @@ class EditSongFragment : Fragment() {
         setHasOptionsMenu(true)
         callingActivity = activity as MainActivity
 
-        // Retrieve the song's album artwork
-        callingActivity.loadImageByAlbumId(song!!.albumId, binding.editSongArtwork)
+        ImageHandlingHelper.loadImageByAlbumId(callingActivity.application, song!!.albumId,
+            binding.editSongArtwork)
         binding.editSongArtwork.setOnClickListener {
             startActivityForResult(Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI), 1)
         }
@@ -88,8 +89,8 @@ class EditSongFragment : Fragment() {
                     .centerCrop()
                     .into(binding.editSongArtwork)
 
-            } catch (e: FileNotFoundException) {
-            } catch (e: IOException) { }
+            } catch (_: FileNotFoundException) {
+            } catch (_: IOException) { }
         }
 
         super.onActivityResult(reqCode, resultCode, data)
@@ -106,7 +107,6 @@ class EditSongFragment : Fragment() {
 
         return when (item.itemId) {
             R.id.save -> {
-                // take user submission for album title or year, or use default values if submission is blank
                 val newTitle = binding.editSongTitle.text.toString()
                 val newArtist = binding.editSongArtist.text.toString()
                 val newDisc = binding.editSongDisc.text.toString()
@@ -124,14 +124,17 @@ class EditSongFragment : Fragment() {
                     if (newTitle != song!!.title || newArtist != song!!.artist || completeTrack != song!!.track || newYear != song!!.year || newArtwork != null) {
 
                         // artwork has been changed
-                        if (newArtwork != null) callingActivity.saveImageByResourceId("albumArt", newArtwork!!, song?.albumId!!)
+                        newArtwork?.let { artwork ->
+                            ImageHandlingHelper.saveAlbumArtByResourceId(callingActivity.application,
+                                song?.albumId!!, artwork)
+                        }
 
                         song!!.title = newTitle
                         song!!.artist = newArtist
                         song!!.track = completeTrack
                         song!!.year = newYear
 
-                        callingActivity.updateSongInfo(listOf(song!!))
+                        callingActivity.updateSongs(listOf(song!!))
                     }
 
                     val action = AlbumsFragmentDirections.actionSelectAlbum(song?.albumId!!)

@@ -1,4 +1,4 @@
-package com.codersguidebook.supernova.recyclerview.adapter
+package com.codersguidebook.supernova.fragment.adapter
 
 import com.codersguidebook.supernova.entities.Song
 

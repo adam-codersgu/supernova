@@ -17,12 +17,12 @@ import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentSearchBinding
+import com.codersguidebook.supernova.fragment.BaseRecyclerViewFragment
+import com.codersguidebook.supernova.fragment.adapter.SearchAdapter
 import com.codersguidebook.supernova.params.SearchTypeConstants.Companion.ALBUM
 import com.codersguidebook.supernova.params.SearchTypeConstants.Companion.ARTIST
 import com.codersguidebook.supernova.params.SearchTypeConstants.Companion.PLAYLIST
 import com.codersguidebook.supernova.params.SearchTypeConstants.Companion.TRACK
-import com.codersguidebook.supernova.recyclerview.BaseRecyclerViewFragment
-import com.codersguidebook.supernova.recyclerview.adapter.SearchAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -231,7 +231,7 @@ class SearchFragment : BaseRecyclerViewFragment() {
 
     override fun onStop() {
         super.onStop()
-        mainActivity.hideKeyboard(mainActivity)
+        mainActivity.hideKeyboard()
     }
 
     override fun onDestroyView() {

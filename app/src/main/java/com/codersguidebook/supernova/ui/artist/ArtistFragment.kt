@@ -10,8 +10,8 @@ import androidx.navigation.fragment.findNavController
 import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Song
-import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
-import com.codersguidebook.supernova.recyclerview.adapter.ArtistAdapter
+import com.codersguidebook.supernova.fragment.RecyclerViewFragment
+import com.codersguidebook.supernova.fragment.adapter.ArtistAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 

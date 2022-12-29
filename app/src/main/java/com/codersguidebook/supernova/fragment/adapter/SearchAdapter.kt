@@ -1,4 +1,4 @@
-package com.codersguidebook.supernova.recyclerview.adapter
+package com.codersguidebook.supernova.fragment.adapter
 
 import android.view.LayoutInflater
 import android.view.View
@@ -21,6 +21,8 @@ import com.codersguidebook.supernova.params.SearchTypeConstants.Companion.TRACK
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 import com.codersguidebook.supernova.ui.search.SearchFragmentDirections
+import com.codersguidebook.supernova.utils.ImageHandlingHelper
+import com.codersguidebook.supernova.utils.PlaylistHelper
 
 class SearchAdapter(private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
@@ -56,7 +58,7 @@ class SearchAdapter(private val activity: MainActivity): RecyclerView.Adapter<Re
                 val current = songs[position]
 
                 holder.mArtwork.isVisible = true
-                activity.loadImageByAlbumId(current.albumId, holder.mArtwork)
+                ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId, holder.mArtwork)
                 holder.mTitle.text = current.title
                 holder.mSubtitle.text = current.artist
                 holder.mMenu.setOnClickListener {
@@ -77,7 +79,7 @@ class SearchAdapter(private val activity: MainActivity): RecyclerView.Adapter<Re
                 val current = albums[position]
 
                 holder.mArtwork.isVisible = true
-                activity.loadImageByAlbumId(current.albumId, holder.mArtwork)
+                ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId, holder.mArtwork)
                 holder.mTitle.text = current.albumName
                 holder.mSubtitle.text = current.artist
                 holder.mMenu.setOnClickListener {
@@ -127,15 +129,15 @@ class SearchAdapter(private val activity: MainActivity): RecyclerView.Adapter<Re
                 val current = playlists[position]
 
                 holder.mArtwork.isVisible = true
-                val playlistSongIDs= activity.extractPlaylistSongIds(current.songs)
-                if (playlistSongIDs.isNotEmpty()){
-                    val firstSongArtwork = activity.findFirstSongArtwork(playlistSongIDs[0])
-                    activity.loadImageByAlbumId(firstSongArtwork, holder.mArtwork)
+
+                val playlistSongIds = PlaylistHelper.extractSongIds(current.songs)
+                if (!ImageHandlingHelper.loadImageByPlaylist(activity.application, current, holder.mArtwork)) {
+                    activity.loadRandomArtworkBySongIds(playlistSongIds, holder.mArtwork)
                 }
 
                 holder.mTitle.text = current.name
 
-                val songCountInt = playlistSongIDs.size
+                val songCountInt = playlistSongIds.size
                 holder.mSubtitle.text = if (songCountInt == 1) {
                     activity.getString(R.string.displayed_song)
                 } else {

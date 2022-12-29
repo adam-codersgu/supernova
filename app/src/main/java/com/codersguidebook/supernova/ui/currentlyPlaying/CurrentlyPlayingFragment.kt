@@ -20,16 +20,20 @@ import android.widget.SeekBar
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
+import androidx.viewbinding.ViewBinding
 import com.bumptech.glide.Glide
-import com.codersguidebook.supernova.*
+import com.codersguidebook.supernova.MobileNavigationDirections
+import com.codersguidebook.supernova.PlayQueueViewModel
+import com.codersguidebook.supernova.R
+import com.codersguidebook.supernova.SettingsActivity
 import com.codersguidebook.supernova.databinding.FragmentCurrentlyPlayingBinding
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.fragment.BaseFragment
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_ACTIVE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_COLOUR
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_QUANTITY
@@ -39,28 +43,32 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CUSTOM_ANIMATION_IMAGE_IDS
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
+import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.codersguidebook.supernova.views.PlaybackAnimator
 import com.codersguidebook.supernova.views.PullToCloseLayout
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
-class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, PlaybackAnimator.Listener {
+class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener, PlaybackAnimator.Listener {
 
     private var animationObjectIsDragging = false
     private val playQueueViewModel: PlayQueueViewModel by activityViewModels()
     private var currentSong: Song? = null
-    private var _binding: FragmentCurrentlyPlayingBinding? = null
-    private val binding get() = _binding!!
+    override var _binding: ViewBinding? = null
+        get() = field as FragmentCurrentlyPlayingBinding?
+    override val binding: FragmentCurrentlyPlayingBinding
+        get() = _binding!! as FragmentCurrentlyPlayingBinding
     private var isAnimationVisible = true
     private var pullToCloseIsDragging = false
     private var fastForwarding = false
     private var fastRewinding = false
-    private lateinit var callingActivity: MainActivity
     private lateinit var onBackPressedCallback: OnBackPressedCallback
     private lateinit var sharedPreferences: SharedPreferences
 
@@ -77,7 +85,6 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
         _binding = FragmentCurrentlyPlayingBinding.inflate(inflater, container, false)
         binding.root.setListener(this)
         binding.animatedView.setListener(this)
-        callingActivity = activity as MainActivity
 
         onBackPressedCallback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -85,14 +92,14 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
             }
         }
 
-        return binding.root
+        return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        callingActivity.onBackPressedDispatcher.addCallback(viewLifecycleOwner, onBackPressedCallback)
+        mainActivity.onBackPressedDispatcher.addCallback(viewLifecycleOwner, onBackPressedCallback)
 
         // The onTouch event should only be propogated to the PullToClose view if a custom animation object
         // is not being dragged.
@@ -122,18 +129,18 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
             binding.currentPosition.text = SimpleDateFormat("mm:ss", Locale.UK).format(it)
         }
 
-        binding.btnPlay.setOnClickListener{ callingActivity.playPauseControl() }
+        binding.btnPlay.setOnClickListener{ mainActivity.playPauseControl() }
 
         binding.btnBackward.setOnClickListener {
             if (fastRewinding) fastRewinding = false
-            else callingActivity.skipBack()
+            else mainActivity.skipBack()
         }
 
         binding.btnBackward.setOnLongClickListener {
             fastRewinding = true
             lifecycleScope.launch {
                 do {
-                    callingActivity.fastRewind()
+                    mainActivity.fastRewind()
                     delay(500)
                 } while (fastRewinding)
             }
@@ -142,14 +149,14 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
 
         binding.btnForward.setOnClickListener{
             if (fastForwarding) fastForwarding = false
-            else callingActivity.skipForward()
+            else mainActivity.skipForward()
         }
 
         binding.btnForward.setOnLongClickListener {
             fastForwarding = true
             lifecycleScope.launch {
                 do {
-                    callingActivity.fastForward()
+                    mainActivity.fastForward()
                     delay(500)
                 } while (fastForwarding)
             }
@@ -157,26 +164,30 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
         }
 
         binding.currentFavourite.setOnClickListener {
-            setFavouriteButtonStyle(callingActivity.toggleSongFavouriteStatus(currentSong))
+            currentSong?.apply {
+                musicLibraryViewModel.toggleSongFavouriteStatus(this)
+                this.isFavourite = !this.isFavourite
+                setFavouriteButtonStyle(this.isFavourite)
+            }
         }
 
         val shuffleMode = sharedPreferences.getInt(SHUFFLE_MODE, SHUFFLE_MODE_NONE)
         setShuffleButtonAppearance(shuffleMode)
 
-        binding.currentButtonShuffle.setOnClickListener{
-            setShuffleButtonAppearance(callingActivity.toggleShuffleMode())
+        binding.currentButtonShuffle.setOnClickListener {
+            setShuffleButtonAppearance(mainActivity.toggleShuffleMode())
         }
         
         val repeatMode = sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_NONE)
         setRepeatButtonAppearance(repeatMode)
 
         binding.currentButtonRepeat.setOnClickListener {
-            setRepeatButtonAppearance(callingActivity.toggleRepeatMode())
+            setRepeatButtonAppearance(mainActivity.toggleRepeatMode())
         }
 
         binding.currentAddToPlaylist.setOnClickListener {
             currentSong?.let {
-                callingActivity.openAddToPlaylistDialog(listOf(it))
+                mainActivity.openAddToPlaylistDialog(listOf(it))
             }
         }
 
@@ -190,7 +201,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
             override fun onStopTrackingTouch(seekBar: SeekBar) {}
             override fun onStartTrackingTouch(seekBar: SeekBar) {}
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) callingActivity.seekTo(progress)
+                if (fromUser) mainActivity.seekTo(progress)
             }
         })
     }
@@ -202,11 +213,11 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
             // Pre-SDK 30
             val displayMetrics = DisplayMetrics()
             @Suppress("DEPRECATION")
-            callingActivity.windowManager.defaultDisplay.getMetrics(displayMetrics)
+            mainActivity.windowManager.defaultDisplay.getMetrics(displayMetrics)
             displayMetrics.widthPixels
         } else {
             // SDK 30 and up
-            callingActivity.windowManager.currentWindowMetrics.bounds.width()
+            mainActivity.windowManager.currentWindowMetrics.bounds.width()
         }
 
         isAnimationVisible = sharedPreferences.getBoolean(ANIMATION_ACTIVE, true)
@@ -247,10 +258,12 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
      * @param metadata - MediaMetadataCompat object detailing the currently playing song's metadata, or null
      * if playback has stopped and any loaded metadata should be cleared.
      */
-    private fun updateCurrentlyDisplayedMetadata(metadata: MediaMetadataCompat?) {
+    private fun updateCurrentlyDisplayedMetadata(metadata: MediaMetadataCompat?) = lifecycleScope.launch(Dispatchers.Main) {
         val currentMediaId = metadata?.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)?.toLong()
-        currentSong = if (currentMediaId != null) callingActivity.getSongById(currentMediaId)
-        else null
+        currentSong = withContext(Dispatchers.IO) {
+            if (currentMediaId != null) musicLibraryViewModel.getSongById(currentMediaId)
+            else null
+        }
 
         setFavouriteButtonStyle(currentSong?.isFavourite ?: false)
 
@@ -259,10 +272,10 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
         binding.album.text = metadata?.getString(MediaMetadataCompat.METADATA_KEY_ALBUM)
 
         if (metadata != null) {
-            callingActivity.runGlideByBitmap(
-                metadata.getBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART), binding.artwork)
+            val albumId = metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI)
+            ImageHandlingHelper.loadImageByAlbumId(mainActivity.application, albumId, binding.artwork)
         } else {
-            Glide.with(callingActivity)
+            Glide.with(mainActivity)
                 .clear(binding.artwork)
         }
     }
@@ -290,7 +303,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
      * @param imageIds - The IDs of the user's custom animation images.
      */
     private fun setCustomDrawables(imageIds: List<String>) {
-        val directory = ContextWrapper(callingActivity).getDir("customAnimation", Context.MODE_PRIVATE)
+        val directory = ContextWrapper(mainActivity).getDir("customAnimation", Context.MODE_PRIVATE)
         val drawables = imageIds.mapNotNull { id ->
             val imageFile = File(directory, "$id.jpg")
             Drawable.createFromPath(imageFile.path)
@@ -312,13 +325,12 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
 
     override fun onResume() {
         super.onResume()
-        callingActivity.hideStatusBars(true)
+        mainActivity.hideStatusBars(true)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null
-        callingActivity.hideStatusBars(false)
+        mainActivity.hideStatusBars(false)
         onBackPressedCallback.remove()
     }
 
@@ -366,24 +378,24 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
                 when (menuItem.itemId) {
                     R.id.search -> {
                         findNavController().popBackStack()
-                        callingActivity.findNavController(R.id.nav_host_fragment).navigate(R.id.nav_search)
+                        mainActivity.findNavController(R.id.nav_host_fragment).navigate(R.id.nav_search)
                     }
                     R.id.queue -> {
                         findNavController().popBackStack()
-                        callingActivity.findNavController(R.id.nav_host_fragment).navigate(R.id.nav_queue)
+                        mainActivity.findNavController(R.id.nav_host_fragment).navigate(R.id.nav_queue)
                     }
                     R.id.artist -> {
                         currentSong?.let {
                             findNavController().popBackStack()
                             val action = MobileNavigationDirections.actionSelectArtist(it.artist)
-                            callingActivity.findNavController(R.id.nav_host_fragment).navigate(action)
+                            mainActivity.findNavController(R.id.nav_host_fragment).navigate(action)
                         }
                     }
                     R.id.album -> {
                         currentSong?.let {
                             findNavController().popBackStack()
                             val action = MobileNavigationDirections.actionSelectAlbum(it.albumId)
-                            callingActivity.findNavController(R.id.nav_host_fragment).navigate(action)
+                            mainActivity.findNavController(R.id.nav_host_fragment).navigate(action)
                         }
                     }
                     R.id.animation_play -> {
@@ -418,11 +430,11 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
                             val listType = object : TypeToken<List<String>>() {}.type
                             val imageIds: List<String> = Gson().fromJson(customDrawableString, listType)
                             setCustomDrawables(imageIds)
-                            Toast.makeText(callingActivity, getString(R.string.changes_applied),
+                            Toast.makeText(mainActivity, getString(R.string.changes_applied),
                                 Toast.LENGTH_SHORT).show()
                         } else {
                             findNavController().popBackStack()
-                            callingActivity.findNavController(R.id.nav_host_fragment).navigate(R.id.nav_custom_animation)
+                            mainActivity.findNavController(R.id.nav_host_fragment).navigate(R.id.nav_custom_animation)
                         }
                     }
                     R.id.animation_fast -> binding.animatedView.changeSpeed(getString(R.string.fast), true)
@@ -430,7 +442,7 @@ class CurrentlyPlayingFragment : Fragment(), PullToCloseLayout.Listener, Playbac
                     R.id.animation_slow -> binding.animatedView.changeSpeed(getString(R.string.slow), true)
                     R.id.change_custom_image -> {
                         findNavController().popBackStack()
-                        callingActivity.findNavController(R.id.nav_host_fragment)
+                        mainActivity.findNavController(R.id.nav_host_fragment)
                             .navigate(R.id.nav_custom_animation)
                     }
                     R.id.menu_more_settings -> {

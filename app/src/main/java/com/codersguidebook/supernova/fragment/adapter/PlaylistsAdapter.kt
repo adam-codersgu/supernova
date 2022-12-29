@@ -1,4 +1,4 @@
-package com.codersguidebook.supernova.recyclerview.adapter
+package com.codersguidebook.supernova.fragment.adapter
 
 import android.view.LayoutInflater
 import android.view.View
@@ -12,6 +12,8 @@ import com.codersguidebook.supernova.PlaylistOptions
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.ui.playlists.PlaylistsFragmentDirections
+import com.codersguidebook.supernova.utils.ImageHandlingHelper
+import com.codersguidebook.supernova.utils.PlaylistHelper
 
 class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     var playlists = mutableListOf<Playlist>()
@@ -41,17 +43,16 @@ class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         holder as ViewHolderPlaylist
-        val current = playlists[position]
+        val playlist = playlists[position]
 
-        holder.mPlaylistName.text = current.name
+        holder.mPlaylistName.text = playlist.name
 
-        val playlistSongIDs = activity.extractPlaylistSongIds(current.songs)
-        // FIXME: Maybe find another way to handle artwork for playlists with no songs
-        if (!activity.insertPlaylistArtwork(current, holder.mArtwork) && playlistSongIDs.isNotEmpty()) {
-            activity.loadImageByAlbumId(activity.findFirstSongArtwork(playlistSongIDs[0]), holder.mArtwork)
+        val playlistSongIds = PlaylistHelper.extractSongIds(playlist.songs)
+        if (!ImageHandlingHelper.loadImageByPlaylist(activity.application, playlist, holder.mArtwork)) {
+            activity.loadRandomArtworkBySongIds(playlistSongIds, holder.mArtwork)
         }
 
-        val songCountInt = playlistSongIDs.size
+        val songCountInt = playlistSongIds.size
         holder.mSongCount.text = if (songCountInt == 1) activity.getString(R.string.displayed_song)
         else activity.getString(R.string.displayed_songs, songCountInt)
     }
@@ -77,8 +78,7 @@ class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter
 
                 processLoopIteration(index, playlist)
             }
-            playlist.name != playlists[index].name ||
-                    playlist.songs != playlists[index].songs -> {
+            playlist != playlists[index] -> {
                 playlists[index] = playlist
                 notifyItemChanged(index)
             }

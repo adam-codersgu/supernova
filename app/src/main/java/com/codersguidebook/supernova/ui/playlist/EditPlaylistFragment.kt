@@ -7,7 +7,6 @@ import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
-import android.text.Editable
 import android.text.SpannableStringBuilder
 import android.view.*
 import android.widget.Toast
@@ -17,11 +16,15 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import com.bumptech.glide.Glide
 import com.codersguidebook.supernova.MainActivity
-import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentEditPlaylistBinding
 import com.codersguidebook.supernova.entities.Playlist
+import com.codersguidebook.supernova.utils.ImageHandlingHelper
+import com.codersguidebook.supernova.utils.PlaylistHelper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
 import java.io.IOException
 
@@ -53,23 +56,21 @@ class EditPlaylistFragment : Fragment() {
         _binding = FragmentEditPlaylistBinding.inflate(inflater, container, false)
 
         callingActivity = activity as MainActivity
-        musicLibraryViewModel = ViewModelProvider(this).get(MusicLibraryViewModel::class.java)
+        musicLibraryViewModel = ViewModelProvider(callingActivity)[MusicLibraryViewModel::class.java]
         setHasOptionsMenu(true)
 
-        val musicDatabase = MusicDatabase.getDatabase(requireContext(), lifecycleScope)
-        musicDatabase.playlistDao().findPlaylist(playlistName ?: "").observe(viewLifecycleOwner) { p ->
-            p?.let {
-                playlist = it
-                val editable: Editable = SpannableStringBuilder(it.name)
-                binding.editPlaylistName.text = editable
+        playlistName?.let { name ->
+            lifecycleScope.launch(Dispatchers.Main) {
+                playlist = withContext(Dispatchers.IO) {
+                    musicLibraryViewModel.getPlaylistByName(name)
+                }
+                playlist?.let {
+                    binding.editPlaylistName.text = SpannableStringBuilder(it.name)
 
-                if (!callingActivity.insertPlaylistArtwork(it, binding.artwork)) {
-                    val playlistSongIDs = callingActivity.extractPlaylistSongIds(it.songs)
-                    callingActivity.loadImageByAlbumId(
-                        callingActivity.findFirstSongArtwork(
-                            playlistSongIDs[0]
-                        ), binding.artwork
-                    )
+                    val playlistSongIds = PlaylistHelper.extractSongIds(it.songs)
+                    if (!ImageHandlingHelper.loadImageByPlaylist(callingActivity.application, it, binding.artwork)) {
+                        callingActivity.loadRandomArtworkBySongIds(playlistSongIds, binding.artwork)
+                    }
                 }
             }
         }
@@ -128,8 +129,8 @@ class EditPlaylistFragment : Fragment() {
                         this.name = newPlaylistName
 
                         newArtwork?.let {
-                            callingActivity.saveImageByResourceId("playlistArt", it,
-                                this.playlistId.toString())
+                            ImageHandlingHelper.savePlaylistArtByResourceId(
+                                callingActivity.application, this.playlistId.toString(), it)
                         }
 
                         musicLibraryViewModel.updatePlaylists(listOf(this))

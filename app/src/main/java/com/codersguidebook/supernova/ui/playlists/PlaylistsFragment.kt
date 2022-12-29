@@ -2,24 +2,20 @@ package com.codersguidebook.supernova.ui.playlists
 
 import android.os.Bundle
 import android.view.View
-import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
-import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.entities.Playlist
-import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
-import com.codersguidebook.supernova.recyclerview.adapter.PlaylistsAdapter
+import com.codersguidebook.supernova.fragment.RecyclerViewFragment
+import com.codersguidebook.supernova.fragment.adapter.PlaylistsAdapter
 
 class PlaylistsFragment : RecyclerViewFragment() {
 
     override lateinit var adapter: PlaylistsAdapter
-    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         binding.root.layoutManager = GridLayoutManager(mainActivity, 3)
 
-        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
         musicLibraryViewModel.allPlaylists.observe(viewLifecycleOwner) {
             updateRecyclerViewWithPlaylists(it)
         }

@@ -11,6 +11,7 @@ class MediaServiceConstants {
         const val ACTION_NEXT = "next"
         const val ACTION_PREVIOUS = "previous"
         const val MOVE_QUEUE_ITEM = "moveQueueItem"
+        const val NOTIFICATION_CHANNEL_ID = "supernova"
         const val REMOVE_QUEUE_ITEM_BY_ID = "removeQueueItemById"
         const val SET_REPEAT_MODE = "setRepeatMode"
         const val SET_SHUFFLE_MODE = "setShuffleMode"

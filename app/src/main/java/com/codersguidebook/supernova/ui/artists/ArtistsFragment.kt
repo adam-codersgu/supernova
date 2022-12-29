@@ -2,22 +2,18 @@ package com.codersguidebook.supernova.ui.artists
 
 import android.os.Bundle
 import android.view.View
-import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.entities.Artist
-import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
-import com.codersguidebook.supernova.recyclerview.adapter.ArtistsAdapter
+import com.codersguidebook.supernova.fragment.RecyclerViewFragment
+import com.codersguidebook.supernova.fragment.adapter.ArtistsAdapter
 
 class ArtistsFragment : RecyclerViewFragment() {
 
     override lateinit var adapter: ArtistsAdapter
-    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
         musicLibraryViewModel.allArtists.observe(viewLifecycleOwner) {
             updateRecyclerViewWithArtists(it)
         }

@@ -1,4 +1,4 @@
-package com.codersguidebook.supernova.recyclerview.adapter
+package com.codersguidebook.supernova.fragment.adapter
 
 import android.view.LayoutInflater
 import android.view.View
@@ -16,6 +16,7 @@ import com.codersguidebook.supernova.AlbumOptions
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.ui.artist.ArtistFragmentDirections
+import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
 class ArtistAdapter(private val activity: MainActivity): SongAdapter() {
 
@@ -108,15 +109,20 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter() {
                 val albumIds = songs.map { it.albumId }
 
                 when {
-                    albumIds.size == 1 -> activity.loadImageByAlbumId(albumIds[0], holder.mArtwork)
+                    albumIds.size == 1 -> ImageHandlingHelper.loadImageByAlbumId(activity.application,
+                        albumIds[0], holder.mArtwork)
                     albumIds.size > 1 -> {
                         holder.mArtwork.isGone = true
                         holder.mArtworkGrid.isVisible = true
                         val shuffledAlbumIds = albumIds.shuffled()
-                        activity.loadImageByAlbumId(shuffledAlbumIds[0], holder.mArtwork1)
-                        activity.loadImageByAlbumId(shuffledAlbumIds[1], holder.mArtwork2)
-                        if (albumIds.size > 2) activity.loadImageByAlbumId(shuffledAlbumIds[2], holder.mArtwork3)
-                        if (albumIds.size > 3) activity.loadImageByAlbumId(shuffledAlbumIds[3], holder.mArtwork4)
+                        ImageHandlingHelper.loadImageByAlbumId(activity.application,
+                            shuffledAlbumIds[0], holder.mArtwork1)
+                        ImageHandlingHelper.loadImageByAlbumId(activity.application,
+                            shuffledAlbumIds[1], holder.mArtwork2)
+                        if (albumIds.size > 2) ImageHandlingHelper.loadImageByAlbumId(activity.application,
+                            shuffledAlbumIds[2], holder.mArtwork3)
+                        if (albumIds.size > 3) ImageHandlingHelper.loadImageByAlbumId(activity.application,
+                            shuffledAlbumIds[3], holder.mArtwork4)
                     }
                 }
 
@@ -140,7 +146,8 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter() {
 
                 val current = songs[position -2]
 
-                activity.loadImageByAlbumId(current.albumId, holder.mArtwork)
+                ImageHandlingHelper.loadImageByAlbumId(activity.application,
+                    current.albumId, holder.mArtwork)
 
                 holder.mTitle.text = current.albumName
                 holder.mYear.text = current.year

@@ -30,11 +30,11 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTI
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PLAY
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PREVIOUS
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_REPEAT_MODE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_SHUFFLE_MODE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.UPDATE_QUEUE_ITEM
-import com.codersguidebook.supernova.params.ResultReceiverConstants.Companion.SUCCESS
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import java.io.File
@@ -43,7 +43,6 @@ import java.io.IOException
 
 class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorListener {
 
-    private val channelID = "supernova"
     private var currentlyPlayingQueueItemId = -1L
     private val logTag = "AudioPlayer"
     private val handler = Handler(Looper.getMainLooper())
@@ -305,7 +304,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         val queueItem = playQueue[oldIndex]
                         playQueue.removeAt(oldIndex)
                         playQueue.add(newIndex, queueItem)
-                        setPlayQueue()
+                        mediaSessionCompat.setQueue(playQueue)
                     }
                 }
                 REMOVE_QUEUE_ITEM_BY_ID -> {
@@ -317,7 +316,6 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         }
                         playQueue.removeIf { it.queueId == queueItemId }
                         setPlayQueue()
-                        cb?.send(SUCCESS, Bundle())
                     }
                 }
                 SET_REPEAT_MODE -> {
@@ -342,7 +340,6 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         }
 
                         setPlayQueue()
-                        cb?.send(SUCCESS, Bundle())
                     }
                 }
                 UPDATE_QUEUE_ITEM -> {
@@ -512,7 +509,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
     /** Set the play queue for the media session and notify all observers of the playback state. */
     private fun setPlayQueue() {
         mediaSessionCompat.setQueue(playQueue)
-        setMediaPlaybackState(STATE_NONE, 0, 0f, null)
+        setMediaPlaybackState(mediaSessionCompat.controller.playbackState.state, 0, 0f, null)
     }
 
     override fun onCreate() {
@@ -559,7 +556,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             ?.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
         val activityIntent = PendingIntent.getActivity(applicationContext, 0, intent, PendingIntent.FLAG_IMMUTABLE)
 
-        val builder = NotificationCompat.Builder(applicationContext, channelID).apply {
+        val builder = NotificationCompat.Builder(applicationContext, NOTIFICATION_CHANNEL_ID).apply {
             val mediaMetadata = mediaSessionCompat.controller.metadata
 
             // Previous button
@@ -638,6 +635,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             putString(MediaMetadataCompat.METADATA_KEY_ALBUM, albumName)
             val albumId = extras?.getString("album_id")
             putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, getArtworkByAlbumId(albumId))
+            putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, albumId)
         }
         mediaSessionCompat.setMetadata(metadataBuilder.build())
     }

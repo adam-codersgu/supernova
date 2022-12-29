@@ -18,8 +18,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.CreatePlaylist
 import com.codersguidebook.supernova.PlayQueueViewModel
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.recyclerview.RecyclerViewFragment
-import com.codersguidebook.supernova.recyclerview.adapter.PlayQueueAdapter
+import com.codersguidebook.supernova.fragment.RecyclerViewFragment
+import com.codersguidebook.supernova.fragment.adapter.PlayQueueAdapter
 
 class PlayQueueFragment : RecyclerViewFragment() {
     private val playQueueViewModel: PlayQueueViewModel by activityViewModels()
@@ -42,6 +42,7 @@ class PlayQueueFragment : RecyclerViewFragment() {
                 viewHolder.itemView.alpha = 1.0f
 
                 if (to != null && queueItem != null) {
+                    playQueueViewModel.playQueue.value = adapter.playQueue
                     mainActivity.notifyQueueItemMoved(queueItem!!.queueId, to!!)
                     to = null
                     queueItem = null
@@ -72,10 +73,6 @@ class PlayQueueFragment : RecyclerViewFragment() {
 
         playQueueViewModel.playQueue.observe(viewLifecycleOwner) {
             updateRecyclerViewWithPlayQueue(it)
-        }
-
-        playQueueViewModel.refreshPlayQueue.observe(viewLifecycleOwner) {
-            if (it) requestNewData()
         }
 
         playQueueViewModel.currentQueueItemId.observe(viewLifecycleOwner) { position ->
@@ -112,8 +109,6 @@ class PlayQueueFragment : RecyclerViewFragment() {
         }
 
         finishUpdate()
-        // TODO: Can we remove the below (incl variable) given the new processing path?
-        playQueueViewModel.refreshPlayQueue.value = false
     }
 
     private fun setupMenu() {

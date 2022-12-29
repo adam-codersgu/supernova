@@ -10,12 +10,14 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
-import com.codersguidebook.supernova.recyclerview.RecyclerViewWithFabFragment
-import com.codersguidebook.supernova.recyclerview.adapter.PlaylistAdapter
+import com.codersguidebook.supernova.fragment.RecyclerViewWithFabFragment
+import com.codersguidebook.supernova.fragment.adapter.PlaylistAdapter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PlaylistFragment : RecyclerViewWithFabFragment() {
 
@@ -23,7 +25,6 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
     private var playlist: Playlist? = null
     private lateinit var reorderPlaylist: MenuItem
     private lateinit var finishedReorder: MenuItem
-    private lateinit var musicDatabase: MusicDatabase
 
     private val itemTouchHelper by lazy {
         val simpleItemTouchCallback =
@@ -41,7 +42,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
                     viewHolder.itemView.alpha = 1.0f
                     playlist?.let {
                         val songIds = adapter.songs.map { song -> song.songId }
-                        mainActivity.savePlaylistWithSongIds(it, songIds)
+                        musicLibraryViewModel.savePlaylistWithSongIds(it, songIds)
                     }
                 }
                 override fun onMove(recyclerView: RecyclerView,
@@ -80,13 +81,19 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        playlistName?.let { playlistName ->
-            musicDatabase = MusicDatabase.getDatabase(mainActivity, lifecycleScope)
-            musicDatabase.playlistDao().findPlaylist(playlistName).observe(viewLifecycleOwner) {
-                playlist = it
-                (adapter as PlaylistAdapter).playlist = it
-                val songs = mainActivity.extractPlaylistSongs(it?.songs)
+        playlistName?.let { name ->
+            musicLibraryViewModel.setActivePlaylistByName(name)
+
+            musicLibraryViewModel.activePlaylistSongs.observe(viewLifecycleOwner) { songs ->
                 updateRecyclerView(songs)
+            }
+
+            lifecycleScope.launch(Dispatchers.Main) {
+                playlist = withContext(Dispatchers.IO) {
+                    musicLibraryViewModel.getPlaylistByName(name)
+                }
+                (adapter as PlaylistAdapter).playlist = playlist
+                adapter.notifyItemChanged(0)
             }
         }
     }
@@ -103,10 +110,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
     }
 
     override fun requestNewData() {
-        musicDatabase.playlistDao().findPlaylist(playlistName ?: return).value?.let {
-            val songs = mainActivity.extractPlaylistSongs(it.songs)
-            updateRecyclerView(songs)
-        }
+        musicLibraryViewModel.activePlaylistSongs.value?.let { updateRecyclerView(it) }
     }
 
     private fun setupMenu(songs: List<Song>) {
