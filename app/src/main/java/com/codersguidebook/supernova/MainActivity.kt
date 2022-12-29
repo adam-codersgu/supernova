@@ -500,6 +500,14 @@ class MainActivity : AppCompatActivity() {
                 mediaControllerCompat.addQueueItem(songDesc)
             }
         }
+        launch(Dispatchers.Main) toast@ {
+            val message = when {
+                songs.size == 1 -> getString(R.string.song_added_play_queue, songs[0].title)
+                songs.size > 1 -> getString(R.string.songs_added_play_queue)
+                else -> return@toast
+            }
+            Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
+        }
     }
 
     /**

@@ -60,7 +60,7 @@ class ArtistOptions(private val artistName: String) : DialogFragment() {
 
         txtAddQueue.setOnClickListener{
             if (!songList.isNullOrEmpty()) callingActivity.addSongsToPlayQueue(songList!!)
-            else Toast.makeText(activity, getString(R.string.no_songs_found, artistName), Toast.LENGTH_SHORT).show()
+            else Toast.makeText(callingActivity, getString(R.string.no_songs_found, artistName), Toast.LENGTH_SHORT).show()
             dismiss()
         }
 

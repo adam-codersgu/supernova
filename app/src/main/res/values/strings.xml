@@ -146,6 +146,7 @@
     <string name="repeat_mode_one">Repeat the current song</string>
     <string name="set_playlist_artwork">Set Playlist artwork</string>
     <string name="song_added_playlist">%1$s has been added to %2$s</string>
+    <string name="song_added_play_queue">%1$s has been added to the play queue</string>
     <string name="songs_added_play_queue">Your songs have been added to the play queue</string>
     <string name="songs_added_playlist">Your songs have been added to %1$s</string>
     <string name="storage_permission_needed">Storage access is required to load your music library</string>
