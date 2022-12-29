@@ -45,7 +45,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
 
     private val mostPlayedSongsObserver: Observer<List<Long>> = Observer<List<Long>> {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.findPlaylistByName(getApplication<Application>().getString(R.string.most_played))?.apply {
+            getPlaylistByName(getApplication<Application>().getString(R.string.most_played))?.apply {
                 val mostPlayedSongs = PlaylistHelper.serialiseSongIds(it)
                 if (mostPlayedSongs != this.songs) {
                     this.songs = mostPlayedSongs
@@ -124,7 +124,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @return A Boolean indicating whether a corresponding playlist exists.
      */
     suspend fun doesPlaylistExistByName(name: String): Boolean {
-        return repository.findPlaylistByName(name) != null
+        return getPlaylistByName(name) != null
     }
 
     /**
@@ -333,7 +333,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param song The Song object that should be favourited/unfavourited.
      */
     fun toggleSongFavouriteStatus(song: Song) = viewModelScope.launch(Dispatchers.IO) {
-        repository.findPlaylistByName(getApplication<Application>().getString(R.string.favourites))?.apply {
+        getPlaylistByName(getApplication<Application>().getString(R.string.favourites))?.apply {
             val songIdList = PlaylistHelper.extractSongIds(this.songs)
             val matchingSong = songIdList.firstOrNull { it == song.songId }
 
@@ -369,14 +369,9 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * Find the Playlist object associated with a given name.
      *
      * @param name The playlist's name.
-     * @return A LiveData representation of the associated Playlist object or null if no match found.
+     * @return The associated Playlist object or null if no match found.
      */
-    // fixme: a bad practice is used here. Fix it in lines with https://developer.android.com/topic/libraries/architecture/livedata#transform_livedata
-    //  set an active playlist to observe
-    // TODO: For areas of the codebase like this, can we use a view model method that itself finds the playlist
-    //  and extracts their songs in one go? This would save the coroutine code duplication
-    //  e.g. see edit playlist fragment
-    fun getPlaylistByName(name: String): LiveData<Playlist?> = repository.findPlaylistByNameLiveData(name)
+    suspend fun getPlaylistByName(name: String): Playlist? = repository.findPlaylistByName(name)
 
     fun setActivePlaylistByName(name: String) {
         activePlaylistName.value = name
@@ -414,7 +409,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param songId The media ID of the song.
      */
     fun addSongByIdToRecentlyPlayedPlaylist(songId: Long) = viewModelScope.launch(Dispatchers.IO) {
-        repository.findPlaylistByName(getApplication<Application>().getString(R.string.recently_played))?.apply {
+        getPlaylistByName(getApplication<Application>().getString(R.string.recently_played))?.apply {
             val songIdList = PlaylistHelper.extractSongIds(this.songs)
             if (songIdList.isNotEmpty()) {
                 val index = songIdList.indexOfFirst { it == songId }
@@ -435,7 +430,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * Default = false.
      */
     fun refreshSongOfTheDay(forceUpdate: Boolean = false) = viewModelScope.launch(Dispatchers.IO) {
-        val playlist = repository.findPlaylistByName(getApplication<Application>()
+        val playlist = getPlaylistByName(getApplication<Application>()
             .getString(R.string.song_day)) ?: Playlist(0, getApplication<Application>()
             .getString(R.string.song_day), null, false)
         val songIdList = PlaylistHelper.extractSongIds(playlist.songs)

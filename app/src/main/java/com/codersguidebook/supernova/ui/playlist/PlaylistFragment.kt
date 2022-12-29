@@ -82,20 +82,18 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         playlistName?.let { name ->
-            // TODO: For areas of the codebase like this, can we use a view model method that itself finds the playlist
-            //  and extracts their songs in one go? This would save the coroutine code duplication
-            //  e.g. see edit playlist fragment
-            // TODO: Need to test if this observer actually works. e.g. when playlist fragment is open, and a
-            //  given song within that playlist is deleted from the device, does the UI update?
-            musicLibraryViewModel.getPlaylistByName(name).observe(viewLifecycleOwner) {
-                lifecycleScope.launch(Dispatchers.Main) {
-                    playlist = it
-                    (adapter as PlaylistAdapter).playlist = it
-                    val songs = withContext(Dispatchers.IO) {
-                        musicLibraryViewModel.extractPlaylistSongs(it?.songs)
-                    }
-                    updateRecyclerView(songs)
+            musicLibraryViewModel.setActivePlaylistByName(name)
+
+            musicLibraryViewModel.activePlaylistSongs.observe(viewLifecycleOwner) { songs ->
+                updateRecyclerView(songs)
+            }
+
+            lifecycleScope.launch(Dispatchers.Main) {
+                playlist = withContext(Dispatchers.IO) {
+                    musicLibraryViewModel.getPlaylistByName(name)
                 }
+                (adapter as PlaylistAdapter).playlist = playlist
+                adapter.notifyItemChanged(0)
             }
         }
     }
@@ -112,17 +110,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
     }
 
     override fun requestNewData() {
-        // TODO: For areas of the codebase like this, can we use a view model method that itself finds the playlist
-        //  and extracts their songs in one go? This would save the coroutine code duplication
-        //  e.g. see edit playlist fragment
-        musicLibraryViewModel.getPlaylistByName(playlistName ?: return).value?.let {
-            lifecycleScope.launch(Dispatchers.Main) {
-                val songs = withContext(Dispatchers.IO) {
-                    musicLibraryViewModel.extractPlaylistSongs(it.songs)
-                }
-                updateRecyclerView(songs)
-            }
-        }
+        musicLibraryViewModel.activePlaylistSongs.value?.let { updateRecyclerView(it) }
     }
 
     private fun setupMenu(songs: List<Song>) {
