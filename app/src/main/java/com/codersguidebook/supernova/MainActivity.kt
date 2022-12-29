@@ -266,7 +266,7 @@ class MainActivity : AppCompatActivity() {
      * method is used by MediaStoreContentObserver whenever a given URI is associated with
      * media insertion, deletion or update.
      *
-     * @param uri - The content URI associated with the change.
+     * @param uri The content URI associated with the change.
      */
     fun handleChangeToContentUri(uri: Uri) {
         val songIdString = uri.toString().removePrefix(
@@ -288,8 +288,8 @@ class MainActivity : AppCompatActivity() {
     /**
      * Notify the media browser service that a queue item has been moved.
      *
-     * @param queueId - The queue ID of the item to be moved.
-     * @param newIndex - The new index in the play queue that the item should occupy.
+     * @param queueId The queue ID of the item to be moved.
+     * @param newIndex The new index in the play queue that the item should occupy.
      */
     fun notifyQueueItemMoved(queueId: Long, newIndex: Int) {
         val bundle = Bundle().apply {
@@ -344,7 +344,7 @@ class MainActivity : AppCompatActivity() {
      * N.B. This functionality may be called independently of toggleShuffleMode() e.g. when an
      * album is played on shuffle mode directly from the Album view.
      *
-     * @param shuffleMode - An Integer representing the active shuffle mode preference.
+     * @param shuffleMode An Integer representing the active shuffle mode preference.
      */
     private fun setShuffleMode(shuffleMode: Int) {
         sharedPreferences.edit().apply {
@@ -439,11 +439,11 @@ class MainActivity : AppCompatActivity() {
     /**
      * Build a play queue using a list of songs and commence playback.
      *
-     * @param songs - A list containing Song objects that should be added to the play queue.
-     * @param startIndex - The index of the play queue element at which playback should begin.
+     * @param songs A list containing Song objects that should be added to the play queue.
+     * @param startIndex The index of the play queue element at which playback should begin.
      * Default = 0 (the beginning of the play queue).
      * N.B. If shuffle is true then the startIndex is ignored.
-     * @param shuffle - Indicates whether the play queue should be shuffled.
+     * @param shuffle Indicates whether the play queue should be shuffled.
      */
     fun playNewPlayQueue(songs: List<Song>, startIndex: Int = 0, shuffle: Boolean = false)
             = lifecycleScope.launch(Dispatchers.Default) {
@@ -480,8 +480,8 @@ class MainActivity : AppCompatActivity() {
      * Add a list of songs to the play queue. The songs can be added to the end of the play queue
      * or after the currently playing song.
      *
-     * @param songs - A list containing Song objects that should be added to the play queue.
-     * @param addSongsAfterCurrentQueueItem - A Boolean indicating whether the songs should be added to
+     * @param songs A list containing Song objects that should be added to the play queue.
+     * @param addSongsAfterCurrentQueueItem A Boolean indicating whether the songs should be added to
      * after the currently playing queue item. Default value = false.
      */
     fun addSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false)
@@ -505,7 +505,7 @@ class MainActivity : AppCompatActivity() {
     /**
      * Remove a given QueueItem from the play queue based on its ID.
      *
-     * @param queueItemId - The ID of the QueueItem to be removed.
+     * @param queueItemId The ID of the QueueItem to be removed.
      */
     fun removeQueueItemById(queueItemId: Long) {
         if (playQueue.isNotEmpty()) {
@@ -520,14 +520,14 @@ class MainActivity : AppCompatActivity() {
     /**
      * Set the playback position for the currently playing song to a specific location.
      *
-     * @param position - An Integer representing the desired playback position.
+     * @param position An Integer representing the desired playback position.
      */
     fun seekTo(position: Int) = mediaController.transportControls.seekTo(position.toLong())
 
     /**
      * Skip to a specific item in the play queue based on its ID.
      *
-     * @param queueItemId - The ID of the target QueueItem object.
+     * @param queueItemId The ID of the target QueueItem object.
      */
     fun skipToQueueItem(queueItemId: Long) {
         mediaController.transportControls.skipToQueueItem(queueItemId)
@@ -538,7 +538,7 @@ class MainActivity : AppCompatActivity() {
      * Load backup art for a playlist based on the artwork associated with a given song within
      * that playlist. If the playlist does not contain any songs, then default art will be displayed.
      *
-     * @param songIds - A list of song IDs that artwork can be randomly sourced from. The list can be empty.
+     * @param songIds A list of song IDs that artwork can be randomly sourced from. The list can be empty.
      * @param view The ImageView widget that the artwork should be rendered in.
      */
     fun loadRandomArtworkBySongIds(songIds: List<Long>, view: ImageView) = lifecycleScope.launch(Dispatchers.Main) {
@@ -554,7 +554,7 @@ class MainActivity : AppCompatActivity() {
      * Hide/reveal the status bars. If the status bars are hidden, then they can be transiently
      * revealed using a swipe motion.
      *
-     * @param hide - A Boolean indicating whether the status bars should be hidden (true) or
+     * @param hide A Boolean indicating whether the status bars should be hidden (true) or
      * revealed (false)
      */
     fun hideStatusBars(hide: Boolean) {
@@ -607,7 +607,7 @@ class MainActivity : AppCompatActivity() {
      * the given song is available. For example, QueueItem objects may feature incomplete
      * song metadata.
      *
-     * @param songId - The ID of the song.
+     * @param songId The ID of the song.
      */
     fun openAddToPlaylistDialogForSongById(songId: Long) = lifecycleScope.launch(Dispatchers.Main) {
         val song = withContext(Dispatchers.IO) {
@@ -620,7 +620,7 @@ class MainActivity : AppCompatActivity() {
      * Opens a dialog window allowing the user to add a list of songs to new and existing
      * playlists.
      *
-     * @param songs - The list of Song objects to be added to a playlist.
+     * @param songs The list of Song objects to be added to a playlist.
      */
     fun openAddToPlaylistDialog(songs: List<Song>) {
         val songIds = songs.map { it.songId }
@@ -666,7 +666,7 @@ class MainActivity : AppCompatActivity() {
     /**
      * Save updates to song metadata to the database. Also update the play queue (if necessary)
      *
-     * @param songs - The list of Song objects containing updated metadata.
+     * @param songs The list of Song objects containing updated metadata.
      */
     fun updateSongs(songs: List<Song>) {
         musicLibraryViewModel.updateSongs(songs)
@@ -684,6 +684,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Open a given Dialog Fragment.
+     *
+     * @param dialog The dialog fragment to load.
+     */
     fun openDialog(dialog: DialogFragment) = dialog.show(supportFragmentManager, "")
 
     /** Create a channel for displaying application notifications */
