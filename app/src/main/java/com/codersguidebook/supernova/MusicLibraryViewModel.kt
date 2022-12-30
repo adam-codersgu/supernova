@@ -12,9 +12,9 @@ import androidx.preference.PreferenceManager
 import com.codersguidebook.supernova.entities.Artist
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
-import com.codersguidebook.supernova.params.ResultReceiverConstants.Companion.NO_ACTION
-import com.codersguidebook.supernova.params.ResultReceiverConstants.Companion.SONG_DELETED
-import com.codersguidebook.supernova.params.ResultReceiverConstants.Companion.SONG_UPDATED
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NO_ACTION
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_DELETED
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_UPDATED
 import com.codersguidebook.supernova.params.SharedPreferencesConstants
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
