@@ -1,8 +1,6 @@
 package com.codersguidebook.supernova
 
-import android.app.ActivityManager
-import android.app.NotificationChannel
-import android.app.NotificationManager
+import android.app.*
 import android.content.*
 import android.media.AudioManager
 import android.media.session.PlaybackState
@@ -18,11 +16,17 @@ import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.media.session.PlaybackStateCompat.*
+import android.util.Log
 import android.view.Menu
 import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
 import android.widget.SearchView
 import android.widget.Toast
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -59,6 +63,7 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -607,6 +612,73 @@ class MainActivity : AppCompatActivity() {
         if (!searchView.isIconified) {
             searchView.isIconified = true
             searchView.onActionViewCollapsed()
+        }
+    }
+
+    /**
+     * TODO
+     *
+     * @param selectionArgs
+     */
+    fun deleteSongsApi29(selectionArgs: Array<String>) {
+        musicLibraryViewModel.deleteSongsSelectionArgs = selectionArgs
+        try {
+            val numberDeleted = contentResolver
+                .delete(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, selectionArgs)
+            Log.e("DEBUGGING", "The number of rows deleted is $numberDeleted")
+            if (numberDeleted > 0) {
+                musicLibraryViewModel.deleteSongsSelectionArgs = null
+            }
+        } catch(exception: RecoverableSecurityException) {
+            val intentSender = exception.userAction.actionIntent.intentSender
+            val intentSenderRequest = IntentSenderRequest.Builder(intentSender).build()
+            registerResult.launch(intentSenderRequest)
+        }
+    }
+
+    private val registerResult = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
+            result: ActivityResult ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            deleteSongsApi29(musicLibraryViewModel.deleteSongsSelectionArgs ?: return@registerForActivityResult)
+        }
+    }
+
+
+    // TODO: The delete multiple songs option should only show on API 30 and higher
+    /**
+     * TODO
+     *
+     * @param songs
+     */
+    fun deleteSongs(songs: List<Song>) {
+
+        try {
+            contentResolver.delete()
+            contentResolver.delete(uri, null, null)
+        } catch (securityException: SecurityException) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val recoverableSecurityException = securityException as RecoverableSecurityException
+                val senderRequest = IntentSenderRequest.Builder(
+                    recoverableSecurityException.userAction
+                        .actionIntent.intentSender
+                ).build()
+                deleteResultLauncher.launch(senderRequest) //Use of ActivityResultLauncher
+            }
+        }
+
+
+        val taskDescription = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            // Pre-SDK 33
+            @Suppress("DEPRECATION")
+            ActivityManager.TaskDescription("Supernova", R.drawable.no_album_artwork,
+                getColor(R.color.nav_home))
+        } else {
+            // SDK 33 and up
+            ActivityManager.TaskDescription.Builder()
+                .setLabel("Supernova")
+                .setIcon(R.drawable.no_album_artwork)
+                .setPrimaryColor(getColor(R.color.nav_home))
+                .build()
         }
     }
 
