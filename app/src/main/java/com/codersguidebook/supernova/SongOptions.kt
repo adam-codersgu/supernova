@@ -65,9 +65,6 @@ class SongOptions(private val song: Song) : BaseDialogFragment() {
 
         binding.deleteSong.setOnClickListener {
             // TODO: Need to include an API check here (or in MainActivity)
-            // val selection = MediaStore.Audio.Media._ID + "=?"
-            val selection = "_id IN (${song.songId})"
-            val selectionArgs = arrayOf(song.songId.toString())
             mainActivity.deleteSongById(song.songId)
             dismiss()
         }

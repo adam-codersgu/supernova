@@ -69,5 +69,15 @@
             android:background="?attr/selectableItemBackground"
             android:text="@string/edit_album"
             android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/deleteAlbum"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/editAlbum"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackground"
+            android:text="@string/delete_album"
+            android:textSize="16sp" />
     </RelativeLayout>
 </androidx.cardview.widget.CardView>

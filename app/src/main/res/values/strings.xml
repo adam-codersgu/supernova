@@ -29,6 +29,7 @@
     <string name="add_to_favourites">Add to favourites</string>
     <string name="cancel">Cancel</string>
     <string name="change_image">Change image</string>
+    <string name="delete_album">Delete album</string>
     <string name="create_playlist">Create new playlist</string>
     <string name="delete_image">Delete image</string>
     <string name="delete_playlist">Delete playlist</string>

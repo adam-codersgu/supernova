@@ -25,6 +25,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.*
@@ -79,6 +80,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var storagePermissionHelper: StorageAccessPermissionHelper
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
+
+    private val mediaDeletionLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
+            result: ActivityResult ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            musicLibraryViewModel.songIdToDelete?.let {
+                deleteSongById(it)
+            }
+        }
+    }
 
     private val connectionCallbacks = object : MediaBrowserCompat.ConnectionCallback() {
         override fun onConnected() {
@@ -241,6 +251,7 @@ class MainActivity : AppCompatActivity() {
         // Remove deleted songs from the play queue
         musicLibraryViewModel.deletedSongIds.observe(this) { songIds ->
             if (songIds.isEmpty()) return@observe
+            // fixme: concurrent exception thrown here - needs handling/preventing
             for (songId in songIds) {
                 val queueItemsToRemove = playQueue.filter { it.description.mediaId == songId.toString() }
                 for (item in queueItemsToRemove) removeQueueItemById(item.queueId)
@@ -630,55 +641,27 @@ class MainActivity : AppCompatActivity() {
         } catch(exception: RecoverableSecurityException) {
             val intentSender = exception.userAction.actionIntent.intentSender
             val intentSenderRequest = IntentSenderRequest.Builder(intentSender).build()
-            registerResult.launch(intentSenderRequest)
+            mediaDeletionLauncher.launch(intentSenderRequest)
         }
     }
 
-    // TODO: Ultimately should move this to the top of the class and refactor its name and state its only needed for API 29 (if true)
-    private val registerResult = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
-            result: ActivityResult ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            deleteSongById(musicLibraryViewModel.songIdToDelete ?: return@registerForActivityResult)
-        }
-    }
-
-    // TODO: The delete multiple songs option should only show on API 30 and higher
     /**
      * TODO
      *
-     * @param songs
+     * @param songs A list of Song objects to be deleted
      */
-    /* fun deleteSongs(songs: List<Song>) {
-
-        try {
-            contentResolver.delete()
-            contentResolver.delete(uri, null, null)
-        } catch (securityException: SecurityException) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                val recoverableSecurityException = securityException as RecoverableSecurityException
-                val senderRequest = IntentSenderRequest.Builder(
-                    recoverableSecurityException.userAction
-                        .actionIntent.intentSender
-                ).build()
-                deleteResultLauncher.launch(senderRequest) //Use of ActivityResultLauncher
-            }
+    // For SDK 30 and higher
+    @RequiresApi(Build.VERSION_CODES.R)
+    fun deleteSongs(songs: List<Song>) {
+        val uris: ArrayList<Uri> = ArrayList()
+        for (song in songs) {
+            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, song.songId)
+            uris.add(uri)
         }
-
-
-        val taskDescription = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            // Pre-SDK 33
-            @Suppress("DEPRECATION")
-            ActivityManager.TaskDescription("Supernova", R.drawable.no_album_artwork,
-                getColor(R.color.nav_home))
-        } else {
-            // SDK 33 and up
-            ActivityManager.TaskDescription.Builder()
-                .setLabel("Supernova")
-                .setIcon(R.drawable.no_album_artwork)
-                .setPrimaryColor(getColor(R.color.nav_home))
-                .build()
-        }
-    } */
+        val intentSender = MediaStore.createDeleteRequest(application.contentResolver, uris).intentSender
+        val intentSenderRequest = IntentSenderRequest.Builder(intentSender).build()
+        mediaDeletionLauncher.launch(intentSenderRequest)
+    }
 
     /**
      * Convenience method to open the 'Add to playlist' dialog when only the ID of
