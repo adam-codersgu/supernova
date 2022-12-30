@@ -16,7 +16,6 @@ import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.media.session.PlaybackStateCompat.*
-import android.util.Log
 import android.view.Menu
 import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
@@ -616,19 +615,17 @@ class MainActivity : AppCompatActivity() {
     /**
      * TODO
      *
-     * @param selection
-     * @param selectionArgs
+     * @param songId The media ID of the song to be deleted.
      */
     // For SDK 29
-    fun deleteSongsBySelection(selection: String, selectionArgs: Array<String>) {
-        musicLibraryViewModel.deleteSongsSelection = selection
-        musicLibraryViewModel.deleteSongsSelectionArgs = selectionArgs
+    fun deleteSongById(songId: Long) {
+        musicLibraryViewModel.songIdToDelete = songId
         try {
-            val numberDeleted = contentResolver
-                .delete(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, selection, selectionArgs)
-            Log.e("DEBUGGING", "The number of rows deleted is $numberDeleted")
+            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, songId)
+
+            val numberDeleted = application.contentResolver.delete(uri, null, null)
             if (numberDeleted > 0) {
-                musicLibraryViewModel.deleteSongsSelectionArgs = null
+                musicLibraryViewModel.songIdToDelete = null
             }
         } catch(exception: RecoverableSecurityException) {
             val intentSender = exception.userAction.actionIntent.intentSender
@@ -637,15 +634,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // TODO: Ultimately should move this to the top of the class and refactor its name and state its only needed for API 29 (if true)
     private val registerResult = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
             result: ActivityResult ->
         if (result.resultCode == Activity.RESULT_OK) {
-            deleteSongsBySelection(
-                musicLibraryViewModel.deleteSongsSelection ?: return@registerForActivityResult,
-                musicLibraryViewModel.deleteSongsSelectionArgs ?: return@registerForActivityResult)
+            deleteSongById(musicLibraryViewModel.songIdToDelete ?: return@registerForActivityResult)
         }
     }
-
 
     // TODO: The delete multiple songs option should only show on API 30 and higher
     /**

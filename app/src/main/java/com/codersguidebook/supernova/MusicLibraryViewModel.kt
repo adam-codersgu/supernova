@@ -32,8 +32,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     val allArtists: LiveData<List<Artist>> = repository.allArtists
     val allPlaylists: LiveData<List<Playlist>> = repository.allPlaylists
     val deletedSongIds = MutableLiveData<MutableList<Long>>()
-    var deleteSongsSelection: String? = null
-    var deleteSongsSelectionArgs: Array<String>? = null
+    var songIdToDelete: Long? = null
 
     private val activePlaylistName = MutableLiveData<String>()
     private val activePlaylist: LiveData<Playlist?> = Transformations.switchMap(activePlaylistName) {

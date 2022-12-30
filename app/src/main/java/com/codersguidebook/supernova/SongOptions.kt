@@ -2,7 +2,6 @@ package com.codersguidebook.supernova
 
 import android.app.Dialog
 import android.os.Bundle
-import android.provider.MediaStore
 import androidx.navigation.findNavController
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.databinding.SongOptionsBinding
@@ -65,9 +64,11 @@ class SongOptions(private val song: Song) : BaseDialogFragment() {
         }
 
         binding.deleteSong.setOnClickListener {
-            val selection = MediaStore.Audio.Media._ID + "=?"
+            // TODO: Need to include an API check here (or in MainActivity)
+            // val selection = MediaStore.Audio.Media._ID + "=?"
+            val selection = "_id IN (${song.songId})"
             val selectionArgs = arrayOf(song.songId.toString())
-            mainActivity.deleteSongsBySelection(selection, selectionArgs)
+            mainActivity.deleteSongById(song.songId)
             dismiss()
         }
 
