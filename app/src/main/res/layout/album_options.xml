@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    card_view:cardElevation="2dp" >
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="16dp" >
+
+        <TextView
+            android:id="@+id/optionsTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:layout_marginBottom="6dp"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/playNext"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/optionsTitle"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackground"
+            android:text="@string/play_next"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/addPlayQueue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/playNext"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackground"
+            android:text="@string/add_que"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/artist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/addPlayQueue"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackground"
+            android:text="@string/artist"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/addPlaylist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/artist"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackground"
+            android:text="@string/add_playlist"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/editAlbum"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/addPlaylist"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackground"
+            android:text="@string/edit_album"
+            android:textSize="16sp" />
+    </RelativeLayout>
+</androidx.cardview.widget.CardView>

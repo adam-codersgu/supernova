@@ -23,8 +23,6 @@ import android.widget.ImageView
 import android.widget.SearchView
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultCallback
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -618,14 +616,16 @@ class MainActivity : AppCompatActivity() {
     /**
      * TODO
      *
+     * @param selection
      * @param selectionArgs
      */
     // For SDK 29
-    fun deleteSongsBySelectionArgs(selectionArgs: Array<String>) {
+    fun deleteSongsBySelection(selection: String, selectionArgs: Array<String>) {
+        musicLibraryViewModel.deleteSongsSelection = selection
         musicLibraryViewModel.deleteSongsSelectionArgs = selectionArgs
         try {
             val numberDeleted = contentResolver
-                .delete(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, selectionArgs)
+                .delete(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, selection, selectionArgs)
             Log.e("DEBUGGING", "The number of rows deleted is $numberDeleted")
             if (numberDeleted > 0) {
                 musicLibraryViewModel.deleteSongsSelectionArgs = null
@@ -640,8 +640,9 @@ class MainActivity : AppCompatActivity() {
     private val registerResult = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
             result: ActivityResult ->
         if (result.resultCode == Activity.RESULT_OK) {
-            deleteSongsBySelectionArgs(musicLibraryViewModel.deleteSongsSelectionArgs
-                ?: return@registerForActivityResult)
+            deleteSongsBySelection(
+                musicLibraryViewModel.deleteSongsSelection ?: return@registerForActivityResult,
+                musicLibraryViewModel.deleteSongsSelectionArgs ?: return@registerForActivityResult)
         }
     }
 
@@ -652,7 +653,7 @@ class MainActivity : AppCompatActivity() {
      *
      * @param songs
      */
-    fun deleteSongs(songs: List<Song>) {
+    /* fun deleteSongs(songs: List<Song>) {
 
         try {
             contentResolver.delete()
@@ -682,7 +683,7 @@ class MainActivity : AppCompatActivity() {
                 .setPrimaryColor(getColor(R.color.nav_home))
                 .build()
         }
-    }
+    } */
 
     /**
      * Convenience method to open the 'Add to playlist' dialog when only the ID of

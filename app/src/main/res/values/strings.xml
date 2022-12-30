@@ -32,6 +32,7 @@
     <string name="create_playlist">Create new playlist</string>
     <string name="delete_image">Delete image</string>
     <string name="delete_playlist">Delete playlist</string>
+    <string name="delete_song">Delete song</string>
     <string name="done">Done</string>
     <string name="edit_album">Edit album info</string>
     <string name="edit_music">Edit music info</string>
