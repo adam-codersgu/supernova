@@ -12,6 +12,9 @@ import androidx.preference.PreferenceManager
 import com.codersguidebook.supernova.entities.Artist
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.params.ResultReceiverConstants.Companion.NO_ACTION
+import com.codersguidebook.supernova.params.ResultReceiverConstants.Companion.SONG_DELETED
+import com.codersguidebook.supernova.params.ResultReceiverConstants.Companion.SONG_UPDATED
 import com.codersguidebook.supernova.params.SharedPreferencesConstants
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
@@ -31,7 +34,6 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     val allSongs: LiveData<List<Song>> = repository.allSongs
     val allArtists: LiveData<List<Artist>> = repository.allArtists
     val allPlaylists: LiveData<List<Playlist>> = repository.allPlaylists
-    val deletedSongIds = MutableLiveData<MutableList<Long>>()
     var songIdToDelete: Long? = null
 
     private val activePlaylistName = MutableLiveData<String>()
@@ -101,9 +103,6 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
 
         launch(Dispatchers.IO) {
             repository.deleteSong(song)
-            val songIds = deletedSongIds.value ?: mutableListOf()
-            songIds.add(song.songId)
-            deletedSongIds.postValue(songIds)
         }
 
         deleteRedundantArtworkBySong(song)
@@ -149,8 +148,12 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
         repository.increaseSongPlaysBySongId(songId)
     }
 
-    /** Refresh the music library. Add new songs and remove deleted songs. */
-    fun refreshMusicLibrary() = viewModelScope.launch(Dispatchers.Default) {
+    /**
+     * Refresh the music library. Add new songs and remove deleted songs.
+     *
+     * @return A list of songs that can be deleted.
+     */
+    suspend fun refreshMusicLibrary(): List<Song> {
         val songsToAddToMusicLibrary = mutableListOf<Song>()
 
         getMediaStoreCursor()?.use { cursor ->
@@ -176,7 +179,9 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
             songsToBeDeleted.let {
                 for (song in songsToBeDeleted) deleteSong(song)
             }
+            return songsToBeDeleted
         }
+        return listOf()
     }
 
     /**
@@ -276,8 +281,9 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * based on the media store record's media ID.
      *
      * @param mediaId The ID of the target media store record
+     * @return A response code indicating the action taken,
      */
-    fun handleFileUpdateByMediaId(mediaId: Long) = viewModelScope.launch(Dispatchers.IO) {
+    suspend fun handleFileUpdateByMediaId(mediaId: Long): Int {
         val selection = MediaStore.Audio.Media._ID + "=?"
         val selectionArgs = arrayOf(mediaId.toString())
         val cursor = getMediaStoreCursor(selection, selectionArgs)
@@ -289,14 +295,17 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
                     this.moveToNext()
                     val createdSong = createSongFromCursor(this)
                     saveSongs(listOf(createdSong))
+                    return SONG_UPDATED
                 }
             }
             cursor?.count == 0 -> {
                 existingSong?.let {
                     deleteSong(existingSong)
+                    return SONG_DELETED
                 }
             }
         }
+        return NO_ACTION
     }
 
     /**

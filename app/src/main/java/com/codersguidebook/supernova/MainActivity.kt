@@ -47,6 +47,7 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMO
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_REPEAT_MODE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_SHUFFLE_MODE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.UPDATE_QUEUE_ITEM
+import com.codersguidebook.supernova.params.ResultReceiverConstants.Companion.SONG_DELETED
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_ID
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_DURATION
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_POSITION
@@ -151,6 +152,7 @@ class MainActivity : AppCompatActivity() {
                         musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(finishedSongId)
                     }
                 }
+                STATE_ERROR -> refreshMusicLibrary()
                 else -> return
             }
         }
@@ -248,20 +250,8 @@ class MainActivity : AppCompatActivity() {
                 true, it)
         }
 
-        // Remove deleted songs from the play queue
-        musicLibraryViewModel.deletedSongIds.observe(this) { songIds ->
-            if (songIds.isEmpty()) return@observe
-            // fixme: concurrent exception thrown here - needs handling/preventing
-            for (songId in songIds) {
-                val queueItemsToRemove = playQueue.filter { it.description.mediaId == songId.toString() }
-                for (item in queueItemsToRemove) removeQueueItemById(item.queueId)
-            }
-            musicLibraryViewModel.deletedSongIds.value?.removeAll(songIds)
-        }
-
-        if (storagePermissionHelper.hasReadPermission()) {
-            musicLibraryViewModel.refreshMusicLibrary()
-        } else storagePermissionHelper.requestPermissions()
+        if (storagePermissionHelper.hasReadPermission()) refreshMusicLibrary()
+        else storagePermissionHelper.requestPermissions()
     }
 
     override fun onStart() {
@@ -274,6 +264,14 @@ class MainActivity : AppCompatActivity() {
         volumeControlStream = AudioManager.STREAM_MUSIC
     }
 
+    /** Refresh the music library and remove any deleted songs from the play queue. */
+    private fun refreshMusicLibrary() = lifecycleScope.launch(Dispatchers.Default) {
+        val songsToDelete = musicLibraryViewModel.refreshMusicLibrary()
+        for (song in songsToDelete) {
+            findSongIdInPlayQueueToRemove(song.songId)
+        }
+    }
+
     /**
      * Notify the activity of a change to the media associated with a given content URI. This
      * method is used by MediaStoreContentObserver whenever a given URI is associated with
@@ -281,13 +279,24 @@ class MainActivity : AppCompatActivity() {
      *
      * @param uri The content URI associated with the change.
      */
-    fun handleChangeToContentUri(uri: Uri) {
+    fun handleChangeToContentUri(uri: Uri) = lifecycleScope.launch(Dispatchers.IO) {
         val songIdString = uri.toString().removePrefix(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + "/")
         try {
             val songId = songIdString.toLong()
-            musicLibraryViewModel.handleFileUpdateByMediaId(songId)
+            val response = musicLibraryViewModel.handleFileUpdateByMediaId(songId)
+            if (response == SONG_DELETED) findSongIdInPlayQueueToRemove(songId)
         } catch (_: NumberFormatException) { musicLibraryViewModel.refreshMusicLibrary() }
+    }
+
+    /**
+     * Search for and remove all instances of a given song from the play queue based on its ID.
+     *
+     * @param songId The ID of the Song to remove from the play queue.
+     */
+    private fun findSongIdInPlayQueueToRemove(songId: Long) = lifecycleScope.launch(Dispatchers.Default) {
+        val queueItemsToRemove = playQueue.filter { it.description.mediaId == songId.toString() }
+        for (item in queueItemsToRemove) removeQueueItemById(item.queueId)
     }
 
     /** Fetch and save an up-to-date version of the play queue from the media controller. */
@@ -624,7 +633,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * TODO
+     * Delete a Song object based on its ID.
      *
      * @param songId The media ID of the song to be deleted.
      */
@@ -783,7 +792,7 @@ class MainActivity : AppCompatActivity() {
                 storagePermissionHelper.launchPermissionSettings()
             }
             finish()
-        } else musicLibraryViewModel.refreshMusicLibrary()
+        } else refreshMusicLibrary()
     }
 
     /** Restore the play queue and playback state from the last save. */
