@@ -646,17 +646,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * TODO
+     * Delete a collection of songs.
      *
      * @param songs A list of Song objects to be deleted
      */
     // For SDK 30 and higher
     @RequiresApi(Build.VERSION_CODES.R)
     fun deleteSongs(songs: List<Song>) {
-        val uris: ArrayList<Uri> = ArrayList()
-        for (song in songs) {
-            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, song.songId)
-            uris.add(uri)
+        val uris = songs.map { song ->
+            ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, song.songId)
         }
         val intentSender = MediaStore.createDeleteRequest(application.contentResolver, uris).intentSender
         val intentSenderRequest = IntentSenderRequest.Builder(intentSender).build()

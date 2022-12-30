@@ -1,6 +1,7 @@
 package com.codersguidebook.supernova
 
 import android.app.Dialog
+import android.os.Build
 import android.os.Bundle
 import androidx.navigation.findNavController
 import androidx.viewbinding.ViewBinding
@@ -64,8 +65,8 @@ class SongOptions(private val song: Song) : BaseDialogFragment() {
         }
 
         binding.deleteSong.setOnClickListener {
-            // TODO: Need to include an API check here (or in MainActivity)
-            mainActivity.deleteSongById(song.songId)
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) mainActivity.deleteSongs(listOf(song))
+            else mainActivity.deleteSongById(song.songId)
             dismiss()
         }
 
