@@ -620,7 +620,8 @@ class MainActivity : AppCompatActivity() {
      *
      * @param selectionArgs
      */
-    fun deleteSongsApi29(selectionArgs: Array<String>) {
+    // For SDK 29
+    fun deleteSongsBySelectionArgs(selectionArgs: Array<String>) {
         musicLibraryViewModel.deleteSongsSelectionArgs = selectionArgs
         try {
             val numberDeleted = contentResolver
@@ -639,7 +640,8 @@ class MainActivity : AppCompatActivity() {
     private val registerResult = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
             result: ActivityResult ->
         if (result.resultCode == Activity.RESULT_OK) {
-            deleteSongsApi29(musicLibraryViewModel.deleteSongsSelectionArgs ?: return@registerForActivityResult)
+            deleteSongsBySelectionArgs(musicLibraryViewModel.deleteSongsSelectionArgs
+                ?: return@registerForActivityResult)
         }
     }
 
