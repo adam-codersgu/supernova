@@ -6,7 +6,7 @@
     \nThe vinyl icon used as the app icon, for missing album and playlist artwork was made by Freepik from www.flaticon.com
     \n
     \nThe playback control icons (play, pause, skip forward and skip back) were made by Elias Bikbulatov from www.flaticon.com</string>
-    <string name="app_name">Supernova</string>
+    <string name="app_name" translatable="false">Supernova</string>
     <string name="app_info">App information</string>
     <string name="developer">Developer</string>
     <string name="developer_body">This app was developed by Adam Hawke. Contact: hello@codersguidebook.com</string>
