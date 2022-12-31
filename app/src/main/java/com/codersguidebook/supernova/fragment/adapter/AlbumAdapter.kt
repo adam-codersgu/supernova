@@ -3,6 +3,7 @@ package com.codersguidebook.supernova.fragment.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
@@ -13,25 +14,29 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.SongOptions
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
-class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter() {
+class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(activity) {
 
     var displayDiscNumbers = false
 
-    inner class ViewHolderSongWithDisc(itemView: View) :
-        ViewHolderSong(itemView) {
+    inner class ViewHolderSongWithDisc(itemView: View) : ViewHolderSong(itemView) {
 
         private var songLayout = itemView.findViewById<ConstraintLayout>(R.id.songPreviewLayout)
         internal var mDisc = itemView.findViewById<View>(R.id.discNumber) as TextView
         internal var mTrack = itemView.findViewById<View>(R.id.songTrack) as TextView
+        private var mMenu = itemView.findViewById<ImageButton>(R.id.menu)
 
         init {
+            itemView.rootView.isClickable = false
+            itemView.rootView.setOnClickListener(null)
+            itemView.rootView.setOnLongClickListener(null)
+
             songLayout.isClickable = true
 
             songLayout.setOnClickListener {
                 activity.playNewPlayQueue(songs, layoutPosition - 1)
             }
 
-            songLayout.setOnLongClickListener{
+            songLayout.setOnLongClickListener {
                 activity.openDialog(SongOptions(songs[layoutPosition - 1]))
                 return@setOnLongClickListener true
             }
@@ -44,7 +49,7 @@ class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter() 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return if (viewType == HEADER) ViewHolderHeader(
-            LayoutInflater.from(parent.context).inflate(R.layout.large_preview, parent, false)
+            LayoutInflater.from(parent.context).inflate(R.layout.header, parent, false)
         ) else ViewHolderSongWithDisc(
             LayoutInflater.from(parent.context).inflate(R.layout.song_with_disc_preview, parent, false)
         )

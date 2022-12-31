@@ -92,7 +92,7 @@
     <string name="search_results">Search results</string>
     <string name="select_playlist">Select a playlist or create a new one</string>
     <string name="song_day">Song of the day</string>
-    <string name="song_of_the_day_will_be_displayed_here">Song of the day will appear here once your library is built</string>
+    <string name="song_of_the_day_will_be_displayed_here">The song of the day will appear once your library is built</string>
     <string name="title">Title</string>
     <string name="track">Track</string>
     <string name="use_custom_image">Use custom image</string>

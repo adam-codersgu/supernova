@@ -6,6 +6,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.GridLayout
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
@@ -21,8 +22,7 @@ import com.codersguidebook.supernova.ui.playlist.PlaylistFragment
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
 class PlaylistAdapter(private val fragment: PlaylistFragment,
-                      private val activity: MainActivity
-): SongWithHeaderAdapter() {
+                      private val activity: MainActivity): SongWithHeaderAdapter(activity) {
     private var showHandles = false
     var playlist: Playlist? = null
 
@@ -41,18 +41,12 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
         internal var mArtwork4 = itemView.findViewById<View>(R.id.artwork4) as ImageView
     }
 
-    inner class ViewHolderSongWithHandle(itemView: View) :
-        ViewHolderSong(itemView) {
+    inner class ViewHolderSongWithHandle(itemView: View) : ViewHolderSong(itemView) {
 
-        internal var mArtwork = itemView.findViewById<View>(R.id.artwork) as ImageView
         internal var mPlays = itemView.findViewById<View>(R.id.plays) as TextView
+        internal var mMenu = itemView.findViewById<ImageButton>(R.id.menu)
 
         init {
-            itemView.isClickable = true
-            itemView.setOnClickListener {
-                activity.playNewPlayQueue(songs, layoutPosition - 1)
-            }
-
             itemView.setOnLongClickListener {
                 if (!showHandles) playlist?.let {
                     activity.openDialog(PlaylistSongOptions(songs, layoutPosition - 1, it))
@@ -70,7 +64,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return if (viewType == HEADER) ViewHolderPlaylistHeader(
-            LayoutInflater.from(parent.context).inflate(R.layout.large_preview, parent, false)
+            LayoutInflater.from(parent.context).inflate(R.layout.header, parent, false)
         ) else ViewHolderSongWithHandle(
             LayoutInflater.from(parent.context).inflate(R.layout.playlist_song, parent, false)
         )

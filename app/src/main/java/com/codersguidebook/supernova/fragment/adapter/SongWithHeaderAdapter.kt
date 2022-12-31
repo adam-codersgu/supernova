@@ -3,13 +3,13 @@ package com.codersguidebook.supernova.fragment.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 
-abstract class SongWithHeaderAdapter: SongAdapter() {
+abstract class SongWithHeaderAdapter(activity: MainActivity): SongAdapter(activity) {
 
     companion object {
         const val HEADER = 1
@@ -24,13 +24,6 @@ abstract class SongWithHeaderAdapter: SongAdapter() {
         internal var mSongCount = itemView.findViewById<View>(R.id.largeSubtitle2) as TextView
     }
 
-    open inner class ViewHolderSong(itemView: View) : RecyclerView.ViewHolder(itemView) {
-
-        internal var mTitle = itemView.findViewById<View>(R.id.title) as TextView
-        internal var mArtist = itemView.findViewById<View>(R.id.subtitle) as TextView
-        internal var mMenu = itemView.findViewById<ImageButton>(R.id.menu)
-    }
-
     override fun getItemViewType(position: Int): Int {
         return if (position == 0) HEADER
         else SONG
@@ -38,11 +31,8 @@ abstract class SongWithHeaderAdapter: SongAdapter() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return if (viewType == HEADER) ViewHolderHeader(
-            LayoutInflater.from(parent.context).inflate(
-                R.layout.large_preview, parent, false
-            )
-        )
-        else ViewHolderSong(
+            LayoutInflater.from(parent.context).inflate(R.layout.header, parent, false)
+        ) else ViewHolderSong(
             LayoutInflater.from(parent.context).inflate(R.layout.item_with_menu, parent, false)
         )
     }

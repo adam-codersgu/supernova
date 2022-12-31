@@ -137,6 +137,9 @@ class HomeFragment : BaseFragment() {
 
         if (adapter.songs.isEmpty()) {
             adapter.songs.addAll(songsSelection)
+            if (songsSelection.isNotEmpty() && playlist.name == getString(R.string.song_day)) {
+                adapter.notifyItemRemoved(0)
+            }
             adapter.notifyItemRangeInserted(0, songsSelection.size)
         } else {
             for ((index, song) in songsSelection.withIndex()) {

@@ -18,7 +18,7 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.ui.artist.ArtistFragmentDirections
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
-class ArtistAdapter(private val activity: MainActivity): SongAdapter() {
+class ArtistAdapter(private val activity: MainActivity): SongAdapter(activity) {
 
     var plays = 0
 
@@ -88,7 +88,7 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
             HEADER -> ViewHolderHeader(
-                LayoutInflater.from(parent.context).inflate(R.layout.large_preview, parent, false)
+                LayoutInflater.from(parent.context).inflate(R.layout.header, parent, false)
             )
             ALL_SONGS -> ViewHolderAllSongs(
                 LayoutInflater.from(parent.context).inflate(R.layout.all_songs, parent, false)
