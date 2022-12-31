@@ -8,7 +8,7 @@
     android:background="?attr/selectableItemBackground">
 
     <ImageView
-        android:id="@+id/smallSongArtwork"
+        android:id="@+id/artwork"
         android:layout_width="100dp"
         android:layout_height="100dp"
         app:layout_constraintStart_toStartOf="parent"
@@ -16,33 +16,31 @@
         android:contentDescription="@string/album_artwork" />
 
     <TextView
-        android:id="@+id/smallSongTitle"
+        android:id="@+id/title"
         android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:singleLine="true"
         android:textSize="16sp"
         android:textColor="?attr/colorOnSurface"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/smallSongArtwork" />
+        app:layout_constraintTop_toBottomOf="@id/artwork" />
 
     <TextView
-        android:id="@+id/smallSongArtistOrCount"
+        android:id="@+id/subtitle"
         android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:singleLine="true"
         android:textSize="14sp"
         android:textColor="@color/onSurface60"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/smallSongTitle" />
+        app:layout_constraintTop_toBottomOf="@id/title" />
 
     <TextView
-        android:id="@+id/smallSongPlays"
+        android:id="@+id/plays"
         android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:singleLine="true"
         android:textSize="14sp"
-        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/smallSongArtistOrCount" />
-
+        app:layout_constraintTop_toBottomOf="@id/subtitle" />
 </androidx.constraintlayout.widget.ConstraintLayout>

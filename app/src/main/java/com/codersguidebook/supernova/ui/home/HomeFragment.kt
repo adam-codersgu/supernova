@@ -17,6 +17,7 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentHomeBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.fragment.BaseFragment
+import com.codersguidebook.supernova.fragment.adapter.HomeAdapter
 import com.codersguidebook.supernova.fragment.adapter.SongAdapter
 import com.codersguidebook.supernova.fragment.layoutmanager.WrapContentLinearLayoutManager
 import com.codersguidebook.supernova.ui.playlists.PlaylistsFragmentDirections
@@ -31,9 +32,9 @@ class HomeFragment : BaseFragment() {
     override val binding: FragmentHomeBinding
         get() = _binding!! as FragmentHomeBinding
     private lateinit var songOfTheDayAdapter: SongOfTheDayAdapter
-    private lateinit var favouritesAdapter: FavouritesAdapter
+    private lateinit var favouritesAdapter: HomeAdapter
     private lateinit var mostPlayedAdapter: MostPlayedAdapter
-    private lateinit var recentlyPlayedAdapter: RecentlyPlayedAdapter
+    private lateinit var recentlyPlayedAdapter: HomeAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -52,9 +53,9 @@ class HomeFragment : BaseFragment() {
         //  May not be possible because not the most played adapter needs to display the song count and colour system
         //  The process of updating each song should be customised to the methodology of the adapter e.g. using
         //  notifyItemMoved, notifyItemInserted(0) notifyItemRemoved(song.size - 1) (for new songs at max songs length)
-        favouritesAdapter = FavouritesAdapter(mainActivity)
+        favouritesAdapter = HomeAdapter(mainActivity)
         mostPlayedAdapter = MostPlayedAdapter(mainActivity)
-        recentlyPlayedAdapter = RecentlyPlayedAdapter(mainActivity)
+        recentlyPlayedAdapter = HomeAdapter(mainActivity)
 
         songOfTheDayAdapter.stateRestorationPolicy = PREVENT_WHEN_EMPTY
         favouritesAdapter.stateRestorationPolicy = PREVENT_WHEN_EMPTY
