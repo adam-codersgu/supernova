@@ -4,15 +4,12 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.lifecycleScope
-import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.fragment.RecyclerViewWithFabFragment
 import com.codersguidebook.supernova.fragment.adapter.SongsAdapter
 
 class ArtistSongsFragment : RecyclerViewWithFabFragment() {
 
     private var artistName: String? = null
-    private lateinit var musicDatabase: MusicDatabase
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
@@ -26,10 +23,11 @@ class ArtistSongsFragment : RecyclerViewWithFabFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        artistName?.let { artistName ->
-            musicDatabase = MusicDatabase.getDatabase(mainActivity, lifecycleScope)
-            musicDatabase.musicDao().findArtistsSongs(artistName).observe(viewLifecycleOwner) {
-                updateRecyclerView(it)
+        artistName?.let { name ->
+            musicLibraryViewModel.setActiveArtistName(name)
+
+            musicLibraryViewModel.activeArtistSongs.observe(viewLifecycleOwner) { songs ->
+                updateRecyclerView(songs)
             }
         }
     }
@@ -39,8 +37,6 @@ class ArtistSongsFragment : RecyclerViewWithFabFragment() {
     }
 
     override fun requestNewData() {
-        musicDatabase.musicDao().findArtistsSongs(artistName ?: return).value?.let {
-            updateRecyclerView(it)
-        }
+        musicLibraryViewModel.activeArtistSongs.value?.let { updateRecyclerView(it) }
     }
 }

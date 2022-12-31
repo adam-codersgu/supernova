@@ -82,7 +82,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         playlistName?.let { name ->
-            musicLibraryViewModel.setActivePlaylistByName(name)
+            musicLibraryViewModel.setActivePlaylistName(name)
 
             musicLibraryViewModel.activePlaylistSongs.observe(viewLifecycleOwner) { songs ->
                 updateRecyclerView(songs)

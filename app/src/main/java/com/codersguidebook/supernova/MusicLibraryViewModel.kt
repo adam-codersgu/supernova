@@ -36,6 +36,16 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     val allPlaylists: LiveData<List<Playlist>> = repository.allPlaylists
     var songIdToDelete: Long? = null
 
+    private val activeAlbumId = MutableLiveData<String>()
+    val activeAlbumSongs: LiveData<List<Song>> = Transformations.switchMap(activeAlbumId) {
+            name -> repository.getSongsByArtist(name)
+    }
+
+    private val activeArtistName = MutableLiveData<String>()
+    val activeArtistSongs: LiveData<List<Song>> = Transformations.switchMap(activeArtistName) {
+            name -> repository.getSongsByArtist(name)
+    }
+
     private val activePlaylistName = MutableLiveData<String>()
     private val activePlaylist: LiveData<Playlist?> = Transformations.switchMap(activePlaylistName) {
         name -> repository.findPlaylistByNameLiveData(name)
@@ -383,7 +393,30 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      */
     suspend fun getPlaylistByName(name: String): Playlist? = repository.findPlaylistByName(name)
 
-    fun setActivePlaylistByName(name: String) {
+    /**
+     * Set the ID of the active album that a LiveData stream of songs should be loaded for.
+     *
+     * @param albumId The album's ID.
+     */
+    fun setActiveAlbumId(albumId: String) {
+        activeAlbumId.value = albumId
+    }
+
+    /**
+     * Set the name of the active artist that a LiveData stream of songs should be loaded for.
+     *
+     * @param name The artist's name.
+     */
+    fun setActiveArtistName(name: String) {
+        activeArtistName.value = name
+    }
+
+    /**
+     * Set the name of the active playlist that a LiveData stream of songs should be loaded for.
+     *
+     * @param name The playlist's name.
+     */
+    fun setActivePlaylistName(name: String) {
         activePlaylistName.value = name
     }
 

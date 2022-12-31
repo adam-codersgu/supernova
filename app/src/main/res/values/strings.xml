@@ -29,8 +29,9 @@
     <string name="add_to_favourites">Add to favourites</string>
     <string name="cancel">Cancel</string>
     <string name="change_image">Change image</string>
-    <string name="delete_album">Delete album</string>
     <string name="create_playlist">Create new playlist</string>
+    <string name="delete_album">Delete album</string>
+    <string name="delete_artist">Delete artist</string>
     <string name="delete_image">Delete image</string>
     <string name="delete_playlist">Delete playlist</string>
     <string name="delete_song">Delete song</string>
@@ -135,7 +136,6 @@
     <string name="image_set">Image set!</string>
     <string name="item_saved">%1$s saved</string>
     <string name="item_added_play_queue">%1$s has been added to the play queue</string>
-    <string name="no_songs_found">No songs were found for %1$s</string>
     <string name="play_queue_shuffled">Play queue shuffled</string>
     <string name="play_queue_unshuffled">Play queue unshuffled</string>
     <string name="playlist_already_exists">A playlist with that name already exists</string>

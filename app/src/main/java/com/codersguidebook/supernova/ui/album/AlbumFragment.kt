@@ -1,13 +1,12 @@
 package com.codersguidebook.supernova.ui.album
 
+import android.os.Build
 import android.os.Bundle
 import android.view.*
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.RecyclerViewWithFabFragment
@@ -17,7 +16,6 @@ import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 class AlbumFragment : RecyclerViewWithFabFragment() {
 
     private var albumId: String? = null
-    private lateinit var musicDatabase: MusicDatabase
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
@@ -32,9 +30,10 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         albumId?.let { albumId ->
-            musicDatabase = MusicDatabase.getDatabase(mainActivity, lifecycleScope)
-            musicDatabase.musicDao().findAlbumSongs(albumId).observe(viewLifecycleOwner) {
-                updateRecyclerView(it)
+            musicLibraryViewModel.setActiveAlbumId(albumId)
+
+            musicLibraryViewModel.activeAlbumSongs.observe(viewLifecycleOwner) { songs ->
+                updateRecyclerView(songs)
             }
         }
     }
@@ -56,9 +55,7 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
     }
 
     override fun requestNewData() {
-        musicDatabase.musicDao().findAlbumSongs(albumId ?: return).value?.let {
-            updateRecyclerView(it)
-        }
+        musicLibraryViewModel.activeAlbumSongs.value?.let { updateRecyclerView(it) }
     }
 
     private fun setupMenu(songs: List<Song>) {
@@ -70,6 +67,9 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
                         it.artist
                     }
                     if (distinctArtists.size != 1) menu.findItem(R.id.album_view_artist).isVisible = false
+                }
+                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+                    menu.findItem(R.id.album_delete_album).isVisible = false
                 }
             }
 
@@ -89,6 +89,12 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
                     R.id.album_edit_album_info -> {
                         val action = AlbumFragmentDirections.actionEditAlbum(songs[0].albumId)
                         findNavController().navigate(action)
+                    }
+                    R.id.album_delete_album -> {
+                        // Delete Album feature only available from SDK 30 and up
+                        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
+                            mainActivity.deleteSongs(songs)
+                        }
                     }
                     else -> return false
                 }

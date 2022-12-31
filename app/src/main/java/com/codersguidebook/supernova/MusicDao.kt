@@ -32,11 +32,11 @@ interface MusicDao {
     @Query("SELECT song_artist, count(*) FROM music_library WHERE song_artist LIKE :search GROUP BY song_artist LIMIT 10")
     suspend fun findBySearchArtists(search: String): List<Artist>
 
-    @Query("SELECT * FROM music_library WHERE song_album_id = :albumID ORDER BY song_track ASC")
-    fun findAlbumSongs(albumID: String): LiveData<List<Song>>
+    @Query("SELECT * FROM music_library WHERE song_album_id = :albumId ORDER BY song_track ASC")
+    fun getSongsByAlbumId(albumId: String): LiveData<List<Song>>
 
-    @Query("SELECT * FROM music_library WHERE song_artist = :artistName ORDER BY song_title ASC")
-    fun findArtistsSongs(artistName: String): LiveData<List<Song>>
+    @Query("SELECT * FROM music_library WHERE song_artist = :artist ORDER BY song_title ASC")
+    fun getSongsByArtist(artist: String): LiveData<List<Song>>
 
     @Query("SELECT songId FROM music_library WHERE song_plays > 0 ORDER BY song_plays DESC LIMIT 30")
     fun findMostPlayedSongsById(): LiveData<List<Long>>

@@ -67,7 +67,6 @@ class AlbumOptions(private val albumId: String) : BaseDialogFragment() {
             // Delete Album feature only available from SDK 30 and up
             if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
                 binding.deleteAlbum.setOnClickListener {
-                    // TODO: Once this feature works, it will need to be added to the Album fragment options menu
                     mainActivity.deleteSongs(songs)
                     dismiss()
                 }

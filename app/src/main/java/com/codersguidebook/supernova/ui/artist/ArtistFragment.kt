@@ -1,5 +1,6 @@
 package com.codersguidebook.supernova.ui.artist
 
+import android.os.Build
 import android.os.Bundle
 import android.view.*
 import androidx.core.view.MenuHost
@@ -36,9 +37,12 @@ class ArtistFragment : RecyclerViewFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        musicDatabase = MusicDatabase.getDatabase(mainActivity, lifecycleScope)
-        musicDatabase.musicDao().findArtistsSongs(artistName ?: "").observe(viewLifecycleOwner) {
-            updateRecyclerView(it)
+        artistName?.let { name ->
+            musicLibraryViewModel.setActiveArtistName(name)
+
+            musicLibraryViewModel.activeArtistSongs.observe(viewLifecycleOwner) { songs ->
+                updateRecyclerView(songs)
+            }
         }
     }
 
@@ -75,6 +79,7 @@ class ArtistFragment : RecyclerViewFragment() {
         if (songs.isNotEmpty()) {
             artistName?.let {
                 lifecycleScope.launch(Dispatchers.IO) {
+                    // TODO: The below needs to be transferred to the view model
                     val plays = musicDatabase.musicDao().getSongPlaysByArtist(it)
                     if (plays != adapter.plays) {
                         adapter.plays = plays
@@ -89,9 +94,7 @@ class ArtistFragment : RecyclerViewFragment() {
     }
 
     override fun requestNewData() {
-        musicDatabase.musicDao().findArtistsSongs(artistName ?: return).value?.let {
-            updateRecyclerView(it)
-        }
+        musicLibraryViewModel.activeArtistSongs.value?.let { updateRecyclerView(it) }
     }
 
     override fun initialiseAdapter() {
@@ -102,6 +105,9 @@ class ArtistFragment : RecyclerViewFragment() {
         (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
             override fun onPrepareMenu(menu: Menu) {
                 menu.setGroupVisible(R.id.menu_group_artist_actions, true)
+                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+                    menu.findItem(R.id.artist_delete_artist).isVisible = false
+                }
             }
 
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) { }
@@ -115,6 +121,12 @@ class ArtistFragment : RecyclerViewFragment() {
                     R.id.artist_edit_artist_info -> {
                         artistName?.let {
                             findNavController().navigate(ArtistFragmentDirections.actionEditArtist(it))
+                        }
+                    }
+                    R.id.artist_delete_artist -> {
+                        // Delete Artist feature only available from SDK 30 and up
+                        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
+                            mainActivity.deleteSongs(songs)
                         }
                     }
                     else -> return false
