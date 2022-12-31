@@ -3,88 +3,70 @@ package com.codersguidebook.supernova
 import android.app.Dialog
 import android.os.Bundle
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isGone
-import androidx.fragment.app.DialogFragment
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
-import com.codersguidebook.supernova.databinding.OptionsLayoutBinding
+import androidx.viewbinding.ViewBinding
+import com.codersguidebook.supernova.databinding.PlaylistOptionsBinding
 import com.codersguidebook.supernova.entities.Playlist
+import com.codersguidebook.supernova.fragment.BaseDialogFragment
 import com.codersguidebook.supernova.ui.playlist.PlaylistFragmentDirections
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
-class PlaylistOptions(private val playlist: Playlist) : DialogFragment() {
+class PlaylistOptions(private val playlist: Playlist) : BaseDialogFragment() {
 
-    private var _binding: OptionsLayoutBinding? = null
-    private val binding get() = _binding!!
-    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
+    override var _binding: ViewBinding? = null
+        get() = field as PlaylistOptionsBinding?
+    override val binding: PlaylistOptionsBinding
+        get() = _binding!! as PlaylistOptionsBinding
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
-        val callingActivity = activity as MainActivity
-        val inflater = callingActivity.layoutInflater
-        _binding = OptionsLayoutBinding.inflate(inflater)
+        _binding = PlaylistOptionsBinding.inflate(inflater)
 
-        val builder = AlertDialog.Builder(callingActivity)
-            .setView(binding.root)
+        musicLibraryViewModel.setActivePlaylistName(playlist.name)
 
         binding.optionsTitle.text = playlist.name
-        binding.option1.text = getString(R.string.play_next)
-        binding.option2.text = getString(R.string.add_que)
-        binding.option3.text = getString(R.string.delete_playlist)
-        binding.option4.text = getString(R.string.edit_playlist)
-        binding.option5.isGone = true
-        binding.option6.isGone = true
-        binding.option7.isGone = true
+
+        musicLibraryViewModel.activePlaylistSongs.observe(this) { songs ->
+            if (songs.isNotEmpty()) {
+                binding.playNext.setOnClickListener {
+                    mainActivity.addSongsToPlayQueue(songs, true)
+                    dismiss()
+                }
+
+                binding.addPlayQueue.setOnClickListener {
+                    mainActivity.addSongsToPlayQueue(songs)
+                    dismiss()
+                }
+            } else {
+                binding.playNext.setOnClickListener {
+                    Toast.makeText(requireActivity(), getString(R.string.playlist_contains_zero_songs),
+                        Toast.LENGTH_SHORT).show()
+                    dismiss()
+                }
+
+                binding.addPlayQueue.setOnClickListener {
+                    Toast.makeText(requireActivity(), getString(R.string.playlist_contains_zero_songs),
+                        Toast.LENGTH_SHORT).show()
+                    dismiss()
+                }
+            }
+        }
 
         if (playlist.isDefault) {
-            binding.option3.isGone = true
-            binding.option4.isGone = true
-        }
+            binding.editPlaylist.isGone = true
+            binding.deletePlaylist.isGone = true
+        } else {
+            binding.editPlaylist.setOnClickListener{
+                val action = PlaylistFragmentDirections.actionEditPlaylist(playlist.name)
+                mainActivity.findNavController(R.id.nav_host_fragment).navigate(action)
+                dismiss()
+            }
 
-        binding.option1.setOnClickListener {
-            lifecycleScope.launch {
-                if (playlist.songs != null) {
-                    val playlistSongs = withContext(Dispatchers.IO) {
-                        musicLibraryViewModel.extractPlaylistSongs(playlist.songs)
-                    }
-                    callingActivity.addSongsToPlayQueue(playlistSongs, true)
-                } else Toast.makeText(requireActivity(), getString(R.string.playlist_contains_zero_songs), Toast.LENGTH_SHORT).show()
+            binding.deletePlaylist.setOnClickListener{
+                musicLibraryViewModel.deletePlaylist(playlist)
                 dismiss()
             }
         }
 
-        binding.option2.setOnClickListener{
-            lifecycleScope.launch {
-                if (playlist.songs != null) {
-                    val playlistSongs = withContext(Dispatchers.IO) {
-                        musicLibraryViewModel.extractPlaylistSongs(playlist.songs)
-                    }
-                    callingActivity.addSongsToPlayQueue(playlistSongs)
-                } else Toast.makeText(requireActivity(), getString(R.string.playlist_contains_zero_songs), Toast.LENGTH_SHORT).show()
-                dismiss()
-            }
-        }
-
-        binding.option3.setOnClickListener{
-            musicLibraryViewModel.deletePlaylist(playlist)
-            dismiss()
-        }
-
-        binding.option4.setOnClickListener{
-            val action = PlaylistFragmentDirections.actionEditPlaylist(playlist.name)
-            callingActivity.findNavController(R.id.nav_host_fragment).navigate(action)
-            dismiss()
-        }
-
-        return builder.create()
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+        return super.onCreateDialog(savedInstanceState)
     }
 }

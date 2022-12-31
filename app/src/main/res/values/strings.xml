@@ -30,13 +30,15 @@
     <string name="cancel">Cancel</string>
     <string name="change_image">Change image</string>
     <string name="create_playlist">Create new playlist</string>
+    <string name="delete_album">Delete album</string>
+    <string name="delete_artist">Delete artist</string>
     <string name="delete_image">Delete image</string>
     <string name="delete_playlist">Delete playlist</string>
+    <string name="delete_song">Delete song</string>
     <string name="done">Done</string>
     <string name="edit_album">Edit album info</string>
     <string name="edit_music">Edit music info</string>
     <string name="edit_playlist">Edit Playlist</string>
-    <string name="edit_playlist_information">Edit Playlist Information</string>
     <string name="manage_custom_images">Manage custom images</string>
     <string name="more_settings">More settings</string>
     <string name="ok">OK</string>
@@ -133,7 +135,6 @@
     <string name="image_set">Image set!</string>
     <string name="item_saved">%1$s saved</string>
     <string name="item_added_play_queue">%1$s has been added to the play queue</string>
-    <string name="no_songs_found">No songs were found for %1$s</string>
     <string name="play_queue_shuffled">Play queue shuffled</string>
     <string name="play_queue_unshuffled">Play queue unshuffled</string>
     <string name="playlist_already_exists">A playlist with that name already exists</string>

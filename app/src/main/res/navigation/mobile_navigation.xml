@@ -43,7 +43,7 @@
     <fragment
         android:id="@+id/nav_edit_playlist"
         android:name="com.codersguidebook.supernova.ui.playlist.EditPlaylistFragment"
-        android:label="@string/edit_playlist_information"
+        android:label="@string/edit_playlist"
         tools:layout="@layout/fragment_edit_playlist" >
         <argument
             android:name="playlistName"

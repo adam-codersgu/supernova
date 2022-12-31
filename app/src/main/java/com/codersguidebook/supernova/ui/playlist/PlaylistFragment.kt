@@ -82,7 +82,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         playlistName?.let { name ->
-            musicLibraryViewModel.setActivePlaylistByName(name)
+            musicLibraryViewModel.setActivePlaylistName(name)
 
             musicLibraryViewModel.activePlaylistSongs.observe(viewLifecycleOwner) { songs ->
                 updateRecyclerView(songs)
@@ -154,6 +154,12 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
                         playlistName?.let {
                             val action = PlaylistFragmentDirections.actionEditPlaylist(playlistName!!)
                             mainActivity.findNavController(R.id.nav_host_fragment).navigate(action)
+                        }
+                    }
+                    R.id.deletePlaylist -> {
+                        playlist?.let {
+                            musicLibraryViewModel.deletePlaylist(it)
+                            mainActivity.findNavController(R.id.nav_host_fragment).popBackStack()
                         }
                     }
                     R.id.done -> {

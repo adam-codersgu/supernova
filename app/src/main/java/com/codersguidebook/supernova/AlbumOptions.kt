@@ -1,73 +1,72 @@
 package com.codersguidebook.supernova
 
 import android.app.Dialog
+import android.os.Build
 import android.os.Bundle
-import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isGone
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
-import com.codersguidebook.supernova.databinding.OptionsLayoutBinding
+import androidx.viewbinding.ViewBinding
+import com.codersguidebook.supernova.databinding.AlbumOptionsBinding
 import com.codersguidebook.supernova.fragment.BaseDialogFragment
 import com.codersguidebook.supernova.ui.album.AlbumFragmentDirections
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class AlbumOptions(private val albumId: String) : BaseDialogFragment() {
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val inflater = mainActivity.layoutInflater
-        _binding = OptionsLayoutBinding.inflate(inflater)
+    override var _binding: ViewBinding? = null
+        get() = field as AlbumOptionsBinding?
+    override val binding: AlbumOptionsBinding
+        get() = _binding!! as AlbumOptionsBinding
 
-        lifecycleScope.launch(Dispatchers.Main) {
-            val songs = withContext(Dispatchers.IO) {
-                musicLibraryViewModel.getSongsByAlbumId(albumId)
-            }
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        _binding = AlbumOptionsBinding.inflate(inflater)
+
+        musicLibraryViewModel.setActiveAlbumId(albumId)
+
+        musicLibraryViewModel.activeAlbumSongs.observe(this) { songs ->
             if (songs.isEmpty()) {
                 dismiss()
-                return@launch
+                return@observe
             }
 
             binding.optionsTitle.text = songs[0].albumName
-            binding.option1.text = getString(R.string.play_next)
-            binding.option2.text = getString(R.string.add_que)
-            binding.option3.text = getString(R.string.artist)
-            binding.option4.text = getString(R.string.add_playlist)
-            binding.option5.text = getString(R.string.edit_album)
-            binding.option6.isGone = true
-            binding.option7.isGone = true
 
-            binding.option1.setOnClickListener{
+            binding.playNext.setOnClickListener {
                 mainActivity.addSongsToPlayQueue(songs, true)
                 dismiss()
             }
 
-            binding.option2.setOnClickListener{
+            binding.addPlayQueue.setOnClickListener {
                 mainActivity.addSongsToPlayQueue(songs)
                 dismiss()
             }
 
-            binding.option3.setOnClickListener{
+            binding.artist.setOnClickListener {
                 val action = ArtistsFragmentDirections.actionSelectArtist(songs[0].artist)
                 mainActivity.findNavController(R.id.nav_host_fragment).navigate(action)
                 dismiss()
             }
 
-            binding.option4.setOnClickListener{
+            binding.addPlaylist.setOnClickListener {
                 mainActivity.openAddToPlaylistDialog(songs)
                 dismiss()
             }
 
-            binding.option5.setOnClickListener{
+            binding.editAlbum.setOnClickListener {
                 val action = AlbumFragmentDirections.actionEditAlbum(songs[0].albumId)
                 mainActivity.findNavController(R.id.nav_host_fragment).navigate(action)
                 dismiss()
             }
+
+            // Delete Album feature only available from SDK 30 and up
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
+                binding.deleteAlbum.setOnClickListener {
+                    mainActivity.deleteSongs(songs)
+                    dismiss()
+                }
+            } else binding.deleteAlbum.isGone = true
         }
 
-        return AlertDialog.Builder(mainActivity)
-            .setView(binding.root)
-            .create()
+        return super.onCreateDialog(savedInstanceState)
     }
 }

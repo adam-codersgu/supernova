@@ -23,19 +23,6 @@
         android:visible="false"
         app:showAsAction="never" />
 
-    <group android:id="@+id/spotify_album_actions"
-        android:visible="false">
-        <item
-            android:id="@+id/spotify_play_next"
-            android:title="@string/play_next"
-            app:showAsAction="never" />
-
-        <item
-            android:id="@+id/spotify_add_playlist"
-            android:title="@string/add_playlist"
-            app:showAsAction="never" />
-    </group>
-
     <group android:id="@+id/universal_playlist_actions"
         android:visible="false">
         <item android:id="@+id/playPlaylistNext"
@@ -55,6 +42,10 @@
 
         <item android:id="@+id/editPlaylist"
             android:title="@string/edit_playlist"
+            app:showAsAction="never" />
+
+        <item android:id="@+id/deletePlaylist"
+            android:title="@string/delete_playlist"
             app:showAsAction="never" />
     </group>
 
@@ -83,6 +74,11 @@
             android:id="@+id/album_edit_album_info"
             android:title="@string/edit_album"
             app:showAsAction="never" />
+
+        <item
+            android:id="@+id/album_delete_album"
+            android:title="@string/delete_album"
+            app:showAsAction="never" />
     </group>
 
     <group android:id="@+id/menu_group_artist_actions"
@@ -105,6 +101,11 @@
         <item
             android:id="@+id/artist_edit_artist_info"
             android:title="@string/edit_artist"
+            app:showAsAction="never" />
+
+        <item
+            android:id="@+id/artist_delete_artist"
+            android:title="@string/delete_artist"
             app:showAsAction="never" />
     </group>
 </menu>
