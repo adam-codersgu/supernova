@@ -33,6 +33,8 @@ class HomeFragment : BaseFragment() {
         get() = field as FragmentHomeBinding?
     override val binding: FragmentHomeBinding
         get() = _binding!! as FragmentHomeBinding
+    private var isUpdating = false
+    private var unhandledRequestReceived = false
     private lateinit var songOfTheDayAdapter: SongOfTheDayAdapter
     private lateinit var favouritesAdapter: HomeAdapter
     private lateinit var mostPlayedAdapter: MostPlayedAdapter
@@ -51,9 +53,7 @@ class HomeFragment : BaseFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         songOfTheDayAdapter = SongOfTheDayAdapter(mainActivity)
-        // todo: can you create multiple instances of the same adapter actually for these bottom 3?
-        //  May not be possible because not the most played adapter needs to display the song count and colour system
-        //  The process of updating each song should be customised to the methodology of the adapter e.g. using
+        // TODO: The process of updating each song should be customised to the methodology of the adapter e.g. using
         //  notifyItemMoved, notifyItemInserted(0) notifyItemRemoved(song.size - 1) (for new songs at max songs length)
         favouritesAdapter = HomeAdapter(mainActivity)
         mostPlayedAdapter = MostPlayedAdapter(mainActivity)
@@ -105,26 +105,45 @@ class HomeFragment : BaseFragment() {
         }
 
         musicLibraryViewModel.allPlaylists.observe(viewLifecycleOwner) { playlists ->
-            // TODO: Implement the BaseRecyclerViewFragment system to prevent duplicate requests
-            playlists.find { it.name == getString(R.string.song_day) }?.let {
-                processPlaylist(it, songOfTheDayAdapter, binding.homeSongOfTheDay)
-            }
-
-            playlists.find { it.name == getString(R.string.favourites) }?.let {
-                processPlaylist(it, favouritesAdapter, binding.homeFavourites)
-            }
-
-            playlists.find { it.name == getString(R.string.most_played) }?.let {
-                processPlaylist(it, mostPlayedAdapter, binding.homeMostPlayed)
-            }
-
-            playlists.find { it.name == getString(R.string.recently_played) }?.let {
-                processPlaylist(it, recentlyPlayedAdapter, binding.homeRecentlyPlayed)
-            }
+            extractPlaylists(playlists)
         }
     }
 
-    private fun processPlaylist(playlist: Playlist, adapter: SongAdapter, layout: RelativeLayout)
+    private fun extractPlaylists(playlists: List<Playlist>) = lifecycleScope.launch(Dispatchers.Default) {
+        if (isUpdating) {
+            unhandledRequestReceived = true
+            return@launch
+        }
+        isUpdating = true
+
+        playlists.find { it.name == getString(R.string.song_day) }?.let {
+            processPlaylist(it, songOfTheDayAdapter, binding.homeSongOfTheDay)
+        }
+
+        playlists.find { it.name == getString(R.string.favourites) }?.let {
+            processPlaylist(it, favouritesAdapter, binding.homeFavourites)
+        }
+
+        playlists.find { it.name == getString(R.string.most_played) }?.let {
+            processPlaylist(it, mostPlayedAdapter, binding.homeMostPlayed)
+        }
+
+        playlists.find { it.name == getString(R.string.recently_played) }?.let {
+            processPlaylist(it, recentlyPlayedAdapter, binding.homeRecentlyPlayed)
+        }
+
+        isUpdating = false
+        if (unhandledRequestReceived) {
+            unhandledRequestReceived = false
+            requestNewData()
+        }
+    }
+
+    private fun requestNewData() {
+        musicLibraryViewModel.allPlaylists.value?.let { extractPlaylists(it) }
+    }
+
+    private suspend fun processPlaylist(playlist: Playlist, adapter: SongAdapter, layout: RelativeLayout)
         = lifecycleScope.launch(Dispatchers.Main) {
         val songs = withContext(Dispatchers.IO) {
             musicLibraryViewModel.extractPlaylistSongs(playlist.songs)

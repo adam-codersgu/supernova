@@ -25,13 +25,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
     private var showHandles = false
     var playlist: Playlist? = null
 
-    companion object {
-        private const val HEADER = 1
-        private const val SONG = 2
-    }
-
-    inner class ViewHolderPlaylistHeader(itemView: View) :
-        ViewHolderHeader(itemView) {
+    inner class ViewHolderPlaylistHeader(itemView: View) : ViewHolderHeader(itemView) {
 
         internal var mArtworkGrid = itemView.findViewById(R.id.imageGrid) as GridLayout
         internal var mArtwork1 = itemView.findViewById(R.id.artwork1) as ImageView
