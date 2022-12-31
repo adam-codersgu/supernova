@@ -53,8 +53,6 @@ class HomeFragment : BaseFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         songOfTheDayAdapter = SongOfTheDayAdapter(mainActivity)
-        // TODO: The process of updating each song should be customised to the methodology of the adapter e.g. using
-        //  notifyItemMoved, notifyItemInserted(0) notifyItemRemoved(song.size - 1) (for new songs at max songs length)
         favouritesAdapter = HomeAdapter(mainActivity)
         mostPlayedAdapter = MostPlayedAdapter(mainActivity)
         recentlyPlayedAdapter = HomeAdapter(mainActivity)
