@@ -156,6 +156,12 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
                             mainActivity.findNavController(R.id.nav_host_fragment).navigate(action)
                         }
                     }
+                    R.id.deletePlaylist -> {
+                        playlist?.let {
+                            musicLibraryViewModel.deletePlaylist(it)
+                            mainActivity.findNavController(R.id.nav_host_fragment).popBackStack()
+                        }
+                    }
                     R.id.done -> {
                         // null essentially removes the itemTouchHelper from the recycler view
                         itemTouchHelper.attachToRecyclerView(null)

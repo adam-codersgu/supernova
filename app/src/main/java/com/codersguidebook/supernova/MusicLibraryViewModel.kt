@@ -38,7 +38,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
 
     private val activeAlbumId = MutableLiveData<String>()
     val activeAlbumSongs: LiveData<List<Song>> = Transformations.switchMap(activeAlbumId) {
-            name -> repository.getSongsByArtist(name)
+            albumId -> repository.getSongsByAlbumId(albumId)
     }
 
     private val activeArtistName = MutableLiveData<String>()
