@@ -42,6 +42,8 @@ class MusicRepository(private val musicDao: MusicDao, private val playlistDao: P
 
     fun getSongsByArtist(artist: String): LiveData<List<Song>> = musicDao.getSongsByArtist(artist)
 
+    suspend fun getSongPlaysByArtist(artistName: String): Int = musicDao.getSongPlaysByArtist(artistName)
+
     suspend fun getAllPlaylists(): List<Playlist> = playlistDao.getAllPlaylists()
 
     fun updatePlaylist(playlists: List<Playlist>){

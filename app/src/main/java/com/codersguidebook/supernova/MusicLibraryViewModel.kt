@@ -349,6 +349,16 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     }
 
     /**
+     * Find the number of songs associated with a given artist.
+     *
+     * @param artistName The name of the artist.
+     * @return An Integer representing the number of songs found.
+     */
+    suspend fun getSongPlaysByArtist(artistName: String): Int {
+        return repository.getSongPlaysByArtist(artistName)
+    }
+
+    /**
      * Toggle the isFavourite field for a given Song object. Also update the favourites
      * playlist accordingly.
      *

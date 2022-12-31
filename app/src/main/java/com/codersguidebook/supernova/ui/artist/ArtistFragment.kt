@@ -8,7 +8,6 @@ import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import com.codersguidebook.supernova.MusicDatabase
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.RecyclerViewFragment
@@ -20,7 +19,6 @@ class ArtistFragment : RecyclerViewFragment() {
 
     private var artistName: String? = null
     override lateinit var adapter: ArtistAdapter
-    private lateinit var musicDatabase: MusicDatabase
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -79,8 +77,7 @@ class ArtistFragment : RecyclerViewFragment() {
         if (songs.isNotEmpty()) {
             artistName?.let {
                 lifecycleScope.launch(Dispatchers.IO) {
-                    // TODO: The below needs to be transferred to the view model
-                    val plays = musicDatabase.musicDao().getSongPlaysByArtist(it)
+                    val plays = musicLibraryViewModel.getSongPlaysByArtist(it)
                     if (plays != adapter.plays) {
                         adapter.plays = plays
                         adapter.notifyItemChanged(0)
