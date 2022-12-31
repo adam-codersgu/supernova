@@ -1,11 +1,7 @@
 package com.codersguidebook.supernova.fragment.adapter
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.navigation.findNavController
@@ -24,65 +20,40 @@ import com.codersguidebook.supernova.ui.search.SearchFragmentDirections
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
 
-class SearchAdapter(private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class SearchAdapter(private val activity: MainActivity): SongAdapter(activity) {
 
-    val songs = mutableListOf<Song>()
     val albums = mutableListOf<Song>()
     val artists = mutableListOf<Artist>()
     val playlists = mutableListOf<Playlist>()
     var itemType = TRACK
 
-    inner class ViewHolderItem(itemView: View) : RecyclerView.ViewHolder(itemView) {
-
-        internal var mArtwork = itemView.findViewById<View>(R.id.artwork) as ImageView
-        internal var mTitle = itemView.findViewById<View>(R.id.title) as TextView
-        internal var mSubtitle = itemView.findViewById<View>(R.id.subtitle) as TextView
-        internal var mMenu = itemView.findViewById<ImageButton>(R.id.menu)
-
-        init {
-            itemView.isClickable = true
-        }
-    }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        return ViewHolderItem(
+        return ViewHolderSong(
             LayoutInflater.from(parent.context).inflate(R.layout.item_with_artwork_preview, parent, false)
         )
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        holder as ViewHolderItem
+        holder as ViewHolderSong
 
         when (itemType) {
             TRACK -> {
                 val current = songs[position]
 
-                holder.mArtwork.isVisible = true
-                ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId, holder.mArtwork)
+                holder.mArtwork?.isVisible = true
+                ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId, holder.mArtwork!!)
                 holder.mTitle.text = current.title
                 holder.mSubtitle.text = current.artist
-                holder.mMenu.setOnClickListener {
-                    activity.openDialog(SongOptions(current))
-                }
-
-                holder.itemView.setOnClickListener {
-                    activity.playNewPlayQueue(listOf(current))
-                }
-
-                holder.itemView.setOnLongClickListener {
-                    activity.openDialog(SongOptions(current))
-                    return@setOnLongClickListener true
-                }
             }
 
             ALBUM -> {
                 val current = albums[position]
 
-                holder.mArtwork.isVisible = true
-                ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId, holder.mArtwork)
+                holder.mArtwork?.isVisible = true
+                ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId, holder.mArtwork!!)
                 holder.mTitle.text = current.albumName
                 holder.mSubtitle.text = current.artist
-                holder.mMenu.setOnClickListener {
+                holder.mMenu?.setOnClickListener {
                     activity.openDialog(AlbumOptions(current.albumId))
                 }
 
@@ -100,7 +71,7 @@ class SearchAdapter(private val activity: MainActivity): RecyclerView.Adapter<Re
             ARTIST -> {
                 val current = artists[position]
 
-                holder.mArtwork.isGone = true
+                holder.mArtwork?.isGone = true
                 holder.mTitle.text = current.artistName
 
                 val songCountInt = current.songCount
@@ -110,7 +81,7 @@ class SearchAdapter(private val activity: MainActivity): RecyclerView.Adapter<Re
                     activity.getString(R.string.displayed_songs, songCountInt)
                 }
 
-                holder.mMenu.setOnClickListener {
+                holder.mMenu?.setOnClickListener {
                     activity.openDialog(ArtistOptions(current.artistName ?: ""))
                 }
 
@@ -128,11 +99,11 @@ class SearchAdapter(private val activity: MainActivity): RecyclerView.Adapter<Re
             PLAYLIST -> {
                 val current = playlists[position]
 
-                holder.mArtwork.isVisible = true
+                holder.mArtwork?.isVisible = true
 
                 val playlistSongIds = PlaylistHelper.extractSongIds(current.songs)
-                if (!ImageHandlingHelper.loadImageByPlaylist(activity.application, current, holder.mArtwork)) {
-                    activity.loadRandomArtworkBySongIds(playlistSongIds, holder.mArtwork)
+                if (!ImageHandlingHelper.loadImageByPlaylist(activity.application, current, holder.mArtwork!!)) {
+                    activity.loadRandomArtworkBySongIds(playlistSongIds, holder.mArtwork!!)
                 }
 
                 holder.mTitle.text = current.name
@@ -144,7 +115,7 @@ class SearchAdapter(private val activity: MainActivity): RecyclerView.Adapter<Re
                     activity.getString(R.string.displayed_songs, songCountInt)
                 }
 
-                holder.mMenu.setOnClickListener {
+                holder.mMenu?.setOnClickListener {
                     activity.openDialog(PlaylistOptions(current))
                 }
 

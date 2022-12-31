@@ -6,7 +6,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.GridLayout
-import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
@@ -35,16 +34,15 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
         ViewHolderHeader(itemView) {
 
         internal var mArtworkGrid = itemView.findViewById(R.id.imageGrid) as GridLayout
-        internal var mArtwork1 = itemView.findViewById<View>(R.id.artwork1) as ImageView
-        internal var mArtwork2 = itemView.findViewById<View>(R.id.artwork2) as ImageView
-        internal var mArtwork3 = itemView.findViewById<View>(R.id.artwork3) as ImageView
-        internal var mArtwork4 = itemView.findViewById<View>(R.id.artwork4) as ImageView
+        internal var mArtwork1 = itemView.findViewById(R.id.artwork1) as ImageView
+        internal var mArtwork2 = itemView.findViewById(R.id.artwork2) as ImageView
+        internal var mArtwork3 = itemView.findViewById(R.id.artwork3) as ImageView
+        internal var mArtwork4 = itemView.findViewById(R.id.artwork4) as ImageView
     }
 
     inner class ViewHolderSongWithHandle(itemView: View) : ViewHolderSong(itemView) {
 
-        internal var mPlays = itemView.findViewById<View>(R.id.plays) as TextView
-        internal var mMenu = itemView.findViewById<ImageButton>(R.id.menu)
+        internal var mPlays = itemView.findViewById(R.id.plays) as TextView
 
         init {
             itemView.setOnLongClickListener {
@@ -54,7 +52,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                 return@setOnLongClickListener true
             }
 
-            mMenu.setOnClickListener {
+            mMenu?.setOnClickListener {
                 playlist?.let {
                     activity.openDialog(PlaylistSongOptions(songs, layoutPosition - 1, it))
                 }
@@ -115,30 +113,30 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                 val current = songs[position -1]
 
                 if (showHandles) {
-                    holder.mArtwork.setColorFilter(ContextCompat
+                    holder.mArtwork!!.setColorFilter(ContextCompat
                         .getColor(fragment.requireActivity(), R.color.onSurface60))
-                    holder.mArtwork.layoutParams.width = activity.resources
+                    holder.mArtwork!!.layoutParams.width = activity.resources
                         .getDimension(R.dimen.handle_width).toInt()
                     Glide.with(fragment)
                         .load(R.drawable.ic_drag_handle)
-                        .into(holder.mArtwork)
-                    holder.mArtwork.setOnTouchListener { _, event ->
+                        .into(holder.mArtwork!!)
+                    holder.mArtwork!!.setOnTouchListener { _, event ->
                         if (event.actionMasked == MotionEvent.ACTION_DOWN) fragment.startDragging(holder)
                         return@setOnTouchListener true
                     }
                 } else {
-                    holder.mArtwork.layoutParams.width = activity.resources
+                    holder.mArtwork!!.layoutParams.width = activity.resources
                         .getDimension(R.dimen.artwork_preview_width).toInt()
-                    holder.mArtwork.clearColorFilter()
-                    holder.mArtwork.setOnTouchListener { _, _ ->
+                    holder.mArtwork!!.clearColorFilter()
+                    holder.mArtwork!!.setOnTouchListener { _, _ ->
                         return@setOnTouchListener true
                     }
                     ImageHandlingHelper.loadImageByAlbumId(activity.application,
-                        current.albumId, holder.mArtwork)
+                        current.albumId, holder.mArtwork!!)
                 }
 
                 holder.mTitle.text = current.title
-                holder.mArtist.text = current.artist
+                holder.mSubtitle.text = current.artist
 
                 if (playlist?.name == activity.getString(R.string.most_played)) {
                     holder.mPlays.isVisible = true
@@ -162,9 +160,9 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                     }
 
                     holder.mTitle.setTextColor(ContextCompat.getColor(activity, textColour))
-                    holder.mArtist.setTextColor(ContextCompat.getColor(activity, textColour60))
+                    holder.mSubtitle.setTextColor(ContextCompat.getColor(activity, textColour60))
                     holder.mPlays.setTextColor(ContextCompat.getColor(activity, textColour60))
-                    holder.mMenu.setColorFilter(ContextCompat.getColor(activity, textColour60))
+                    holder.mMenu?.setColorFilter(ContextCompat.getColor(activity, textColour60))
                 }
             }
         }

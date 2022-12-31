@@ -1,6 +1,7 @@
 package com.codersguidebook.supernova.fragment.adapter
 
 import android.view.View
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -14,19 +15,24 @@ abstract class SongAdapter(private val activity: MainActivity): Adapter() {
 
     open inner class ViewHolderSong(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
-        internal var mArtwork = itemView.findViewById<View>(R.id.artwork) as ImageView
-        internal var mTitle = itemView.findViewById<View>(R.id.title) as TextView
-        internal var mArtist = itemView.findViewById<View>(R.id.subtitle) as TextView
+        internal var mArtwork = itemView.findViewById(R.id.artwork) as ImageView?
+        internal var mTitle = itemView.findViewById(R.id.title) as TextView
+        internal var mSubtitle = itemView.findViewById(R.id.subtitle) as TextView
+        internal var mMenu = itemView.findViewById(R.id.menu) as ImageButton?
 
         init {
             itemView.rootView.isClickable = true
             itemView.rootView.setOnClickListener {
-                activity.playNewPlayQueue(songs, getRecyclerViewIndex(layoutPosition))
+                activity.playNewPlayQueue(songs, layoutPosition)
             }
 
             itemView.rootView.setOnLongClickListener {
-                activity.openDialog(SongOptions(songs[getRecyclerViewIndex(layoutPosition)]))
+                activity.openDialog(SongOptions(songs[layoutPosition]))
                 return@setOnLongClickListener true
+            }
+
+            mMenu?.setOnClickListener {
+                activity.openDialog(SongOptions(songs[layoutPosition]))
             }
         }
     }

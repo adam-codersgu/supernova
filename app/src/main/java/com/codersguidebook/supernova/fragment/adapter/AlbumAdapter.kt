@@ -3,7 +3,6 @@ package com.codersguidebook.supernova.fragment.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
@@ -21,9 +20,8 @@ class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(ac
     inner class ViewHolderSongWithDisc(itemView: View) : ViewHolderSong(itemView) {
 
         private var songLayout = itemView.findViewById<ConstraintLayout>(R.id.songPreviewLayout)
-        internal var mDisc = itemView.findViewById<View>(R.id.discNumber) as TextView
-        internal var mTrack = itemView.findViewById<View>(R.id.songTrack) as TextView
-        private var mMenu = itemView.findViewById<ImageButton>(R.id.menu)
+        internal var mDisc = itemView.findViewById(R.id.discNumber) as TextView
+        internal var mTrack = itemView.findViewById(R.id.songTrack) as TextView
 
         init {
             itemView.rootView.isClickable = false
@@ -41,7 +39,7 @@ class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(ac
                 return@setOnLongClickListener true
             }
 
-            mMenu.setOnClickListener {
+            mMenu!!.setOnClickListener {
                 activity.openDialog(SongOptions(songs[layoutPosition - 1]))
             }
         }
@@ -68,10 +66,10 @@ class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(ac
                         songs[0].albumId, holder.mArtwork)
                     holder.mTitle.text = songs[0].albumName
                     holder.mArtist.text = songs[0].artist
-                    val songCountInt = songs.size
-                    holder.mSongCount.text = if (songCountInt == 1) activity.getString(R.string.displayed_song)
-                    else activity.getString(R.string.displayed_songs, songCountInt)
                 }
+                val songCountInt = songs.size
+                holder.mSongCount.text = if (songCountInt == 1) activity.getString(R.string.displayed_song)
+                else activity.getString(R.string.displayed_songs, songCountInt)
             }
 
             SONG -> {
@@ -91,7 +89,7 @@ class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(ac
 
                 holder.mTrack.text = current.track.toString().substring(1, 4).toInt().toString()
                 holder.mTitle.text = current.title
-                holder.mArtist.text = current.artist
+                holder.mSubtitle.text = current.artist
             }
         }
     }

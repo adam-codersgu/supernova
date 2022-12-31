@@ -18,7 +18,9 @@ import com.codersguidebook.supernova.databinding.FragmentHomeBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.fragment.BaseFragment
 import com.codersguidebook.supernova.fragment.adapter.HomeAdapter
+import com.codersguidebook.supernova.fragment.adapter.MostPlayedAdapter
 import com.codersguidebook.supernova.fragment.adapter.SongAdapter
+import com.codersguidebook.supernova.fragment.adapter.SongOfTheDayAdapter
 import com.codersguidebook.supernova.fragment.layoutmanager.WrapContentLinearLayoutManager
 import com.codersguidebook.supernova.ui.playlists.PlaylistsFragmentDirections
 import kotlinx.coroutines.Dispatchers

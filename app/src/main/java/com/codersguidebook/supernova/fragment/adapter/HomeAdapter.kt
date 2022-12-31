@@ -18,9 +18,9 @@ open class HomeAdapter(private val activity: MainActivity): SongAdapter(activity
         holder as ViewHolderSong
         val current = songs[position]
 
-        ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId, holder.mArtwork)
+        ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId, holder.mArtwork!!)
 
         holder.mTitle.text = current.title
-        holder.mArtist.text = current.artist
+        holder.mSubtitle.text = current.artist
     }
 }

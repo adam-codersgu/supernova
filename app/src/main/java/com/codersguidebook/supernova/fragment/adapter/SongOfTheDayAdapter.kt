@@ -1,4 +1,4 @@
-package com.codersguidebook.supernova.ui.home
+package com.codersguidebook.supernova.fragment.adapter
 
 import android.view.LayoutInflater
 import android.view.View
@@ -7,7 +7,6 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.fragment.adapter.SongAdapter
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
 class SongOfTheDayAdapter(private val activity: MainActivity): SongAdapter(activity) {
@@ -32,9 +31,9 @@ class SongOfTheDayAdapter(private val activity: MainActivity): SongAdapter(activ
 
         val song = songs[position]
 
-        ImageHandlingHelper.loadImageByAlbumId(activity.application, song.albumId, holder.mArtwork)
+        ImageHandlingHelper.loadImageByAlbumId(activity.application, song.albumId, holder.mArtwork!!)
         holder.mTitle.text = song.title
-        holder.mArtist.text = song.artist
+        holder.mSubtitle.text = song.artist
         holder.mAlbum.text = song.albumName
     }
 

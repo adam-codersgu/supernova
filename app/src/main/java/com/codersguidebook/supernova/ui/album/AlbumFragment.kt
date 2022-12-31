@@ -51,6 +51,9 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
 
         super.updateRecyclerView(songs)
 
+        // Refresh the header
+        (adapter as AlbumAdapter).notifyItemChanged(0)
+
         setupMenu(songs)
     }
 

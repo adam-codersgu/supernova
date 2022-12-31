@@ -1,26 +1,20 @@
-package com.codersguidebook.supernova.ui.home
+package com.codersguidebook.supernova.fragment.adapter
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.fragment.adapter.HomeAdapter
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
 class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activity) {
 
-    inner class ViewHolderMostPlayedSong(itemView: View) : HomeAdapter.ViewHolderSong(itemView) {
+    inner class ViewHolderMostPlayedSong(itemView: View) : ViewHolderSong(itemView) {
 
-        internal var mPlays = itemView.findViewById<View>(R.id.plays) as TextView
-
-        init {
-            mPlays.isVisible = true
-        }
+        internal var mPlays = itemView.findViewById(R.id.plays) as TextView
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -32,30 +26,30 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
         holder as ViewHolderMostPlayedSong
         val current = songs[position]
 
-        ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId, holder.mArtwork)
+        ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId, holder.mArtwork!!)
 
         holder.mTitle.text = current.title
-        holder.mArtist.text = current.artist
+        holder.mSubtitle.text = current.artist
 
         when (position) {
             0 -> {
                 holder.mTitle.setTextColor(ContextCompat.getColor(activity, R.color.gold))
-                holder.mArtist.setTextColor(ContextCompat.getColor(activity, R.color.gold60))
+                holder.mSubtitle.setTextColor(ContextCompat.getColor(activity, R.color.gold60))
                 holder.mPlays.setTextColor(ContextCompat.getColor(activity, R.color.gold60))
             }
             1 -> {
                 holder.mTitle.setTextColor(ContextCompat.getColor(activity, R.color.silver))
-                holder.mArtist.setTextColor(ContextCompat.getColor(activity, R.color.silver60))
+                holder.mSubtitle.setTextColor(ContextCompat.getColor(activity, R.color.silver60))
                 holder.mPlays.setTextColor(ContextCompat.getColor(activity, R.color.silver60))
             }
             2 -> {
                 holder.mTitle.setTextColor(ContextCompat.getColor(activity, R.color.bronze))
-                holder.mArtist.setTextColor(ContextCompat.getColor(activity, R.color.bronze60))
+                holder.mSubtitle.setTextColor(ContextCompat.getColor(activity, R.color.bronze60))
                 holder.mPlays.setTextColor(ContextCompat.getColor(activity, R.color.bronze60))
             }
             else -> {
                 holder.mTitle.setTextColor(ContextCompat.getColor(activity, android.R.color.white))
-                holder.mArtist.setTextColor(ContextCompat.getColor(activity, R.color.onSurface60))
+                holder.mSubtitle.setTextColor(ContextCompat.getColor(activity, R.color.onSurface60))
                 holder.mPlays.setTextColor(ContextCompat.getColor(activity, R.color.onSurface60))
             }
         }

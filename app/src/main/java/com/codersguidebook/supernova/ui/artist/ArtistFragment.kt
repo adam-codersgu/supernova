@@ -86,6 +86,9 @@ class ArtistFragment : RecyclerViewFragment() {
             }
         }
 
+        // Refresh the header
+        adapter.notifyItemChanged(0)
+
         setupMenu(songs)
         finishUpdate()
     }
