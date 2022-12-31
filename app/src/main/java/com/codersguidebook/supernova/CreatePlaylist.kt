@@ -3,32 +3,24 @@ package com.codersguidebook.supernova
 import android.app.Dialog
 import android.os.Bundle
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
-import androidx.fragment.app.DialogFragment
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.databinding.CreatePlaylistBinding
 import com.codersguidebook.supernova.entities.Playlist
+import com.codersguidebook.supernova.fragment.BaseDialogFragment
 import com.codersguidebook.supernova.utils.PlaylistHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class CreatePlaylist (private val songIds: List<Long>) : DialogFragment() {
+class CreatePlaylist (private val songIds: List<Long>) : BaseDialogFragment() {
 
-    private var _binding: CreatePlaylistBinding? = null
-    private val binding get() = _binding!!
-    private lateinit var mainActivity: MainActivity
-    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        mainActivity = activity as MainActivity
-        musicLibraryViewModel = ViewModelProvider(mainActivity)[MusicLibraryViewModel::class.java]
-    }
+    override var _binding: ViewBinding? = null
+        get() = field as CreatePlaylistBinding?
+    override val binding: CreatePlaylistBinding
+        get() = _binding!! as CreatePlaylistBinding
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val inflater = mainActivity.layoutInflater
         _binding = CreatePlaylistBinding.inflate(inflater)
 
         binding.btnCreatePlaylistCancel.setOnClickListener { dismiss() }
@@ -60,13 +52,6 @@ class CreatePlaylist (private val songIds: List<Long>) : DialogFragment() {
             }
         }
 
-        return AlertDialog.Builder(mainActivity)
-            .setView(binding.root)
-            .create()
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+        return super.onCreateDialog(savedInstanceState)
     }
 }

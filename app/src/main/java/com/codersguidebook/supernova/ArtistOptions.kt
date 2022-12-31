@@ -24,7 +24,7 @@ class ArtistOptions(private val artist: String) : BaseDialogFragment() {
 
         binding.optionsTitle.text = artist
 
-        musicLibraryViewModel.activeArtistSongs.observe(viewLifecycleOwner) { songs ->
+        musicLibraryViewModel.activeArtistSongs.observe(this) { songs ->
             binding.playNext.setOnClickListener{
                 mainActivity.addSongsToPlayQueue(songs, true)
                 dismiss()

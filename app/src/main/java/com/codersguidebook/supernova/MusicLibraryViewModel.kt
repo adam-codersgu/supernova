@@ -344,7 +344,9 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param albumId The ID of the album.
      * @return A list of the associated Song objects sorted by track number.
      */
-    suspend fun getSongsByAlbumId(albumId: String) : List<Song> = repository.getSongsByAlbumIdOrderByTrack(albumId)
+    private suspend fun getSongsByAlbumId(albumId: String): List<Song> {
+        return repository.getSongsByAlbumIdOrderByTrack(albumId)
+    }
 
     /**
      * Toggle the isFavourite field for a given Song object. Also update the favourites

@@ -25,7 +25,7 @@ class PlaylistOptions(private val playlist: Playlist) : BaseDialogFragment() {
 
         binding.optionsTitle.text = playlist.name
 
-        musicLibraryViewModel.activePlaylistSongs.observe(viewLifecycleOwner) { songs ->
+        musicLibraryViewModel.activePlaylistSongs.observe(this) { songs ->
             if (songs.isNotEmpty()) {
                 binding.playNext.setOnClickListener {
                     mainActivity.addSongsToPlayQueue(songs, true)
