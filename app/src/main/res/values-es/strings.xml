@@ -15,4 +15,14 @@
     <string name="artists">Artistas</string>
     <string name="home">Casa</string>
     <string name="play_queue">Cola de reproducción</string>
+    <string name="playlists">Listas de reproducción</string>
+    <string name="search">Busca</string>
+    <string name="settings">Ajustes</string>
+    <string name="songs">Canciones</string>
+    <string name="add_que">Agregar a la cola de reproducción</string>
+    <string name="add_playlist">Agregar a la lista de reproducción</string>
+    <string name="add_to_favourites">Agregar a favoritos</string>
+    <string name="cancel">Cancelar</string>
+    <string name="change_image">Cambiar imagen</string>
+    <string name="create_playlist">Crear nueva lista de reproducción</string>
 </resources>
