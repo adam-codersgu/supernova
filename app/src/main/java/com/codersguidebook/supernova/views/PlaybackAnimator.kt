@@ -175,8 +175,6 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
     /** Pause the animator. */
     fun pause() {
         if (mTimeAnimator != null && mTimeAnimator!!.isRunning) {
-            // Store the current play time for later.
-            // mCurrentPlayTime = mTimeAnimator?.currentPlayTime
             mTimeAnimator!!.pause()
         }
     }
@@ -185,7 +183,6 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
     private fun resumeAnimator() {
         if (mTimeAnimator != null && mTimeAnimator!!.isPaused) {
             mTimeAnimator!!.start()
-            // mTimeAnimator!!.currentPlayTime = mCurrentPlayTime
         }
     }
 
