@@ -6,12 +6,10 @@ import android.content.ContextWrapper
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.drawable.Drawable
-import android.os.Build
 import android.os.Bundle
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat.*
 import android.transition.TransitionInflater
-import android.util.DisplayMetrics
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -35,10 +33,6 @@ import com.codersguidebook.supernova.databinding.FragmentCurrentlyPlayingBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.BaseFragment
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_ACTIVE
-import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_COLOUR
-import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_QUANTITY
-import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_SPEED
-import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_SPIN
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_TYPE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CUSTOM_ANIMATION_IMAGE_IDS
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
@@ -129,7 +123,7 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener, Pla
             binding.currentPosition.text = SimpleDateFormat("mm:ss", Locale.UK).format(it)
         }
 
-        binding.btnPlay.setOnClickListener{ mainActivity.playPauseControl() }
+        binding.btnPlay.setOnClickListener { mainActivity.playPauseControl() }
 
         binding.btnBackward.setOnClickListener {
             if (fastRewinding) fastRewinding = false
@@ -186,9 +180,7 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener, Pla
         }
 
         binding.currentAddToPlaylist.setOnClickListener {
-            currentSong?.let {
-                mainActivity.openAddToPlaylistDialog(listOf(it))
-            }
+            currentSong?.let { song -> mainActivity.openAddToPlaylistDialog(listOf(song)) }
         }
 
         binding.currentClose.setOnClickListener { this.pullToCloseDismissed() }
@@ -209,23 +201,12 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener, Pla
     override fun onStart() {
         super.onStart()
 
-        binding.animatedView.viewWidth = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-            // Pre-SDK 30
-            val displayMetrics = DisplayMetrics()
-            @Suppress("DEPRECATION")
-            mainActivity.windowManager.defaultDisplay.getMetrics(displayMetrics)
-            displayMetrics.widthPixels
-        } else {
-            // SDK 30 and up
-            mainActivity.windowManager.currentWindowMetrics.bounds.width()
-        }
-
         isAnimationVisible = sharedPreferences.getBoolean(ANIMATION_ACTIVE, true)
         if (isAnimationVisible) binding.animatedView.visibility = View.VISIBLE
         else binding.animatedView.visibility = View.GONE
 
         val customDrawableString = sharedPreferences.getString(CUSTOM_ANIMATION_IMAGE_IDS, null)
-        val animationPreference = sharedPreferences.getString(ANIMATION_TYPE, getString(R.string.leaves))
+        val animationPreference = sharedPreferences.getString(ANIMATION_TYPE, null)
         when {
             customDrawableString != null && animationPreference == getString(R.string.custom_image) -> {
                 val listType = object : TypeToken<List<String>>() {}.type
@@ -240,16 +221,8 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener, Pla
                 Toast.makeText(activity, getString(R.string.error_custom_animation_image_not_found), Toast.LENGTH_LONG).show()
                 binding.animatedView.changeDrawable(getString(R.string.leaves), false)
             }
-            else -> binding.animatedView.changeDrawable(animationPreference!!, false)
+            animationPreference != null -> binding.animatedView.changeDrawable(animationPreference)
         }
-        val animationColour = sharedPreferences.getString(ANIMATION_COLOUR, getString(R.string.red))
-        binding.animatedView.changeColour(animationColour!!, false)
-        val animationSpeed = sharedPreferences.getString(ANIMATION_SPEED, getString(R.string.normal))
-        binding.animatedView.changeSpeed(animationSpeed!!, false)
-        binding.animatedView.spinSpeed = sharedPreferences.getInt(ANIMATION_SPIN, 20)
-        val animationQuantity = sharedPreferences.getInt(ANIMATION_QUANTITY, 6)
-        binding.animatedView.objectList = arrayOfNulls(animationQuantity)
-        binding.animatedView.createObjects()
     }
 
     /**

@@ -25,7 +25,6 @@ import kotlin.math.roundToInt
 class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     companion object {
-        private const val SEED = 1337L
         private const val SCALE_MIN_PART = 0.45f
         private const val SCALE_RANDOM_PART = 0.55f
         private const val ALPHA_SCALE_PART = 0.9f
@@ -96,32 +95,29 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
     )
     private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
     private val count = sharedPreferences.getInt(ANIMATION_QUANTITY, 6)
-    var objectList = arrayOfNulls<MovingObject>(count)
-    private val mRnd: Random = Random(SEED)
+    private val objectList = MutableList(count) { MovingObject() }
     private var mTimeAnimator: TimeAnimator? = null
     var usingCustomDrawable = false
-    // default drawable
-    var drawableList = drawableListGenerator(leavesDrawables)
-    var spinSpeed = sharedPreferences.getInt(ANIMATION_SPIN, 20)
-    var viewWidth = width
+    var drawableList = drawableListGenerator()
+    private var spinSpeed = sharedPreferences.getInt(ANIMATION_SPIN, 20)
     private var mBaseSize = 0f
-    private var mCurrentPlayTime: Long = 0
-    // Speed in dp per s
     private var speedSetting = 70
-    // default colour
-    private var colourList = colourListGenerator(redColours)
+    private var colourList = colourListGenerator()
     private var selectedObject: MovingObject? = null
 
     init {
+        sharedPreferences.getString(ANIMATION_COLOUR, null)?.let { changeColour(it) }
+
+        sharedPreferences.getString(ANIMATION_SPEED, null)?.let { changeSpeed(it) }
+
         if (drawableList.isNotEmpty()) {
             mBaseSize = drawableList[0].intrinsicWidth.coerceAtLeast(drawableList[0].intrinsicHeight) / 3f
         }
     }
 
     override fun onDraw(canvas: Canvas) {
-        val viewHeight = height
         for (movingObject in objectList) {
-            val objectSize = movingObject!!.scale * mBaseSize
+            val objectSize = movingObject.scale * mBaseSize
 
             // Save the current canvas state
             val save = canvas.save()
@@ -130,7 +126,7 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
             canvas.translate(movingObject.x, movingObject.y)
 
             // Rotate the canvas based on how far the leaf has moved
-            val progress = (movingObject.y + objectSize) / viewHeight
+            val progress = (movingObject.y + objectSize) / measuredHeight
             canvas.rotate(movingObject.spin * progress)
 
             // Prepare the size and alpha of the drawable
@@ -140,7 +136,6 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
 
             if (!usingCustomDrawable) movingObject.drawable.setTint(movingObject.colour)
 
-            // Draw the object to the canvas
             movingObject.drawable.draw(canvas)
 
             // Restore the canvas to it's previous position and rotation
@@ -150,55 +145,44 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        mTimeAnimator = TimeAnimator()
-        mTimeAnimator!!.setTimeListener(TimeAnimator.TimeListener { _, _, deltaTime ->
-            if (!isLaidOut) {
+        mTimeAnimator = TimeAnimator().apply {
+            setTimeListener(TimeAnimator.TimeListener { _, _, deltaTime ->
                 // Ignore all calls before the view has been measured and laid out.
-                return@TimeListener
-            }
-            updateState(deltaTime.toFloat())
-            invalidate()
-        })
-        mTimeAnimator!!.start()
+                if (!isLaidOut) return@TimeListener
+                updateState(deltaTime.toFloat())
+                invalidate()
+            })
+            start()
+        }
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        mTimeAnimator!!.cancel()
-        mTimeAnimator!!.setTimeListener(null)
-        mTimeAnimator!!.removeAllListeners()
+        mTimeAnimator?.cancel()
+        mTimeAnimator?.setTimeListener(null)
+        mTimeAnimator?.removeAllListeners()
         mTimeAnimator = null
     }
 
-    fun createObjects() {
-        // The starting position is dependent on the size of the view,
-        // which is why the model is initialized here, when the view is measured.
-        for (i in objectList.indices) {
-            val movingObject = MovingObject()
-            initialiseAnimationObject(movingObject)
-            objectList[i] = movingObject
-        }
-    }
-
+    /** Start or resume the animator. */
     fun start() {
         if (mTimeAnimator != null) {
-            if (mTimeAnimator!!.isPaused) resume()
+            if (mTimeAnimator!!.isPaused) resumeAnimator()
             else mTimeAnimator!!.start()
         }
     }
 
+    /** Pause the animator. */
     fun pause() {
         if (mTimeAnimator != null && mTimeAnimator!!.isRunning) {
-            // Store the current play time for later.
-            mCurrentPlayTime = mTimeAnimator!!.currentPlayTime
             mTimeAnimator!!.pause()
         }
     }
 
-    private fun resume() {
+    /** Resume the animator */
+    private fun resumeAnimator() {
         if (mTimeAnimator != null && mTimeAnimator!!.isPaused) {
             mTimeAnimator!!.start()
-            mTimeAnimator!!.currentPlayTime = mCurrentPlayTime
         }
     }
 
@@ -206,49 +190,68 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
         // Converting to seconds since PX/S constants are easier to understand
         val deltaSeconds = deltaMs / 1000f
         for (movingObject in objectList) {
-            if (movingObject != null && !movingObject.selected) {
-                val leafSize = movingObject.scale * mBaseSize
+            if (!movingObject.selected) {
+                val objectSize = movingObject.scale * mBaseSize
                 // Move the movingObject based on the elapsed time and it's speed
                 movingObject.y += movingObject.speed * deltaSeconds
 
                 // If the movingObject is completely outside of the view bounds after
                 // updating it's position, recycle it.
-                if (movingObject.y > height + leafSize) initialiseAnimationObject(movingObject)
+                if (movingObject.y > measuredHeight + objectSize) initialiseAnimationObject(movingObject)
             }
         }
     }
 
-    private fun initialiseAnimationObject(movingObject: MovingObject) {
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        if (w != 0 && h != 0 && oldw == 0 && oldh == 0) {
+            for (obj in objectList) initialiseAnimationObject(obj, true)
+        }
+    }
+
+    /**
+     * Initialise an object for a new animation cycle.
+     *
+     * @param movingObject The animation object.
+     * @param randomYStart A Boolean indicating whether the start position on the Y axis should be random.
+     * Default = false, because after the first animation cycle the object should always reappear from
+     * the top of the screen.
+     */
+    private fun initialiseAnimationObject(movingObject: MovingObject, randomYStart: Boolean = false) {
         // Set the scale based on a min value and a random multiplier
-        movingObject.scale = SCALE_MIN_PART + SCALE_RANDOM_PART * mRnd.nextFloat()
+        movingObject.scale = SCALE_MIN_PART + SCALE_RANDOM_PART * Random().nextFloat()
 
-        // Set X to a random value within the width of the view
-        movingObject.x = viewWidth * mRnd.nextFloat()
+        val objectSize = movingObject.scale * mBaseSize
+        movingObject.x = measuredWidth * Random().nextFloat()
+        movingObject.y = if (randomYStart && measuredHeight > 0) Random().nextInt(measuredHeight).toFloat()
+        else -objectSize
 
-        // Set the Y position
-        // Start near the top of the view with a random offset
-        val leafSize = movingObject.scale * mBaseSize
-        movingObject.y = -leafSize
-
-        // set the drawable image
+        // Set the drawable image
         if (drawableList.isNotEmpty()) movingObject.drawable = drawableList.random()
 
-        // set the drawable colour
+        // Set the drawable colour
         if (colourList.isNotEmpty()) movingObject.colour = colourList.random()
 
         // The alpha is determined by the scale of the star and a random multiplier.
-        movingObject.alpha = ALPHA_SCALE_PART * movingObject.scale + ALPHA_RANDOM_PART * mRnd.nextFloat()
-        // The bigger and brighter a star is, the faster it moves
+        movingObject.alpha = ALPHA_SCALE_PART * movingObject.scale + ALPHA_RANDOM_PART * Random().nextFloat()
+        // The bigger and brighter an object is, the faster it moves
         val mBaseSpeed = speedSetting * resources.displayMetrics.density
         movingObject.speed = mBaseSpeed * movingObject.alpha * movingObject.scale
 
-        // generate a random clockwise or anticlockwise spin between 20 and 180 degrees
+        // Generate a random clockwise or anticlockwise spin between 20 and 180 degrees
         val spin = Random().nextInt(180-20) + spinSpeed
         if (spin % 2 == 0) movingObject.spin = spin
         else movingObject.spin = -spin
     }
 
-    private fun colourListGenerator(colours: List<Int>): List<Int> {
+    /**
+     * Generate a list of colour values for the animation objects.
+     *
+     * @param colours A list of colour resource IDs to render.
+     * Default = the list of red colour resource IDs.
+     * @return A list of colour values.
+     */
+    private fun colourListGenerator(colours: List<Int> = redColours): List<Int> {
         return colours.mapNotNull { colour ->
             try {
                 ContextCompat.getColor(context, colour)
@@ -258,20 +261,27 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
         }
     }
 
-    private fun drawableListGenerator(drawables: List<Int>): List<Drawable> {
+    /**
+     * Generate a list of Drawable resources for the animation objects.
+     *
+     * @param drawables A list of Drawable resource IDs to render.
+     * Default = the list of Drawable resource IDs for the leaves.
+     * @return A list of Drawable resources.
+     */
+    private fun drawableListGenerator(drawables: List<Int> = leavesDrawables): List<Drawable> {
         return drawables.mapNotNull { drawable ->
             ContextCompat.getDrawable(context, drawable)
         }
     }
 
-    fun changeDrawable(drawable: String, updatePreferences: Boolean) {
+    fun changeDrawable(drawable: String, updatePreferences: Boolean = false) {
         drawableList = when (drawable) {
             context.getString(R.string.space) -> drawableListGenerator(spaceDrawables)
             context.getString(R.string.mandala) -> drawableListGenerator(mandalaDrawables)
             context.getString(R.string.animals) -> drawableListGenerator(animalDrawables)
             context.getString(R.string.flowers) -> drawableListGenerator(flowerDrawables)
             context.getString(R.string.instruments) -> drawableListGenerator(instrumentsDrawables)
-            else -> drawableListGenerator(leavesDrawables)
+            else -> drawableListGenerator()
         }
         usingCustomDrawable = false
         if (updatePreferences){
@@ -283,12 +293,12 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
         }
     }
 
-    fun changeColour(colour: String, updatePreferences: Boolean) {
+    fun changeColour(colour: String, updatePreferences: Boolean = false) {
         colourList = when (colour) {
             context.getString(R.string.blue) -> colourListGenerator(blueColours)
             context.getString(R.string.night) -> colourListGenerator(nightColours)
             context.getString(R.string.pastel) -> colourListGenerator(pastelColours)
-            else -> colourListGenerator(redColours)
+            else -> colourListGenerator()
         }
         if (updatePreferences){
             sharedPreferences.edit().apply {
@@ -299,7 +309,7 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
         }
     }
 
-    fun changeSpeed(speed: String, updatePreferences: Boolean) {
+    fun changeSpeed(speed: String, updatePreferences: Boolean = false) {
         speedSetting = when (speed) {
             context.getString(R.string.fast) -> 180
             context.getString(R.string.slow) -> 20
@@ -322,7 +332,7 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
         when (event?.action) {
             MotionEvent.ACTION_DOWN -> {
                 getTouchedObject(x, y)?.let {
-                    selectedObject = objectList[it]?.apply {
+                    selectedObject = objectList[it].apply {
                         this.selected = true
                     }
                     return true
@@ -344,15 +354,15 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
     }
 
     private fun getTouchedObject(x: Float, y: Float): Int? {
-        objectList.forEachIndexed { i, movingObject ->
-            if (movingObject != null) {
-                val objectX = movingObject.x.toInt()
-                val objectY = movingObject.y.toInt()
-                val bounds = movingObject.drawable.bounds
-                val occupiedSpace = Rect(bounds.left + objectX, bounds.top + objectY, bounds.right + objectX, bounds.bottom + objectY)
+        objectList.forEachIndexed { index, obj ->
+            val objectX = obj.x.toInt()
+            val objectY = obj.y.toInt()
+            val bounds = obj.drawable.bounds
+            val occupiedSpace = Rect(bounds.left + objectX,
+                bounds.top + objectY, bounds.right + objectX,
+                bounds.bottom + objectY)
 
-                if (occupiedSpace.contains(x.toInt(), y.toInt())) return i
-            }
+            if (occupiedSpace.contains(x.toInt(), y.toInt())) return index
         }
         return null
     }
