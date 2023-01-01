@@ -99,7 +99,7 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
     private var mTimeAnimator: TimeAnimator? = null
     var usingCustomDrawable = false
     var drawableList = drawableListGenerator()
-    var spinSpeed = sharedPreferences.getInt(ANIMATION_SPIN, 20)
+    private var spinSpeed = sharedPreferences.getInt(ANIMATION_SPIN, 20)
     private var mBaseSize = 0f
     private var speedSetting = 70
     private var colourList = colourListGenerator()
