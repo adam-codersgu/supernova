@@ -1,45 +1,33 @@
 package com.codersguidebook.supernova.ui.playlist
 
-import android.app.Activity
-import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
 import android.text.SpannableStringBuilder
-import android.view.*
+import android.view.LayoutInflater
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
-import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
+import androidx.viewbinding.ViewBinding
 import com.bumptech.glide.Glide
-import com.codersguidebook.supernova.MainActivity
-import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentEditPlaylistBinding
 import com.codersguidebook.supernova.entities.Playlist
+import com.codersguidebook.supernova.fragment.BaseEditMusicFragment
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
-import com.codersguidebook.supernova.utils.PlaylistHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.FileNotFoundException
-import java.io.IOException
 
-class EditPlaylistFragment : Fragment() {
+class EditPlaylistFragment : BaseEditMusicFragment() {
 
-    companion object {
-        private const val GET_ARTWORK = 1
-    }
+    override var _binding: ViewBinding? = null
+        get() = field as FragmentEditPlaylistBinding?
+    override val binding: FragmentEditPlaylistBinding
+        get() = _binding!! as FragmentEditPlaylistBinding
 
-    private var _binding: FragmentEditPlaylistBinding? = null
-    private val binding get() = _binding!!
-    private var newArtwork: Bitmap? = null
-    private var selectedImageUri: Uri? = null
-    private lateinit var callingActivity: MainActivity
-    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
     private var playlist: Playlist? = null
     private var playlistName: String? = null
 
@@ -55,69 +43,42 @@ class EditPlaylistFragment : Fragment() {
 
         _binding = FragmentEditPlaylistBinding.inflate(inflater, container, false)
 
-        callingActivity = activity as MainActivity
-        musicLibraryViewModel = ViewModelProvider(callingActivity)[MusicLibraryViewModel::class.java]
-        setHasOptionsMenu(true)
+        return super.onCreateView(inflater, container, savedInstanceState)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        binding.editPlaylistName.text = SpannableStringBuilder(playlistName)
 
         playlistName?.let { name ->
+            musicLibraryViewModel.setActivePlaylistName(name)
+
             lifecycleScope.launch(Dispatchers.Main) {
                 playlist = withContext(Dispatchers.IO) {
                     musicLibraryViewModel.getPlaylistByName(name)
                 }
                 playlist?.let {
-                    binding.editPlaylistName.text = SpannableStringBuilder(it.name)
-
-                    val playlistSongIds = PlaylistHelper.extractSongIds(it.songs)
-                    if (!ImageHandlingHelper.loadImageByPlaylist(callingActivity.application, it, binding.artwork)) {
-                        callingActivity.loadRandomArtworkBySongIds(playlistSongIds, binding.artwork)
+                    if (!ImageHandlingHelper.loadImageByPlaylist(mainActivity.application,
+                            it, binding.artwork)) {
+                        musicLibraryViewModel.activePlaylistSongs.observe(viewLifecycleOwner) { songs ->
+                            val randomSong = if (songs.isNotEmpty()) songs.random()
+                            else return@observe
+                            ImageHandlingHelper.loadImageByAlbumId(mainActivity.application,
+                                randomSong.albumId, binding.artwork)
+                        }
                     }
                 }
             }
         }
 
-        binding.artwork.setOnClickListener {
-            startActivityForResult(
-                Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI), GET_ARTWORK
-            )
-        }
+        binding.artwork.setOnClickListener {  }
 
-        binding.editArtworkIcon.setOnClickListener {
-            startActivityForResult(
-                Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI), GET_ARTWORK
-            )
-        }
-
-        return binding.root
+        binding.editArtworkIcon.setOnClickListener { getImage() }
     }
 
-    override fun onActivityResult(reqCode: Int, resultCode: Int, data: Intent?) {
-        if (reqCode == GET_ARTWORK && resultCode == Activity.RESULT_OK) {
-            try {
-                selectedImageUri = data!!.data
-                val source = ImageDecoder.createSource(requireActivity().contentResolver, selectedImageUri!!)
-                newArtwork = ImageDecoder.decodeBitmap(source)
-
-                Glide.with(this)
-                    .load(selectedImageUri)
-                    .centerCrop()
-                    .into(binding.artwork)
-            } catch (_: FileNotFoundException) { }
-            catch (_: IOException) { }
-        }
-
-        super.onActivityResult(reqCode, resultCode, data)
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        menu.findItem(R.id.search).isVisible = false
-        menu.findItem(R.id.save).isVisible = true
-
-        super.onCreateOptionsMenu(menu, inflater)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-
-        return when (item.itemId) {
+    override fun menuItemSelected(menuItem: MenuItem): Boolean {
+        return when (menuItem.itemId) {
             R.id.save -> {
                 playlist?.apply {
                     val newPlaylistName = binding.editPlaylistName.text.toString()
@@ -130,7 +91,7 @@ class EditPlaylistFragment : Fragment() {
 
                         newArtwork?.let {
                             ImageHandlingHelper.savePlaylistArtByResourceId(
-                                callingActivity.application, this.playlistId.toString(), it)
+                                mainActivity.application, this.playlistId.toString(), it)
                         }
 
                         musicLibraryViewModel.updatePlaylists(listOf(this))
@@ -141,15 +102,16 @@ class EditPlaylistFragment : Fragment() {
                         Toast.makeText(activity, getString(R.string.playlist_updated), Toast.LENGTH_SHORT).show()
                     }
                 }
-
                 true
             }
-            else -> super.onOptionsItemSelected(item)
+            else -> false
         }
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+    override fun furtherUriProcessing(uri: Uri) {
+        Glide.with(this)
+            .load(uri)
+            .centerCrop()
+            .into(binding.artwork)
     }
 }

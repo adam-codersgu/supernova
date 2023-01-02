@@ -20,9 +20,9 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
+import com.codersguidebook.supernova.fragment.BaseRecyclerViewFragment
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_TYPE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CUSTOM_ANIMATION_IMAGE_IDS
-import com.codersguidebook.supernova.fragment.BaseRecyclerViewFragment
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -85,7 +85,7 @@ class CustomAnimationFragment : BaseRecyclerViewFragment() {
     /**
      * Prompt the user to select an image from their device.
      *
-     * @param imageId - The ID that the image should have.
+     * @param imageId The ID that the image should have.
      */
     fun getPhoto(imageId: String) {
         this.imageIdToUse = imageId
@@ -109,8 +109,8 @@ class CustomAnimationFragment : BaseRecyclerViewFragment() {
     /**
      * Show a popup options menu when the user selects and image.
      *
-     * @param view - The ImageView that the popup menu should appear over.
-     * @param imageId - The ID of the selected image.
+     * @param view The ImageView that the popup menu should appear over.
+     * @param imageId The ID of the selected image.
      */
     fun showPopup(view: View, imageId: String) {
         PopupMenu(requireContext(), view).apply {

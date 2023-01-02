@@ -2,15 +2,18 @@ package com.codersguidebook.supernova.ui.artist
 
 import android.os.Bundle
 import android.text.SpannableStringBuilder
-import android.view.*
+import android.view.LayoutInflater
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentEditArtistBinding
 import com.codersguidebook.supernova.entities.Song
-import com.codersguidebook.supernova.fragment.BaseFragment
+import com.codersguidebook.supernova.fragment.BaseEditMusicFragment
 
-class EditArtistFragment : BaseFragment() {
+class EditArtistFragment : BaseEditMusicFragment() {
 
     override var _binding: ViewBinding? = null
         get() = field as FragmentEditArtistBinding?
@@ -32,15 +35,13 @@ class EditArtistFragment : BaseFragment() {
 
         _binding = FragmentEditArtistBinding.inflate(inflater, container, false)
 
-        binding.editArtistName.text = SpannableStringBuilder(artistName)
-
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        setHasOptionsMenu(true)
+        binding.editArtistName.text = SpannableStringBuilder(artistName)
 
         artistName?.let { name ->
             musicLibraryViewModel.setActiveArtistName(name)
@@ -51,16 +52,8 @@ class EditArtistFragment : BaseFragment() {
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        menu.findItem(R.id.search).isVisible = false
-        menu.findItem(R.id.save).isVisible = true
-
-        super.onCreateOptionsMenu(menu, inflater)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-
-        return when (item.itemId) {
+    override fun menuItemSelected(menuItem: MenuItem): Boolean {
+        return when (menuItem.itemId) {
             R.id.save -> {
                 val newName = binding.editArtistName.text.toString()
 
@@ -80,7 +73,7 @@ class EditArtistFragment : BaseFragment() {
                 true
             }
 
-            else -> super.onOptionsItemSelected(item)
+            else -> false
         }
     }
 }
