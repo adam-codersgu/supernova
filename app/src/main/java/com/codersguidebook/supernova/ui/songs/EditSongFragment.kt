@@ -1,34 +1,29 @@
 package com.codersguidebook.supernova.ui.songs
 
-import android.app.Activity
-import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.ImageDecoder
+import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
-import android.text.Editable
 import android.text.SpannableStringBuilder
-import android.view.*
+import android.view.LayoutInflater
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
-import androidx.fragment.app.Fragment
 import androidx.navigation.findNavController
+import androidx.viewbinding.ViewBinding
 import com.bumptech.glide.Glide
-import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentEditSongBinding
 import com.codersguidebook.supernova.entities.Song
-import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
+import com.codersguidebook.supernova.fragment.BaseEditMusicFragment
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
-import java.io.FileNotFoundException
-import java.io.IOException
 
-class EditSongFragment : Fragment() {
+class EditSongFragment : BaseEditMusicFragment() {
 
-    private var _binding: FragmentEditSongBinding? = null
-    private val binding get() = _binding!!
+    override var _binding: ViewBinding? = null
+        get() = field as FragmentEditSongBinding?
+    override val binding: FragmentEditSongBinding
+        get() = _binding!! as FragmentEditSongBinding
     private var song: Song? = null
-    private var newArtwork: Bitmap? = null
-    private lateinit var callingActivity: MainActivity
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,71 +36,28 @@ class EditSongFragment : Fragment() {
         }
 
         _binding = FragmentEditSongBinding.inflate(inflater, container, false)
-        setHasOptionsMenu(true)
-        callingActivity = activity as MainActivity
 
-        ImageHandlingHelper.loadImageByAlbumId(callingActivity.application, song!!.albumId,
+        return super.onCreateView(inflater, container, savedInstanceState)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        ImageHandlingHelper.loadImageByAlbumId( mainActivity.application, song?.albumId,
             binding.editSongArtwork)
-        binding.editSongArtwork.setOnClickListener {
-            startActivityForResult(Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI), 1)
-        }
+        binding.editSongArtwork.setOnClickListener { getImage() }
 
-        binding.editSongArtworkIcon.setOnClickListener {
-            startActivityForResult(Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI), 1)
-        }
+        binding.editSongArtworkIcon.setOnClickListener { getImage() }
 
-        var editable: Editable = SpannableStringBuilder(song!!.title)
-        binding.editSongTitle.text = editable
-
-        editable = SpannableStringBuilder(song!!.artist)
-        binding.editSongArtist.text = editable
-
-        editable = SpannableStringBuilder(song!!.track.toString().substring(0, 1))
-        binding.editSongDisc.text = editable
-
-        editable = SpannableStringBuilder(song!!.track.toString().substring(1, 4).toInt().toString())
-        binding.editSongTrack.text = editable
-
-        editable = SpannableStringBuilder(song!!.year)
-        binding.editSongYear.text = editable
-
-        return binding.root
+        binding.editSongTitle.text = SpannableStringBuilder(song?.title)
+        binding.editSongArtist.text = SpannableStringBuilder(song?.artist)
+        binding.editSongDisc.text = SpannableStringBuilder(song?.track.toString().substring(0, 1))
+        binding.editSongTrack.text = SpannableStringBuilder(song?.track.toString().substring(1, 4)
+            .toInt().toString())
+        binding.editSongYear.text = SpannableStringBuilder(song?.year)
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
-
-    override fun onActivityResult(reqCode: Int, resultCode: Int, data: Intent?) {
-        if (reqCode == 1 && resultCode == Activity.RESULT_OK) {
-            try {
-                val selectedImageUri = data!!.data
-                val source = ImageDecoder.createSource(requireActivity().contentResolver, selectedImageUri!!)
-                newArtwork = ImageDecoder.decodeBitmap(source)
-
-                Glide.with(this)
-                    .load(selectedImageUri)
-                    .centerCrop()
-                    .into(binding.editSongArtwork)
-
-            } catch (_: FileNotFoundException) {
-            } catch (_: IOException) { }
-        }
-
-        super.onActivityResult(reqCode, resultCode, data)
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        menu.findItem(R.id.search).isVisible = false
-        menu.findItem(R.id.save).isVisible = true
-
-        super.onCreateOptionsMenu(menu, inflater)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-
-        return when (item.itemId) {
+    override fun menuItemSelected(menuItem: MenuItem): Boolean {
+        return when (menuItem.itemId) {
             R.id.save -> {
                 val newTitle = binding.editSongTitle.text.toString()
                 val newArtist = binding.editSongArtist.text.toString()
@@ -125,7 +77,7 @@ class EditSongFragment : Fragment() {
 
                         // artwork has been changed
                         newArtwork?.let { artwork ->
-                            ImageHandlingHelper.saveAlbumArtByResourceId(callingActivity.application,
+                            ImageHandlingHelper.saveAlbumArtByResourceId( mainActivity.application,
                                 song?.albumId!!, artwork)
                         }
 
@@ -134,18 +86,22 @@ class EditSongFragment : Fragment() {
                         song!!.track = completeTrack
                         song!!.year = newYear
 
-                        callingActivity.updateSongs(listOf(song!!))
+                        mainActivity.updateSongs(listOf(song!!))
                     }
 
-                    val action = AlbumsFragmentDirections.actionSelectAlbum(song?.albumId!!)
-                    requireView().findNavController().navigate(action)
-
                     Toast.makeText(activity, getString(R.string.details_saved), Toast.LENGTH_SHORT).show()
+                    requireView().findNavController().popBackStack()
                 } else Toast.makeText(activity, getString(R.string.check_fields_not_empty), Toast.LENGTH_SHORT).show()
                 true
             }
-
-            else -> super.onOptionsItemSelected(item)
+            else -> false
         }
+    }
+
+    override fun furtherUriProcessing(uri: Uri) {
+        Glide.with(this)
+            .load(uri)
+            .centerCrop()
+            .into(binding.editSongArtwork)
     }
 }

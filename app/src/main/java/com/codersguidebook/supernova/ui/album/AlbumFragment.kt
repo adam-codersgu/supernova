@@ -21,7 +21,7 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
                               savedInstanceState: Bundle?): View {
         arguments?.let {
             val safeArgs = AlbumFragmentArgs.fromBundle(it)
-            albumId = safeArgs.albumID
+            albumId = safeArgs.albumId
         }
         return super.onCreateView(inflater, container, savedInstanceState)
     }

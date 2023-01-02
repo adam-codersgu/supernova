@@ -1,44 +1,31 @@
 package com.codersguidebook.supernova.ui.album
 
-import android.app.Activity
-import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
-import android.text.Editable
 import android.text.SpannableStringBuilder
-import android.view.*
+import android.view.LayoutInflater
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
-import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
+import androidx.viewbinding.ViewBinding
 import com.bumptech.glide.Glide
-import com.codersguidebook.supernova.MainActivity
-import com.codersguidebook.supernova.MusicLibraryViewModel
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentEditAlbumBinding
 import com.codersguidebook.supernova.entities.Song
-import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
+import com.codersguidebook.supernova.fragment.BaseEditMusicFragment
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
-import java.io.FileNotFoundException
-import java.io.IOException
 
-class EditAlbumFragment : Fragment() {
+class EditAlbumFragment : BaseEditMusicFragment() {
 
-    companion object {
-        private const val GET_ARTWORK = 1
-    }
-
-    private var albumID: String? = null
-    private var _binding: FragmentEditAlbumBinding? = null
-    private val binding get() = _binding!!
-    private var newAlbumArtwork: Bitmap? = null
-    private var selectedImageUri: Uri? = null
+    private var albumId: String? = null
     private var albumSongs = emptyList<Song>()
-    private lateinit var callingActivity: MainActivity
-    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
+
+    override var _binding: ViewBinding? = null
+        get() = field as FragmentEditAlbumBinding?
+    override val binding: FragmentEditAlbumBinding
+        get() = _binding!! as FragmentEditAlbumBinding
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,84 +34,49 @@ class EditAlbumFragment : Fragment() {
     ): View {
         arguments?.let {
             val safeArgs = EditAlbumFragmentArgs.fromBundle(it)
-            albumID = safeArgs.albumID
+            albumId = safeArgs.albumId
         }
 
         _binding = FragmentEditAlbumBinding.inflate(inflater, container, false)
+        
+        return super.onCreateView(inflater, container, savedInstanceState)
+    }
 
-        callingActivity = activity as MainActivity
-        setHasOptionsMenu(true)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        musicLibraryViewModel = ViewModelProvider(callingActivity)[MusicLibraryViewModel::class.java]
-        musicLibraryViewModel.allSongs.observe(viewLifecycleOwner) {
-            this.albumSongs = it.filter { song ->
-                song.albumId == albumID
+        albumId?.let { albumId ->
+            musicLibraryViewModel.setActiveAlbumId(albumId)
+
+            musicLibraryViewModel.activeAlbumSongs.observe(viewLifecycleOwner) { songs ->
+                this.albumSongs = songs
+                binding.editAlbumTitle.text = SpannableStringBuilder(albumSongs[0].albumName)
+                binding.editAlbumYear.text = SpannableStringBuilder(albumSongs[0].year)
             }
-            var editable: Editable = SpannableStringBuilder(albumSongs[0].albumName)
-            binding.editAlbumTitle.text = editable
-
-            editable = SpannableStringBuilder(albumSongs[0].year)
-            binding.editAlbumYear.text = editable
         }
 
-        ImageHandlingHelper.loadImageByAlbumId(callingActivity.application, albumID, binding.editAlbumArtwork)
-        binding.editAlbumArtwork.setOnClickListener {
-            startActivityForResult(
-                Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI), GET_ARTWORK
-            )
-        }
+        ImageHandlingHelper.loadImageByAlbumId(mainActivity.application, albumId, binding.editAlbumArtwork)
+        binding.editAlbumArtwork.setOnClickListener { getImage() }
 
-        binding.editAlbumArtworkIcon.setOnClickListener {
-            startActivityForResult(
-                Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI), GET_ARTWORK
-            )
-        }
-
-        return binding.root
+        binding.editAlbumArtworkIcon.setOnClickListener { getImage() }
     }
-
-    override fun onActivityResult(reqCode: Int, resultCode: Int, data: Intent?) {
-        if (reqCode == GET_ARTWORK && resultCode == Activity.RESULT_OK) {
-            try {
-                selectedImageUri = data!!.data
-                val source = ImageDecoder.createSource(requireActivity().contentResolver, selectedImageUri!!)
-                newAlbumArtwork = ImageDecoder.decodeBitmap(source)
-
-                Glide.with(this)
-                    .load(selectedImageUri)
-                    .centerCrop()
-                    .into(binding.editAlbumArtwork)
-            } catch (e: FileNotFoundException) { }
-            catch (e: IOException) { }
-        }
-
-        super.onActivityResult(reqCode, resultCode, data)
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        menu.findItem(R.id.search).isVisible = false
-        menu.findItem(R.id.save).isVisible = true
-
-        super.onCreateOptionsMenu(menu, inflater)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-
-        return when (item.itemId) {
+    
+    override fun menuItemSelected(menuItem: MenuItem): Boolean {
+        return when (menuItem.itemId) {
             R.id.save -> {
                 if (albumSongs.isNotEmpty()) {
                     val newAlbumTitle = binding.editAlbumTitle.text.toString()
                     val newAlbumYear = binding.editAlbumYear.text.toString()
 
                     when {
-                        newAlbumTitle.isEmpty() -> Toast.makeText(callingActivity,
+                        newAlbumTitle.isEmpty() -> Toast.makeText(mainActivity,
                             getString(R.string.album_name_cannot_be_empty), Toast.LENGTH_SHORT).show()
-                        newAlbumYear.isEmpty() -> Toast.makeText(callingActivity,
+                        newAlbumYear.isEmpty() -> Toast.makeText(mainActivity,
                             getString(R.string.album_year_cannot_be_empty), Toast.LENGTH_SHORT).show()
                         else -> {
-                            newAlbumArtwork?.let { albumArt ->
-                                ImageHandlingHelper.saveAlbumArtByResourceId(callingActivity.application,
-                                    albumID!!, albumArt)
+                            newArtwork?.let { albumArt ->
+                                ImageHandlingHelper.saveAlbumArtByResourceId(mainActivity.application,
+                                    albumId!!, albumArt)
                             }
 
                             if (newAlbumTitle != albumSongs[0].title || newAlbumYear != albumSongs[0].year) {
@@ -132,10 +84,10 @@ class EditAlbumFragment : Fragment() {
                                     song.albumName = newAlbumTitle
                                     song.year = newAlbumYear
                                 }
-                                callingActivity.updateSongs(albumSongs)
+                                mainActivity.updateSongs(albumSongs)
                             }
 
-                            val action = AlbumsFragmentDirections.actionFinishEditAlbum(albumID!!)
+                            val action = EditAlbumFragmentDirections.actionFinishEditAlbum(albumId!!)
                             requireView().findNavController().navigate(action)
 
                             Toast.makeText(activity, getString(R.string.album_updated), Toast.LENGTH_SHORT).show()
@@ -144,12 +96,14 @@ class EditAlbumFragment : Fragment() {
                 }
                 true
             }
-            else -> super.onOptionsItemSelected(item)
+            else -> false
         }
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+    override fun furtherUriProcessing(uri: Uri) {
+        Glide.with(this)
+            .load(uri)
+            .centerCrop()
+            .into(binding.editAlbumArtwork)
     }
 }
