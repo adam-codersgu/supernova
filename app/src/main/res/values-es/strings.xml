@@ -25,4 +25,17 @@
     <string name="cancel">Cancelar</string>
     <string name="change_image">Cambiar imagen</string>
     <string name="create_playlist">Crear nueva lista de reproducción</string>
+    <string name="delete_image">Eliminar Imagen</string>
+    <string name="delete_playlist">Eliminar lista de reproducción</string>
+    <string name="done">Hecho</string>
+    <string name="edit_album">Editar información del álbum</string>
+    <string name="edit_music">Editar información de música</string>
+    <string name="edit_playlist_information">Editar información de la lista de reproducción</string>
+    <string name="edit_playlist">Editar lista de reproducción</string>
+    <string name="manage_custom_images">Administrar imágenes personalizadas</string>
+    <string name="more_settings">Más ajustes</string>
+    <string name="ok">Aprobado</string>
+    <string name="options_menu">Menú de opciones</string>
+    <string name="play_next">Jugar siguiente</string>
+    <string name="play_pause">Reproducir o pausar</string>
 </resources>
