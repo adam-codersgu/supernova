@@ -7,6 +7,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.navigation.findNavController
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentEditArtistBinding
@@ -67,9 +68,10 @@ class EditArtistFragment : BaseEditMusicFragment() {
                         mainActivity.updateSongs(artistSongs)
                         Toast.makeText(activity, getString(R.string.artist_updated),
                             Toast.LENGTH_SHORT).show()
+                        val action = EditArtistFragmentDirections.actionFinishEditArtist(artistName!!)
+                        requireView().findNavController().navigate(action)
                     }
                 }
-
                 true
             }
 

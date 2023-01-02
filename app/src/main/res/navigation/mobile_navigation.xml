@@ -52,7 +52,7 @@
         <action
             android:id="@+id/action_finish_edit_playlist"
             app:destination="@id/nav_playlist"
-            app:popUpTo="@+id/nav_playlists"
+            app:popUpTo="@+id/mobile_navigation"
             app:popUpToInclusive="true" />
     </fragment>
 
@@ -93,6 +93,11 @@
             android:name="artist"
             android:defaultValue="null"
             app:argType="string" />
+        <action
+            android:id="@+id/action_finish_edit_artist"
+            app:destination="@id/nav_artist"
+            app:popUpTo="@+id/mobile_navigation"
+            app:popUpToInclusive="true" />
     </fragment>
 
     <fragment
@@ -107,7 +112,7 @@
         android:label="@string/albums"
         tools:layout="@layout/fragment_with_recycler_view">
         <argument
-            android:name="albumID"
+            android:name="albumId"
             android:defaultValue="null"
             app:argType="string" />
     </fragment>
@@ -116,11 +121,16 @@
         android:id="@+id/nav_edit_album"
         android:name="com.codersguidebook.supernova.ui.album.EditAlbumFragment"
         android:label="@string/edit_music"
-        tools:layout="@layout/fragment_edit_album" >
+        tools:layout="@layout/fragment_edit_album">
         <argument
-            android:name="albumID"
+            android:name="albumId"
             android:defaultValue="null"
             app:argType="string" />
+        <action
+            android:id="@+id/action_finish_edit_album"
+            app:destination="@id/nav_album"
+            app:popUpTo="@+id/mobile_navigation"
+            app:popUpToInclusive="true" />
     </fragment>
 
     <fragment
@@ -162,13 +172,6 @@
         android:id="@+id/action_edit_playlist"
         app:destination="@id/nav_edit_playlist" />
 
-    <!-- pop up to information prevents user from returning to edit music info once changes have been saved -->
-    <action
-        android:id="@+id/action_finish_edit_album"
-        app:destination="@id/nav_album"
-        app:popUpTo="@+id/nav_album"
-        app:popUpToInclusive="true" />
-
     <action
         android:id="@+id/action_select_album"
         app:destination="@id/nav_album" />
@@ -188,12 +191,6 @@
     <action
         android:id="@+id/action_library"
         app:destination="@id/nav_library" />
-
-    <action
-        android:id="@+id/action_finish_edit_artist"
-        app:destination="@id/nav_artist"
-        app:popUpTo="@+id/nav_artist"
-        app:popUpToInclusive="true" />
 
     <action
         android:id="@+id/action_select_artist"

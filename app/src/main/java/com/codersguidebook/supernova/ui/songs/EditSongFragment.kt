@@ -86,13 +86,11 @@ class EditSongFragment : BaseEditMusicFragment() {
                         song!!.track = completeTrack
                         song!!.year = newYear
 
-                         mainActivity.updateSongs(listOf(song!!))
+                        mainActivity.updateSongs(listOf(song!!))
                     }
 
-                    // fixme
-                    requireView().findNavController().popBackStack()
-
                     Toast.makeText(activity, getString(R.string.details_saved), Toast.LENGTH_SHORT).show()
+                    requireView().findNavController().popBackStack()
                 } else Toast.makeText(activity, getString(R.string.check_fields_not_empty), Toast.LENGTH_SHORT).show()
                 true
             }

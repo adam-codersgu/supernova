@@ -15,7 +15,6 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentEditAlbumBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.BaseEditMusicFragment
-import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
 class EditAlbumFragment : BaseEditMusicFragment() {
@@ -35,7 +34,7 @@ class EditAlbumFragment : BaseEditMusicFragment() {
     ): View {
         arguments?.let {
             val safeArgs = EditAlbumFragmentArgs.fromBundle(it)
-            albumId = safeArgs.albumID
+            albumId = safeArgs.albumId
         }
 
         _binding = FragmentEditAlbumBinding.inflate(inflater, container, false)
@@ -88,7 +87,7 @@ class EditAlbumFragment : BaseEditMusicFragment() {
                                 mainActivity.updateSongs(albumSongs)
                             }
 
-                            val action = AlbumsFragmentDirections.actionFinishEditAlbum(albumId!!)
+                            val action = EditAlbumFragmentDirections.actionFinishEditAlbum(albumId!!)
                             requireView().findNavController().navigate(action)
 
                             Toast.makeText(activity, getString(R.string.album_updated), Toast.LENGTH_SHORT).show()
