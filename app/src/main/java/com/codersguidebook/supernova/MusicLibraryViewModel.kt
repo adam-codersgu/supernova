@@ -48,7 +48,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
 
     private val activePlaylistName = MutableLiveData<String>()
     private val activePlaylist: LiveData<Playlist?> = Transformations.switchMap(activePlaylistName) {
-        name -> repository.findPlaylistByNameLiveData(name)
+        name -> repository.getPlaylistByNameLiveData(name)
     }
     val activePlaylistSongs: LiveData<List<Song>> = Transformations.switchMap(activePlaylist) { playlist ->
         liveData {
@@ -336,7 +336,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param songId The ID of the song.
      * @return The associated Song object, or null.
      */
-    suspend fun getSongById(songId: Long) : Song? = repository.findSongById(songId)
+    suspend fun getSongById(songId: Long) : Song? = repository.getSongById(songId)
 
     /**
      * Retrieve the Song objects associated with a given album ID.
@@ -403,7 +403,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param name The playlist's name.
      * @return The associated Playlist object or null if no match found.
      */
-    suspend fun getPlaylistByName(name: String): Playlist? = repository.findPlaylistByName(name)
+    suspend fun getPlaylistByName(name: String): Playlist? = repository.getPlaylistByName(name)
 
     /**
      * Set the ID of the active album that a LiveData stream of songs should be loaded for.
@@ -494,7 +494,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
         val lastUpdate = sharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null)
         when {
             todayDate != lastUpdate -> {
-                val song = repository.findRandomSong() ?: return@launch
+                val song = repository.getRandomSong() ?: return@launch
                 songIdList.add(0, song.songId)
                 if (songIdList.size > 30) songIdList.removeAt(songIdList.size - 1)
                 savePlaylistWithSongIds(playlist, songIdList)
@@ -505,7 +505,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
             }
             forceUpdate -> {
                 if (songIdList.isNotEmpty()) songIdList.removeAt(0)
-                val song = repository.findRandomSong() ?: return@launch
+                val song = repository.getRandomSong() ?: return@launch
                 songIdList.add(0, song.songId)
                 savePlaylistWithSongIds(playlist, songIdList)
             }

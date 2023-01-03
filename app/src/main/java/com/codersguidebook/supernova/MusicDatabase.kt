@@ -57,8 +57,8 @@ abstract class MusicDatabase : RoomDatabase() {
                 "Song of the day",
                 "Most played"
             )
-            for (p in defaultPlaylistNames) {
-                playlistDao.insert(Playlist(0, p, null, true))
+            for (playlist in defaultPlaylistNames) {
+                playlistDao.insert(Playlist(0, playlist, null, true))
             }
         }
     }

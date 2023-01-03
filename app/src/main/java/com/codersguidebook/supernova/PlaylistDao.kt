@@ -6,27 +6,28 @@ import com.codersguidebook.supernova.entities.Playlist
 
 @Dao
 interface PlaylistDao {
-    @Query("SELECT * from playlists")
-    suspend fun getAllPlaylists(): List<Playlist>
-
-    @Delete
-    suspend fun delete(playlist: Playlist)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(playlist: Playlist)
 
+    @Delete
+    suspend fun delete(playlist: Playlist)
+
     @Update(onConflict = OnConflictStrategy.REPLACE)
-    fun updatePlaylist(playlist: Playlist)
+    fun update(playlist: Playlist)
 
-    @Query("SELECT * from playlists ORDER BY playlist_name ASC")
-    fun getAllPlaylistsByName(): LiveData<List<Playlist>>
+    @Query("SELECT * from playlists")
+    suspend fun getAllPlaylists(): List<Playlist>
+
+    @Query("SELECT * from playlists ORDER BY playlist_name")
+    fun getAllPlaylistsOrderByName(): LiveData<List<Playlist>>
 
     @Query("SELECT * FROM playlists WHERE playlist_name = :name")
-    fun findPlaylistByNameLiveData(name: String): LiveData<Playlist?>
+    suspend fun getPlaylistByName(name: String): Playlist?
 
     @Query("SELECT * FROM playlists WHERE playlist_name = :name")
-    suspend fun findPlaylistByName(name: String): Playlist?
+    fun getPlaylistByNameLiveData(name: String): LiveData<Playlist?>
 
-    @Query("SELECT * FROM playlists WHERE playlist_name LIKE :search LIMIT 10")
-    suspend fun findBySearchPlaylists(search: String): List<Playlist>
+    @Query("SELECT * FROM playlists WHERE playlist_name LIKE :search LIMIT :limit")
+    suspend fun getPlaylistsLikeSearch(search: String, limit: Int = 10): List<Playlist>
 }

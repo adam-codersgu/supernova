@@ -103,7 +103,7 @@ class SearchFragment : BaseRecyclerViewFragment() {
         when (adapter.itemType) {
             TRACK -> {
                 lifecycleScope.launch(Dispatchers.IO) {
-                    val songs = musicDatabase!!.musicDao().findBySearchSongs(query).take(10)
+                    val songs = musicDatabase!!.musicDao().getSongsLikeSearch(query).take(10)
 
                     lifecycleScope.launch(Dispatchers.Main) {
                         if (songs.isEmpty()) binding.noResults.isVisible = true
@@ -126,7 +126,7 @@ class SearchFragment : BaseRecyclerViewFragment() {
             }
             ALBUM -> {
                 lifecycleScope.launch(Dispatchers.IO) {
-                    val songs = musicDatabase!!.musicDao().findBySearchSongs(query)
+                    val songs = musicDatabase!!.musicDao().getSongsLikeSearch(query)
                     val songsByAlbum = songs.distinctBy { song ->
                         song.albumId
                     }.take(10)
@@ -152,7 +152,7 @@ class SearchFragment : BaseRecyclerViewFragment() {
             }
             ARTIST -> {
                 lifecycleScope.launch(Dispatchers.IO) {
-                    val artists = musicDatabase!!.musicDao().findBySearchArtists(query)
+                    val artists = musicDatabase!!.musicDao().getArtistsLikeSearch(query)
 
                     lifecycleScope.launch(Dispatchers.Main) {
                         if (artists.isEmpty()) binding.noResults.isVisible = true
@@ -175,7 +175,7 @@ class SearchFragment : BaseRecyclerViewFragment() {
             }
             PLAYLIST -> {
                 lifecycleScope.launch(Dispatchers.IO) {
-                    val playlists = musicDatabase!!.playlistDao().findBySearchPlaylists(query)
+                    val playlists = musicDatabase!!.playlistDao().getPlaylistsLikeSearch(query)
 
                     lifecycleScope.launch(Dispatchers.Main) {
                         if (playlists.isEmpty()) binding.noResults.isVisible = true
