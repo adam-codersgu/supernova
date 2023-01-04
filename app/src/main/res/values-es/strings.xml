@@ -38,4 +38,23 @@
     <string name="options_menu">Menú de opciones</string>
     <string name="play_next">Jugar siguiente</string>
     <string name="play_pause">Reproducir o pausar</string>
+    <string name="play_prev">Reproducir anterior</string>
+    <string name="refresh_song_of_the_day">Refresca la canción del día de hoy.</string>
+    <string name="remove_favourites">Quitar de favoritos</string>
+    <string name="remove_play_queue">Eliminar de la cola de reproducción</string>
+    <string name="remove_playlist">Eliminar de la lista de reproducción</string>
+    <string name="reorder_playlist">Reordenar lista de reproducción</string>
+    <string name="repeat_current_playlist">Repetir la lista de reproducción actual</string>
+    <string name="save">Guardar</string>
+    <string name="save_play_queue">Guardar cola de reproducción como lista de reproducción</string>
+    <string name="submit">Enviar</string>
+    <string name="album">Álbum</string>
+    <string name="album_title">Título del álbum</string>
+    <string name="album_year">Año del álbum</string>
+    <string name="all_songs">Todas las canciones</string>
+    <string name="artist">Artista</string>
+    <string name="artist_information">Información del artista</string>
+    <string name="artist_name">Nombre del artista</string>
+    <string name="artist_songs">Ver las canciones del artista</string>
+    <string name="custom_image">Imágenes personalizadas</string>
 </resources>
