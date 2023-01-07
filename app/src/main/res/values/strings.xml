@@ -1,4 +1,5 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:locale="en-GB">
     <!-- App details -->
     <string name="acknowledgements">Acknowledgements</string>
     <string name="acknowledgements_body">Warm thanks to the following people and organisations who\'s work has been used in this app:
@@ -71,6 +72,8 @@
     <string name="displayed_song">1 song</string>
     <string name="displayed_songs">%1$d songs</string>
     <string name="edit_artist">Edit artist info</string>
+    <string name="english">English</string>
+    <string name="english_code" translatable="false">en</string>
     <string name="favourites">Favourites</string>
     <string name="library">My Library</string>
     <string name="more">More</string>
@@ -93,6 +96,8 @@
     <string name="select_playlist">Select a playlist or create a new one</string>
     <string name="song_day">Song of the day</string>
     <string name="song_of_the_day_will_be_displayed_here">The song of the day will appear once your library is built</string>
+    <string name="spanish">Spanish</string>
+    <string name="spanish_code" translatable="false">es</string>
     <string name="title">Title</string>
     <string name="track">Track</string>
     <string name="use_custom_image">Use custom image</string>
