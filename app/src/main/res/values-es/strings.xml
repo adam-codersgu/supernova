@@ -154,4 +154,8 @@
     <string name="normal">Normal</string>
     <string name="pastel">Pastel</string>
     <string name="playback_animations">Animaciones de reproducción</string>
+    <string name="delete_album">Eliminar álbum</string>
+    <string name="delete_artist">Eliminar artista</string>
+    <string name="delete_song">Eliminar canción</string>
+    <string name="song_added_play_queue">%1$s se ha agregado a la cola de reproducción.</string>
 </resources>
