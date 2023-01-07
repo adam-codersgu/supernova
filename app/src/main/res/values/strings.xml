@@ -6,7 +6,7 @@
     \nThe vinyl icon used as the app icon, for missing album and playlist artwork was made by Freepik from www.flaticon.com
     \n
     \nThe playback control icons (play, pause, skip forward and skip back) were made by Elias Bikbulatov from www.flaticon.com</string>
-    <string name="app_name">Supernova</string>
+    <string name="app_name" translatable="false">Supernova</string>
     <string name="app_info">App information</string>
     <string name="developer">Developer</string>
     <string name="developer_body">This app was developed by Adam Hawke. Contact: hello@codersguidebook.com</string>
@@ -112,13 +112,13 @@
     <string name="skip_back">Skip back a track</string>
 
     <!-- Transition labels -->
-    <string name="transition_back">transition_back</string>
-    <string name="transition_forward">transition_forward</string>
-    <string name="transition_image">transition_image</string>
-    <string name="transition_play">transition_play</string>
-    <string name="transition_subtitle">transition_subtitle</string>
-    <string name="transition_subtitle2">transition_subtitle2</string>
-    <string name="transition_title">transition_title</string>
+    <string name="transition_back" translatable="false">transition_back</string>
+    <string name="transition_forward" translatable="false">transition_forward</string>
+    <string name="transition_image" translatable="false">transition_image</string>
+    <string name="transition_play" translatable="false">transition_play</string>
+    <string name="transition_subtitle" translatable="false">transition_subtitle</string>
+    <string name="transition_subtitle2" translatable="false">transition_subtitle2</string>
+    <string name="transition_title" translatable="false">transition_title</string>
 
     <!-- Toast notifications -->
     <string name="added_to_favourites">Added to favourites</string>
