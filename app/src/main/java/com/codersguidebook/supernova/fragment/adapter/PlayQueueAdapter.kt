@@ -12,7 +12,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
-import com.codersguidebook.supernova.QueueOptions
+import com.codersguidebook.supernova.dialogs.QueueOptions
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.ui.playQueue.PlayQueueFragment
 
@@ -36,8 +36,10 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
             btnSongMenu.setOnClickListener {
                 val isCurrentlyPlayingSelected =
                     playQueue[layoutPosition].queueId == currentlyPlayingQueueId
-                activity.openDialog(QueueOptions(playQueue[layoutPosition],
-                    isCurrentlyPlayingSelected))
+                activity.openDialog(
+                    QueueOptions(playQueue[layoutPosition],
+                    isCurrentlyPlayingSelected)
+                )
             }
         }
     }
