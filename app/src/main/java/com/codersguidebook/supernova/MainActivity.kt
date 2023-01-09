@@ -52,6 +52,7 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.UPDATE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.APPLICATION_LANGUAGE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_ID
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.DEFAULT_PLAYLIST_LANGUAGE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_DURATION
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_POSITION
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAY_QUEUE_ITEM_PAIRS
@@ -278,26 +279,24 @@ class MainActivity : AppCompatActivity() {
     /** Process changes to the user's selected language locale, or load its initial value */
     private fun processLanguageLocale() = lifecycleScope.launch(Dispatchers.IO) {
         val selectedLanguageCode = AppCompatDelegate.getApplicationLocales().toLanguageTags()
-        val storedLanguageCode = sharedPreferences.getString(APPLICATION_LANGUAGE,
+        var storedLanguageCode = sharedPreferences.getString(APPLICATION_LANGUAGE,
             getString(R.string.english_code))
+        val defaultPlaylistLanguageCode = sharedPreferences.getString(DEFAULT_PLAYLIST_LANGUAGE, null)
         val supportedLanguages = resources.getStringArray(R.array.language_values)
-        if (selectedLanguageCode != storedLanguageCode
-            && supportedLanguages.contains(selectedLanguageCode)) {
-
-            // TODO: Here you need to find a way of updating the name of all default playlists
-            //  Perhaps locate them based on their ID? If this value is predetermined by MusicDatabase
-            //  You may need to hardocde the ID of each playlist into the MusicDatabase code
-
-            // 1	1	Favourites	[1000008197,1000008204,1000009430,1000009382,1000009393,1000010058,1000010063,1000010067,1000011701,1000011707,1000010350,1000012567,1000012560,1000012532,1000012563,1000012544]	1
-            // 2	2	Recently played	[1000012563,1000012544,1000010897,1000010896,1000008204,1000010078,1000008198,1000008197,1000012532,1000010068,1000010066,1000010062,1000010058,1000010065,1000010067,1000010063,1000012535,1000012533,1000012552,1000012545,1000012546,1000012547,1000012548,1000012577,1000012536,1000012538,1000012539,1000012531,1000012567,1000012560]	1
-            // 3	3	Song of the day	[1000008079,1000011616,1000010364,1000010076,1000010896,1000011575,1000008140,1000010067,1000011545,1000011597,1000008185,1000010347,1000009427,1000011617,1000011545,1000011702,1000011625,1000008074,1000008074,1000009418,1000009413,1000009395,1000009395,1000010078,1000010078,1000008197,1000009366,1000008074,1000008200,1000008200]	1
-            // 4	4	Most played	[1000008197,1000009407,1000010058,1000009382,1000010067,1000010063,1000008199,1000010078,1000008204,1000011701,1000012563,1000008198,1000009430,1000012544,1000009386,1000012532,1000008163,1000009409,1000012560,1000009410,1000011012,1000012567,1000011574,1000010066,1000010068,1000010350,1000012546,1000008173,1000009387,1000009418]	1
-
-            val mostPlayedPlaylist = musicLibraryViewModel
-                .getPlaylistByName(getString(R.string.most_played))
-
+        if (selectedLanguageCode != storedLanguageCode && supportedLanguages.contains(selectedLanguageCode)) {
             sharedPreferences.edit().apply {
                 putString(APPLICATION_LANGUAGE, selectedLanguageCode)
+                apply()
+            }
+            storedLanguageCode = selectedLanguageCode
+        }
+
+        // Update the names of the default application playlists to reflect the active locale
+        if (storedLanguageCode != defaultPlaylistLanguageCode) {
+            musicLibraryViewModel.updateLanguageLocaleForDefaultPlaylists()
+
+            sharedPreferences.edit().apply {
+                putString(DEFAULT_PLAYLIST_LANGUAGE, storedLanguageCode)
                 apply()
             }
         }

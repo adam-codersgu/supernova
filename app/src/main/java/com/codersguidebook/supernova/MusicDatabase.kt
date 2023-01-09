@@ -7,6 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -52,14 +53,9 @@ abstract class MusicDatabase : RoomDatabase() {
         }
 
         suspend fun populatePlaylistTable(playlistDao: PlaylistDao) {
-            val defaultPlaylistNames = listOf(
-                context.getString(R.string.favourites),
-                context.getString(R.string.recently_played),
-                context.getString(R.string.song_day),
-                context.getString(R.string.most_played)
-            )
-            for (playlist in defaultPlaylistNames) {
-                playlistDao.insert(Playlist(0, playlist, null, true))
+            val defaultPlaylistHelper = DefaultPlaylistHelper(context)
+            for (pair in defaultPlaylistHelper.playlistPairs) {
+                playlistDao.insert(Playlist(pair.first, pair.second, null, true))
             }
         }
     }

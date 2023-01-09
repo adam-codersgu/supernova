@@ -16,6 +16,7 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NO_A
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_DELETED
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_UPDATED
 import com.codersguidebook.supernova.params.SharedPreferencesConstants
+import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
 import kotlinx.coroutines.Dispatchers
@@ -510,5 +511,19 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
                 savePlaylistWithSongIds(playlist, songIdList)
             }
         }
+    }
+
+    /** Update the names of the default playlists to reflect the application language locale. */
+    fun updateLanguageLocaleForDefaultPlaylists() = viewModelScope.launch(Dispatchers.IO) {
+        val defaultPlaylistHelper = DefaultPlaylistHelper(getApplication())
+        val allPlaylists = repository.getAllPlaylists()
+        val playlistsToSave = mutableListOf<Playlist>()
+        for (pair in defaultPlaylistHelper.playlistPairs) {
+            val playlist = allPlaylists.find { it.playlistId == pair.first }?.apply {
+                this.name = pair.second
+            }
+            if (playlist != null) playlistsToSave.add(playlist)
+        }
+        if (playlistsToSave.isNotEmpty()) updatePlaylists(playlistsToSave)
     }
 }

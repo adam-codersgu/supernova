@@ -15,6 +15,7 @@ import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.RecyclerViewWithFabFragment
 import com.codersguidebook.supernova.fragment.adapter.PlaylistAdapter
+import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -117,10 +118,8 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
         (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
             override fun onPrepareMenu(menu: Menu) {
                 menu.setGroupVisible(R.id.universal_playlist_actions, true)
-                if (playlistName != getString(R.string.most_played) && 
-                    playlistName != getString(R.string.recently_played) && 
-                    playlistName != getString(R.string.favourites) && 
-                    playlistName != getString(R.string.song_day)) {
+                val defaultPlaylistHelper = DefaultPlaylistHelper(mainActivity)
+                if (!defaultPlaylistHelper.getDefaultPlaylistNames().contains(playlistName)) {
                     menu.setGroupVisible(R.id.user_playlist_actions, true)
                     reorderPlaylist = menu.findItem(R.id.reorderPlaylist)
                     finishedReorder = menu.findItem(R.id.done)
