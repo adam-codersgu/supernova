@@ -1,4 +1,4 @@
-package com.codersguidebook.supernova
+package com.codersguidebook.supernova.data
 
 import android.content.Context
 import androidx.room.Database

@@ -14,7 +14,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewbinding.ViewBinding
-import com.codersguidebook.supernova.MusicDatabase
+import com.codersguidebook.supernova.data.MusicDatabase
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentSearchBinding
 import com.codersguidebook.supernova.fragment.BaseRecyclerViewFragment

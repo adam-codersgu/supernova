@@ -16,7 +16,6 @@ import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.media.session.PlaybackStateCompat.*
-import android.util.Log
 import android.view.Menu
 import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
@@ -41,6 +40,7 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import androidx.preference.PreferenceManager
+import com.codersguidebook.supernova.data.MusicDatabase
 import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.dialogs.CreatePlaylist
 import com.codersguidebook.supernova.entities.Playlist

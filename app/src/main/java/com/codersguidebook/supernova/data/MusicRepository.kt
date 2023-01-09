@@ -1,4 +1,4 @@
-package com.codersguidebook.supernova
+package com.codersguidebook.supernova.data
 
 import androidx.lifecycle.LiveData
 import com.codersguidebook.supernova.entities.Artist
