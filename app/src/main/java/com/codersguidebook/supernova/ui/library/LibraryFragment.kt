@@ -7,9 +7,9 @@ import android.view.ViewGroup
 import androidx.viewbinding.ViewBinding
 import androidx.viewpager2.widget.ViewPager2
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.fragment.adapter.ViewPagerAdapter
 import com.codersguidebook.supernova.databinding.FragmentLibraryBinding
 import com.codersguidebook.supernova.fragment.BaseFragment
+import com.codersguidebook.supernova.fragment.adapter.ViewPagerAdapter
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
@@ -55,7 +55,8 @@ class LibraryFragment : BaseFragment() {
         }
         binding.viewPager.registerOnPageChangeCallback(pageChangeCallback)
 
-        val namesArray = arrayOf("Playlists", "Artists", "Albums", "Songs")
+        val namesArray = arrayOf(getString(R.string.playlists), getString(R.string.artists),
+            getString(R.string.albums), getString(R.string.songs))
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
             tab.text = namesArray[position]
         }.attach()

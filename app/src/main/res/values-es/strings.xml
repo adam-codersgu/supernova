@@ -30,7 +30,6 @@
     <string name="done">Hecho</string>
     <string name="edit_album">Editar información del álbum</string>
     <string name="edit_music">Editar información de música</string>
-    <string name="edit_playlist_information">Editar información de la lista de reproducción</string>
     <string name="edit_playlist">Editar lista de reproducción</string>
     <string name="manage_custom_images">Administrar imágenes personalizadas</string>
     <string name="more_settings">Más ajustes</string>
@@ -113,7 +112,6 @@
     <string name="image_set">Conjunto de imágenes</string>
     <string name="item_saved">%1$s guardado</string>
     <string name="item_added_play_queue">El %1$s se ha agregado a la cola de reproducción</string>
-    <string name="no_songs_found">No se encontraron canciones para %1$s</string>
     <string name="play_queue_shuffled">La cola de reproducción se barajó</string>
     <string name="play_queue_unshuffled">La cola de reproducción no se barajó</string>
     <string name="playlist_already_exists">Ya existe una lista de reproducción con ese nombre</string>
@@ -158,6 +156,4 @@
     <string name="delete_artist">Eliminar artista</string>
     <string name="delete_song">Eliminar canción</string>
     <string name="song_added_play_queue">%1$s se ha agregado a la cola de reproducción.</string>
-    <string name="english">Inglés</string>
-    <string name="spanish">Español</string>
 </resources>

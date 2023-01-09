@@ -16,6 +16,7 @@ import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.media.session.PlaybackStateCompat.*
+import android.util.Log
 import android.view.Menu
 import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
@@ -42,6 +43,7 @@ import androidx.navigation.ui.setupWithNavController
 import androidx.preference.PreferenceManager
 import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.dialogs.CreatePlaylist
+import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
@@ -293,7 +295,16 @@ class MainActivity : AppCompatActivity() {
 
         // Update the names of the default application playlists to reflect the active locale
         if (storedLanguageCode != defaultPlaylistLanguageCode) {
-            musicLibraryViewModel.updateLanguageLocaleForDefaultPlaylists()
+            val defaultPlaylistHelper = DefaultPlaylistHelper(this@MainActivity)
+            val allPlaylists = musicLibraryViewModel.getAllPlaylists()
+            val playlistsToSave = mutableListOf<Playlist>()
+            for (pair in defaultPlaylistHelper.playlistPairs) {
+                val playlist = allPlaylists.find { it.playlistId == pair.first }?.apply {
+                    this.name = pair.second
+                }
+                if (playlist != null) playlistsToSave.add(playlist)
+            }
+            if (playlistsToSave.isNotEmpty()) musicLibraryViewModel.updatePlaylists(playlistsToSave)
 
             sharedPreferences.edit().apply {
                 putString(DEFAULT_PLAYLIST_LANGUAGE, storedLanguageCode)
