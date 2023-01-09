@@ -1,33 +1,27 @@
-package com.codersguidebook.supernova
+package com.codersguidebook.supernova.dialogs
 
 import android.app.Dialog
+import android.os.Build
 import android.os.Bundle
-import androidx.core.view.isGone
 import androidx.navigation.findNavController
 import androidx.viewbinding.ViewBinding
-import com.codersguidebook.supernova.databinding.PlaylistSongOptionsBinding
-import com.codersguidebook.supernova.entities.Playlist
+import com.codersguidebook.supernova.R
+import com.codersguidebook.supernova.databinding.SongOptionsBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.BaseDialogFragment
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 import com.codersguidebook.supernova.ui.songs.SongsFragmentDirections
 
-class PlaylistSongOptions(private val songs: MutableList<Song>,
-                          private val position: Int,
-                          private val playlist: Playlist
-) : BaseDialogFragment() {
+class SongOptions(private val song: Song) : BaseDialogFragment() {
 
     override var _binding: ViewBinding? = null
-        get() = field as PlaylistSongOptionsBinding?
-    override val binding: PlaylistSongOptionsBinding
-        get() = _binding!! as PlaylistSongOptionsBinding
+        get() = field as SongOptionsBinding?
+    override val binding: SongOptionsBinding
+        get() = _binding!! as SongOptionsBinding
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        _binding = PlaylistSongOptionsBinding.inflate(inflater)
-
-        val song = if (position < songs.size) songs[position]
-        else return super.onCreateDialog(savedInstanceState)
+        _binding = SongOptionsBinding.inflate(inflater)
 
         binding.optionsTitle.text = song.title
 
@@ -71,15 +65,10 @@ class PlaylistSongOptions(private val songs: MutableList<Song>,
             dismiss()
         }
 
-        if (playlist.name == getString(R.string.most_played) || playlist.name == getString(R.string.favourites)) {
-            binding.removeSong.isGone = true
-        } else {
-            binding.removeSong.setOnClickListener{
-                songs.removeAt(position)
-                val songIds = songs.map { song -> song.songId }
-                musicLibraryViewModel.savePlaylistWithSongIds(playlist, songIds)
-                dismiss()
-            }
+        binding.deleteSong.setOnClickListener {
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) mainActivity.deleteSongs(listOf(song))
+            else mainActivity.deleteSongById(song.songId)
+            dismiss()
         }
 
         return super.onCreateDialog(savedInstanceState)

@@ -1,10 +1,11 @@
-package com.codersguidebook.supernova
+package com.codersguidebook.supernova.dialogs
 
 import android.app.Dialog
 import android.os.Bundle
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import androidx.viewbinding.ViewBinding
+import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.CreatePlaylistBinding
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.fragment.BaseDialogFragment

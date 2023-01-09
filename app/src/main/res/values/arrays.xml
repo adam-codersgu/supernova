@@ -22,4 +22,14 @@
         <item>@string/normal</item>
         <item>@string/slow</item>
     </string-array>
+
+    <string-array name="language_entries">
+        <item>@string/english</item>
+        <item>@string/spanish</item>
+    </string-array>
+
+    <string-array name="language_values">
+        <item>@string/english_code</item>
+        <item>@string/spanish_code</item>
+    </string-array>
 </resources>

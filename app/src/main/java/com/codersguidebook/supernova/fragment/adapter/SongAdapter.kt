@@ -7,7 +7,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.SongOptions
+import com.codersguidebook.supernova.dialogs.SongOptions
 import com.codersguidebook.supernova.entities.Song
 
 abstract class SongAdapter(private val activity: MainActivity): Adapter() {

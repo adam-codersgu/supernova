@@ -7,6 +7,9 @@ import androidx.core.view.isVisible
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.*
+import com.codersguidebook.supernova.dialogs.AlbumOptions
+import com.codersguidebook.supernova.dialogs.ArtistOptions
+import com.codersguidebook.supernova.dialogs.PlaylistOptions
 import com.codersguidebook.supernova.entities.Artist
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song

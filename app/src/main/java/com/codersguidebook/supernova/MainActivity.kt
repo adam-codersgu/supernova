@@ -16,6 +16,7 @@ import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.media.session.PlaybackStateCompat.*
+import android.util.Log
 import android.view.Menu
 import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
@@ -28,6 +29,7 @@ import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.*
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
@@ -40,15 +42,19 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import androidx.preference.PreferenceManager
 import com.codersguidebook.supernova.databinding.ActivityMainBinding
+import com.codersguidebook.supernova.dialogs.CreatePlaylist
+import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_REPEAT_MODE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_SHUFFLE_MODE
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.UPDATE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_DELETED
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.UPDATE_QUEUE_ITEM
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.APPLICATION_LANGUAGE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_ID
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.DEFAULT_PLAYLIST_LANGUAGE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_DURATION
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_POSITION
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAY_QUEUE_ITEM_PAIRS
@@ -268,6 +274,42 @@ class MainActivity : AppCompatActivity() {
         val songsToDelete = musicLibraryViewModel.refreshMusicLibrary()
         for (song in songsToDelete) {
             findSongIdInPlayQueueToRemove(song.songId)
+        }
+        processLanguageLocale()
+    }
+
+    /** Process changes to the user's selected language locale, or load its initial value */
+    private fun processLanguageLocale() = lifecycleScope.launch(Dispatchers.IO) {
+        val selectedLanguageCode = AppCompatDelegate.getApplicationLocales().toLanguageTags()
+        var storedLanguageCode = sharedPreferences.getString(APPLICATION_LANGUAGE,
+            getString(R.string.english_code))
+        val defaultPlaylistLanguageCode = sharedPreferences.getString(DEFAULT_PLAYLIST_LANGUAGE, null)
+        val supportedLanguages = resources.getStringArray(R.array.language_values)
+        if (selectedLanguageCode != storedLanguageCode && supportedLanguages.contains(selectedLanguageCode)) {
+            sharedPreferences.edit().apply {
+                putString(APPLICATION_LANGUAGE, selectedLanguageCode)
+                apply()
+            }
+            storedLanguageCode = selectedLanguageCode
+        }
+
+        // Update the names of the default application playlists to reflect the active locale
+        if (storedLanguageCode != defaultPlaylistLanguageCode) {
+            val defaultPlaylistHelper = DefaultPlaylistHelper(this@MainActivity)
+            val allPlaylists = musicLibraryViewModel.getAllPlaylists()
+            val playlistsToSave = mutableListOf<Playlist>()
+            for (pair in defaultPlaylistHelper.playlistPairs) {
+                val playlist = allPlaylists.find { it.playlistId == pair.first }?.apply {
+                    this.name = pair.second
+                }
+                if (playlist != null) playlistsToSave.add(playlist)
+            }
+            if (playlistsToSave.isNotEmpty()) musicLibraryViewModel.updatePlaylists(playlistsToSave)
+
+            sharedPreferences.edit().apply {
+                putString(DEFAULT_PLAYLIST_LANGUAGE, storedLanguageCode)
+                apply()
+            }
         }
     }
 

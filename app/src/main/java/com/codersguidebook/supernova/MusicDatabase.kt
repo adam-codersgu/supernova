@@ -7,6 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -29,7 +30,7 @@ abstract class MusicDatabase : RoomDatabase() {
                 database = Room.databaseBuilder(context, MusicDatabase::class.java, "music_database")
                     // destroy the earlier database if the version is incremented
                     .fallbackToDestructiveMigration()
-                    .addCallback(MusicDatabaseCallback(scope))
+                    .addCallback(MusicDatabaseCallback(context, scope))
                     .build()
             }
 
@@ -38,6 +39,7 @@ abstract class MusicDatabase : RoomDatabase() {
     }
 
     private class MusicDatabaseCallback(
+        private val context: Context,
         private val scope: CoroutineScope
     ) : Callback() {
 
@@ -51,14 +53,9 @@ abstract class MusicDatabase : RoomDatabase() {
         }
 
         suspend fun populatePlaylistTable(playlistDao: PlaylistDao) {
-            val defaultPlaylistNames = listOf(
-                "Favourites",
-                "Recently played",
-                "Song of the day",
-                "Most played"
-            )
-            for (playlist in defaultPlaylistNames) {
-                playlistDao.insert(Playlist(0, playlist, null, true))
+            val defaultPlaylistHelper = DefaultPlaylistHelper(context)
+            for (pair in defaultPlaylistHelper.playlistPairs) {
+                playlistDao.insert(Playlist(pair.first, pair.second, null, true))
             }
         }
     }

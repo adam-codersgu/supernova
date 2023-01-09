@@ -1,4 +1,4 @@
-package com.codersguidebook.supernova
+package com.codersguidebook.supernova.dialogs
 
 import android.app.Dialog
 import android.os.Bundle
@@ -6,6 +6,7 @@ import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import androidx.core.view.isGone
 import androidx.navigation.findNavController
 import androidx.viewbinding.ViewBinding
+import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.QueueOptionsBinding
 import com.codersguidebook.supernova.fragment.BaseDialogFragment
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections

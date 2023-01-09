@@ -10,7 +10,7 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.SongOptions
+import com.codersguidebook.supernova.dialogs.SongOptions
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
 class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(activity) {

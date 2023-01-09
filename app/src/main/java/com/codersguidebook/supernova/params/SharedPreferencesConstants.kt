@@ -9,6 +9,8 @@ class SharedPreferencesConstants {
         const val ANIMATION_SPEED = "animation_speed"
         const val ANIMATION_SPIN = "animation_spin"
         const val ANIMATION_TYPE = "animation_type"
+        const val APPLICATION_LANGUAGE = "application_language"
+        const val DEFAULT_PLAYLIST_LANGUAGE = "default_playlist_language"
         const val CURRENT_QUEUE_ITEM_ID = "current_queue_item_id"
         const val CUSTOM_ANIMATION_IMAGE_IDS = "animation_image_ids"
         const val PLAY_QUEUE_ITEM_PAIRS = "play_queue"

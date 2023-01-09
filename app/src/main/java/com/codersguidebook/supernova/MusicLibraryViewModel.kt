@@ -78,9 +78,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     }
 
     private fun deleteSong(song: Song) = viewModelScope.launch(Dispatchers.Default) {
-        val playlists = withContext(Dispatchers.IO) {
-            repository.getAllPlaylists()
-        }
+        val playlists = withContext(Dispatchers.IO) { getAllPlaylists() }
 
         val updatedPlaylists = mutableListOf<Playlist>()
         for (playlist in playlists) {
@@ -511,4 +509,11 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
             }
         }
     }
+
+    /**
+     * Fetch all the playlists held by the database.
+     *
+     * @return A list of Playlist objects.
+     */
+    suspend fun getAllPlaylists(): List<Playlist> = repository.getAllPlaylists()
 }
