@@ -15,12 +15,12 @@ class ArtistsFragment : RecyclerViewFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         musicLibraryViewModel.allArtists.observe(viewLifecycleOwner) {
-            updateRecyclerViewWithArtists(it)
+            updateRecyclerView(it)
         }
     }
 
     override fun requestNewData() {
-        musicLibraryViewModel.allArtists.value?.let { updateRecyclerViewWithArtists(it) }
+        musicLibraryViewModel.allArtists.value?.let { updateRecyclerView(it) }
     }
 
     /**
@@ -28,7 +28,7 @@ class ArtistsFragment : RecyclerViewFragment() {
      *
      * @param artists - The up-to-date list of Artist objects that should be displayed.
      */
-    private fun updateRecyclerViewWithArtists(artists: List<Artist>) {
+    private fun updateRecyclerView(artists: List<Artist>) {
         setIsUpdatingTrue()
 
         val sortedArtists = artists.sortedBy { artist ->
@@ -39,15 +39,7 @@ class ArtistsFragment : RecyclerViewFragment() {
             adapter.artists.addAll(sortedArtists)
             adapter.notifyItemRangeInserted(0, sortedArtists.size)
         } else {
-            for ((index, artist) in sortedArtists.withIndex()) {
-                adapter.processLoopIteration(index, artist)
-            }
-
-            if (adapter.artists.size > sortedArtists.size) {
-                val numberItemsToRemove = adapter.artists.size - sortedArtists.size
-                repeat(numberItemsToRemove) { adapter.artists.removeLast() }
-                adapter.notifyItemRangeRemoved(sortedArtists.size, numberItemsToRemove)
-            }
+            adapter.processNewArtists(sortedArtists)
         }
 
         finishUpdate()
