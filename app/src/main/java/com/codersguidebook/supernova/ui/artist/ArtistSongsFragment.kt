@@ -27,7 +27,7 @@ class ArtistSongsFragment : RecyclerViewWithFabFragment() {
             musicLibraryViewModel.setActiveArtistName(name)
 
             musicLibraryViewModel.activeArtistSongs.observe(viewLifecycleOwner) { songs ->
-                updateRecyclerView(songs)
+                updateRecyclerViewV2(songs)
             }
         }
     }
@@ -37,6 +37,6 @@ class ArtistSongsFragment : RecyclerViewWithFabFragment() {
     }
 
     override fun requestNewData() {
-        musicLibraryViewModel.activeArtistSongs.value?.let { updateRecyclerView(it) }
+        musicLibraryViewModel.activeArtistSongs.value?.let { updateRecyclerViewV2(it) }
     }
 }

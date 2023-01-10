@@ -75,6 +75,28 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
         finishUpdate()
     }
 
+    /**
+     * Refresh the content displayed in the RecyclerView.
+     *
+     * @param songs The up-to-date list of Song objects that should be displayed.
+     */
+    open fun updateRecyclerViewV2(songs: List<Song>) {
+        setIsUpdatingTrue()
+
+        binding.fab.setOnClickListener {
+            mainActivity.playNewPlayQueue(songs, shuffle = true)
+        }
+
+        if (adapter.songs.isEmpty()) {
+            adapter.songs.addAll(songs)
+            adapter.notifyItemRangeInserted(0, songs.size)
+        } else {
+            adapter.processNewSongs(songs)
+        }
+
+        finishUpdate()
+    }
+
     private fun finishUpdate() {
         if (binding.scrollRecyclerView.recyclerView.adapter == null) {
             binding.scrollRecyclerView.recyclerView.adapter = adapter

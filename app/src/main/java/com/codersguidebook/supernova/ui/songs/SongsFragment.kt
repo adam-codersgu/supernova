@@ -12,7 +12,7 @@ class SongsFragment : RecyclerViewWithFabFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         musicLibraryViewModel.allSongs.observe(viewLifecycleOwner) {
-            updateRecyclerView(it)
+            updateRecyclerViewV2(it)
         }
     }
 
@@ -22,6 +22,6 @@ class SongsFragment : RecyclerViewWithFabFragment() {
     }
 
     override fun requestNewData() {
-        musicLibraryViewModel.allSongs.value?.let { updateRecyclerView(it) }
+        musicLibraryViewModel.allSongs.value?.let { updateRecyclerViewV2(it) }
     }
 }

@@ -37,19 +37,11 @@ class AlbumsFragment : RecyclerViewFragment() {
             song.albumName.uppercase()
         }.toMutableList()
 
-        if (adapter.songsByAlbum.isEmpty()) {
-            adapter.songsByAlbum.addAll(songsByAlbum)
+        if (adapter.songs.isEmpty()) {
+            adapter.songs.addAll(songsByAlbum)
             adapter.notifyItemRangeInserted(0, songsByAlbum.size)
         } else {
-            for ((index, album) in songsByAlbum.withIndex()) {
-                adapter.processLoopIteration(index, album)
-            }
-
-            if (adapter.songsByAlbum.size > songsByAlbum.size) {
-                val numberItemsToRemove = adapter.songsByAlbum.size - songsByAlbum.size
-                repeat(numberItemsToRemove) { adapter.songsByAlbum.removeLast() }
-                adapter.notifyItemRangeRemoved(songsByAlbum.size, numberItemsToRemove)
-            }
+            adapter.processNewSongs(songsByAlbum)
         }
 
         finishUpdate()
