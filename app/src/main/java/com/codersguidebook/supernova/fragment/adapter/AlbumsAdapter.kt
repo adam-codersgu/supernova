@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.AlbumOptions
+import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
@@ -61,5 +62,26 @@ class AlbumsAdapter(private val activity: MainActivity): SongAdapter(activity),
 
         holder.mTitle.text = current.albumName
         holder.mArtist.text = current.artist
+    }
+
+    /**
+     * Extract the list of unique of albums from a list of songs and display the album
+     * metadata in the RecyclerView
+     *
+     * @param songList The list of Song objects that album details should be extracted from.
+     */
+    fun processAlbumsBySongs(songList: List<Song>) {
+        val songsByAlbum = songList.distinctBy { song ->
+            song.albumId
+        }.sortedBy { song ->
+            song.albumName.uppercase()
+        }.toMutableList()
+
+        if (songs.isEmpty()) {
+            songs.addAll(songsByAlbum)
+            notifyItemRangeInserted(0, songsByAlbum.size)
+        } else {
+            processNewSongs(songsByAlbum)
+        }
     }
 }

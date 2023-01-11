@@ -161,15 +161,7 @@ class HomeFragment : BaseFragment() {
             }
             adapter.notifyItemRangeInserted(0, songsSelection.size)
         } else {
-            for ((index, song) in songsSelection.withIndex()) {
-                adapter.processLoopIteration(index, song)
-            }
-
-            if (adapter.songs.size > songsSelection.size) {
-                val numberItemsToRemove = adapter.songs.size - songsSelection.size
-                repeat(numberItemsToRemove) { adapter.songs.removeLast() }
-                adapter.notifyItemRangeRemoved(adapter.getRecyclerViewIndex(songs.size), numberItemsToRemove)
-            }
+            adapter.processNewSongs(songsSelection)
         }
     }
 }
