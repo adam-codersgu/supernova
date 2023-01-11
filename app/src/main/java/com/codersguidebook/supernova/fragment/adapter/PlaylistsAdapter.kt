@@ -8,8 +8,8 @@ import android.widget.TextView
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
-import com.codersguidebook.supernova.dialogs.PlaylistOptions
 import com.codersguidebook.supernova.R
+import com.codersguidebook.supernova.dialogs.PlaylistOptions
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.ui.playlists.PlaylistsFragmentDirections
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
@@ -57,31 +57,44 @@ class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter
         else activity.getString(R.string.displayed_songs, songCountInt)
     }
 
-    fun processLoopIteration(index: Int, playlist: Playlist) {
-        when {
-            index >= playlists.size -> {
-                playlists.add(playlist)
-                notifyItemInserted(index)
-            }
-            playlist.playlistId != playlists[index].playlistId -> {
-                var numberOfItemsRemoved = 0
-                do {
-                    playlists.removeAt(index)
-                    ++numberOfItemsRemoved
-                } while (index < playlists.size &&
-                    playlist.playlistId != playlists[index].playlistId)
-
-                when {
-                    numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
-                    numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index, numberOfItemsRemoved)
+    /**
+     * Handle updates to the content of the RecyclerView. The below method will determine what
+     * changes are required when an element/elements is/are changed, inserted, or deleted.
+     * This enhanced process loop iteration method assumes each playlist can only appear once.
+     *
+     * @param newPlaylists The new list of Playlist objects that should be displayed.
+     */
+    fun processNewPlaylists(newPlaylists: List<Playlist>) {
+        for ((index, playlist) in newPlaylists.withIndex()) {
+            when {
+                index >= playlists.size -> {
+                    playlists.add(playlist)
+                    notifyItemInserted(index)
                 }
+                playlist.playlistId != playlists[index].playlistId -> {
+                    var numberOfItemsRemoved = 0
+                    do {
+                        playlists.removeAt(index)
+                        ++numberOfItemsRemoved
+                    } while (index < playlists.size &&
+                        playlist.playlistId != playlists[index].playlistId)
 
-                processLoopIteration(index, playlist)
+                    when {
+                        numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
+                        numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index, numberOfItemsRemoved)
+                    }
+                }
+                playlist != newPlaylists[index] -> {
+                    playlists[index] = playlist
+                    notifyItemChanged(index)
+                }
             }
-            playlist != playlists[index] -> {
-                playlists[index] = playlist
-                notifyItemChanged(index)
-            }
+        }
+
+        if (playlists.size > newPlaylists.size) {
+            val numberItemsToRemove = playlists.size - newPlaylists.size
+            repeat(numberItemsToRemove) { playlists.removeLast() }
+            notifyItemRangeRemoved(newPlaylists.size, numberItemsToRemove)
         }
     }
 

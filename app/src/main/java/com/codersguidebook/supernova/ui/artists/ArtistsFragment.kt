@@ -26,7 +26,7 @@ class ArtistsFragment : RecyclerViewFragment() {
     /**
      * Refresh the content displayed in the RecyclerView.
      *
-     * @param artists - The up-to-date list of Artist objects that should be displayed.
+     * @param artists The up-to-date list of Artist objects that should be displayed.
      */
     private fun updateRecyclerView(artists: List<Artist>) {
         setIsUpdatingTrue()
