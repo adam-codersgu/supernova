@@ -12,8 +12,8 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
-import com.codersguidebook.supernova.dialogs.QueueOptions
 import com.codersguidebook.supernova.R
+import com.codersguidebook.supernova.dialogs.QueueOptions
 import com.codersguidebook.supernova.ui.playQueue.PlayQueueFragment
 
 class PlayQueueAdapter(private val fragment: PlayQueueFragment
@@ -84,31 +84,45 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
         notifyItemChanged(newCurrentlyPlayingIndex)
     }
 
-    fun processLoopIteration(index: Int, queueItem: QueueItem) {
-        when {
-            index >= playQueue.size -> {
-                playQueue.add(queueItem)
-                notifyItemInserted(index)
-            }
-            queueItem.queueId != playQueue[index].queueId -> {
-                // Check if the item has been moved
-                val oldIndex = playQueue.indexOfFirst {
-                    it.queueId == queueItem.queueId
-                }
-                if (oldIndex != -1) {
-                    playQueue.removeAt(oldIndex)
-                    playQueue.add(index, queueItem)
-                    notifyItemMoved(oldIndex, index)
-                } else {
-                    playQueue.add(index, queueItem)
+    /**
+     * Handle updates to the content of the RecyclerView. The below method will determine what
+     * changes are required when an element/elements is/are changed, inserted, or deleted.
+     * This enhanced process loop iteration method assumes each queue item can only appear once.
+     *
+     * @param newPlayQueue The new list of QueueItem objects that should be displayed.
+     */
+    fun processNewPlayQueue(newPlayQueue: List<QueueItem>) {
+        for ((index, queueItem) in newPlayQueue.withIndex()) {
+            when {
+                index >= playQueue.size -> {
+                    playQueue.add(queueItem)
                     notifyItemInserted(index)
                 }
+                queueItem.queueId != playQueue[index].queueId -> {
+                    var numberOfItemsRemoved = 0
+                    do {
+                        playQueue.removeAt(index)
+                        ++numberOfItemsRemoved
+                    } while (index < playQueue.size &&
+                        queueItem.queueId != playQueue[index].queueId)
+
+                    when {
+                        numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
+                        numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index, numberOfItemsRemoved)
+                    }
+                }
+                queueItem.description.title != playQueue[index].description.title ||
+                        queueItem.description.subtitle != playQueue[index].description.subtitle -> {
+                    playQueue[index] = queueItem
+                    notifyItemChanged(index)
+                }
             }
-            queueItem.description.title != playQueue[index].description.title ||
-                    queueItem.description.subtitle != playQueue[index].description.subtitle -> {
-                playQueue[index] = queueItem
-                notifyItemChanged(index)
-            }
+        }
+
+        if (playQueue.size > newPlayQueue.size) {
+            val numberItemsToRemove = playQueue.size - newPlayQueue.size
+            repeat(numberItemsToRemove) { playQueue.removeLast() }
+            notifyItemRangeRemoved(newPlayQueue.size, numberItemsToRemove)
         }
     }
 

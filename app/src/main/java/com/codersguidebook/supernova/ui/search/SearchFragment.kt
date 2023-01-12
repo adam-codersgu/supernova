@@ -14,8 +14,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewbinding.ViewBinding
-import com.codersguidebook.supernova.data.MusicDatabase
 import com.codersguidebook.supernova.R
+import com.codersguidebook.supernova.data.MusicDatabase
 import com.codersguidebook.supernova.databinding.FragmentSearchBinding
 import com.codersguidebook.supernova.fragment.BaseRecyclerViewFragment
 import com.codersguidebook.supernova.fragment.adapter.SearchAdapter
@@ -66,7 +66,7 @@ class SearchFragment : BaseRecyclerViewFragment() {
         binding.recyclerView.itemAnimator = DefaultItemAnimator()
 
         binding.chipGroup.setOnCheckedStateChangeListener { _, checkedIds ->
-            if (adapter.itemCount > 0) clearRecyclerView()
+            if (adapter.itemCount > 0) adapter.clearRecyclerView()
 
             val checkedId = if (checkedIds.isNotEmpty()) checkedIds[0]
             else R.id.trackChip
@@ -88,16 +88,6 @@ class SearchFragment : BaseRecyclerViewFragment() {
         adapter = SearchAdapter(mainActivity)
     }
 
-    /** Clear the contents of the RecyclerView */
-    private fun clearRecyclerView() {
-        val itemCount = adapter.itemCount
-        adapter.songs.clear()
-        adapter.artists.clear()
-        adapter.albums.clear()
-        adapter.playlists.clear()
-        adapter.notifyItemRangeRemoved(0, itemCount)
-    }
-
     override fun requestNewData() {
         binding.noResults.isGone = true
         when (adapter.itemType) {
@@ -111,15 +101,7 @@ class SearchFragment : BaseRecyclerViewFragment() {
                             adapter.songs.addAll(songs)
                             adapter.notifyItemRangeInserted(0, songs.size)
                         } else {
-                            for ((index, song) in songs.withIndex()) {
-                                adapter.processLoopIterationSong(index, song)
-                            }
-
-                            if (adapter.songs.size > songs.size) {
-                                val numberItemsToRemove = adapter.songs.size - songs.size
-                                repeat(numberItemsToRemove) { adapter.songs.removeLast() }
-                                adapter.notifyItemRangeRemoved(songs.size, numberItemsToRemove)
-                            }
+                            adapter.processNewSongs(songs)
                         }
                     }
                 }
@@ -137,15 +119,7 @@ class SearchFragment : BaseRecyclerViewFragment() {
                             adapter.albums.addAll(songsByAlbum)
                             adapter.notifyItemRangeInserted(0, songsByAlbum.size)
                         } else {
-                            for ((index, album) in songsByAlbum.withIndex()) {
-                                adapter.processLoopIterationAlbum(index, album)
-                            }
-
-                            if (adapter.albums.size > songsByAlbum.size) {
-                                val numberItemsToRemove = adapter.albums.size - songsByAlbum.size
-                                repeat(numberItemsToRemove) { adapter.albums.removeLast() }
-                                adapter.notifyItemRangeRemoved(songsByAlbum.size, numberItemsToRemove)
-                            }
+                            adapter.processNewAlbums(songsByAlbum)
                         }
                     }
                 }
@@ -160,15 +134,7 @@ class SearchFragment : BaseRecyclerViewFragment() {
                             adapter.artists.addAll(artists)
                             adapter.notifyItemRangeInserted(0, artists.size)
                         } else {
-                            for ((index, artist) in artists.withIndex()) {
-                                adapter.processLoopIterationArtist(index, artist)
-                            }
-
-                            if (adapter.artists.size > artists.size) {
-                                val numberItemsToRemove = adapter.artists.size - artists.size
-                                repeat(numberItemsToRemove) { adapter.artists.removeLast() }
-                                adapter.notifyItemRangeRemoved(artists.size, numberItemsToRemove)
-                            }
+                            adapter.processNewArtists(artists)
                         }
                     }
                 }
@@ -183,15 +149,7 @@ class SearchFragment : BaseRecyclerViewFragment() {
                             adapter.playlists.addAll(playlists)
                             adapter.notifyItemRangeInserted(0, playlists.size)
                         } else {
-                            for ((index, playlist) in playlists.withIndex()) {
-                                adapter.processLoopIterationPlaylist(index, playlist)
-                            }
-
-                            if (adapter.playlists.size > playlists.size) {
-                                val numberItemsToRemove = adapter.playlists.size - playlists.size
-                                repeat(numberItemsToRemove) { adapter.playlists.removeLast() }
-                                adapter.notifyItemRangeRemoved(playlists.size, numberItemsToRemove)
-                            }
+                            adapter.processNewPlaylists(playlists)
                         }
                     }
                 }
