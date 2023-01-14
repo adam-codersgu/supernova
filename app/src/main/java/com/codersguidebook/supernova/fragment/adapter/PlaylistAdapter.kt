@@ -14,8 +14,8 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.codersguidebook.supernova.MainActivity
-import com.codersguidebook.supernova.dialogs.PlaylistSongOptions
 import com.codersguidebook.supernova.R
+import com.codersguidebook.supernova.dialogs.PlaylistSongOptions
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.ui.playlist.PlaylistFragment
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
@@ -39,6 +39,10 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
         internal var mPlays = itemView.findViewById(R.id.plays) as TextView
 
         init {
+            itemView.rootView.setOnClickListener {
+                activity.playNewPlayQueue(songs, layoutPosition - 1)
+            }
+
             itemView.setOnLongClickListener {
                 if (!showHandles) playlist?.let {
                     activity.openDialog(PlaylistSongOptions(songs, layoutPosition - 1, it))
@@ -66,7 +70,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder.itemViewType) {
             HEADER -> {
-                holder as PlaylistAdapter.ViewHolderPlaylistHeader
+                holder as ViewHolderPlaylistHeader
 
                 holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.preview_background))
 
@@ -103,7 +107,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                 }
             }
             SONG -> {
-                holder as PlaylistAdapter.ViewHolderSongWithHandle
+                holder as ViewHolderSongWithHandle
                 val current = songs[position -1]
 
                 if (showHandles) {

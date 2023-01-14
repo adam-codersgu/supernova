@@ -1,5 +1,6 @@
 package com.codersguidebook.supernova.fragment.adapter
 
+import android.util.Log
 import android.view.View
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -83,32 +84,32 @@ abstract class SongAdapter(private val activity: MainActivity): Adapter() {
      * @param newSongs The new list of Song objects that should be displayed.
      */
     fun processNewSongs(newSongs: List<Song>) {
+        // TODO: On resume, log the details of the incoming song, and the song that currently exists at that index (if exists)
+        //  Then, log which branch of the when block is triggered (have a log in an else block also to catch unmatched cases)
         for ((index, song) in newSongs.withIndex()) {
             val recyclerViewIndex = getRecyclerViewIndex(index)
             when {
                 index >= songs.size -> {
+                    // fixme: note the logs that we have here
+                    Log.e("DEBUGGING SongAdapter", "When block branch 1")
                     songs.add(song)
                     notifyItemInserted(recyclerViewIndex)
                 }
                 song.songId != songs[index].songId -> {
-                    // Find if the song has been moved elsewhere
-                    val newIndex = newSongs.indexOfFirst { it.songId == song.songId }
+                    Log.e("DEBUGGING SongAdapter", "When block branch 2")
+                    // fixme: update other areas of the application that use an algo like this
 
-                    if (newIndex != -1) {
-                        val songMetadataChanged = song == songs[newIndex]
-                        songs.removeAt(index)
-                        songs.add(newIndex, song)
+                    // Check if the song is a new entry to the list
+                    val songIsNewEntry = songs.find { it.songId == song.songId } == null
+                    if (songIsNewEntry) {
+                        songs.add(index, song)
+                        notifyItemInserted(recyclerViewIndex)
+                        continue
+                    }
 
-                        val newRecyclerViewIndex = getRecyclerViewIndex(newIndex)
-                        if (songMetadataChanged) {
-                            notifyItemRemoved(recyclerViewIndex)
-                            notifyItemInserted(newRecyclerViewIndex)
-                        } else {
-                            notifyItemMoved(recyclerViewIndex, newRecyclerViewIndex)
-                        }
-                    } else {
-                        // The song is no longer present. Remove it and all other deleted
-                        // songs that immediately followed it in the list.
+                    // Check if song(s) has/have been removed from the list
+                    val songIsRemoved = newSongs.find { it.songId == songs[index].songId } == null
+                    if (songIsRemoved) {
                         var numberOfItemsRemoved = 0
                         do {
                             songs.removeAt(index)
@@ -121,9 +122,49 @@ abstract class SongAdapter(private val activity: MainActivity): Adapter() {
                             numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(recyclerViewIndex,
                                 numberOfItemsRemoved)
                         }
+
+                        // Check if removing the song(s) has fixed the list
+                        if (song.songId == songs[index].songId) continue
+                    }
+
+                    // Check if the song has been moved earlier in the list
+                    val oldIndex = songs.indexOfFirst { it.songId == song.songId }
+                    if (oldIndex != -1 && oldIndex > index) {
+                        songs.removeAt(oldIndex)
+                        songs.add(index, song)
+                        notifyItemMoved(getRecyclerViewIndex(oldIndex), recyclerViewIndex)
+                        continue
+                    }
+
+                    // Check if the song(s) has been moved later in the list
+                    var newIndex = newSongs.indexOfFirst { it.songId == songs[index].songId }
+                    if (newIndex != -1) {
+                        do {
+                            songs.removeAt(index)
+
+                            if (newIndex <= songs.size) {
+                                songs.add(newIndex, song)
+                                notifyItemMoved(recyclerViewIndex, getRecyclerViewIndex(newIndex))
+                            } else {
+                                notifyItemRemoved(recyclerViewIndex)
+                            }
+
+                            // See if further songs need to be moved
+                            newIndex = newSongs.indexOfFirst { it.songId == songs[index].songId }
+                        } while (index < songs.size &&
+                            song.songId != songs[index].songId &&
+                            newIndex != -1)
+
+                        // Check if moving the song(s) has fixed the list
+                        if (song.songId == songs[index].songId) continue
+                        else {
+                            songs.add(index, song)
+                            notifyItemInserted(recyclerViewIndex)
+                        }
                     }
                 }
                 song != songs[index] -> {
+                    Log.e("DEBUGGING SongAdapter", "When block branch 3")
                     songs[index] = song
                     notifyItemChanged(recyclerViewIndex)
                 }
