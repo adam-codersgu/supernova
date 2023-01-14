@@ -15,9 +15,9 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.*
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.dialogs.CreatePlaylist
 import com.codersguidebook.supernova.PlayQueueViewModel
 import com.codersguidebook.supernova.R
+import com.codersguidebook.supernova.dialogs.CreatePlaylist
 import com.codersguidebook.supernova.fragment.RecyclerViewFragment
 import com.codersguidebook.supernova.fragment.adapter.PlayQueueAdapter
 
@@ -72,7 +72,7 @@ class PlayQueueFragment : RecyclerViewFragment() {
         setupMenu()
 
         playQueueViewModel.playQueue.observe(viewLifecycleOwner) {
-            updateRecyclerViewWithPlayQueue(it)
+            updateRecyclerView(it)
         }
 
         playQueueViewModel.currentQueueItemId.observe(viewLifecycleOwner) { position ->
@@ -87,25 +87,17 @@ class PlayQueueFragment : RecyclerViewFragment() {
     }
 
     override fun requestNewData() {
-        playQueueViewModel.playQueue.value?.let { updateRecyclerViewWithPlayQueue(it) }
+        playQueueViewModel.playQueue.value?.let { updateRecyclerView(it) }
     }
 
-    private fun updateRecyclerViewWithPlayQueue(playQueue: List<QueueItem>) {
+    private fun updateRecyclerView(playQueue: List<QueueItem>) {
         setIsUpdatingTrue()
 
         if (adapter.playQueue.isEmpty()) {
             adapter.playQueue.addAll(playQueue)
             adapter.notifyItemRangeInserted(0, playQueue.size)
         } else {
-            for ((index, queueItem) in playQueue.withIndex()) {
-                adapter.processLoopIteration(index, queueItem)
-            }
-
-            if (adapter.playQueue.size > playQueue.size) {
-                val numberItemsToRemove = adapter.playQueue.size - playQueue.size
-                repeat(numberItemsToRemove) { adapter.playQueue.removeLast() }
-                adapter.notifyItemRangeRemoved(playQueue.size, numberItemsToRemove)
-            }
+            adapter.processNewPlayQueue(playQueue)
         }
 
         finishUpdate()

@@ -26,31 +26,12 @@ class AlbumsFragment : RecyclerViewFragment() {
     /**
      * Refresh the content displayed in the RecyclerView.
      *
-     * @param songs - The up-to-date list of Song objects that should be displayed.
+     * @param songs The up-to-date list of Song objects that should be displayed.
      */
     private fun updateRecyclerView(songs: List<Song>) {
         setIsUpdatingTrue()
 
-        val songsByAlbum = songs.distinctBy { song ->
-            song.albumId
-        }.sortedBy { song ->
-            song.albumName.uppercase()
-        }.toMutableList()
-
-        if (adapter.songsByAlbum.isEmpty()) {
-            adapter.songsByAlbum.addAll(songsByAlbum)
-            adapter.notifyItemRangeInserted(0, songsByAlbum.size)
-        } else {
-            for ((index, album) in songsByAlbum.withIndex()) {
-                adapter.processLoopIteration(index, album)
-            }
-
-            if (adapter.songsByAlbum.size > songsByAlbum.size) {
-                val numberItemsToRemove = adapter.songsByAlbum.size - songsByAlbum.size
-                repeat(numberItemsToRemove) { adapter.songsByAlbum.removeLast() }
-                adapter.notifyItemRangeRemoved(songsByAlbum.size, numberItemsToRemove)
-            }
-        }
+        adapter.processAlbumsBySongs(songs)
 
         finishUpdate()
     }

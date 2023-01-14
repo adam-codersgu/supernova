@@ -60,22 +60,13 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
             adapter.songs.addAll(songs)
             adapter.notifyItemRangeInserted(0, songs.size)
         } else {
-            for ((index, song) in songs.withIndex()) {
-                adapter.processLoopIteration(index, song)
-            }
-
-            if (adapter.songs.size > songs.size) {
-                val numberItemsToRemove = adapter.songs.size - songs.size
-                repeat(numberItemsToRemove) { adapter.songs.removeLast() }
-                adapter.notifyItemRangeRemoved(
-                    adapter.getRecyclerViewIndex(songs.size), numberItemsToRemove)
-            }
+            adapter.processNewSongs(songs)
         }
 
         finishUpdate()
     }
 
-    private fun finishUpdate() {
+    fun finishUpdate() {
         if (binding.scrollRecyclerView.recyclerView.adapter == null) {
             binding.scrollRecyclerView.recyclerView.adapter = adapter
         }

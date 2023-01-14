@@ -42,36 +42,94 @@ abstract class SongAdapter(private val activity: MainActivity): Adapter() {
     /**
      * Handle updates to the content of the RecyclerView. The below method will determine what
      * changes are required when an element/elements is/are changed, inserted, or deleted.
+     * This enhanced process loop iteration method assumes each song can only appear once.
      *
-     * @param index - The index of the current iteration through the up-to-date content list.
-     * @param song - The Song object that should be displayed at the index.
+     * @param newSongs The new list of Song objects that should be displayed.
      */
-    override fun processLoopIteration(index: Int, song: Song) {
-        val recyclerViewIndex = getRecyclerViewIndex(index)
-        when {
-            index >= songs.size -> {
-                songs.add(song)
-                notifyItemInserted(recyclerViewIndex)
-            }
-            song.songId != songs[index].songId -> {
-                var numberOfItemsRemoved = 0
-                do {
-                    songs.removeAt(index)
-                    ++numberOfItemsRemoved
-                } while (index < songs.size &&
-                    song.songId != songs[index].songId)
-
-                when {
-                    numberOfItemsRemoved == 1 -> notifyItemRemoved(recyclerViewIndex)
-                    numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(recyclerViewIndex, numberOfItemsRemoved)
+    fun processNewSongs(newSongs: List<Song>) {
+        for ((index, song) in newSongs.withIndex()) {
+            val recyclerViewIndex = getRecyclerViewIndex(index)
+            when {
+                index >= songs.size -> {
+                    songs.add(song)
+                    notifyItemInserted(recyclerViewIndex)
                 }
+                song.songId != songs[index].songId -> {
+                    // Check if the song is a new entry to the list
+                    val songIsNewEntry = songs.find { it.songId == song.songId } == null
+                    if (songIsNewEntry) {
+                        songs.add(index, song)
+                        notifyItemInserted(recyclerViewIndex)
+                        continue
+                    }
 
-                processLoopIteration(index, song)
+                    // Check if song(s) has/have been removed from the list
+                    val songIsRemoved = newSongs.find { it.songId == songs[index].songId } == null
+                    if (songIsRemoved) {
+                        var numberOfItemsRemoved = 0
+                        do {
+                            songs.removeAt(index)
+                            ++numberOfItemsRemoved
+                        } while (index < songs.size &&
+                            newSongs.find { it.songId == songs[index].songId } == null)
+
+                        when {
+                            numberOfItemsRemoved == 1 -> notifyItemRemoved(recyclerViewIndex)
+                            numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(recyclerViewIndex,
+                                numberOfItemsRemoved)
+                        }
+
+                        // Check if removing the song(s) has fixed the list
+                        if (song.songId == songs[index].songId) continue
+                    }
+
+                    // Check if the song has been moved earlier in the list
+                    val oldIndex = songs.indexOfFirst { it.songId == song.songId }
+                    if (oldIndex != -1 && oldIndex > index) {
+                        songs.removeAt(oldIndex)
+                        songs.add(index, song)
+                        notifyItemMoved(getRecyclerViewIndex(oldIndex), recyclerViewIndex)
+                        continue
+                    }
+
+                    // Check if the song(s) has been moved later in the list
+                    var newIndex = newSongs.indexOfFirst { it.songId == songs[index].songId }
+                    if (newIndex != -1) {
+                        do {
+                            songs.removeAt(index)
+
+                            if (newIndex <= songs.size) {
+                                songs.add(newIndex, song)
+                                notifyItemMoved(recyclerViewIndex, getRecyclerViewIndex(newIndex))
+                            } else {
+                                notifyItemRemoved(recyclerViewIndex)
+                            }
+
+                            // See if further songs need to be moved
+                            newIndex = newSongs.indexOfFirst { it.songId == songs[index].songId }
+                        } while (index < songs.size &&
+                            song.songId != songs[index].songId &&
+                            newIndex != -1)
+
+                        // Check if moving the song(s) has fixed the list
+                        if (song.songId == songs[index].songId) continue
+                        else {
+                            songs.add(index, song)
+                            notifyItemInserted(recyclerViewIndex)
+                        }
+                    }
+                }
+                song != songs[index] -> {
+                    songs[index] = song
+                    notifyItemChanged(recyclerViewIndex)
+                }
             }
-            song != songs[index] -> {
-                songs[index] = song
-                notifyItemChanged(recyclerViewIndex)
-            }
+        }
+
+        if (songs.size > newSongs.size) {
+            val numberItemsToRemove = songs.size - newSongs.size
+            repeat(numberItemsToRemove) { songs.removeLast() }
+            notifyItemRangeRemoved(getRecyclerViewIndex(newSongs.size), numberItemsToRemove)
         }
     }
 }

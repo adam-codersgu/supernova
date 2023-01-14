@@ -8,21 +8,19 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.dialogs.AlbumOptions
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
+import com.codersguidebook.supernova.dialogs.AlbumOptions
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
 
-class AlbumsAdapter(private val activity: MainActivity): Adapter(),
+class AlbumsAdapter(private val activity: MainActivity): SongAdapter(activity),
     FastScrollRecyclerView.SectionedAdapter {
 
-    val songsByAlbum = mutableListOf<Song>()
-
     override fun getSectionName(position: Int): String {
-        return songsByAlbum[position].albumName[0].uppercase()
+        return songs[position].albumName[0].uppercase()
     }
 
     inner class ViewHolderAlbum(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -35,46 +33,17 @@ class AlbumsAdapter(private val activity: MainActivity): Adapter(),
         init {
             itemView.isClickable = true
             itemView.setOnClickListener {
-                val action = AlbumsFragmentDirections.actionSelectAlbum(songsByAlbum[layoutPosition].albumId)
+                val action = AlbumsFragmentDirections.actionSelectAlbum(songs[layoutPosition].albumId)
                 it.findNavController().navigate(action)
             }
 
             itemView.setOnLongClickListener{
-                activity.openDialog(AlbumOptions(songsByAlbum[layoutPosition].albumId))
+                activity.openDialog(AlbumOptions(songs[layoutPosition].albumId))
                 return@setOnLongClickListener true
             }
 
             mMenu.setOnClickListener {
-                activity.openDialog(AlbumOptions(songsByAlbum[layoutPosition].albumId))
-            }
-        }
-    }
-
-    override fun processLoopIteration(index: Int, song: Song) {
-        val recyclerViewIndex = getRecyclerViewIndex(index)
-        when {
-            index >= songsByAlbum.size -> {
-                songsByAlbum.add(song)
-                notifyItemInserted(recyclerViewIndex)
-            }
-            song.albumId != songsByAlbum[index].albumId -> {
-                var numberOfItemsRemoved = 0
-                do {
-                    songsByAlbum.removeAt(index)
-                    ++numberOfItemsRemoved
-                } while (index < songsByAlbum.size &&
-                    song.songId != songsByAlbum[index].songId)
-
-                when {
-                    numberOfItemsRemoved == 1 -> notifyItemRemoved(recyclerViewIndex)
-                    numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(recyclerViewIndex, numberOfItemsRemoved)
-                }
-
-                processLoopIteration(index, song)
-            }
-            song.albumName != songsByAlbum[index].albumName || song.artist != songsByAlbum[index].artist -> {
-                songsByAlbum[index] = song
-                notifyItemChanged(recyclerViewIndex)
+                activity.openDialog(AlbumOptions(songs[layoutPosition].albumId))
             }
         }
     }
@@ -87,7 +56,7 @@ class AlbumsAdapter(private val activity: MainActivity): Adapter(),
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         holder as ViewHolderAlbum
-        val current = songsByAlbum[position]
+        val current = songs[position]
 
         ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId, holder.mArtwork)
 
@@ -95,5 +64,24 @@ class AlbumsAdapter(private val activity: MainActivity): Adapter(),
         holder.mArtist.text = current.artist
     }
 
-    override fun getItemCount() = songsByAlbum.size
+    /**
+     * Extract the list of unique of albums from a list of songs and display the album
+     * metadata in the RecyclerView
+     *
+     * @param songList The list of Song objects that album details should be extracted from.
+     */
+    fun processAlbumsBySongs(songList: List<Song>) {
+        val songsByAlbum = songList.distinctBy { song ->
+            song.albumId
+        }.sortedBy { song ->
+            song.albumName.uppercase()
+        }.toMutableList()
+
+        if (songs.isEmpty()) {
+            songs.addAll(songsByAlbum)
+            notifyItemRangeInserted(0, songsByAlbum.size)
+        } else {
+            processNewSongs(songsByAlbum)
+        }
+    }
 }
