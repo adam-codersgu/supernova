@@ -33,7 +33,7 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
             musicLibraryViewModel.setActiveAlbumId(albumId)
 
             musicLibraryViewModel.activeAlbumSongs.observe(viewLifecycleOwner) { songs ->
-                updateRecyclerViewV2(songs)
+                updateRecyclerView(songs)
             }
         }
     }
@@ -42,14 +42,14 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
         adapter = AlbumAdapter(mainActivity)
     }
 
-    override fun updateRecyclerViewV2(songs: List<Song>) {
+    override fun updateRecyclerView(songs: List<Song>) {
         val discNumbers = songs.distinctBy {
             it.track.toString().substring(0, 1).toInt()
         }.map { it.track.toString().substring(0, 1).toInt() }
 
         (adapter as AlbumAdapter).displayDiscNumbers = discNumbers.size > 1
 
-        super.updateRecyclerViewV2(songs)
+        super.updateRecyclerView(songs)
 
         // Refresh the header
         (adapter as AlbumAdapter).notifyItemChanged(0)
@@ -58,7 +58,7 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
     }
 
     override fun requestNewData() {
-        musicLibraryViewModel.activeAlbumSongs.value?.let { updateRecyclerViewV2(it) }
+        musicLibraryViewModel.activeAlbumSongs.value?.let { updateRecyclerView(it) }
     }
 
     private fun setupMenu(songs: List<Song>) {

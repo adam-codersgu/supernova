@@ -17,6 +17,7 @@ import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.PlaylistSongOptions
 import com.codersguidebook.supernova.entities.Playlist
+import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.ui.playlist.PlaylistFragment
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
@@ -169,5 +170,45 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
     internal fun manageHandles(applyHandles: Boolean){
         this.showHandles = applyHandles
         notifyItemRangeChanged(1, songs.size)
+    }
+
+    /**
+     * Handle updates to the content of the RecyclerView. The below method will determine what
+     * changes are required when an element/elements is/are changed, inserted, or deleted.
+     * N.B. Playlist adapter uses a different update methodology to other areas of the app
+     * because only the Playlist adapter may potentially have to handle duplicate identical
+     * versions of the same song. For this reason, handling element moves is not feasible
+     * as each element could appear more than once with no distinguishing characteristics.
+     *
+     * @param index The index of the current iteration through the up-to-date content list.
+     * @param song The Song object that should be displayed at the index.
+     */
+    fun processLoopIteration(index: Int, song: Song) {
+        val recyclerViewIndex = getRecyclerViewIndex(index)
+        when {
+            index >= songs.size -> {
+                songs.add(song)
+                notifyItemInserted(recyclerViewIndex)
+            }
+            song.songId != songs[index].songId -> {
+                var numberOfItemsRemoved = 0
+                do {
+                    songs.removeAt(index)
+                    ++numberOfItemsRemoved
+                } while (index < songs.size &&
+                    song.songId != songs[index].songId)
+
+                when {
+                    numberOfItemsRemoved == 1 -> notifyItemRemoved(recyclerViewIndex)
+                    numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(recyclerViewIndex, numberOfItemsRemoved)
+                }
+
+                processLoopIteration(index, song)
+            }
+            song != songs[index] -> {
+                songs[index] = song
+                notifyItemChanged(recyclerViewIndex)
+            }
+        }
     }
 }
