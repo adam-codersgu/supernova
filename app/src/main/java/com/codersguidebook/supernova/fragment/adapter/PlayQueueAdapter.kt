@@ -99,16 +99,68 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
                     notifyItemInserted(index)
                 }
                 queueItem.queueId != playQueue[index].queueId -> {
-                    var numberOfItemsRemoved = 0
-                    do {
-                        playQueue.removeAt(index)
-                        ++numberOfItemsRemoved
-                    } while (index < playQueue.size &&
-                        queueItem.queueId != playQueue[index].queueId)
+                    // Check if the queueItem is a new entry to the list
+                    val queueItemIsNewEntry = playQueue.find { it.queueId == queueItem.queueId } == null
+                    if (queueItemIsNewEntry) {
+                        playQueue.add(index, queueItem)
+                        notifyItemInserted(index)
+                        continue
+                    }
 
-                    when {
-                        numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
-                        numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index, numberOfItemsRemoved)
+                    // Check if queueItem(s) has/have been removed from the list
+                    val queueItemIsRemoved = newPlayQueue.find { it.queueId == playQueue[index].queueId } == null
+                    if (queueItemIsRemoved) {
+                        var numberOfItemsRemoved = 0
+                        do {
+                            playQueue.removeAt(index)
+                            ++numberOfItemsRemoved
+                        } while (index < playQueue.size &&
+                            newPlayQueue.find { it.queueId == playQueue[index].queueId } == null)
+
+                        when {
+                            numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
+                            numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index,
+                                numberOfItemsRemoved)
+                        }
+
+                        // Check if removing the queueItem(s) has fixed the list
+                        if (queueItem.queueId == playQueue[index].queueId) continue
+                    }
+
+                    // Check if the queueItem has been moved earlier in the list
+                    val oldIndex = playQueue.indexOfFirst { it.queueId == queueItem.queueId }
+                    if (oldIndex != -1 && oldIndex > index) {
+                        playQueue.removeAt(oldIndex)
+                        playQueue.add(index, queueItem)
+                        notifyItemMoved(oldIndex, index)
+                        continue
+                    }
+
+                    // Check if the queueItem(s) has been moved later in the list
+                    var newIndex = newPlayQueue.indexOfFirst { it.queueId == playQueue[index].queueId }
+                    if (newIndex != -1) {
+                        do {
+                            playQueue.removeAt(index)
+
+                            if (newIndex <= playQueue.size) {
+                                playQueue.add(newIndex, queueItem)
+                                notifyItemMoved(index, newIndex)
+                            } else {
+                                notifyItemRemoved(index)
+                            }
+
+                            // See if further playQueue need to be moved
+                            newIndex = newPlayQueue.indexOfFirst { it.queueId == playQueue[index].queueId }
+                        } while (index < playQueue.size &&
+                            queueItem.queueId != playQueue[index].queueId &&
+                            newIndex != -1)
+
+                        // Check if moving the queueItem(s) has fixed the list
+                        if (queueItem.queueId == playQueue[index].queueId) continue
+                        else {
+                            playQueue.add(index, queueItem)
+                            notifyItemInserted(index)
+                        }
                     }
                 }
                 queueItem.description.title != playQueue[index].description.title ||

@@ -1,6 +1,5 @@
 package com.codersguidebook.supernova.fragment.adapter
 
-import android.util.Log
 import android.view.View
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -84,21 +83,14 @@ abstract class SongAdapter(private val activity: MainActivity): Adapter() {
      * @param newSongs The new list of Song objects that should be displayed.
      */
     fun processNewSongs(newSongs: List<Song>) {
-        // TODO: On resume, log the details of the incoming song, and the song that currently exists at that index (if exists)
-        //  Then, log which branch of the when block is triggered (have a log in an else block also to catch unmatched cases)
         for ((index, song) in newSongs.withIndex()) {
             val recyclerViewIndex = getRecyclerViewIndex(index)
             when {
                 index >= songs.size -> {
-                    // fixme: note the logs that we have here
-                    Log.e("DEBUGGING SongAdapter", "When block branch 1")
                     songs.add(song)
                     notifyItemInserted(recyclerViewIndex)
                 }
                 song.songId != songs[index].songId -> {
-                    Log.e("DEBUGGING SongAdapter", "When block branch 2")
-                    // fixme: update other areas of the application that use an algo like this
-
                     // Check if the song is a new entry to the list
                     val songIsNewEntry = songs.find { it.songId == song.songId } == null
                     if (songIsNewEntry) {
@@ -164,7 +156,6 @@ abstract class SongAdapter(private val activity: MainActivity): Adapter() {
                     }
                 }
                 song != songs[index] -> {
-                    Log.e("DEBUGGING SongAdapter", "When block branch 3")
                     songs[index] = song
                     notifyItemChanged(recyclerViewIndex)
                 }

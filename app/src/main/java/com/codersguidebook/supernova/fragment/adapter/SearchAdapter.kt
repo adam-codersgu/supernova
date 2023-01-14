@@ -162,31 +162,23 @@ class SearchAdapter(private val activity: MainActivity): SongAdapter(activity) {
      */
     fun processNewAlbums(songsByAlbum: List<Song>) {
         for ((index, song) in songsByAlbum.withIndex()) {
-            val recyclerViewIndex = getRecyclerViewIndex(index)
             when {
                 index >= albums.size -> {
                     albums.add(song)
-                    notifyItemInserted(recyclerViewIndex)
+                    notifyItemInserted(index)
                 }
                 song.songId != albums[index].songId -> {
-                    // Find if the song has been moved elsewhere
-                    val newIndex = songsByAlbum.indexOfFirst { it.songId == song.songId }
+                    // Check if the album is a new entry to the list
+                    val songIsNewEntry = albums.find { it.songId == song.songId } == null
+                    if (songIsNewEntry) {
+                        albums.add(index, song)
+                        notifyItemInserted(index)
+                        continue
+                    }
 
-                    if (newIndex != -1) {
-                        val songMetadataChanged = song == albums[newIndex]
-                        albums.removeAt(index)
-                        albums.add(newIndex, song)
-
-                        val newRecyclerViewIndex = getRecyclerViewIndex(newIndex)
-                        if (songMetadataChanged) {
-                            notifyItemRemoved(recyclerViewIndex)
-                            notifyItemInserted(newRecyclerViewIndex)
-                        } else {
-                            notifyItemMoved(recyclerViewIndex, newRecyclerViewIndex)
-                        }
-                    } else {
-                        // The song is no longer present. Remove it and all other deleted
-                        // songs that immediately followed it in the list.
+                    // Check if album(s) has/have been removed from the list
+                    val songIsRemoved = songsByAlbum.find { it.songId == albums[index].songId } == null
+                    if (songIsRemoved) {
                         var numberOfItemsRemoved = 0
                         do {
                             albums.removeAt(index)
@@ -195,15 +187,54 @@ class SearchAdapter(private val activity: MainActivity): SongAdapter(activity) {
                             songsByAlbum.find { it.songId == albums[index].songId } == null)
 
                         when {
-                            numberOfItemsRemoved == 1 -> notifyItemRemoved(recyclerViewIndex)
-                            numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(recyclerViewIndex,
+                            numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
+                            numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index,
                                 numberOfItemsRemoved)
+                        }
+
+                        // Check if removing the album(s) has fixed the list
+                        if (song.songId == albums[index].songId) continue
+                    }
+
+                    // Check if the album has been moved earlier in the list
+                    val oldIndex = albums.indexOfFirst { it.songId == song.songId }
+                    if (oldIndex != -1 && oldIndex > index) {
+                        albums.removeAt(oldIndex)
+                        albums.add(index, song)
+                        notifyItemMoved(oldIndex, index)
+                        continue
+                    }
+
+                    // Check if the album(s) has been moved later in the list
+                    var newIndex = songsByAlbum.indexOfFirst { it.songId == albums[index].songId }
+                    if (newIndex != -1) {
+                        do {
+                            albums.removeAt(index)
+
+                            if (newIndex <= albums.size) {
+                                albums.add(newIndex, song)
+                                notifyItemMoved(index, newIndex)
+                            } else {
+                                notifyItemRemoved(index)
+                            }
+
+                            // See if further albums need to be moved
+                            newIndex = songsByAlbum.indexOfFirst { it.songId == albums[index].songId }
+                        } while (index < albums.size &&
+                            song.songId != albums[index].songId &&
+                            newIndex != -1)
+
+                        // Check if moving the album(s) has fixed the list
+                        if (song.songId == albums[index].songId) continue
+                        else {
+                            albums.add(index, song)
+                            notifyItemInserted(index)
                         }
                     }
                 }
                 song != albums[index] -> {
                     albums[index] = song
-                    notifyItemChanged(recyclerViewIndex)
+                    notifyItemChanged(index)
                 }
             }
         }
@@ -211,7 +242,7 @@ class SearchAdapter(private val activity: MainActivity): SongAdapter(activity) {
         if (albums.size > songsByAlbum.size) {
             val numberItemsToRemove = albums.size - songsByAlbum.size
             repeat(numberItemsToRemove) { albums.removeLast() }
-            notifyItemRangeRemoved(getRecyclerViewIndex(songsByAlbum.size), numberItemsToRemove)
+            notifyItemRangeRemoved(songsByAlbum.size, numberItemsToRemove)
         }
     }
 
@@ -230,16 +261,68 @@ class SearchAdapter(private val activity: MainActivity): SongAdapter(activity) {
                     notifyItemInserted(index)
                 }
                 artist.artistName != artists[index].artistName -> {
-                    var numberOfItemsRemoved = 0
-                    do {
-                        artists.removeAt(index)
-                        ++numberOfItemsRemoved
-                    } while (index < artists.size &&
-                        artist.artistName != artists[index].artistName)
+                    // Check if the artist is a new entry to the list
+                    val artistIsNewEntry = artists.find { it.artistName == artist.artistName } == null
+                    if (artistIsNewEntry) {
+                        artists.add(index, artist)
+                        notifyItemInserted(index)
+                        continue
+                    }
 
-                    when {
-                        numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
-                        numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index, numberOfItemsRemoved)
+                    // Check if artist(s) has/have been removed from the list
+                    val artistIsRemoved = newArtists.find { it.artistName == artists[index].artistName } == null
+                    if (artistIsRemoved) {
+                        var numberOfItemsRemoved = 0
+                        do {
+                            artists.removeAt(index)
+                            ++numberOfItemsRemoved
+                        } while (index < artists.size &&
+                            newArtists.find { it.artistName == artists[index].artistName } == null)
+
+                        when {
+                            numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
+                            numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index,
+                                numberOfItemsRemoved)
+                        }
+
+                        // Check if removing the artist(s) has fixed the list
+                        if (artist.artistName == artists[index].artistName) continue
+                    }
+
+                    // Check if the artist has been moved earlier in the list
+                    val oldIndex = artists.indexOfFirst { it.artistName == artist.artistName }
+                    if (oldIndex != -1 && oldIndex > index) {
+                        artists.removeAt(oldIndex)
+                        artists.add(index, artist)
+                        notifyItemMoved(oldIndex, index)
+                        continue
+                    }
+
+                    // Check if the artist(s) has been moved later in the list
+                    var newIndex = newArtists.indexOfFirst { it.artistName == artists[index].artistName }
+                    if (newIndex != -1) {
+                        do {
+                            artists.removeAt(index)
+
+                            if (newIndex <= artists.size) {
+                                artists.add(newIndex, artist)
+                                notifyItemMoved(index, newIndex)
+                            } else {
+                                notifyItemRemoved(index)
+                            }
+
+                            // See if further artists need to be moved
+                            newIndex = newArtists.indexOfFirst { it.artistName == artists[index].artistName }
+                        } while (index < artists.size &&
+                            artist.artistName != artists[index].artistName &&
+                            newIndex != -1)
+
+                        // Check if moving the artist(s) has fixed the list
+                        if (artist.artistName == artists[index].artistName) continue
+                        else {
+                            artists.add(index, artist)
+                            notifyItemInserted(index)
+                        }
                     }
                 }
                 artist.songCount != artists[index].songCount -> {
@@ -271,16 +354,68 @@ class SearchAdapter(private val activity: MainActivity): SongAdapter(activity) {
                     notifyItemInserted(index)
                 }
                 playlist.playlistId != playlists[index].playlistId -> {
-                    var numberOfItemsRemoved = 0
-                    do {
-                        playlists.removeAt(index)
-                        ++numberOfItemsRemoved
-                    } while (index < playlists.size &&
-                        playlist.playlistId != playlists[index].playlistId)
+                    // Check if the playlist is a new entry to the list
+                    val playlistIsNewEntry = playlists.find { it.playlistId == playlist.playlistId } == null
+                    if (playlistIsNewEntry) {
+                        playlists.add(index, playlist)
+                        notifyItemInserted(index)
+                        continue
+                    }
 
-                    when {
-                        numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
-                        numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index, numberOfItemsRemoved)
+                    // Check if playlist(s) has/have been removed from the list
+                    val playlistIsRemoved = newPlaylists.find { it.playlistId == playlists[index].playlistId } == null
+                    if (playlistIsRemoved) {
+                        var numberOfItemsRemoved = 0
+                        do {
+                            playlists.removeAt(index)
+                            ++numberOfItemsRemoved
+                        } while (index < playlists.size &&
+                            newPlaylists.find { it.playlistId == playlists[index].playlistId } == null)
+
+                        when {
+                            numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
+                            numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index,
+                                numberOfItemsRemoved)
+                        }
+
+                        // Check if removing the playlist(s) has fixed the list
+                        if (playlist.playlistId == playlists[index].playlistId) continue
+                    }
+
+                    // Check if the playlist has been moved earlier in the list
+                    val oldIndex = playlists.indexOfFirst { it.playlistId == playlist.playlistId }
+                    if (oldIndex != -1 && oldIndex > index) {
+                        playlists.removeAt(oldIndex)
+                        playlists.add(index, playlist)
+                        notifyItemMoved(oldIndex, index)
+                        continue
+                    }
+
+                    // Check if the playlist(s) has been moved later in the list
+                    var newIndex = newPlaylists.indexOfFirst { it.playlistId == playlists[index].playlistId }
+                    if (newIndex != -1) {
+                        do {
+                            playlists.removeAt(index)
+
+                            if (newIndex <= playlists.size) {
+                                playlists.add(newIndex, playlist)
+                                notifyItemMoved(index, newIndex)
+                            } else {
+                                notifyItemRemoved(index)
+                            }
+
+                            // See if further playlists need to be moved
+                            newIndex = newPlaylists.indexOfFirst { it.playlistId == playlists[index].playlistId }
+                        } while (index < playlists.size &&
+                            playlist.playlistId != playlists[index].playlistId &&
+                            newIndex != -1)
+
+                        // Check if moving the playlist(s) has fixed the list
+                        if (playlist.playlistId == playlists[index].playlistId) continue
+                        else {
+                            playlists.add(index, playlist)
+                            notifyItemInserted(index)
+                        }
                     }
                 }
                 playlist != newPlaylists[index] -> {

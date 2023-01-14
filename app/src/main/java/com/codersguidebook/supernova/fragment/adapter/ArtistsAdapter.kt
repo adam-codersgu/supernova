@@ -70,16 +70,68 @@ class ArtistsAdapter(private val activity: MainActivity): RecyclerView.Adapter<R
                     notifyItemInserted(index)
                 }
                 artist.artistName != artists[index].artistName -> {
-                    var numberOfItemsRemoved = 0
-                    do {
-                        artists.removeAt(index)
-                        ++numberOfItemsRemoved
-                    } while (index < artists.size &&
-                        artist.artistName != artists[index].artistName)
+                    // Check if the artist is a new entry to the list
+                    val artistIsNewEntry = artists.find { it.artistName == artist.artistName } == null
+                    if (artistIsNewEntry) {
+                        artists.add(index, artist)
+                        notifyItemInserted(index)
+                        continue
+                    }
 
-                    when {
-                        numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
-                        numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index, numberOfItemsRemoved)
+                    // Check if artist(s) has/have been removed from the list
+                    val artistIsRemoved = newArtists.find { it.artistName == artists[index].artistName } == null
+                    if (artistIsRemoved) {
+                        var numberOfItemsRemoved = 0
+                        do {
+                            artists.removeAt(index)
+                            ++numberOfItemsRemoved
+                        } while (index < artists.size &&
+                            newArtists.find { it.artistName == artists[index].artistName } == null)
+
+                        when {
+                            numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
+                            numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index,
+                                numberOfItemsRemoved)
+                        }
+
+                        // Check if removing the artist(s) has fixed the list
+                        if (artist.artistName == artists[index].artistName) continue
+                    }
+
+                    // Check if the artist has been moved earlier in the list
+                    val oldIndex = artists.indexOfFirst { it.artistName == artist.artistName }
+                    if (oldIndex != -1 && oldIndex > index) {
+                        artists.removeAt(oldIndex)
+                        artists.add(index, artist)
+                        notifyItemMoved(oldIndex, index)
+                        continue
+                    }
+
+                    // Check if the artist(s) has been moved later in the list
+                    var newIndex = newArtists.indexOfFirst { it.artistName == artists[index].artistName }
+                    if (newIndex != -1) {
+                        do {
+                            artists.removeAt(index)
+
+                            if (newIndex <= artists.size) {
+                                artists.add(newIndex, artist)
+                                notifyItemMoved(index, newIndex)
+                            } else {
+                                notifyItemRemoved(index)
+                            }
+
+                            // See if further artists need to be moved
+                            newIndex = newArtists.indexOfFirst { it.artistName == artists[index].artistName }
+                        } while (index < artists.size &&
+                            artist.artistName != artists[index].artistName &&
+                            newIndex != -1)
+
+                        // Check if moving the artist(s) has fixed the list
+                        if (artist.artistName == artists[index].artistName) continue
+                        else {
+                            artists.add(index, artist)
+                            notifyItemInserted(index)
+                        }
                     }
                 }
                 artist.songCount != artists[index].songCount -> {

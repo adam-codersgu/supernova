@@ -72,16 +72,68 @@ class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter
                     notifyItemInserted(index)
                 }
                 playlist.playlistId != playlists[index].playlistId -> {
-                    var numberOfItemsRemoved = 0
-                    do {
-                        playlists.removeAt(index)
-                        ++numberOfItemsRemoved
-                    } while (index < playlists.size &&
-                        playlist.playlistId != playlists[index].playlistId)
+                    // Check if the playlist is a new entry to the list
+                    val playlistIsNewEntry = playlists.find { it.playlistId == playlist.playlistId } == null
+                    if (playlistIsNewEntry) {
+                        playlists.add(index, playlist)
+                        notifyItemInserted(index)
+                        continue
+                    }
 
-                    when {
-                        numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
-                        numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index, numberOfItemsRemoved)
+                    // Check if playlist(s) has/have been removed from the list
+                    val playlistIsRemoved = newPlaylists.find { it.playlistId == playlists[index].playlistId } == null
+                    if (playlistIsRemoved) {
+                        var numberOfItemsRemoved = 0
+                        do {
+                            playlists.removeAt(index)
+                            ++numberOfItemsRemoved
+                        } while (index < playlists.size &&
+                            newPlaylists.find { it.playlistId == playlists[index].playlistId } == null)
+
+                        when {
+                            numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
+                            numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index,
+                                numberOfItemsRemoved)
+                        }
+
+                        // Check if removing the playlist(s) has fixed the list
+                        if (playlist.playlistId == playlists[index].playlistId) continue
+                    }
+
+                    // Check if the playlist has been moved earlier in the list
+                    val oldIndex = playlists.indexOfFirst { it.playlistId == playlist.playlistId }
+                    if (oldIndex != -1 && oldIndex > index) {
+                        playlists.removeAt(oldIndex)
+                        playlists.add(index, playlist)
+                        notifyItemMoved(oldIndex, index)
+                        continue
+                    }
+
+                    // Check if the playlist(s) has been moved later in the list
+                    var newIndex = newPlaylists.indexOfFirst { it.playlistId == playlists[index].playlistId }
+                    if (newIndex != -1) {
+                        do {
+                            playlists.removeAt(index)
+
+                            if (newIndex <= playlists.size) {
+                                playlists.add(newIndex, playlist)
+                                notifyItemMoved(index, newIndex)
+                            } else {
+                                notifyItemRemoved(index)
+                            }
+
+                            // See if further playlists need to be moved
+                            newIndex = newPlaylists.indexOfFirst { it.playlistId == playlists[index].playlistId }
+                        } while (index < playlists.size &&
+                            playlist.playlistId != playlists[index].playlistId &&
+                            newIndex != -1)
+
+                        // Check if moving the playlist(s) has fixed the list
+                        if (playlist.playlistId == playlists[index].playlistId) continue
+                        else {
+                            playlists.add(index, playlist)
+                            notifyItemInserted(index)
+                        }
                     }
                 }
                 playlist != newPlaylists[index] -> {
