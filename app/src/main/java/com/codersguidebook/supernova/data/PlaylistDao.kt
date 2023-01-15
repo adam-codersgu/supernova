@@ -22,6 +22,9 @@ interface PlaylistDao {
     @Query("SELECT * from playlists ORDER BY playlist_name")
     fun getAllPlaylistsOrderByName(): LiveData<List<Playlist>>
 
+    @Query("SELECT * FROM playlists WHERE playlistId = :id")
+    suspend fun getPlaylistById(id: Int): Playlist?
+
     @Query("SELECT * FROM playlists WHERE playlist_name = :name")
     suspend fun getPlaylistByName(name: String): Playlist?
 

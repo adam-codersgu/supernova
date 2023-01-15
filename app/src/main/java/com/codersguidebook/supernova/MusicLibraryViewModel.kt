@@ -18,6 +18,7 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NO_A
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_DELETED
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_UPDATED
 import com.codersguidebook.supernova.params.SharedPreferencesConstants
+import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
 import kotlinx.coroutines.Dispatchers
@@ -37,6 +38,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     val allArtists: LiveData<List<Artist>> = repository.allArtists
     val allPlaylists: LiveData<List<Playlist>> = repository.allPlaylists
     var songIdToDelete: Long? = null
+    private val defaultPlaylistHelper: DefaultPlaylistHelper = DefaultPlaylistHelper(application)
 
     private val activeAlbumId = MutableLiveData<String>()
     val activeAlbumSongs: LiveData<List<Song>> = Transformations.switchMap(activeAlbumId) {
@@ -60,7 +62,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
 
     private val mostPlayedSongsObserver: Observer<List<Long>> = Observer<List<Long>> {
         viewModelScope.launch(Dispatchers.IO) {
-            getPlaylistByName(getApplication<Application>().getString(R.string.most_played))?.apply {
+            getPlaylistById(defaultPlaylistHelper.mostPlayed.first)?.apply {
                 val mostPlayedSongs = PlaylistHelper.serialiseSongIds(it)
                 if (mostPlayedSongs != this.songs) {
                     this.songs = mostPlayedSongs
@@ -264,6 +266,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
             1001
         }
 
+        // fixme: the default values should each come from String resources that use translations
         val title = cursor.getString(titleColumn) ?: "Unknown song"
         val artist = cursor.getString(artistColumn) ?: "Unknown artist"
         val album = cursor.getString(albumColumn) ?: "Unknown album"
@@ -365,7 +368,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param song The Song object that should be favourited/unfavourited.
      */
     fun toggleSongFavouriteStatus(song: Song) = viewModelScope.launch(Dispatchers.IO) {
-        getPlaylistByName(getApplication<Application>().getString(R.string.favourites))?.apply {
+        getPlaylistById(defaultPlaylistHelper.favourites.first)?.apply {
             val songIdList = PlaylistHelper.extractSongIds(this.songs)
             val matchingSong = songIdList.firstOrNull { it == song.songId }
 
@@ -396,6 +399,14 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
             }
         }
     }
+
+    /**
+     * Find the Playlist object associated with a given ID.
+     *
+     * @param id The playlist's ID.
+     * @return The associated Playlist object or null if no match found.
+     */
+    private suspend fun getPlaylistById(id: Int): Playlist? = repository.getPlaylistById(id)
 
     /**
      * Find the Playlist object associated with a given name.
@@ -464,7 +475,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param songId The media ID of the song.
      */
     fun addSongByIdToRecentlyPlayedPlaylist(songId: Long) = viewModelScope.launch(Dispatchers.IO) {
-        getPlaylistByName(getApplication<Application>().getString(R.string.recently_played))?.apply {
+        getPlaylistById(defaultPlaylistHelper.recentlyPlayed.first)?.apply {
             val songIdList = PlaylistHelper.extractSongIds(this.songs)
             if (songIdList.isNotEmpty()) {
                 val index = songIdList.indexOfFirst { it == songId }
@@ -485,8 +496,8 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * Default = false.
      */
     fun refreshSongOfTheDay(forceUpdate: Boolean = false) = viewModelScope.launch(Dispatchers.IO) {
-        val playlist = getPlaylistByName(getApplication<Application>()
-            .getString(R.string.song_day)) ?: Playlist(0, getApplication<Application>()
+        val playlist = getPlaylistById(defaultPlaylistHelper.songOfTheDay.first)
+            ?: Playlist(0, getApplication<Application>()
             .getString(R.string.song_day), null, false)
         val songIdList = PlaylistHelper.extractSongIds(playlist.songs)
 

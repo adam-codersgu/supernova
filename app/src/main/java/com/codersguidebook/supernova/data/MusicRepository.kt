@@ -52,5 +52,7 @@ class MusicRepository(private val musicDao: MusicDao, private val playlistDao: P
 
     fun getPlaylistByNameLiveData(name: String): LiveData<Playlist?> = playlistDao.getPlaylistByNameLiveData(name)
 
+    suspend fun getPlaylistById(id: Int): Playlist? = playlistDao.getPlaylistById(id)
+
     suspend fun getPlaylistByName(name: String): Playlist? = playlistDao.getPlaylistByName(name)
 }
