@@ -162,6 +162,16 @@ class HomeFragment : BaseFragment() {
             adapter.notifyItemRangeInserted(0, songsSelection.size)
         } else {
             adapter.processNewSongs(songsSelection)
+            if (songsSelection.isNotEmpty()) {
+                when (playlist.name) {
+                    getString(R.string.song_day) -> {
+                        binding.songOfTheDayRecyclerView.scrollToPosition(0)
+                    }
+                    getString(R.string.recently_played) -> {
+                        binding.recentlyPlayedRecyclerView.scrollToPosition(0)
+                    }
+                }
+            }
         }
     }
 }

@@ -496,29 +496,28 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * Default = false.
      */
     fun refreshSongOfTheDay(forceUpdate: Boolean = false) = viewModelScope.launch(Dispatchers.IO) {
-        val playlist = getPlaylistById(defaultPlaylistHelper.songOfTheDay.first)
-            ?: Playlist(0, getApplication<Application>()
-            .getString(R.string.song_day), null, false)
-        val songIdList = PlaylistHelper.extractSongIds(playlist.songs)
+        getPlaylistById(defaultPlaylistHelper.songOfTheDay.first)?.apply {
+            val songIdList = PlaylistHelper.extractSongIds(this.songs)
 
-        val todayDate = SimpleDateFormat.getDateInstance().format(Date())
-        val lastUpdate = sharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null)
-        when {
-            todayDate != lastUpdate -> {
-                val song = repository.getRandomSong() ?: return@launch
-                songIdList.add(0, song.songId)
-                if (songIdList.size > 30) songIdList.removeAt(songIdList.size - 1)
-                savePlaylistWithSongIds(playlist, songIdList)
-                sharedPreferences.edit().apply {
-                    putString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, todayDate)
-                    apply()
+            val todayDate = SimpleDateFormat.getDateInstance().format(Date())
+            val lastUpdate = sharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null)
+            when {
+                todayDate != lastUpdate -> {
+                    val song = repository.getRandomSong() ?: return@launch
+                    songIdList.add(0, song.songId)
+                    if (songIdList.size > 30) songIdList.removeAt(songIdList.size - 1)
+                    savePlaylistWithSongIds(this, songIdList)
+                    sharedPreferences.edit().apply {
+                        putString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, todayDate)
+                        apply()
+                    }
                 }
-            }
-            forceUpdate -> {
-                if (songIdList.isNotEmpty()) songIdList.removeAt(0)
-                val song = repository.getRandomSong() ?: return@launch
-                songIdList.add(0, song.songId)
-                savePlaylistWithSongIds(playlist, songIdList)
+                forceUpdate -> {
+                    if (songIdList.isNotEmpty()) songIdList.removeAt(0)
+                    val song = repository.getRandomSong() ?: return@launch
+                    songIdList.add(0, song.songId)
+                    savePlaylistWithSongIds(this, songIdList)
+                }
             }
         }
     }
