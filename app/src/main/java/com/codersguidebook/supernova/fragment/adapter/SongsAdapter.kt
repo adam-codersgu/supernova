@@ -6,14 +6,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
-import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
 
-class SongsAdapter(private val activity: MainActivity): SongAdapter(activity),
+class SongsAdapter(private val activity: MainActivity): SongAdapter(activity)/*,
     FastScrollRecyclerView.SectionedAdapter {
 
     override fun getSectionName(position: Int): String {
         return songs[position].title[0].uppercase()
-    }
+    } */ {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return ViewHolderSong(

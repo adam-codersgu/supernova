@@ -14,14 +14,13 @@ import com.codersguidebook.supernova.dialogs.AlbumOptions
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
-import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
 
-class AlbumsAdapter(private val activity: MainActivity): SongAdapter(activity),
+class AlbumsAdapter(private val activity: MainActivity): SongAdapter(activity)/*,
     FastScrollRecyclerView.SectionedAdapter {
 
     override fun getSectionName(position: Int): String {
         return songs[position].albumName[0].uppercase()
-    }
+    }  */ {
 
     inner class ViewHolderAlbum(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
