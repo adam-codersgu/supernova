@@ -15,6 +15,8 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     private val thumb = ContextCompat.getDrawable(context, R.drawable.thumb_drawable)
     private val track = ContextCompat.getDrawable(context, R.drawable.line_drawable)
 
+    private val trackOffColour = ContextCompat.getColor(context, R.color.onSurface30)
+
     private var textHeight = 0f
     private val textColor = ContextCompat.getColor(context, R.color.blue7)
 
@@ -25,6 +27,11 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         } else {
             textSize = textHeight
         }
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        setBackgroundColor(trackOffColour)
     }
 
     override fun onDraw(canvas: Canvas?) {
