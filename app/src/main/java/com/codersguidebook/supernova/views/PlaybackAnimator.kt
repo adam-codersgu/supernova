@@ -43,7 +43,6 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
         lateinit var drawable: Drawable
     }
 
-    private var listener: Listener? = null
     private val redColours = listOf(
         R.color.red1, R.color.red2, R.color.red3,
         R.color.red4, R.color.red5, R.color.red6, R.color.red7
@@ -365,19 +364,5 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
             if (occupiedSpace.contains(x.toInt(), y.toInt())) return index
         }
         return null
-    }
-
-    fun setListener(listener: Listener) {
-        this.listener = listener
-    }
-
-    interface Listener {
-        /**
-         * A method called when an object is being dragged or released.
-         *
-         * @param dragging - A Boolean indicating whether an object is being dragged (true)
-         * or has been released (false)
-         */
-        fun animationObjectIsDragging(dragging: Boolean)
     }
 }
