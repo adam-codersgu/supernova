@@ -55,7 +55,9 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
         val currentQueueItemDescription = playQueue[position].description
 
         holder.txtSongTitle.text = currentQueueItemDescription.title
+            ?: activity.getString(R.string.default_title)
         holder.txtSongArtist.text = currentQueueItemDescription.subtitle
+            ?: activity.getString(R.string.default_artist)
         if (playQueue[position].queueId == currentlyPlayingQueueId) {
             holder.txtSongTitle.setTextColor(ContextCompat.getColor(activity, R.color.accent))
             holder.txtSongArtist.setTextColor(ContextCompat.getColor(activity, R.color.accent))

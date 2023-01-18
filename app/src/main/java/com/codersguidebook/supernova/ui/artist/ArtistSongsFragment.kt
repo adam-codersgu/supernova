@@ -4,12 +4,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.fragment.RecyclerViewWithFabFragment
 import com.codersguidebook.supernova.fragment.adapter.SongsAdapter
 
 class ArtistSongsFragment : RecyclerViewWithFabFragment() {
 
-    private var artistName: String? = null
+    private var artistName = getString(R.string.default_artist)
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
@@ -23,12 +24,10 @@ class ArtistSongsFragment : RecyclerViewWithFabFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        artistName?.let { name ->
-            musicLibraryViewModel.setActiveArtistName(name)
+        musicLibraryViewModel.setActiveArtistName(artistName)
 
-            musicLibraryViewModel.activeArtistSongs.observe(viewLifecycleOwner) { songs ->
-                updateRecyclerView(songs)
-            }
+        musicLibraryViewModel.activeArtistSongs.observe(viewLifecycleOwner) { songs ->
+            updateRecyclerView(songs)
         }
     }
 

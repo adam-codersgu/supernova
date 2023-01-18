@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 
 class ArtistFragment : RecyclerViewFragment() {
 
-    private var artistName: String? = null
+    private var artistName = getString(R.string.default_artist)
     override lateinit var adapter: ArtistAdapter
 
     override fun onCreateView(
@@ -35,12 +35,10 @@ class ArtistFragment : RecyclerViewFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        artistName?.let { name ->
-            musicLibraryViewModel.setActiveArtistName(name)
+        musicLibraryViewModel.setActiveArtistName(artistName)
 
-            musicLibraryViewModel.activeArtistSongs.observe(viewLifecycleOwner) { songs ->
-                updateRecyclerView(songs)
-            }
+        musicLibraryViewModel.activeArtistSongs.observe(viewLifecycleOwner) { songs ->
+            updateRecyclerView(songs)
         }
     }
 
@@ -66,13 +64,11 @@ class ArtistFragment : RecyclerViewFragment() {
         }
 
         if (songs.isNotEmpty()) {
-            artistName?.let {
-                lifecycleScope.launch(Dispatchers.IO) {
-                    val plays = musicLibraryViewModel.getSongPlaysByArtist(it)
-                    if (plays != adapter.plays) {
-                        adapter.plays = plays
-                        adapter.notifyItemChanged(0)
-                    }
+            lifecycleScope.launch(Dispatchers.IO) {
+                val plays = musicLibraryViewModel.getSongPlaysByArtist(artistName)
+                if (plays != adapter.plays) {
+                    adapter.plays = plays
+                    adapter.notifyItemChanged(0)
                 }
             }
         }
@@ -110,9 +106,7 @@ class ArtistFragment : RecyclerViewFragment() {
                     R.id.artist_add_queue -> mainActivity.addSongsToPlayQueue(songs)
                     R.id.artist_add_playlist -> mainActivity.openAddToPlaylistDialog(songs)
                     R.id.artist_edit_artist_info -> {
-                        artistName?.let {
-                            findNavController().navigate(ArtistFragmentDirections.actionEditArtist(it))
-                        }
+                        findNavController().navigate(ArtistFragmentDirections.actionEditArtist(artistName))
                     }
                     R.id.artist_delete_artist -> {
                         // Delete Artist feature only available from SDK 30 and up
