@@ -67,6 +67,12 @@
     <string name="artist_name">Artist name</string>
     <string name="artist_songs">View artist\'s songs</string>
     <string name="custom_image">Custom images</string>
+    <string name="default_album">Unknown album</string>
+    <string name="default_album_id" translatable="false">unknown_album_id</string>
+    <string name="default_artist">Unknown artist</string>
+    <string name="default_title">Unknown song</string>
+    <string name="default_track_number" translatable="false">1001</string>
+    <string name="default_year" translatable="false">2000</string>
     <string name="disc">Disc</string>
     <string name="disc_number">Disc %1$s</string>
     <string name="displayed_song">1 song</string>

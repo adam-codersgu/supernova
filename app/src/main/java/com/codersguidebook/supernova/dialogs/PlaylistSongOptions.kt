@@ -2,7 +2,9 @@ package com.codersguidebook.supernova.dialogs
 
 import android.app.Dialog
 import android.os.Bundle
+import android.widget.Toast
 import androidx.core.view.isGone
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.R
@@ -13,6 +15,9 @@ import com.codersguidebook.supernova.fragment.BaseDialogFragment
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 import com.codersguidebook.supernova.ui.songs.SongsFragmentDirections
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PlaylistSongOptions(private val songs: MutableList<Song>,
                           private val position: Int,
@@ -45,8 +50,19 @@ class PlaylistSongOptions(private val songs: MutableList<Song>,
         if (song.isFavourite) binding.favourite.text = getString(R.string.remove_favourites)
 
         binding.favourite.setOnClickListener {
-            musicLibraryViewModel.toggleSongFavouriteStatus(song)
-            dismiss()
+            lifecycleScope.launch(Dispatchers.Main) {
+                val isFavourite = withContext(Dispatchers.IO) {
+                    musicLibraryViewModel.toggleSongFavouriteStatus(song)
+                }
+                if (isFavourite == true) {
+                    Toast.makeText(mainActivity, getString(R.string.added_to_favourites),
+                        Toast.LENGTH_SHORT).show()
+                } else if (isFavourite == false)  {
+                    Toast.makeText(mainActivity, getString(R.string.removed_from_favourites),
+                        Toast.LENGTH_SHORT).show()
+                }
+                dismiss()
+            }
         }
 
         binding.artist.setOnClickListener {
