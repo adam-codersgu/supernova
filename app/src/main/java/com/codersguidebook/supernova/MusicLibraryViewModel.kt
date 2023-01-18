@@ -1,11 +1,6 @@
 package com.codersguidebook.supernova
 
 import android.app.Application
-import android.content.ContentUris
-import android.database.Cursor
-import android.provider.MediaStore
-import android.util.Size
-import android.widget.Toast
 import androidx.lifecycle.*
 import androidx.lifecycle.Observer
 import androidx.preference.PreferenceManager
@@ -14,9 +9,6 @@ import com.codersguidebook.supernova.data.MusicRepository
 import com.codersguidebook.supernova.entities.Artist
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NO_ACTION
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_DELETED
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_UPDATED
 import com.codersguidebook.supernova.params.SharedPreferencesConstants
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
@@ -24,7 +16,6 @@ import com.codersguidebook.supernova.utils.PlaylistHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.FileNotFoundException
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -81,7 +72,12 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
         repository.mostPlayedSongsById.removeObserver(mostPlayedSongsObserver)
     }
 
-    private fun deleteSong(song: Song) = viewModelScope.launch(Dispatchers.Default) {
+    /**
+     * Delete a given Song object from the database and any playlists it appears in.
+     *
+     * @param song The Song object to be deleted.
+     */
+    fun deleteSong(song: Song) = viewModelScope.launch(Dispatchers.Default) {
         val playlists = withContext(Dispatchers.IO) { getAllPlaylists() }
 
         val updatedPlaylists = mutableListOf<Playlist>()
@@ -125,7 +121,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
         ImageHandlingHelper.deletePlaylistArtByResourceId(getApplication(), playlist.playlistId.toString())
     }
 
-    private fun saveSongs(songs: List<Song>) = viewModelScope.launch(Dispatchers.IO) {
+    fun saveSongs(songs: List<Song>) = viewModelScope.launch(Dispatchers.IO) {
         repository.saveSongs(songs)
     }
 
@@ -158,167 +154,6 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
 
     fun increaseSongPlaysBySongId(songId: Long) = viewModelScope.launch(Dispatchers.IO) {
         repository.increaseSongPlaysBySongId(songId)
-    }
-
-    /**
-     * Refresh the music library. Add new songs and remove deleted songs.
-     *
-     * @return A list of songs that can be deleted.
-     */
-    suspend fun refreshMusicLibrary(): List<Song> {
-        val songsToAddToMusicLibrary = mutableListOf<Song>()
-
-        getMediaStoreCursor()?.use { cursor ->
-            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-            val songIds = mutableListOf<Long>()
-            while (cursor.moveToNext()) {
-                val songId = cursor.getLong(idColumn)
-                songIds.add(songId)
-                val existingSong = getSongById(songId)
-                if (existingSong == null) {
-                    val song = createSongFromCursor(cursor)
-                    songsToAddToMusicLibrary.add(song)
-                }
-            }
-
-            val chunksToAddToMusicLibrary = songsToAddToMusicLibrary.chunked(25)
-            for (chunk in chunksToAddToMusicLibrary) saveSongs(chunk)
-
-            val songs = withContext(Dispatchers.IO) {
-                repository.getAllSongs()
-            }
-            val songsToBeDeleted = songs.filterNot { songIds.contains(it.songId) }
-            songsToBeDeleted.let {
-                for (song in songsToBeDeleted) deleteSong(song)
-            }
-            return songsToBeDeleted
-        }
-        return listOf()
-    }
-
-    /**
-     * Obtain a Cursor featuring all music entries in the media store that fulfil a given
-     * selection criteria.
-     *
-     * @param selection The WHERE clause for the media store query.
-     * Default = standard WHERE clause that selects only music entries.
-     * @param selectionArgs An array of String selection arguments that filter the results
-     * that are returned in the Cursor.
-     * Default = null (no selection arguments).
-     * @return A Cursor object detailing all the relevant media store entries.
-     */
-    private fun getMediaStoreCursor(selection: String = MediaStore.Audio.Media.IS_MUSIC,
-                                    selectionArgs: Array<String>? = null): Cursor? {
-        val projection = arrayOf(
-            MediaStore.Audio.Media._ID,
-            MediaStore.Audio.Media.TRACK,
-            MediaStore.Audio.Media.TITLE,
-            MediaStore.Audio.Media.ARTIST,
-            MediaStore.Audio.Media.ALBUM,
-            MediaStore.Audio.Media.ALBUM_ID,
-            MediaStore.Audio.Media.YEAR
-        )
-        val sortOrder = MediaStore.Audio.Media.TITLE + " ASC"
-        return getApplication<Application>().contentResolver.query(
-            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-            projection,
-            selection,
-            selectionArgs,
-            sortOrder
-        )
-    }
-
-    /**
-     * Use the media metadata from an entry in a Cursor object to construct a Song object.
-     *
-     * @param cursor A Cursor object that is set to the row containing the metadata that a Song
-     * object should be constructed for.
-     */
-    private fun createSongFromCursor(cursor: Cursor): Song {
-        val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-        val trackColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
-        val titleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
-        val artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
-        val albumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
-        val albumIDColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
-        val yearColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
-
-        val id = cursor.getLong(idColumn)
-        var trackString = cursor.getString(trackColumn) ?: "1001"
-
-        // The Track value will be stored in the format 1xxx where the first digit is the disc number
-        val track = try {
-            when (trackString.length) {
-                4 -> trackString.toInt()
-                in 1..3 -> {
-                    val numberNeeded = 4 - trackString.length
-                    trackString = when (numberNeeded) {
-                        1 -> "1$trackString"
-                        2 -> "10$trackString"
-                        else -> "100$trackString"
-                    }
-                    trackString.toInt()
-                }
-                else -> 1001
-            }
-        } catch (_: NumberFormatException) {
-            // If the Track value is unusual (e.g. you can get stuff like "12/23") then use 1001
-            1001
-        }
-
-        // fixme: the default values should each come from String resources that use translations
-        val title = cursor.getString(titleColumn) ?: "Unknown song"
-        val artist = cursor.getString(artistColumn) ?: "Unknown artist"
-        val album = cursor.getString(albumColumn) ?: "Unknown album"
-        val year = cursor.getString(yearColumn) ?: "2000"
-        val albumId = cursor.getString(albumIDColumn) ?: "unknown_album_ID"
-        val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
-
-        if (!ImageHandlingHelper.doesAlbumArtExistByResourceId(getApplication<Application>(), albumId)) {
-            val albumArt = try {
-                getApplication<Application>().contentResolver.loadThumbnail(uri,
-                    Size(640, 640), null)
-            } catch (_: FileNotFoundException) { null }
-            albumArt?.let {
-                ImageHandlingHelper.saveAlbumArtByResourceId(getApplication<Application>(),
-                    albumId, albumArt)
-            }
-        }
-
-        return Song(id, track, title, artist, album, albumId, year)
-    }
-
-    /**
-     * The content observer has been notified that a given media store record has been
-     * inserted, deleted or modified. This method evaluates the appropriate action to take
-     * based on the media store record's media ID.
-     *
-     * @param mediaId The ID of the target media store record
-     * @return A response code indicating the action taken,
-     */
-    suspend fun handleFileUpdateByMediaId(mediaId: Long): Int {
-        val selection = MediaStore.Audio.Media._ID + "=?"
-        val selectionArgs = arrayOf(mediaId.toString())
-        val cursor = getMediaStoreCursor(selection, selectionArgs)
-
-        val existingSong = getSongById(mediaId)
-        when {
-            existingSong == null && cursor?.count!! > 0 -> {
-                cursor.apply {
-                    this.moveToNext()
-                    val createdSong = createSongFromCursor(this)
-                    saveSongs(listOf(createdSong))
-                    return SONG_UPDATED
-                }
-            }
-            cursor?.count == 0 -> {
-                existingSong?.let {
-                    deleteSong(existingSong)
-                    return SONG_DELETED
-                }
-            }
-        }
-        return NO_ACTION
     }
 
     /**
@@ -366,8 +201,10 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * playlist accordingly.
      *
      * @param song The Song object that should be favourited/unfavourited.
+     * @return A Boolean indicating whether the song has been favourited (true) or unfavourited (false)
+     * Null will be returned if no change occurred (e.g. due to an error)
      */
-    fun toggleSongFavouriteStatus(song: Song) = viewModelScope.launch(Dispatchers.IO) {
+    suspend fun toggleSongFavouriteStatus(song: Song): Boolean? {
         getPlaylistById(defaultPlaylistHelper.favourites.first)?.apply {
             val songIdList = PlaylistHelper.extractSongIds(this.songs)
             val matchingSong = songIdList.firstOrNull { it == song.songId }
@@ -386,18 +223,9 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
             } else this.songs = null
             updatePlaylists(listOf(this))
             updateSongs(listOf(song))
-            launch(Dispatchers.Main) {
-                if (song.isFavourite) {
-                    Toast.makeText(getApplication(),
-                        getApplication<Application>().getString(R.string.added_to_favourites),
-                        Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(getApplication(),
-                        getApplication<Application>().getString(R.string.removed_from_favourites),
-                        Toast.LENGTH_SHORT).show()
-                }
-            }
+            return song.isFavourite
         }
+        return null
     }
 
     /**
@@ -521,6 +349,13 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
             }
         }
     }
+
+    /**
+     * Fetch all the songs held by the database.
+     *
+     * @return A list of Playlist objects.
+     */
+    suspend fun getAllSongs(): List<Song> = repository.getAllSongs()
 
     /**
      * Fetch all the playlists held by the database.

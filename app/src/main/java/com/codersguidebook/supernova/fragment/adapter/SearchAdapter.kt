@@ -46,8 +46,8 @@ class SearchAdapter(private val activity: MainActivity): SongAdapter(activity) {
 
                 holder.mArtwork?.isVisible = true
                 ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId, holder.mArtwork!!)
-                holder.mTitle.text = current.title
-                holder.mSubtitle.text = current.artist
+                holder.mTitle.text = current.title ?: activity.getString(R.string.default_title)
+                holder.mSubtitle.text = current.artist ?: activity.getString(R.string.default_artist)
             }
 
             ALBUM -> {
@@ -55,8 +55,8 @@ class SearchAdapter(private val activity: MainActivity): SongAdapter(activity) {
 
                 holder.mArtwork?.isVisible = true
                 ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId, holder.mArtwork!!)
-                holder.mTitle.text = current.albumName
-                holder.mSubtitle.text = current.artist
+                holder.mTitle.text = current.albumName ?: activity.getString(R.string.default_album)
+                holder.mSubtitle.text = current.artist ?: activity.getString(R.string.default_artist)
                 holder.mMenu?.setOnClickListener {
                     activity.openDialog(AlbumOptions(current.albumId))
                 }
@@ -76,7 +76,7 @@ class SearchAdapter(private val activity: MainActivity): SongAdapter(activity) {
                 val current = artists[position]
 
                 holder.mArtwork?.isGone = true
-                holder.mTitle.text = current.artistName
+                holder.mTitle.text = current.artistName ?: activity.getString(R.string.default_artist)
 
                 val songCountInt = current.songCount
                 holder.mSubtitle.text = if (songCountInt == 1) {

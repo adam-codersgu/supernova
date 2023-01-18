@@ -60,8 +60,8 @@ class AlbumsAdapter(private val activity: MainActivity): SongAdapter(activity),
 
         ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId, holder.mArtwork)
 
-        holder.mTitle.text = current.albumName
-        holder.mArtist.text = current.artist
+        holder.mTitle.text = current.albumName ?: activity.getString(R.string.default_album)
+        holder.mArtist.text = current.artist ?: activity.getString(R.string.default_artist)
     }
 
     /**
@@ -74,7 +74,7 @@ class AlbumsAdapter(private val activity: MainActivity): SongAdapter(activity),
         val songsByAlbum = songList.distinctBy { song ->
             song.albumId
         }.sortedBy { song ->
-            song.albumName.uppercase()
+            song.albumName?.uppercase()
         }.toMutableList()
 
         if (songs.isEmpty()) {

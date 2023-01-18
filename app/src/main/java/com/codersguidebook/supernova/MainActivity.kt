@@ -2,6 +2,7 @@ package com.codersguidebook.supernova
 
 import android.app.*
 import android.content.*
+import android.database.Cursor
 import android.media.AudioManager
 import android.media.session.PlaybackState
 import android.net.Uri
@@ -16,6 +17,7 @@ import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.media.session.PlaybackStateCompat.*
+import android.util.Size
 import android.view.Menu
 import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
@@ -47,10 +49,12 @@ import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NO_ACTION
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_REPEAT_MODE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_SHUFFLE_MODE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_DELETED
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_UPDATED
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.UPDATE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.APPLICATION_LANGUAGE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_ID
@@ -68,6 +72,7 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.FileNotFoundException
 
 class MainActivity : AppCompatActivity() {
 
@@ -269,13 +274,24 @@ class MainActivity : AppCompatActivity() {
         volumeControlStream = AudioManager.STREAM_MUSIC
     }
 
-    /** Refresh the music library and remove any deleted songs from the play queue. */
-    private fun refreshMusicLibrary() = lifecycleScope.launch(Dispatchers.Default) {
-        val songsToDelete = musicLibraryViewModel.refreshMusicLibrary()
-        for (song in songsToDelete) {
-            findSongIdInPlayQueueToRemove(song.songId)
+    override fun onDestroy() {
+        super.onDestroy()
+
+        mediaStoreContentObserver?.let {
+            this.contentResolver.unregisterContentObserver(it)
         }
-        processLanguageLocale()
+
+        MediaControllerCompat.getMediaController(this)?.apply {
+            transportControls.stop()
+            unregisterCallback(controllerCallback)
+        }
+        mediaBrowser.disconnect()
+
+        sharedPreferences.edit().apply {
+            putInt(PLAYBACK_POSITION, currentPlaybackPosition)
+            putInt(PLAYBACK_DURATION, currentPlaybackDuration)
+            apply()
+        }
     }
 
     /** Process changes to the user's selected language locale, or load its initial value */
@@ -325,9 +341,8 @@ class MainActivity : AppCompatActivity() {
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + "/")
         try {
             val songId = songIdString.toLong()
-            val response = musicLibraryViewModel.handleFileUpdateByMediaId(songId)
-            if (response == SONG_DELETED) findSongIdInPlayQueueToRemove(songId)
-        } catch (_: NumberFormatException) { musicLibraryViewModel.refreshMusicLibrary() }
+            if (handleFileUpdateByMediaId(songId) == SONG_DELETED) findSongIdInPlayQueueToRemove(songId)
+        } catch (_: NumberFormatException) { refreshMusicLibrary() }
     }
 
     /**
@@ -872,23 +887,159 @@ class MainActivity : AppCompatActivity() {
         if (playbackPosition != 0) seekTo(playbackPosition)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    /** Refresh the music library. Add new songs, remove deleted songs, and implement language changes. */
+    private fun refreshMusicLibrary() = lifecycleScope.launch(Dispatchers.Default) {
+        val songsToAddToMusicLibrary = mutableListOf<Song>()
 
-        mediaStoreContentObserver?.let {
-            this.contentResolver.unregisterContentObserver(it)
+        getMediaStoreCursor()?.use { cursor ->
+            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+            val songIds = mutableListOf<Long>()
+            while (cursor.moveToNext()) {
+                val songId = cursor.getLong(idColumn)
+                songIds.add(songId)
+                val existingSong = musicLibraryViewModel.getSongById(songId)
+                if (existingSong == null) {
+                    val song = createSongFromCursor(cursor)
+                    songsToAddToMusicLibrary.add(song)
+                }
+            }
+
+            val chunksToAddToMusicLibrary = songsToAddToMusicLibrary.chunked(25)
+            for (chunk in chunksToAddToMusicLibrary) musicLibraryViewModel.saveSongs(chunk)
+
+            val songs = withContext(Dispatchers.IO) {
+                musicLibraryViewModel.getAllSongs()
+            }
+            val songsToBeDeleted = songs.filterNot { songIds.contains(it.songId) }
+            songsToBeDeleted.let {
+                for (song in songsToBeDeleted) {
+                    musicLibraryViewModel.deleteSong(song)
+                    findSongIdInPlayQueueToRemove(song.songId)
+                }
+            }
+            processLanguageLocale()
+        }
+    }
+
+    /**
+     * Obtain a Cursor featuring all music entries in the media store that fulfil a given
+     * selection criteria.
+     *
+     * @param selection The WHERE clause for the media store query.
+     * Default = standard WHERE clause that selects only music entries.
+     * @param selectionArgs An array of String selection arguments that filter the results
+     * that are returned in the Cursor.
+     * Default = null (no selection arguments).
+     * @return A Cursor object detailing all the relevant media store entries.
+     */
+    private fun getMediaStoreCursor(selection: String = MediaStore.Audio.Media.IS_MUSIC,
+                                    selectionArgs: Array<String>? = null): Cursor? {
+        val projection = arrayOf(
+            MediaStore.Audio.Media._ID,
+            MediaStore.Audio.Media.TRACK,
+            MediaStore.Audio.Media.TITLE,
+            MediaStore.Audio.Media.ARTIST,
+            MediaStore.Audio.Media.ALBUM,
+            MediaStore.Audio.Media.ALBUM_ID,
+            MediaStore.Audio.Media.YEAR
+        )
+        val sortOrder = MediaStore.Audio.Media.TITLE + " ASC"
+        return contentResolver.query(
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+            projection,
+            selection,
+            selectionArgs,
+            sortOrder
+        )
+    }
+
+    /**
+     * The content observer has been notified that a given media store record has been
+     * inserted, deleted or modified. This method evaluates the appropriate action to take
+     * based on the media store record's media ID.
+     *
+     * @param mediaId The ID of the target media store record
+     * @return A response code indicating the action taken,
+     */
+    private suspend fun handleFileUpdateByMediaId(mediaId: Long): Int {
+        val selection = MediaStore.Audio.Media._ID + "=?"
+        val selectionArgs = arrayOf(mediaId.toString())
+        val cursor = getMediaStoreCursor(selection, selectionArgs)
+
+        val existingSong = musicLibraryViewModel.getSongById(mediaId)
+        when {
+            existingSong == null && cursor?.count!! > 0 -> {
+                cursor.apply {
+                    this.moveToNext()
+                    val createdSong = createSongFromCursor(this)
+                    musicLibraryViewModel.saveSongs(listOf(createdSong))
+                    return SONG_UPDATED
+                }
+            }
+            cursor?.count == 0 -> {
+                existingSong?.let {
+                    musicLibraryViewModel.deleteSong(existingSong)
+                    return SONG_DELETED
+                }
+            }
+        }
+        return NO_ACTION
+    }
+
+    /**
+     * Use the media metadata from an entry in a Cursor object to construct a Song object.
+     *
+     * @param cursor A Cursor object that is set to the row containing the metadata that a Song
+     * object should be constructed for.
+     */
+    private fun createSongFromCursor(cursor: Cursor): Song {
+        val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+        val trackColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
+        val titleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
+        val artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
+        val albumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
+        val albumIDColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
+        val yearColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
+
+        val id = cursor.getLong(idColumn)
+        var trackString = cursor.getString(trackColumn) ?: getString(R.string.default_track_number)
+
+        // The Track value will be stored in the format 1xxx where the first digit is the disc number
+        val track = try {
+            when (trackString.length) {
+                4 -> trackString.toInt()
+                in 1..3 -> {
+                    val numberNeeded = 4 - trackString.length
+                    trackString = when (numberNeeded) {
+                        1 -> "1$trackString"
+                        2 -> "10$trackString"
+                        else -> "100$trackString"
+                    }
+                    trackString.toInt()
+                }
+                else -> 1001
+            }
+        } catch (_: NumberFormatException) {
+            // If the Track value is unusual (e.g. you can get stuff like "12/23") then use 1001
+            1001
         }
 
-        MediaControllerCompat.getMediaController(this)?.apply {
-            transportControls.stop()
-            unregisterCallback(controllerCallback)
-        }
-        mediaBrowser.disconnect()
+        val title: String? = cursor.getString(titleColumn)
+        val artist: String? = cursor.getString(artistColumn)
+        val album: String? = cursor.getString(albumColumn)
+        val year = cursor.getString(yearColumn) ?: getString(R.string.default_year)
+        val albumId = cursor.getString(albumIDColumn) ?: getString(R.string.default_album_id)
+        val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
 
-        sharedPreferences.edit().apply {
-            putInt(PLAYBACK_POSITION, currentPlaybackPosition)
-            putInt(PLAYBACK_DURATION, currentPlaybackDuration)
-            apply()
+        if (!ImageHandlingHelper.doesAlbumArtExistByResourceId(application, albumId)) {
+            val albumArt = try {
+                contentResolver.loadThumbnail(uri, Size(640, 640), null)
+            } catch (_: FileNotFoundException) { null }
+            albumArt?.let {
+                ImageHandlingHelper.saveAlbumArtByResourceId(application, albumId, albumArt)
+            }
         }
+
+        return Song(id, track, title, artist, album, albumId, year)
     }
 }

@@ -12,9 +12,9 @@ import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.dialogs.AlbumOptions
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
+import com.codersguidebook.supernova.dialogs.AlbumOptions
 import com.codersguidebook.supernova.ui.artist.ArtistFragmentDirections
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
@@ -46,7 +46,8 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter(activity) {
             itemView.isClickable = true
             itemView.setOnClickListener {
                 if (songs.isEmpty()) return@setOnClickListener
-                val action = ArtistFragmentDirections.actionSelectArtistSongs(songs[0].artist)
+                val action = ArtistFragmentDirections.actionSelectArtistSongs(
+                    songs[0].artist ?: activity.getString(R.string.default_artist))
                 it.findNavController().navigate(action)
             }
         }
@@ -127,7 +128,7 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter(activity) {
                 }
 
                 if (songs.isNotEmpty()){
-                    holder.mArtist.text = songs[0].artist
+                    holder.mArtist.text = songs[0].artist ?: activity.getString(R.string.default_artist)
                     holder.mAlbumCount.text = if (songs.size == 1) {
                         activity.getString(R.string.one_album)
                     } else {
@@ -149,7 +150,7 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter(activity) {
                 ImageHandlingHelper.loadImageByAlbumId(activity.application,
                     current.albumId, holder.mArtwork)
 
-                holder.mTitle.text = current.albumName
+                holder.mTitle.text = current.albumName ?: activity.getString(R.string.default_album)
                 holder.mYear.text = current.year
             }
         }

@@ -156,4 +156,7 @@
     <string name="delete_artist">Eliminar artista</string>
     <string name="delete_song">Eliminar canción</string>
     <string name="song_added_play_queue">%1$s se ha agregado a la cola de reproducción.</string>
+    <string name="default_album">Álbum desconocido</string>
+    <string name="default_artist">Artista desconocido</string>
+    <string name="default_title">Canción desconocida</string>
 </resources>

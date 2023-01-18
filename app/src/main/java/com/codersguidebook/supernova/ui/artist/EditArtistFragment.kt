@@ -21,7 +21,7 @@ class EditArtistFragment : BaseEditMusicFragment() {
     override val binding: FragmentEditArtistBinding
         get() = _binding!! as FragmentEditArtistBinding
 
-    private var artistName: String? = null
+    private var artistName = getString(R.string.default_artist)
     private var artistSongs = emptyList<Song>()
 
     override fun onCreateView(
@@ -44,12 +44,10 @@ class EditArtistFragment : BaseEditMusicFragment() {
 
         binding.editArtistName.text = SpannableStringBuilder(artistName)
 
-        artistName?.let { name ->
-            musicLibraryViewModel.setActiveArtistName(name)
+        musicLibraryViewModel.setActiveArtistName(artistName)
 
-            musicLibraryViewModel.activeArtistSongs.observe(viewLifecycleOwner) { songs ->
-                artistSongs = songs
-            }
+        musicLibraryViewModel.activeArtistSongs.observe(viewLifecycleOwner) { songs ->
+            artistSongs = songs
         }
     }
 
@@ -68,7 +66,7 @@ class EditArtistFragment : BaseEditMusicFragment() {
                         mainActivity.updateSongs(artistSongs)
                         Toast.makeText(activity, getString(R.string.artist_updated),
                             Toast.LENGTH_SHORT).show()
-                        val action = EditArtistFragmentDirections.actionFinishEditArtist(artistName!!)
+                        val action = EditArtistFragmentDirections.actionFinishEditArtist(artistName)
                         requireView().findNavController().navigate(action)
                     }
                 }

@@ -37,7 +37,8 @@
         <argument
             android:name="playlistName"
             android:defaultValue="null"
-            app:argType="string" />
+            app:argType="string"
+            app:nullable="true" />
     </fragment>
 
     <fragment
@@ -48,7 +49,8 @@
         <argument
             android:name="playlistName"
             android:defaultValue="null"
-            app:argType="string" />
+            app:argType="string"
+            app:nullable="true" />
         <action
             android:id="@+id/action_finish_edit_playlist"
             app:destination="@id/nav_playlist"
@@ -69,7 +71,7 @@
         tools:layout="@layout/fragment_with_recycler_view">
         <argument
             android:name="artist"
-            android:defaultValue="null"
+            android:defaultValue="@string/default_artist"
             app:argType="string" />
     </fragment>
 
@@ -80,7 +82,7 @@
         tools:layout="@layout/fragment_with_fab">
         <argument
             android:name="artist"
-            android:defaultValue="null"
+            android:defaultValue="@string/default_artist"
             app:argType="string" />
     </fragment>
 
@@ -91,7 +93,7 @@
         tools:layout="@layout/fragment_edit_artist">
         <argument
             android:name="artist"
-            android:defaultValue="null"
+            android:defaultValue="@string/default_artist"
             app:argType="string" />
         <action
             android:id="@+id/action_finish_edit_artist"
@@ -113,7 +115,6 @@
         tools:layout="@layout/fragment_with_recycler_view">
         <argument
             android:name="albumId"
-            android:defaultValue="null"
             app:argType="string" />
     </fragment>
 
@@ -124,7 +125,6 @@
         tools:layout="@layout/fragment_edit_album">
         <argument
             android:name="albumId"
-            android:defaultValue="null"
             app:argType="string" />
         <action
             android:id="@+id/action_finish_edit_album"
@@ -164,8 +164,8 @@
         <argument
             android:name="song"
             android:defaultValue="@null"
-            app:nullable="true"
-            app:argType="com.codersguidebook.supernova.entities.Song" />
+            app:argType="com.codersguidebook.supernova.entities.Song"
+            app:nullable="true" />
     </fragment>
 
     <action

@@ -64,8 +64,8 @@ class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(ac
                 if (songs.isNotEmpty()){
                     ImageHandlingHelper.loadImageByAlbumId(activity.application,
                         songs[0].albumId, holder.mArtwork)
-                    holder.mTitle.text = songs[0].albumName
-                    holder.mArtist.text = songs[0].artist
+                    holder.mTitle.text = songs[0].albumName ?: activity.getString(R.string.default_album)
+                    holder.mArtist.text = songs[0].artist ?: activity.getString(R.string.default_artist)
                 }
                 val songCountInt = songs.size
                 holder.mSongCount.text = if (songCountInt == 1) activity.getString(R.string.displayed_song)
@@ -88,8 +88,8 @@ class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(ac
                 }
 
                 holder.mTrack.text = current.track.toString().substring(1, 4).toInt().toString()
-                holder.mTitle.text = current.title
-                holder.mSubtitle.text = current.artist
+                holder.mTitle.text = current.title ?: activity.getString(R.string.default_title)
+                holder.mSubtitle.text = current.artist ?: activity.getString(R.string.default_artist)
             }
         }
     }

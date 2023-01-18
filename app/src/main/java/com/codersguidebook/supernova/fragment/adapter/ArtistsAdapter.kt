@@ -158,7 +158,7 @@ class ArtistsAdapter(private val activity: MainActivity): RecyclerView.Adapter<R
         holder as ViewHolderArtist
         val current = artists[position]
 
-        holder.mTitle.text = current.artistName
+        holder.mTitle.text = current.artistName ?: activity.getString(R.string.default_artist)
 
         val songCountInt = current.songCount
         holder.mSongCount.text = if (songCountInt == 1) activity.getString(R.string.displayed_song)

@@ -152,10 +152,22 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
         }
 
         binding.currentFavourite.setOnClickListener {
-            currentSong?.apply {
-                musicLibraryViewModel.toggleSongFavouriteStatus(this)
-                this.isFavourite = !this.isFavourite
-                setFavouriteButtonStyle(this.isFavourite)
+            lifecycleScope.launch(Dispatchers.Main) {
+                val isFavourite = withContext(Dispatchers.IO) {
+                    musicLibraryViewModel.toggleSongFavouriteStatus(currentSong
+                        ?: return@withContext null)
+                }
+                if (isFavourite == true) {
+                    Toast.makeText(mainActivity, getString(R.string.added_to_favourites),
+                        Toast.LENGTH_SHORT).show()
+                } else if (isFavourite == false)  {
+                    Toast.makeText(mainActivity, getString(R.string.removed_from_favourites),
+                        Toast.LENGTH_SHORT).show()
+                }
+                currentSong?.apply {
+                    this.isFavourite = isFavourite ?: false
+                    setFavouriteButtonStyle(this.isFavourite)
+                }
             }
         }
 
