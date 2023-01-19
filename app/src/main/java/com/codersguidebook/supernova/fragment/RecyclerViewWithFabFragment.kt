@@ -1,6 +1,7 @@
 package com.codersguidebook.supernova.fragment
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -38,6 +39,8 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
         binding.scrollRecyclerView.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
+                // fixme - Album with 10 songs is about 2000. SongsFragment is upwards of 65000
+                Log.e("DEBUGGING", "The recyclerview height is ${binding.scrollRecyclerView.recyclerView.computeVerticalScrollRange()}")
                 if (dy > 0 && binding.fab.visibility == View.VISIBLE) binding.fab.hide()
                 else if (dy < 0 && binding.fab.visibility != View.VISIBLE) binding.fab.show()
             }
