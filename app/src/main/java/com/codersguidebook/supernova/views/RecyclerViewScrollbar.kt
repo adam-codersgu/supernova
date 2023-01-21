@@ -1,5 +1,6 @@
 package com.codersguidebook.supernova.views
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
@@ -7,6 +8,7 @@ import android.graphics.Paint.ANTI_ALIAS_FLAG
 import android.graphics.Rect
 import android.util.AttributeSet
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
@@ -16,11 +18,12 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
 
     /*
     TODO:
-        - Draw the thumb
         - Draw the scrollbar letter identifier
         - Set the width of the view
         - Only the track and thumb should respond to touch events. The identifier should not
         -
+        - When scrolling, a listener interface should tell the fragment the position to scroll to
+        -   Need to make sure that there is not conflict with the onScrollListener
         - For RecyclerView's who's content is not greater than the measuredHeight, the scrollbar should not be displayed. This could be evaluated in onDraw()?
         - Need to adjust the thumb height dynamically based on the contents of the RecyclerView. It must have a minumum value
         - The scrollbar should be invisible by default and only appear when the user is scrolling the recycler view
@@ -36,7 +39,10 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     /*
     FOR LIBRARY RELEASE:
        - Need to have the option to customise the colours of the scrollbar features (or at least match theme)
+       - Also to customise the scrollbar (thumb + track) width
      */
+
+    private var listener: Listener? = null
 
     private var recyclerViewContentHeight: Int? = null
     private var recyclerViewScrollPosition = 0
@@ -49,6 +55,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
 
     private val thumbOffColour = ContextCompat.getColor(context, R.color.onSurface84)
     private var thumbRect = Rect(trackAndThumbWidth, 0, 0, getThumbHeight())
+    private var thumbSelected = false
 
     private val valueLabel = ContextCompat.getDrawable(context, R.drawable.thumb_drawable)
 
@@ -59,7 +66,6 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         color = textColor
         if (textHeight == 0f) {
             // fixme: Logged 12.0
-            Log.e("DEBUGGING", "The text size is $textSize")
             textHeight = textSize
         } else {
             textSize = textHeight
@@ -96,8 +102,49 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     // fixme: test if the below is even necessary
     override fun getLayoutParams(): ViewGroup.LayoutParams {
         return super.getLayoutParams().apply {
-            width = trackAndThumbWidth
+            width = 100 // fixme trackAndThumbWidth
         }
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        val x = event?.x ?: 0f
+        val y = event?.y ?: 0f
+
+        Log.e("DEBUGGING", "The x is $x and the y is $y")
+
+        when (event?.action) {
+            MotionEvent.ACTION_DOWN -> {
+                /*
+
+2023-01-21 17:05:31.607 9728-9728/com.codersguidebook.supernova E/DEBUGGING: The x is 12.666687 and the y is 72.66669
+2023-01-21 17:05:31.607 9728-9728/com.codersguidebook.supernova E/DEBUGGING: The thumb rect is Rect(25, 0 - 0, 100)
+2023-01-21 17:05:31.805 9728-9728/com.codersguidebook.supernova E/DEBUGGING: The x is 7.333374 and the y is 68.0
+2023-01-21 17:05:31.805 9728-9728/com.codersguidebook.supernova E/DEBUGGING: The thumb rect is Rect(25, 0 - 0, 100)
+2023-01-21 17:06:28.472 9728-9728/com.codersguidebook.supernova E/DEBUGGING: The x is 12.0 and the y is 228.66669
+2023-01-21 17:06:28.472 9728-9728/com.codersguidebook.supernova E/DEBUGGING: The thumb rect is Rect(25, 136 - 0, 236)
+
+                 */
+                Log.e("DEBUGGING", "The thumb rect is $thumbRect")
+                if (thumbRect.contains(x.toInt(), y.toInt())) {
+                    Log.e("DEBUGGING", "Touch point contains thumb")
+                    thumbSelected = true
+                    return true
+                }
+            }
+            MotionEvent.ACTION_MOVE -> {
+                recyclerViewContentHeight?.let { height ->
+                    val scrollProportion = y / measuredHeight
+                    val newScrollPosition = scrollProportion * height
+                    listener?.onScrollTo(newScrollPosition.toInt())
+                }
+            }
+            else -> {
+                thumbSelected = false
+            }
+        }
+
+        return super.onTouchEvent(event)
     }
 
     /** Move the thumb along the track to reflect the RecyclerView scroll position */
@@ -156,5 +203,18 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     fun notifyRecyclerViewScrollPositionChanged(position: Int) {
         recyclerViewScrollPosition = position
         updateScrollPosition()
+    }
+
+    interface Listener {
+        /**
+         * A method called when the scrollbar thumb is being dragged.
+         *
+         * @param position The position that the user has scrolled to.
+         */
+        fun onScrollTo(position: Int)
+    }
+
+    fun setListener(listener: Listener) {
+        this.listener = listener
     }
 }

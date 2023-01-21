@@ -11,8 +11,9 @@ import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.adapter.SongAdapter
+import com.codersguidebook.supernova.views.RecyclerViewScrollbar
 
-abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
+abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment(), RecyclerViewScrollbar.Listener {
 
     override var _binding: ViewBinding? = null
         get() = field as FragmentWithFabBinding?
@@ -34,6 +35,7 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
 
         binding.scrollRecyclerView.recyclerView.layoutManager = LinearLayoutManager(mainActivity)
         binding.scrollRecyclerView.recyclerView.itemAnimator = DefaultItemAnimator()
+        binding.scrollRecyclerView.seekBar.setListener(this)
 
         binding.scrollRecyclerView.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -49,6 +51,13 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
                 else if (dy < 0 && binding.fab.visibility != View.VISIBLE) binding.fab.show()
             }
         })
+    }
+
+    override fun onScrollTo(position: Int) {
+        val maximumScrollPosition = binding.scrollRecyclerView.recyclerView.computeVerticalScrollRange()
+        val positionToScrollTo = if (position > maximumScrollPosition) maximumScrollPosition
+        else position
+        binding.scrollRecyclerView.recyclerView.scrollToPosition(positionToScrollTo)
     }
 
     /**
