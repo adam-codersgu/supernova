@@ -3,16 +3,17 @@ package com.codersguidebook.supernova.views
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Paint.ANTI_ALIAS_FLAG
 import android.graphics.Rect
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import com.codersguidebook.supernova.R
+import com.google.android.material.color.MaterialColors
 
 class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
@@ -33,13 +34,17 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
      */
 
     /*
-    The width of the track and thumb should be 25
+    FIXME BUGS
+        - It is often difficult to select the scrollbar. Maybe set the width of the scrollbar to larger than
+        -   the width of the thumb/track? To avoid conflicts with the RecyclerView, it is important that the
+        -   onTouch listener is only active when the scrollbar is visible.
      */
 
     /*
     FOR LIBRARY RELEASE:
        - Need to have the option to customise the colours of the scrollbar features (or at least match theme)
        - Also to customise the scrollbar (thumb + track) width
+       - Look at sourcing all colours from the theme
      */
 
     private var listener: Listener? = null
@@ -54,6 +59,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     private var trackRect = Rect(trackAndThumbWidth, 0, 0, height)
 
     private val thumbOffColour = ContextCompat.getColor(context, R.color.onSurface84)
+    private val thumbOnColour = MaterialColors.getColor(context, R.attr.colorSecondary, Color.CYAN)
     private var thumbRect = Rect(trackAndThumbWidth, 0, 0, getThumbHeight())
     private var thumbSelected = false
 
@@ -87,6 +93,10 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
             // drawText("A", 10f, 10f, textPaint)
             drawRect(trackRect, trackPaint)
             drawRect(thumbRect, thumbPaint)
+
+            if (thumbSelected) {
+                // TODO: Draw the value label
+            }
         }
     }
 
@@ -102,45 +112,28 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     // fixme: test if the below is even necessary
     override fun getLayoutParams(): ViewGroup.LayoutParams {
         return super.getLayoutParams().apply {
-            width = 100 // fixme trackAndThumbWidth
+            width = trackAndThumbWidth
         }
     }
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        val x = event?.x ?: 0f
         val y = event?.y ?: 0f
 
-        Log.e("DEBUGGING", "The x is $x and the y is $y")
-
         when (event?.action) {
-            MotionEvent.ACTION_DOWN -> {
-                /*
-
-2023-01-21 17:05:31.607 9728-9728/com.codersguidebook.supernova E/DEBUGGING: The x is 12.666687 and the y is 72.66669
-2023-01-21 17:05:31.607 9728-9728/com.codersguidebook.supernova E/DEBUGGING: The thumb rect is Rect(25, 0 - 0, 100)
-2023-01-21 17:05:31.805 9728-9728/com.codersguidebook.supernova E/DEBUGGING: The x is 7.333374 and the y is 68.0
-2023-01-21 17:05:31.805 9728-9728/com.codersguidebook.supernova E/DEBUGGING: The thumb rect is Rect(25, 0 - 0, 100)
-2023-01-21 17:06:28.472 9728-9728/com.codersguidebook.supernova E/DEBUGGING: The x is 12.0 and the y is 228.66669
-2023-01-21 17:06:28.472 9728-9728/com.codersguidebook.supernova E/DEBUGGING: The thumb rect is Rect(25, 136 - 0, 236)
-
-                 */
-                Log.e("DEBUGGING", "The thumb rect is $thumbRect")
-                if (thumbRect.contains(x.toInt(), y.toInt())) {
-                    Log.e("DEBUGGING", "Touch point contains thumb")
-                    thumbSelected = true
-                    return true
-                }
-            }
-            MotionEvent.ACTION_MOVE -> {
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
                 recyclerViewContentHeight?.let { height ->
                     val scrollProportion = y / measuredHeight
                     val newScrollPosition = scrollProportion * height
                     listener?.onScrollTo(newScrollPosition.toInt())
                 }
+                thumbSelected = true
+                thumbPaint.color = thumbOnColour
+                return true
             }
             else -> {
                 thumbSelected = false
+                thumbPaint.color = thumbOffColour
             }
         }
 

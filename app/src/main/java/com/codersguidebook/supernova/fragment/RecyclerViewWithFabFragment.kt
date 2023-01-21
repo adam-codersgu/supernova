@@ -12,6 +12,7 @@ import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.adapter.SongAdapter
 import com.codersguidebook.supernova.views.RecyclerViewScrollbar
+import kotlin.math.roundToInt
 
 abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment(), RecyclerViewScrollbar.Listener {
 
@@ -54,10 +55,13 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment(), Recycler
     }
 
     override fun onScrollTo(position: Int) {
+        // todo: for the library release, refactor position to scrollPercentage (currently scrollToProportion below)
         val maximumScrollPosition = binding.scrollRecyclerView.recyclerView.computeVerticalScrollRange()
-        val positionToScrollTo = if (position > maximumScrollPosition) maximumScrollPosition
-        else position
-        binding.scrollRecyclerView.recyclerView.scrollToPosition(positionToScrollTo)
+        val scrollToProportion = if (position > maximumScrollPosition) 1f
+        else position.toFloat() / maximumScrollPosition
+        val scrollToPosition = scrollToProportion * adapter.itemCount
+
+        binding.scrollRecyclerView.recyclerView.scrollToPosition(scrollToPosition.roundToInt())
     }
 
     /**
