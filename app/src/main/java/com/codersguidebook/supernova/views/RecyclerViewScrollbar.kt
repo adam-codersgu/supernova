@@ -38,6 +38,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         - It is often difficult to select the scrollbar. Maybe set the width of the scrollbar to larger than
         -   the width of the thumb/track? To avoid conflicts with the RecyclerView, it is important that the
         -   onTouch listener is only active when the scrollbar is visible.
+        - The active colour of the scrollbar thumb needs to reset when the thumb is released
      */
 
     /*
@@ -63,7 +64,17 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     private var thumbRect = Rect(trackAndThumbWidth, 0, 0, getThumbHeight())
     private var thumbSelected = false
 
-    private val valueLabel = ContextCompat.getDrawable(context, R.drawable.thumb_drawable)
+    private val innerRectWidthHeight = 50
+    private val innerValueLabelRect = Rect(innerRectWidthHeight, 100, 100, innerRectWidthHeight)
+    private val valueLabel = ContextCompat.getDrawable(context, R.drawable.thumb_drawable)?.apply {
+        bounds = innerValueLabelRect
+    }
+    /* private val valueLabelRoundRect = RoundRectShape(floatArrayOf(
+        44f, 44f,
+        44f, 44f,
+        0f, 0f,
+        0f, 0f
+    ), innerValueLabelRect, null) */
 
     private var textHeight = 0f
     private val textColor = ContextCompat.getColor(context, R.color.blue7)
@@ -94,8 +105,16 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
             drawRect(trackRect, trackPaint)
             drawRect(thumbRect, thumbPaint)
 
+            // Save the current canvas state
+            val save = canvas.save()
+            canvas.translate(100f, 100f)
+            valueLabel?.draw(this)
+            canvas.restoreToCount(save)
+
+
             if (thumbSelected) {
                 // TODO: Draw the value label
+                // valueLabel?.draw(this)
             }
         }
     }
@@ -112,7 +131,8 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     // fixme: test if the below is even necessary
     override fun getLayoutParams(): ViewGroup.LayoutParams {
         return super.getLayoutParams().apply {
-            width = trackAndThumbWidth
+           // Log.e("DEBUGGING", "Value label intrinsic width = ${valueLabel?.intrinsicWidth}")
+            width = 400 // trackAndThumbWidth // + (valueLabel?.intrinsicWidth ?: 0)
         }
     }
 
@@ -131,9 +151,10 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
                 thumbPaint.color = thumbOnColour
                 return true
             }
-            else -> {
+            MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP -> {
                 thumbSelected = false
                 thumbPaint.color = thumbOffColour
+                return true
             }
         }
 

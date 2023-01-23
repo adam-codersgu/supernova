@@ -7,9 +7,5 @@
         android:topRightRadius="44dp"
         android:bottomLeftRadius="44dp" />
 
-    <padding
-        android:paddingLeft="22dp"
-        android:paddingRight="22dp" />
-
     <solid android:color="@color/accent" />
 </shape>
