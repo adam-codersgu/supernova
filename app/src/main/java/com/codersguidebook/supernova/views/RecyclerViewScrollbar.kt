@@ -9,6 +9,7 @@ import android.graphics.Paint.ANTI_ALIAS_FLAG
 import android.graphics.Rect
 import android.util.AttributeSet
 import android.view.MotionEvent
+import android.view.MotionEvent.*
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
@@ -30,6 +31,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         - The scrollbar should hide upon scroll inactivity
         - The scrollbar should only respond to touch events when visible
         - Add custom properties as described here https://developer.android.com/develop/ui/views/layout/custom-views/create-view
+        - The properties should include those specified in the 'FOR LIBRARY RELEASE' comment
      */
 
     /*
@@ -37,7 +39,6 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         - It is often difficult to select the scrollbar. Maybe set the width of the scrollbar to larger than
         -   the width of the thumb/track? To avoid conflicts with the RecyclerView, it is important that the
         -   onTouch listener is only active when the scrollbar is visible.
-        - The active colour of the scrollbar thumb needs to reset when the thumb is released
      */
 
     /*
@@ -154,7 +155,8 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         val y = event?.y ?: 0f
 
         when (event?.action) {
-            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+            // Action down = 0; Action move = 2;
+            ACTION_DOWN, ACTION_MOVE -> {
                 recyclerViewContentHeight?.let { height ->
                     val scrollProportion = y / measuredHeight
                     val newScrollPosition = scrollProportion * height
@@ -164,9 +166,11 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
                 thumbPaint.color = thumbOnColour
                 return true
             }
-            MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP -> {
+            // Action cancel = 3; Action up = 1;
+            ACTION_CANCEL, ACTION_UP -> {
                 thumbSelected = false
                 thumbPaint.color = thumbOffColour
+                invalidate()
                 return true
             }
         }
