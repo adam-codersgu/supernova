@@ -79,8 +79,22 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         0f, 0f
     ), innerValueLabelRect, null) */
 
-    private val valueLabelWidthAndHeight = 50
-    private var valueLabelPath: Path? = null
+    private val valueLabelWidthAndHeight = 160f
+    private val valueLabelCornerOffset = valueLabelWidthAndHeight / 12
+    private val valueLabelCornerMidway = valueLabelCornerOffset / 3
+    private var valueLabelPath = Path().apply {
+        moveTo(valueLabelWidthAndHeight, valueLabelWidthAndHeight)
+        lineTo(valueLabelWidthAndHeight, 0f + valueLabelCornerOffset)
+
+        // Draw the top right corner
+        val topRightX1 = valueLabelWidthAndHeight - (valueLabelCornerOffset / 2)
+        val topRightX2 = valueLabelWidthAndHeight - valueLabelCornerOffset
+        val topRightY1 = 0f + valueLabelCornerMidway
+        quadTo(topRightX1, topRightY1, topRightX2, 0f)
+
+        // Draw the top left corner
+        lineTo(0f + valueLabelCornerOffset, 0f)
+    }
 
     private var textHeight = 0f
     private val textColor = ContextCompat.getColor(context, R.color.blue7)
@@ -110,11 +124,15 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         if (measuredHeight >= (recyclerViewContentHeight ?: measuredHeight)) return
 
         canvas.apply {
-            canvas.translate((width - trackAndThumbWidth).toFloat(), 0f)
-            // track?.draw(this)
-            // drawText("A", 10f, 10f, textPaint)
+            // Draw the track and thumb
+            val savedState = save()
+            translate((width - trackAndThumbWidth).toFloat(), 0f)
             drawRect(trackRect, trackPaint)
             drawRect(thumbRect, thumbPaint)
+            restoreToCount(savedState)
+
+            // track?.draw(this)
+            // drawText("A", 10f, 10f, textPaint)
 
             // Log.e("DEBUGGING", "The intrinsic height is ${valueLabel?.width}")// intrinsicWidth}")
             // Save the current canvas state
@@ -123,8 +141,6 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
             //drawBitmap(valueLabel, 0f, 0f, null)
             // valueLabel?.draw(this)
             // canvas.restoreToCount(save)
-
-            valueLabelPath?.let { path -> drawPath(path, thumbPaint) }
 
 
             if (thumbSelected) {
@@ -137,26 +153,22 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
                 // canvas.translate((width - trackAndThumbWidth).toFloat(), valueLabelWidthAndHeight.toFloat())
 
                 // drawPath(valueLabelPath, thumbPaint)
+
+                valueLabelPath?.let { path -> drawPath(path, thumbPaint) }
             }
         }
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        if (w != 0 && h != 0 && oldw == 0 && oldh == 0) {
+        if (w != 0 && h != 0) {
             trackRect.set(trackAndThumbWidth, 0, 0, h)
-
-            valueLabelPath = Path().apply {
-                moveTo(0f, 0f)
-                lineTo(0.1f * w, 0.5f * h)
-                lineTo(w.toFloat(), h.toFloat())
-            }
         }
     }
 
     override fun getLayoutParams(): ViewGroup.LayoutParams {
         return super.getLayoutParams().apply {
-            width = trackAndThumbWidth + valueLabelWidthAndHeight
+            width = trackAndThumbWidth + valueLabelWidthAndHeight.roundToInt()
         }
     }
 
