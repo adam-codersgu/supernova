@@ -67,34 +67,10 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     private var thumbRect = Rect(trackAndThumbWidth, 0, 0, getThumbHeight())
     private var thumbSelected = false
 
-    /* private val innerRectWidthHeight = 50
-    private val innerValueLabelRect = Rect(innerRectWidthHeight, 100, 100, innerRectWidthHeight)
-    private val valueLabel = ContextCompat.getDrawable(context, R.drawable.thumb)?.apply {
-        bounds = innerValueLabelRect
-    } */
-    /* private val valueLabelRoundRect = RoundRectShape(floatArrayOf(
-        44f, 44f,
-        44f, 44f,
-        0f, 0f,
-        0f, 0f
-    ), innerValueLabelRect, null) */
-
-    private val valueLabelWidthAndHeight = 160f
-    private val valueLabelCornerOffset = valueLabelWidthAndHeight / 12
-    private val valueLabelCornerMidway = valueLabelCornerOffset / 3
-    private var valueLabelPath = Path().apply {
-        moveTo(valueLabelWidthAndHeight, valueLabelWidthAndHeight)
-        lineTo(valueLabelWidthAndHeight, 0f + valueLabelCornerOffset)
-
-        // Draw the top right corner
-        val topRightX1 = valueLabelWidthAndHeight - (valueLabelCornerOffset / 2)
-        val topRightX2 = valueLabelWidthAndHeight - valueLabelCornerOffset
-        val topRightY1 = 0f + valueLabelCornerMidway
-        quadTo(topRightX1, topRightY1, topRightX2, 0f)
-
-        // Draw the top left corner
-        lineTo(0f + valueLabelCornerOffset, 0f)
-    }
+    private val valueLabelWidthAndHeight = 200f
+    private val valueLabelCornerOffset = valueLabelWidthAndHeight / 4
+    private val valueLabelCornerMidway = valueLabelCornerOffset / 5
+    private var valueLabelPath = updateValueLabelPath()
 
     private var textHeight = 0f
     private val textColor = ContextCompat.getColor(context, R.color.blue7)
@@ -131,30 +107,8 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
             drawRect(thumbRect, thumbPaint)
             restoreToCount(savedState)
 
-            // track?.draw(this)
-            // drawText("A", 10f, 10f, textPaint)
-
-            // Log.e("DEBUGGING", "The intrinsic height is ${valueLabel?.width}")// intrinsicWidth}")
-            // Save the current canvas state
-            // val save = canvas.save()
-            // canvas.translate(100f, 100f)
-            //drawBitmap(valueLabel, 0f, 0f, null)
-            // valueLabel?.draw(this)
-            // canvas.restoreToCount(save)
-
-
             if (thumbSelected) {
-                // TODO: Draw the value label
-                // valueLabel?.draw(this)
-
-                // TODO: Draw the value label
-                //  Need to also subtract the value label width from the X coordinate
-                //  Need to subtract the value label height (?) and scroll position (not so it goes off the screen) from the Y coordinate
-                // canvas.translate((width - trackAndThumbWidth).toFloat(), valueLabelWidthAndHeight.toFloat())
-
-                // drawPath(valueLabelPath, thumbPaint)
-
-                valueLabelPath?.let { path -> drawPath(path, thumbPaint) }
+                drawPath(valueLabelPath, thumbPaint)
             }
         }
     }
@@ -205,22 +159,81 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         recyclerViewContentHeight?.let { height ->
             // The scroll proportion will be between 0 (top) and 1 (bottom)
             val scrollProportion = recyclerViewScrollPosition.toFloat() / height
-            // The scroll position will be the height of the scrollbar * the scroll proportion
+            // The scroll position will be the height of the View * the scroll proportion
             val scrollPosition = measuredHeight * scrollProportion
 
-            // Update the y coordinate of the thumb to reflect the scroll position
-            // The y coordinate should not cause the thumb to go off the screen,
-            // and so maximum y coordinate values are provided as a fallback.
-            val maximumTopValue = measuredHeight - getThumbHeight()
-            val topValueToUse = if (scrollPosition > maximumTopValue) maximumTopValue
-            else scrollPosition.toInt()
+            updateThumbRect(scrollPosition)
+            if (thumbSelected) updateValueLabelPath(scrollPosition)
 
-            val proposedBottomValue = scrollPosition + getThumbHeight()
-            val bottomValueToUse = if (proposedBottomValue > measuredHeight) measuredHeight
-            else proposedBottomValue.toInt()
-
-            thumbRect.set(trackAndThumbWidth, topValueToUse, 0, bottomValueToUse)
             invalidate()
+        }
+    }
+
+    /**
+     * Update the scrollbar thumb's Rect coordinates to reflect the updated scroll position.
+     *
+     * @param scrollPosition The position on the Y axis that the thumb should be positioned.
+     */
+    private fun updateThumbRect(scrollPosition: Float) {
+        // Update the y coordinate of the thumb to reflect the scroll position
+        // The y coordinate should not cause the thumb to go off the screen,
+        // and so maximum y coordinate values are provided as a fallback.
+        val maximumTopValue = measuredHeight - getThumbHeight()
+        val topValueToUse = if (scrollPosition > maximumTopValue) maximumTopValue
+        else scrollPosition.toInt()
+
+        val proposedBottomValue = scrollPosition + getThumbHeight()
+        val bottomValueToUse = if (proposedBottomValue > measuredHeight) measuredHeight
+        else proposedBottomValue.toInt()
+
+        thumbRect.set(trackAndThumbWidth, topValueToUse, 0, bottomValueToUse)
+    }
+
+    /**
+     * Update the scrollbar value label's Path coordinates to reflect the updated scroll position.
+     *
+     * @param scrollPosition The position on the Y axis that the value label should be positioned.
+     * Default value = 0f.
+     */
+    private fun updateValueLabelPath(scrollPosition: Float = 0f): Path {
+        // TODO: This whole method needs to be rewritten. Note you need to take into account
+        //  the value label's dimensions and ensure it does not fall outside the View when drawn
+
+        /*
+        // Update the y coordinate of the thumb to reflect the scroll position
+        // The y coordinate should not cause the thumb to go off the screen,
+        // and so maximum y coordinate values are provided as a fallback.
+        val maximumTopValue = measuredHeight - getThumbHeight()
+        val topValueToUse = if (scrollPosition > maximumTopValue) maximumTopValue
+        else scrollPosition.toInt()
+
+        val proposedBottomValue = scrollPosition + getThumbHeight()
+        val bottomValueToUse = if (proposedBottomValue > measuredHeight) measuredHeight
+        else proposedBottomValue.toInt()
+
+        thumbRect.set(trackAndThumbWidth, topValueToUse, 0, bottomValueToUse)
+        */
+        return Path().apply {
+            moveTo(valueLabelWidthAndHeight, valueLabelWidthAndHeight)
+            lineTo(valueLabelWidthAndHeight, 0f + valueLabelCornerOffset)
+
+            // Draw the top right corner
+            val topRightX1 = valueLabelWidthAndHeight - (valueLabelCornerOffset / 2)
+            val topRightX2 = valueLabelWidthAndHeight - valueLabelCornerOffset
+            quadTo(topRightX1, valueLabelCornerMidway, topRightX2, 0f)
+
+            // Draw the top left corner
+            lineTo(valueLabelCornerOffset, 0f)
+            quadTo(valueLabelCornerMidway, valueLabelCornerMidway, 0f, valueLabelCornerOffset)
+
+            // Draw the bottom left corner
+            lineTo(0f, valueLabelWidthAndHeight - valueLabelCornerOffset)
+            val bottomLeftY1 = valueLabelWidthAndHeight - valueLabelCornerMidway
+            quadTo(valueLabelCornerMidway, bottomLeftY1, valueLabelCornerOffset, valueLabelWidthAndHeight)
+
+            // fixme: Is the below necessary?
+            // Complete the value label
+            lineTo(valueLabelWidthAndHeight, valueLabelWidthAndHeight)
         }
     }
 
