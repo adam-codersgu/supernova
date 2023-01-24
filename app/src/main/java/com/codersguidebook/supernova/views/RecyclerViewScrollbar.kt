@@ -2,11 +2,8 @@ package com.codersguidebook.supernova.views
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
+import android.graphics.*
 import android.graphics.Paint.ANTI_ALIAS_FLAG
-import android.graphics.Rect
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.MotionEvent.*
@@ -70,17 +67,20 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     private var thumbRect = Rect(trackAndThumbWidth, 0, 0, getThumbHeight())
     private var thumbSelected = false
 
-    private val innerRectWidthHeight = 50
+    /* private val innerRectWidthHeight = 50
     private val innerValueLabelRect = Rect(innerRectWidthHeight, 100, 100, innerRectWidthHeight)
     private val valueLabel = ContextCompat.getDrawable(context, R.drawable.thumb)?.apply {
         bounds = innerValueLabelRect
-    }
+    } */
     /* private val valueLabelRoundRect = RoundRectShape(floatArrayOf(
         44f, 44f,
         44f, 44f,
         0f, 0f,
         0f, 0f
     ), innerValueLabelRect, null) */
+
+    private val valueLabelWidthAndHeight = 50
+    private var valueLabelPath: Path? = null
 
     private var textHeight = 0f
     private val textColor = ContextCompat.getColor(context, R.color.blue7)
@@ -124,10 +124,19 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
             // valueLabel?.draw(this)
             // canvas.restoreToCount(save)
 
+            valueLabelPath?.let { path -> drawPath(path, thumbPaint) }
+
 
             if (thumbSelected) {
                 // TODO: Draw the value label
                 // valueLabel?.draw(this)
+
+                // TODO: Draw the value label
+                //  Need to also subtract the value label width from the X coordinate
+                //  Need to subtract the value label height (?) and scroll position (not so it goes off the screen) from the Y coordinate
+                // canvas.translate((width - trackAndThumbWidth).toFloat(), valueLabelWidthAndHeight.toFloat())
+
+                // drawPath(valueLabelPath, thumbPaint)
             }
         }
     }
@@ -135,18 +144,19 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         if (w != 0 && h != 0 && oldw == 0 && oldh == 0) {
-            // fixme: test if the below is even necessary
             trackRect.set(trackAndThumbWidth, 0, 0, h)
-            // fixme: if the height of the view changes, do we need to move the thumb?
+
+            valueLabelPath = Path().apply {
+                moveTo(0f, 0f)
+                lineTo(0.1f * w, 0.5f * h)
+                lineTo(w.toFloat(), h.toFloat())
+            }
         }
     }
 
-    // fixme: test if the below is even necessary
     override fun getLayoutParams(): ViewGroup.LayoutParams {
         return super.getLayoutParams().apply {
-           // Log.e("DEBUGGING", "Value label intrinsic width = ${valueLabel?.intrinsicWidth}")
-            // fixme
-            width = trackAndThumbWidth + 50 // + (valueLabel?.intrinsicWidth ?: 0)
+            width = trackAndThumbWidth + valueLabelWidthAndHeight
         }
     }
 
