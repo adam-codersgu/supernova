@@ -14,6 +14,7 @@ import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import com.codersguidebook.supernova.R
 import com.google.android.material.color.MaterialColors
+import kotlin.math.roundToInt
 
 class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
@@ -25,12 +26,10 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         -
         - When scrolling, a listener interface should tell the fragment the position to scroll to
         -   Need to make sure that there is not conflict with the onScrollListener
-        - For RecyclerView's who's content is not greater than the measuredHeight, the scrollbar should not be displayed. This could be evaluated in onDraw()?
-        - Need to adjust the thumb height dynamically based on the contents of the RecyclerView. It must have a minumum value
         - The scrollbar should be invisible by default and only appear when the user is scrolling the recycler view
         - The scrollbar should hide upon scroll inactivity
         - The scrollbar should only respond to touch events when visible
-        - The height of the thumb must never be greater than the height of the view
+        - Add custom properties as described here https://developer.android.com/develop/ui/views/layout/custom-views/create-view
      */
 
     /*
@@ -45,7 +44,13 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     FOR LIBRARY RELEASE:
        - Need to have the option to customise the colours of the scrollbar features (or at least match theme)
        - Also to customise the scrollbar (thumb + track) width
+       - Property to set the minimum thumb height
        - Look at sourcing all colours from the theme
+
+       BENEFITS OF THE LIBRARY:
+       - The scrollbar thumb always has a minimum height (unlike the default fast scroll thumb, which
+       can become too small when the RecyclerView has lots of content. This is a known issue that has been
+       unresolved for years https://issuetracker.google.com/issues/64729576)
      */
 
     private var listener: Listener? = null
@@ -66,7 +71,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
 
     private val innerRectWidthHeight = 50
     private val innerValueLabelRect = Rect(innerRectWidthHeight, 100, 100, innerRectWidthHeight)
-    private val valueLabel = ContextCompat.getDrawable(context, R.drawable.thumb_drawable)?.apply {
+    private val valueLabel = ContextCompat.getDrawable(context, R.drawable.thumb)?.apply {
         bounds = innerValueLabelRect
     }
     /* private val valueLabelRoundRect = RoundRectShape(floatArrayOf(
@@ -99,17 +104,24 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+
+        // If the RecyclerView is not larger than the View, then no need to display the scrollbar
+        if (measuredHeight >= (recyclerViewContentHeight ?: measuredHeight)) return
+
         canvas.apply {
+            canvas.translate((width - trackAndThumbWidth).toFloat(), 0f)
             // track?.draw(this)
             // drawText("A", 10f, 10f, textPaint)
             drawRect(trackRect, trackPaint)
             drawRect(thumbRect, thumbPaint)
 
+            // Log.e("DEBUGGING", "The intrinsic height is ${valueLabel?.width}")// intrinsicWidth}")
             // Save the current canvas state
-            val save = canvas.save()
-            canvas.translate(100f, 100f)
-            valueLabel?.draw(this)
-            canvas.restoreToCount(save)
+            // val save = canvas.save()
+            // canvas.translate(100f, 100f)
+            //drawBitmap(valueLabel, 0f, 0f, null)
+            // valueLabel?.draw(this)
+            // canvas.restoreToCount(save)
 
 
             if (thumbSelected) {
@@ -132,7 +144,8 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     override fun getLayoutParams(): ViewGroup.LayoutParams {
         return super.getLayoutParams().apply {
            // Log.e("DEBUGGING", "Value label intrinsic width = ${valueLabel?.intrinsicWidth}")
-            width = 400 // trackAndThumbWidth // + (valueLabel?.intrinsicWidth ?: 0)
+            // fixme
+            width = trackAndThumbWidth + 50 // + (valueLabel?.intrinsicWidth ?: 0)
         }
     }
 
@@ -192,10 +205,14 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
      * will always be equal to or greater than $minimumThumbHeight
      */
     private fun getThumbHeight(): Int {
-        // TODO: Need to update the thumb height to reflect the contents size of the RecyclerView
-        val thumbHeight = 0
-        return if (thumbHeight > minimumThumbHeight) thumbHeight
-        else minimumThumbHeight
+        val viewHeightProportionOfContentHeight = measuredHeight.toFloat() /
+                (recyclerViewContentHeight ?: measuredHeight)
+        val thumbHeight = measuredHeight * viewHeightProportionOfContentHeight
+        return when {
+            thumbHeight > measuredHeight -> measuredHeight
+            thumbHeight > minimumThumbHeight -> thumbHeight.roundToInt()
+            else -> minimumThumbHeight
+        }
     }
 
     /**
