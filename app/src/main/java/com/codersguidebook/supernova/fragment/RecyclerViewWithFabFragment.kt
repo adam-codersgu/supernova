@@ -41,12 +41,20 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment(), Recycler
         binding.scrollRecyclerView.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-                // fixme - Album with 10 songs is about 2000. SongsFragment is upwards of 65000
                 val contentSize = binding.scrollRecyclerView.recyclerView.computeVerticalScrollRange()
                 binding.scrollRecyclerView.seekBar.notifyRecyclerViewContentHeightChanged(contentSize)
 
                 val scrollPosition = binding.scrollRecyclerView.recyclerView.computeVerticalScrollOffset()
                 binding.scrollRecyclerView.seekBar.notifyRecyclerViewScrollPositionChanged(scrollPosition)
+
+                if (adapter is RecyclerViewScrollbar.ValueLabelListener) {
+                    val scrollProportion = scrollPosition.toFloat() / contentSize
+                    val activePosition = (scrollProportion * adapter.itemCount).roundToInt()
+
+                    val valueLabelText = (adapter as RecyclerViewScrollbar.ValueLabelListener)
+                        .getValueLabelText(activePosition)
+                    binding.scrollRecyclerView.seekBar.setValueLabelText(valueLabelText)
+                }
 
                 if (dy > 0 && binding.fab.visibility == View.VISIBLE) binding.fab.hide()
                 else if (dy < 0 && binding.fab.visibility != View.VISIBLE) binding.fab.show()

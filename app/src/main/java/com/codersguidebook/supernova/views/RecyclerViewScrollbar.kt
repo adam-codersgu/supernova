@@ -23,8 +23,6 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         - Set the width of the view
         - Only the track and thumb should respond to touch events. The identifier should not
         -
-        - When scrolling, a listener interface should tell the fragment the position to scroll to
-        -   Need to make sure that there is not conflict with the onScrollListener
         - The scrollbar should be invisible by default and only appear when the user is scrolling the recycler view
         - The scrollbar should hide upon scroll inactivity
         - The scrollbar should only respond to touch events when visible
@@ -45,8 +43,15 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
        - Also to customise the scrollbar (thumb + track) width
        - Property to set the minimum thumb height
        - Look at sourcing all colours from the theme
+       - Could we have some way of inherently linking the View to the RecyclerView (and its adapter)? E.g.
+       The RecyclerView instance could be passed to the View as a property (if this is possible)
+       The View could then check that the RV has an adapter
+       The adapter could then be checked to confirm it extends a given interface
+       The extended interface could include a mandatory abstract function with a signature like:
+       override fun getSectionName(position: Int): String
+       Which would tell the view what value label character to use
 
-       BENEFITS OF THE LIBRARY:
+    BENEFITS OF THE LIBRARY:
        - The scrollbar thumb always has a minimum height (unlike the default fast scroll thumb, which
        can become too small when the RecyclerView has lots of content. This is a known issue that has been
        unresolved for years https://issuetracker.google.com/issues/64729576)
@@ -69,6 +74,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     private var thumbSelected = false
 
     private val valueLabelWidthAndHeight = 200f
+    private var valueLabelText: String? = null
 
     private var textHeight = 0f
     private val textColor = ContextCompat.getColor(context, R.color.blue7)
@@ -105,6 +111,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
             drawRect(thumbRect, thumbPaint)
             restoreToCount(savedState)
 
+            // TODO: Also check that there is a value to display?
             if (thumbSelected) {
                 // Position the canvas so that the value label is drawn next to the center of the scrollbar
                 // thumb, except when doing so would cause the value label to fall outside the View.
@@ -113,8 +120,14 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
                 else scrollbarThumbCenterYCoordinate - valueLabelWidthAndHeight
 
                 translate(0f, yStartToUse)
-
                 drawPath(getValueLabelPath(), thumbPaint)
+
+                // Draw the appropriate value text for the position in the RecyclerView
+                // fixme: Should we subtract half the size of the text from the X and/or Y coordinates also?
+                valueLabelText?.let { text ->
+                    // fixme translate(valueLabelWidthAndHeight / 2, valueLabelWidthAndHeight / 2)
+                    drawText(text, valueLabelWidthAndHeight / 2, valueLabelWidthAndHeight / 2, textPaint)
+                }
             }
         }
     }
@@ -254,6 +267,17 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         updateScrollPosition()
     }
 
+    /**
+     * Set the text to display in the value label for a given scroll position.
+     * Often, the text will be a single character.
+     *
+     * @param text A String containing the text to display in the value label at
+     * a given scroll position.
+     */
+    fun setValueLabelText(text: String?) {
+        valueLabelText = text
+    }
+
     interface Listener {
         /**
          * A method called when the scrollbar thumb is being dragged.
@@ -265,5 +289,15 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
 
     fun setListener(listener: Listener) {
         this.listener = listener
+    }
+
+    interface ValueLabelListener {
+        /**
+         * Retrieves the text to display in the value label for a given RecyclerView position.
+         *
+         * @param position The active RecyclerView position.
+         * @return A String containing the text that should be
+         */
+        fun getValueLabelText(position: Int): String
     }
 }
