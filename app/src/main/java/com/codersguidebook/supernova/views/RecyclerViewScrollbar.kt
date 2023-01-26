@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import com.codersguidebook.supernova.R
 import com.google.android.material.color.MaterialColors
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -50,6 +51,8 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
        The extended interface could include a mandatory abstract function with a signature like:
        override fun getSectionName(position: Int): String
        Which would tell the view what value label character to use
+       - Will need to create a test app that uses the library and confirm it works as a standalone library
+       - There should be a minimum width of 200f for value label width property
 
     BENEFITS OF THE LIBRARY:
        - The scrollbar thumb always has a minimum height (unlike the default fast scroll thumb, which
@@ -68,6 +71,9 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     private val trackOffColour = ContextCompat.getColor(context, R.color.onSurface30)
     private var trackRect = Rect(trackAndThumbWidth, 0, 0, height)
 
+    // fixme: Could get all colours from theme then manually apply opacity numbers?
+    //  If this method is successful then could use this method across the entire application
+    //  Start off by logging the values for each variable (the int). Is it a hex code or something that can have opacity added?
     private val thumbOffColour = ContextCompat.getColor(context, R.color.onSurface84)
     private val thumbOnColour = MaterialColors.getColor(context, R.attr.colorSecondary, Color.CYAN)
     private var thumbRect = Rect(trackAndThumbWidth, 0, 0, getThumbHeight())
@@ -76,17 +82,12 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     private val valueLabelWidthAndHeight = 200f
     private var valueLabelText: String? = null
 
-    private var textHeight = 0f
-    private val textColor = ContextCompat.getColor(context, R.color.blue7)
+    private var textHeight = valueLabelWidthAndHeight / 2
+    private val textColor = MaterialColors.getColor(context, R.attr.textFillColor, Color.BLACK) // fixme ContextCompat.getColor(context, R.color.blue7)
 
     private val textPaint = Paint(ANTI_ALIAS_FLAG).apply {
         color = textColor
-        if (textHeight == 0f) {
-            // fixme: Logged 12.0
-            textHeight = textSize
-        } else {
-            textSize = textHeight
-        }
+        textSize = textHeight
     }
 
     private val trackPaint = Paint(ANTI_ALIAS_FLAG).apply {
@@ -111,7 +112,6 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
             drawRect(thumbRect, thumbPaint)
             restoreToCount(savedState)
 
-            // TODO: Also check that there is a value to display?
             if (thumbSelected) {
                 // Position the canvas so that the value label is drawn next to the center of the scrollbar
                 // thumb, except when doing so would cause the value label to fall outside the View.
@@ -123,10 +123,12 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
                 drawPath(getValueLabelPath(), thumbPaint)
 
                 // Draw the appropriate value text for the position in the RecyclerView
-                // fixme: Should we subtract half the size of the text from the X and/or Y coordinates also?
                 valueLabelText?.let { text ->
-                    // fixme translate(valueLabelWidthAndHeight / 2, valueLabelWidthAndHeight / 2)
-                    drawText(text, valueLabelWidthAndHeight / 2, valueLabelWidthAndHeight / 2, textPaint)
+                    // Need to offset the text so it is visible while scrolling, but no so much that it
+                    // falls outside the value label
+                    val proposedXOffset = (valueLabelWidthAndHeight / 2) - (trackAndThumbWidth * 3)
+                    val xOffsetToUse = max(proposedXOffset, (valueLabelWidthAndHeight / 10))
+                    drawText(text, xOffsetToUse, 0f, textPaint)
                 }
             }
         }
