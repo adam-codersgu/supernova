@@ -87,7 +87,9 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
 
     private val textPaint = Paint(ANTI_ALIAS_FLAG).apply {
         color = textColor
+        textAlign = Paint.Align.CENTER
         textSize = textHeight
+        style = Paint.Style.FILL
     }
 
     private val trackPaint = Paint(ANTI_ALIAS_FLAG).apply {
@@ -124,11 +126,15 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
 
                 // Draw the appropriate value text for the position in the RecyclerView
                 valueLabelText?.let { text ->
-                    // Need to offset the text so it is visible while scrolling, but no so much that it
+                    // Need to offset the text so it is visible while scrolling, but not so much that it
                     // falls outside the value label
+                    val textBound = Rect()
+                    textPaint.getTextBounds(text, 0, text.length, textBound)
+
                     val proposedXOffset = (valueLabelWidthAndHeight / 2) - (trackAndThumbWidth * 3)
                     val xOffsetToUse = max(proposedXOffset, (valueLabelWidthAndHeight / 10))
-                    drawText(text, xOffsetToUse, 0f, textPaint)
+                    val yOffsetToUse = textHeight // 2)*/
+                    drawText(text, xOffsetToUse, yOffsetToUse, textPaint)
                 }
             }
         }
@@ -224,10 +230,6 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
             lineTo(0f, valueLabelWidthAndHeight - valueLabelCornerOffset)
             val bottomLeftY1 = valueLabelWidthAndHeight - valueLabelCornerMidway
             quadTo(valueLabelCornerMidway, bottomLeftY1, valueLabelCornerOffset, valueLabelWidthAndHeight)
-
-            // fixme: Is the below necessary?
-            // Complete the value label
-            // lineTo(valueLabelWidthAndHeight, valueLabelWidthAndHeight)
         }
     }
 
