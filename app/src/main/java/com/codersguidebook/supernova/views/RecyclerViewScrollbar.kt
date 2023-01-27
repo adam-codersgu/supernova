@@ -132,7 +132,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
                     textPaint.getTextBounds(text, 0, text.length, textBound)
 
                     val proposedXOffset = (valueLabelWidthAndHeight / 2) - (trackAndThumbWidth * 3)
-                    val xOffsetToUse = max(proposedXOffset, (valueLabelWidthAndHeight / 10))
+                    val xOffsetToUse = max(proposedXOffset, (valueLabelWidthAndHeight / 4))
                     val yOffsetToUse = textHeight // 2)*/
                     drawText(text, xOffsetToUse, yOffsetToUse, textPaint)
                 }
