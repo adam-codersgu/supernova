@@ -20,7 +20,6 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
 
     /*
     TODO:
-        - Draw the scrollbar letter identifier
         - Set the width of the view
         - Only the track and thumb should respond to touch events. The identifier should not
         -
@@ -83,7 +82,8 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     private var valueLabelText: String? = null
 
     private var textHeight = valueLabelWidthAndHeight / 2
-    private val textColor = MaterialColors.getColor(context, R.attr.textFillColor, Color.BLACK) // fixme ContextCompat.getColor(context, R.color.blue7)
+    private val textColor = MaterialColors.getColor(context, R.attr.textFillColor, Color.BLACK)
+    private val textBounds = Rect()
 
     private val textPaint = Paint(ANTI_ALIAS_FLAG).apply {
         color = textColor
@@ -128,12 +128,9 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
                 valueLabelText?.let { text ->
                     // Need to offset the text so it is visible while scrolling, but not so much that it
                     // falls outside the value label
-                    val textBound = Rect()
-                    textPaint.getTextBounds(text, 0, text.length, textBound)
-
                     val proposedXOffset = (valueLabelWidthAndHeight / 2) - (trackAndThumbWidth * 3)
                     val xOffsetToUse = max(proposedXOffset, (valueLabelWidthAndHeight / 4))
-                    val yOffsetToUse = textHeight // 2)*/
+                    val yOffsetToUse = (valueLabelWidthAndHeight / 2) - (textBounds.top / 2)
                     drawText(text, xOffsetToUse, yOffsetToUse, textPaint)
                 }
             }
@@ -280,6 +277,8 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
      */
     fun setValueLabelText(text: String?) {
         valueLabelText = text
+        // Transmit the Rect bounds of the value label text to the textBounds variable.
+        textPaint.getTextBounds(text, 0, (text?.length ?: 0), textBounds)
     }
 
     interface Listener {
