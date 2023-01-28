@@ -1,5 +1,7 @@
 package com.codersguidebook.supernova.views
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
@@ -100,6 +102,13 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         color = thumbOffColour
     }
 
+    private val animationDuration = context.resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        visibility = INVISIBLE
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
@@ -171,6 +180,17 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
                 thumbSelected = false
                 thumbPaint.color = thumbOffColour
                 invalidate()
+
+                // fixme: Will likely need to sleep before performing this action (if possible?)
+                animate()
+                    .alpha(0f)
+                    .setDuration(animationDuration)
+                    .setListener(object : AnimatorListenerAdapter() {
+                        override fun onAnimationEnd(animation: Animator) {
+                            visibility = INVISIBLE
+                        }
+                    })
+
                 return true
             }
         }

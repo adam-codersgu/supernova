@@ -3,6 +3,7 @@ package com.codersguidebook.supernova.fragment
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -41,6 +42,10 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment(), Recycler
         binding.scrollRecyclerView.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
+
+                // fixme: Need to refine the methodology of this e.g. use setVisibility
+                binding.scrollRecyclerView.seekBar.visibility = VISIBLE
+
                 val contentSize = binding.scrollRecyclerView.recyclerView.computeVerticalScrollRange()
                 binding.scrollRecyclerView.seekBar.notifyRecyclerViewContentHeightChanged(contentSize)
 
@@ -56,8 +61,8 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment(), Recycler
                     binding.scrollRecyclerView.seekBar.setValueLabelText(valueLabelText)
                 }
 
-                if (dy > 0 && binding.fab.visibility == View.VISIBLE) binding.fab.hide()
-                else if (dy < 0 && binding.fab.visibility != View.VISIBLE) binding.fab.show()
+                if (dy > 0 && binding.fab.visibility == VISIBLE) binding.fab.hide()
+                else if (dy < 0 && binding.fab.visibility != VISIBLE) binding.fab.show()
             }
         })
     }
