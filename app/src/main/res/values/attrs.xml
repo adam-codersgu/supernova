@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="RecyclerViewScrollbar">
+        <attr name="thumbAndTrackWidth" format="dimension|enum" />
+        <attr name="thumbMinHeight" format="dimension|enum" />
+        <attr name="thumbOffColor" format="reference|color" />
+        <attr name="thumbOnColor" format="reference|color" />=
+
+        <attr name="valueLabelBackgroundColor" format="reference|color" />
+        <attr name="valueLabelTextColor" format="reference|color" />
+        <attr name="valueLabelWidth" format="dimension|enum" />
+
+
+        <!-- <attr name="showText" format="boolean" />
+        <attr name="labelPosition" format="enum">
+            <enum name="left" value="0"/>
+            <enum name="right" value="1"/>
+        </attr> -->
+    </declare-styleable>
+</resources>

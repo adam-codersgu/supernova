@@ -29,7 +29,6 @@
         android:layout_height="match_parent"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
-    <!-- android:progressDrawable="@drawable/seekbar_drawable" -->
     <com.codersguidebook.supernova.views.RecyclerViewScrollbar
         android:id="@+id/seekBar"
         android:layout_width="wrap_content"

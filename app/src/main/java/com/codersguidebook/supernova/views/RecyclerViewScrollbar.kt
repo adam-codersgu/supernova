@@ -18,44 +18,40 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
+/**
+ * A custom View that displays a scrollbar for RecyclerView widgets. The scrollbar features a draggable thumb
+ * and value label.
+ *
+ *   FOR LIBRARY RELEASE:
+ *   - Look at sourcing all colours from the theme
+ *   - Could we have some way of inherently linking the View to the RecyclerView (and its adapter)? E.g.
+ *   The RecyclerView instance could be passed to the View as a property (if this is possible)
+ *   The View could then check that the RV has an adapter
+ *   The adapter could then be checked to confirm it extends a given interface
+ *   The extended interface could include a mandatory abstract function with a signature like:
+ *   override fun getSectionName(position: Int): String
+ *   Which would tell the view what value label character to use
+ *   - Will need to create a test app that uses the library and confirm it works as a standalone library
+ *   - There should be a minimum width of 200f for value label width property
+ *
+ *   BENEFITS OF THE LIBRARY:
+ *   - The scrollbar thumb always has a minimum height (unlike the default fast scroll thumb, which
+ *   can become too small when the RecyclerView has lots of content. This is a known issue that has been
+ *   unresolved for years https://issuetracker.google.com/issues/64729576)
+ *
+ * @constructor Construct an instance of the scrollbar by supplying the context and attribute set required
+ * for the layout editor to manage the View.
+ *
+ * @param context The context in which the scrollbar is being loaded (Application context is sufficient)
+ * @param attrs An attribute set for customising the scrollbar View.
+ */
 class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     /*
     TODO:
-        - Set the width of the view
-        - Only the track and thumb should respond to touch events. The identifier should not
-        -
         - Add custom properties as described here https://developer.android.com/develop/ui/views/layout/custom-views/create-view
         - The properties should include those specified in the 'FOR LIBRARY RELEASE' comment
-     */
-
-    /*
-    FIXME BUGS
-        - It is often difficult to select the scrollbar. Maybe set the width of the scrollbar to larger than
-        -   the width of the thumb/track? To avoid conflicts with the RecyclerView, it is important that the
-        -   onTouch listener is only active when the scrollbar is visible.
-     */
-
-    /*
-    FOR LIBRARY RELEASE:
-       - Need to have the option to customise the colours of the scrollbar features (or at least match theme)
-       - Also to customise the scrollbar (thumb + track) width
-       - Property to set the minimum thumb height
-       - Look at sourcing all colours from the theme
-       - Could we have some way of inherently linking the View to the RecyclerView (and its adapter)? E.g.
-       The RecyclerView instance could be passed to the View as a property (if this is possible)
-       The View could then check that the RV has an adapter
-       The adapter could then be checked to confirm it extends a given interface
-       The extended interface could include a mandatory abstract function with a signature like:
-       override fun getSectionName(position: Int): String
-       Which would tell the view what value label character to use
-       - Will need to create a test app that uses the library and confirm it works as a standalone library
-       - There should be a minimum width of 200f for value label width property
-
-    BENEFITS OF THE LIBRARY:
-       - The scrollbar thumb always has a minimum height (unlike the default fast scroll thumb, which
-       can become too small when the RecyclerView has lots of content. This is a known issue that has been
-       unresolved for years https://issuetracker.google.com/issues/64729576)
+        - Each property needs to be tested when assigning values
      */
 
     private var listener: Listener? = null
