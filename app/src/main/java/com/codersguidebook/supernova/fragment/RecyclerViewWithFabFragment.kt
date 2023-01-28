@@ -43,9 +43,6 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment(), Recycler
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
 
-                // fixme: Need to refine the methodology of this e.g. use setVisibility
-                binding.scrollRecyclerView.seekBar.visibility = VISIBLE
-
                 val contentSize = binding.scrollRecyclerView.recyclerView.computeVerticalScrollRange()
                 binding.scrollRecyclerView.seekBar.notifyRecyclerViewContentHeightChanged(contentSize)
 

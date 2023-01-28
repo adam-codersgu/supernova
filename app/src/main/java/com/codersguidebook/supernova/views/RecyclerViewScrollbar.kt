@@ -25,9 +25,6 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         - Set the width of the view
         - Only the track and thumb should respond to touch events. The identifier should not
         -
-        - The scrollbar should be invisible by default and only appear when the user is scrolling the recycler view
-        - The scrollbar should hide upon scroll inactivity
-        - The scrollbar should only respond to touch events when visible
         - Add custom properties as described here https://developer.android.com/develop/ui/views/layout/custom-views/create-view
         - The properties should include those specified in the 'FOR LIBRARY RELEASE' comment
      */
@@ -102,11 +99,41 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         color = thumbOffColour
     }
 
-    private val animationDuration = context.resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
+    private val animationDuration = context.resources
+        .getInteger(android.R.integer.config_mediumAnimTime).toLong()
+
+    var lastActionNanoTime = System.nanoTime()
+
+    private var fadeOutScrollbarRunnable = object : Runnable {
+        override fun run() {
+            val timeElapsed = System.nanoTime() - lastActionNanoTime
+            try {
+                // If the scrollbar thumb is not selected and one second has passed then hide the thumb
+                if (!thumbSelected && timeElapsed >= 1000000000) {
+                    animate()
+                        .alpha(0f)
+                        .setDuration(animationDuration)
+                        .setListener(object : AnimatorListenerAdapter() {
+                            override fun onAnimationEnd(animation: Animator) {
+                                visibility = INVISIBLE
+                            }
+                        })
+                }
+            } finally {
+                handler.postDelayed(this, 1000L)
+            }
+        }
+    }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         visibility = INVISIBLE
+        fadeOutScrollbarRunnable.run()
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        handler.removeCallbacks(fadeOutScrollbarRunnable)
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -123,7 +150,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
             drawRect(thumbRect, thumbPaint)
             restoreToCount(savedState)
 
-            if (thumbSelected) {
+            if (thumbSelected && valueLabelText != null) {
                 // Position the canvas so that the value label is drawn next to the center of the scrollbar
                 // thumb, except when doing so would cause the value label to fall outside the View.
                 val scrollbarThumbCenterYCoordinate = (thumbRect.height().toFloat() / 2) + thumbRect.top
@@ -159,6 +186,11 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         }
     }
 
+    override fun setVisibility(visibility: Int) {
+        super.setVisibility(visibility)
+        if (visibility == VISIBLE) alpha = 1f
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         val y = event?.y ?: 0f
@@ -166,6 +198,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         when (event?.action) {
             // Action down = 0; Action move = 2;
             ACTION_DOWN, ACTION_MOVE -> {
+                visibility = VISIBLE
                 recyclerViewContentHeight?.let { height ->
                     val scrollProportion = y / measuredHeight
                     val newScrollPosition = scrollProportion * height
@@ -180,17 +213,6 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
                 thumbSelected = false
                 thumbPaint.color = thumbOffColour
                 invalidate()
-
-                // fixme: Will likely need to sleep before performing this action (if possible?)
-                animate()
-                    .alpha(0f)
-                    .setDuration(animationDuration)
-                    .setListener(object : AnimatorListenerAdapter() {
-                        override fun onAnimationEnd(animation: Animator) {
-                            visibility = INVISIBLE
-                        }
-                    })
-
                 return true
             }
         }
@@ -201,6 +223,8 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     /** Move the thumb along the track to reflect the RecyclerView scroll position */
     private fun updateScrollPosition() {
         recyclerViewContentHeight?.let { height ->
+            visibility = VISIBLE
+
             // The scroll proportion will be between 0 (top) and 1 (bottom)
             val scrollProportion = recyclerViewScrollPosition.toFloat() / height
             // The scroll position will be the height of the View * the scroll proportion
@@ -218,6 +242,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
             thumbRect.set(trackAndThumbWidth, topValueToUse, 0, bottomValueToUse)
 
             invalidate()
+            lastActionNanoTime = System.nanoTime()
         }
     }
 
