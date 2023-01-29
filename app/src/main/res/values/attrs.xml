@@ -4,7 +4,9 @@
         <attr name="thumbAndTrackWidth" format="dimension" />
         <attr name="thumbMinHeight" format="dimension" />
         <attr name="thumbOffColor" format="reference|color" />
-        <attr name="thumbOnColor" format="reference|color" />=
+        <attr name="thumbOnColor" format="reference|color" />
+
+        <attr name="trackColor" format="reference|color" />
 
         <attr name="valueLabelBackgroundColor" format="reference|color" />
         <attr name="valueLabelTextColor" format="reference|color" />

@@ -7,7 +7,6 @@ import android.content.Context
 import android.graphics.*
 import android.graphics.Paint.ANTI_ALIAS_FLAG
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.MotionEvent.*
 import android.view.View
@@ -49,7 +48,8 @@ import kotlin.math.roundToInt
 class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     companion object {
-        const val DEFAULT_VALUE_LABEL_WIDTH = 200F
+        const val DEFAULT_VALUE_LABEL_WIDTH = 200f
+        const val DEFAULT_THUMB_AND_TRACK_WIDTH = 25f
     }
 
     /*
@@ -64,25 +64,23 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     private var recyclerViewContentHeight: Int? = null
     private var recyclerViewScrollPosition = 0
 
-    private val trackAndThumbWidth = 25
-    private val minimumThumbHeight = trackAndThumbWidth * 4
-
+    private val thumbAndTrackWidth: Int
     private val trackOffColour = ContextCompat.getColor(context, R.color.onSurface30)
-    private var trackRect = Rect(trackAndThumbWidth, 0, 0, height)
+    private var trackRect = Rect()
 
     // fixme: Could get all colours from theme then manually apply opacity numbers?
     //  If this method is successful then could use this method across the entire application
     //  Start off by logging the values for each variable (the int). Is it a hex code or something that can have opacity added?
     private val thumbOffColour = ContextCompat.getColor(context, R.color.onSurface84)
     private val thumbOnColour: Int
-    private var thumbRect = Rect(trackAndThumbWidth, 0, 0, getThumbHeight())
+    private val thumbMinHeight: Int
+    private var thumbRect = Rect()
     private var thumbSelected = false
 
     private var valueLabelWidth: Float
     private var valueLabelText: String? = null
 
     private val textBounds = Rect()
-
     private val textPaint = Paint(ANTI_ALIAS_FLAG)
 
     private val trackPaint = Paint(ANTI_ALIAS_FLAG).apply {
@@ -126,14 +124,23 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
             attrs, R.styleable.RecyclerViewScrollbar, 0, 0).apply {
 
             try {
-                valueLabelWidth = getDimension(R.styleable.RecyclerViewScrollbar_valueLabelWidth,
-                    DEFAULT_VALUE_LABEL_WIDTH)
+                thumbAndTrackWidth = getDimension(R.styleable.RecyclerViewScrollbar_thumbAndTrackWidth,
+                    DEFAULT_THUMB_AND_TRACK_WIDTH).roundToInt()
 
+                thumbMinHeight = getDimension(R.styleable.RecyclerViewScrollbar_thumbMinHeight,
+                    thumbAndTrackWidth * 4f).roundToInt()
+               // val defaultThumbOffColour = MaterialColors.getColor(context, R.attr.colorSecondary, Color.CYAN)
+               // thumbOnColour = getInt(R.styleable.RecyclerViewScrollbar_thumbOnColor, defaultThumbOnColour)
                 val defaultThumbOnColour = MaterialColors.getColor(context, R.attr.colorSecondary, Color.CYAN)
                 thumbOnColour = getInt(R.styleable.RecyclerViewScrollbar_thumbOnColor, defaultThumbOnColour)
 
+                valueLabelWidth = getDimension(R.styleable.RecyclerViewScrollbar_valueLabelWidth,
+                    DEFAULT_VALUE_LABEL_WIDTH)
+                valueLabelPaint.apply {
+                    color = getInt(R.styleable.RecyclerViewScrollbar_valueLabelBackgroundColor, defaultThumbOnColour)
+                }
+
                 val defaultTextColour = MaterialColors.getColor(context, R.attr.textFillColor, Color.BLACK)
-                Log.e("DEBUGGING", "The text colour $defaultTextColour")
                 textPaint.apply {
                     color = getInt(R.styleable.RecyclerViewScrollbar_valueLabelTextColor, defaultTextColour)
                     style = Paint.Style.FILL
@@ -143,11 +150,10 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
                 }
 
 
-                /* <attr name="thumbAndTrackWidth" format="dimension|enum" />
-                <attr name="thumbMinHeight" format="dimension|enum" />
+                /*
                 <attr name="thumbOffColor" format="reference|color" />
 
-                <attr name="valueLabelBackgroundColor" format="reference|color" />*/
+                trackColour*/
 
             } finally {
                 recycle()
@@ -175,7 +181,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         canvas.apply {
             // Draw the track and thumb
             val savedState = save()
-            translate((width - trackAndThumbWidth).toFloat(), 0f)
+            translate((width - thumbAndTrackWidth).toFloat(), 0f)
             drawRect(trackRect, trackPaint)
             drawRect(thumbRect, thumbPaint)
             restoreToCount(savedState)
@@ -194,7 +200,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
                 valueLabelText?.let { text ->
                     // Need to offset the text so it is visible while scrolling, but not so much that it
                     // falls outside the value label
-                    val proposedXOffset = (valueLabelWidth / 2) - (trackAndThumbWidth * 3)
+                    val proposedXOffset = (valueLabelWidth / 2) - (thumbAndTrackWidth * 3)
                     val xOffsetToUse = max(proposedXOffset, (valueLabelWidth / 4))
                     val yOffsetToUse = (valueLabelWidth / 2) - (textBounds.top / 2)
                     drawText(text, xOffsetToUse, yOffsetToUse, textPaint)
@@ -206,13 +212,14 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         if (w != 0 && h != 0) {
-            trackRect.set(trackAndThumbWidth, 0, 0, h)
+            trackRect.set(thumbAndTrackWidth, 0, 0, h)
+            thumbRect.set(thumbAndTrackWidth, 0, 0, getThumbHeight())
         }
     }
 
     override fun getLayoutParams(): ViewGroup.LayoutParams {
         return super.getLayoutParams().apply {
-            width = trackAndThumbWidth + valueLabelWidth.roundToInt()
+            width = thumbAndTrackWidth + valueLabelWidth.roundToInt()
         }
     }
 
@@ -269,7 +276,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
             val proposedBottomValue = scrollPosition + getThumbHeight()
             val bottomValueToUse = min(proposedBottomValue.toInt(), measuredHeight)
 
-            thumbRect.set(trackAndThumbWidth, topValueToUse, 0, bottomValueToUse)
+            thumbRect.set(thumbAndTrackWidth, topValueToUse, 0, bottomValueToUse)
 
             invalidate()
             lastActionNanoTime = System.nanoTime()
@@ -317,8 +324,8 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         val thumbHeight = measuredHeight * viewHeightProportionOfContentHeight
         return when {
             thumbHeight > measuredHeight -> measuredHeight
-            thumbHeight > minimumThumbHeight -> thumbHeight.roundToInt()
-            else -> minimumThumbHeight
+            thumbHeight > thumbMinHeight -> thumbHeight.roundToInt()
+            else -> thumbMinHeight
         }
     }
 
