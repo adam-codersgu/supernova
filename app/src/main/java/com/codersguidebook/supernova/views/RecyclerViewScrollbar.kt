@@ -7,6 +7,7 @@ import android.content.Context
 import android.graphics.*
 import android.graphics.Paint.ANTI_ALIAS_FLAG
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.MotionEvent.*
 import android.view.View
@@ -47,6 +48,10 @@ import kotlin.math.roundToInt
  */
 class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
+    companion object {
+        const val DEFAULT_VALUE_LABEL_WIDTH = 200F
+    }
+
     /*
     TODO:
         - Add custom properties as described here https://developer.android.com/develop/ui/views/layout/custom-views/create-view
@@ -69,23 +74,16 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     //  If this method is successful then could use this method across the entire application
     //  Start off by logging the values for each variable (the int). Is it a hex code or something that can have opacity added?
     private val thumbOffColour = ContextCompat.getColor(context, R.color.onSurface84)
-    private val thumbOnColour = MaterialColors.getColor(context, R.attr.colorSecondary, Color.CYAN)
+    private val thumbOnColour: Int
     private var thumbRect = Rect(trackAndThumbWidth, 0, 0, getThumbHeight())
     private var thumbSelected = false
 
-    private val valueLabelWidthAndHeight = 200f
+    private var valueLabelWidth: Float
     private var valueLabelText: String? = null
 
-    private var textHeight = valueLabelWidthAndHeight / 2
-    private val textColor = MaterialColors.getColor(context, R.attr.textFillColor, Color.BLACK)
     private val textBounds = Rect()
 
-    private val textPaint = Paint(ANTI_ALIAS_FLAG).apply {
-        color = textColor
-        textAlign = Paint.Align.CENTER
-        textSize = textHeight
-        style = Paint.Style.FILL
-    }
+    private val textPaint = Paint(ANTI_ALIAS_FLAG)
 
     private val trackPaint = Paint(ANTI_ALIAS_FLAG).apply {
         color = trackOffColour
@@ -94,6 +92,8 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     private val thumbPaint = Paint(ANTI_ALIAS_FLAG).apply {
         color = thumbOffColour
     }
+
+    private val valueLabelPaint = Paint(ANTI_ALIAS_FLAG)
 
     private val animationDuration = context.resources
         .getInteger(android.R.integer.config_mediumAnimTime).toLong()
@@ -117,6 +117,40 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
                 }
             } finally {
                 handler.postDelayed(this, 1000L)
+            }
+        }
+    }
+
+    init {
+        context.theme.obtainStyledAttributes(
+            attrs, R.styleable.RecyclerViewScrollbar, 0, 0).apply {
+
+            try {
+                valueLabelWidth = getDimension(R.styleable.RecyclerViewScrollbar_valueLabelWidth,
+                    DEFAULT_VALUE_LABEL_WIDTH)
+
+                val defaultThumbOnColour = MaterialColors.getColor(context, R.attr.colorSecondary, Color.CYAN)
+                thumbOnColour = getInt(R.styleable.RecyclerViewScrollbar_thumbOnColor, defaultThumbOnColour)
+
+                val defaultTextColour = MaterialColors.getColor(context, R.attr.textFillColor, Color.BLACK)
+                Log.e("DEBUGGING", "The text colour $defaultTextColour")
+                textPaint.apply {
+                    color = getInt(R.styleable.RecyclerViewScrollbar_valueLabelTextColor, defaultTextColour)
+                    style = Paint.Style.FILL
+                    textAlign = Paint.Align.CENTER
+                    textSize = getDimension(R.styleable.RecyclerViewScrollbar_valueLabelTextSize,
+                        valueLabelWidth / 2)
+                }
+
+
+                /* <attr name="thumbAndTrackWidth" format="dimension|enum" />
+                <attr name="thumbMinHeight" format="dimension|enum" />
+                <attr name="thumbOffColor" format="reference|color" />
+
+                <attr name="valueLabelBackgroundColor" format="reference|color" />*/
+
+            } finally {
+                recycle()
             }
         }
     }
@@ -150,19 +184,19 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
                 // Position the canvas so that the value label is drawn next to the center of the scrollbar
                 // thumb, except when doing so would cause the value label to fall outside the View.
                 val scrollbarThumbCenterYCoordinate = (thumbRect.height().toFloat() / 2) + thumbRect.top
-                val yStartToUse = if (valueLabelWidthAndHeight > scrollbarThumbCenterYCoordinate) 0f
-                else scrollbarThumbCenterYCoordinate - valueLabelWidthAndHeight
+                val yStartToUse = if (valueLabelWidth > scrollbarThumbCenterYCoordinate) 0f
+                else scrollbarThumbCenterYCoordinate - valueLabelWidth
 
                 translate(0f, yStartToUse)
-                drawPath(getValueLabelPath(), thumbPaint)
+                drawPath(getValueLabelPath(), valueLabelPaint)
 
                 // Draw the appropriate value text for the position in the RecyclerView
                 valueLabelText?.let { text ->
                     // Need to offset the text so it is visible while scrolling, but not so much that it
                     // falls outside the value label
-                    val proposedXOffset = (valueLabelWidthAndHeight / 2) - (trackAndThumbWidth * 3)
-                    val xOffsetToUse = max(proposedXOffset, (valueLabelWidthAndHeight / 4))
-                    val yOffsetToUse = (valueLabelWidthAndHeight / 2) - (textBounds.top / 2)
+                    val proposedXOffset = (valueLabelWidth / 2) - (trackAndThumbWidth * 3)
+                    val xOffsetToUse = max(proposedXOffset, (valueLabelWidth / 4))
+                    val yOffsetToUse = (valueLabelWidth / 2) - (textBounds.top / 2)
                     drawText(text, xOffsetToUse, yOffsetToUse, textPaint)
                 }
             }
@@ -178,7 +212,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
 
     override fun getLayoutParams(): ViewGroup.LayoutParams {
         return super.getLayoutParams().apply {
-            width = trackAndThumbWidth + valueLabelWidthAndHeight.roundToInt()
+            width = trackAndThumbWidth + valueLabelWidth.roundToInt()
         }
     }
 
@@ -248,16 +282,16 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
      * @return A Path object that draws the value label.
      */
     private fun getValueLabelPath(): Path {
-        val valueLabelCornerOffset = valueLabelWidthAndHeight / 4
+        val valueLabelCornerOffset = valueLabelWidth / 4
         val valueLabelCornerMidway = valueLabelCornerOffset / 5
 
         return Path().apply {
-            moveTo(valueLabelWidthAndHeight, valueLabelWidthAndHeight)
-            lineTo(valueLabelWidthAndHeight, valueLabelCornerOffset)
+            moveTo(valueLabelWidth, valueLabelWidth)
+            lineTo(valueLabelWidth, valueLabelCornerOffset)
 
             // Draw the top right corner
-            val topRightX1 = valueLabelWidthAndHeight - valueLabelCornerMidway
-            val topRightX2 = valueLabelWidthAndHeight - valueLabelCornerOffset
+            val topRightX1 = valueLabelWidth - valueLabelCornerMidway
+            val topRightX2 = valueLabelWidth - valueLabelCornerOffset
             quadTo(topRightX1, valueLabelCornerMidway, topRightX2, 0f)
 
             // Draw the top left corner
@@ -265,9 +299,9 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
             quadTo(valueLabelCornerMidway, valueLabelCornerMidway, 0f, valueLabelCornerOffset)
 
             // Draw the bottom left corner
-            lineTo(0f, valueLabelWidthAndHeight - valueLabelCornerOffset)
-            val bottomLeftY1 = valueLabelWidthAndHeight - valueLabelCornerMidway
-            quadTo(valueLabelCornerMidway, bottomLeftY1, valueLabelCornerOffset, valueLabelWidthAndHeight)
+            lineTo(0f, valueLabelWidth - valueLabelCornerOffset)
+            val bottomLeftY1 = valueLabelWidth - valueLabelCornerMidway
+            quadTo(valueLabelCornerMidway, bottomLeftY1, valueLabelCornerOffset, valueLabelWidth)
         }
     }
 

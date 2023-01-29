@@ -2,6 +2,7 @@
 <resources>
     <color name="accent">#84C9FB</color>
     <color name="accent12">#1F84C9FB</color>
+    <color name="onSurface">#FFFFFF</color>
     <color name="onSurface30">#4DFFFFFF</color>
     <color name="onSurface60">#99FFFFFF</color>
     <color name="onSurface84">#D6FFFFFF</color>
