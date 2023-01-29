@@ -28,6 +28,7 @@ abstract class RecyclerViewFragment: BaseRecyclerViewFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // fixme: see if you can add layout manager to the xml layout directly? incl. for all affected areas
         binding.root.layoutManager = LinearLayoutManager(mainActivity)
         binding.root.itemAnimator = DefaultItemAnimator()
     }

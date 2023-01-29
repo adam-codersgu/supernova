@@ -29,6 +29,8 @@ import kotlin.math.roundToInt
  *   The extended interface could include a mandatory abstract function with a signature like:
  *   override fun getSectionName(position: Int): String
  *   Which would tell the view what value label character to use
+ *   Could have the addOnScrollListener object in an interface that is packaged in the library
+ *   and made available to any class (i.e. fragment) that extends it
  *   - Will need to create a test app that uses the library and confirm it works as a standalone library
  *
  *  BENEFITS OF THE LIBRARY:

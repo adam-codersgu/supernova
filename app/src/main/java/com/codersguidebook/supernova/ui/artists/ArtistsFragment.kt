@@ -13,7 +13,7 @@ class ArtistsFragment : RecyclerViewWithScrollFragment() {
     override lateinit var adapter: ArtistsAdapter
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        // super.onViewCreated(view, savedInstanceState)
+        super.onViewCreated(view, savedInstanceState)
 
         musicLibraryViewModel.allArtists.observe(viewLifecycleOwner) {
             updateRecyclerView(it)

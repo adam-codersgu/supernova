@@ -6,7 +6,6 @@ import android.view.View
 import android.view.View.VISIBLE
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DefaultItemAnimator
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
@@ -35,7 +34,6 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment(), Recycler
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.scrollRecyclerView.recyclerView.layoutManager = LinearLayoutManager(mainActivity)
         binding.scrollRecyclerView.recyclerView.itemAnimator = DefaultItemAnimator()
         binding.scrollRecyclerView.seekBar.setListener(this)
 

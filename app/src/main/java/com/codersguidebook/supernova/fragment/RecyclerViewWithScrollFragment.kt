@@ -5,10 +5,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.databinding.ScrollRecyclerViewBinding
+import com.codersguidebook.supernova.views.RecyclerViewScrollbar
+import kotlin.math.roundToInt
 
-abstract class RecyclerViewWithScrollFragment: BaseRecyclerViewFragment() {
+abstract class RecyclerViewWithScrollFragment: BaseRecyclerViewFragment(), RecyclerViewScrollbar.Listener {
 
     override var _binding: ViewBinding? = null
         get() = field as ScrollRecyclerViewBinding?
@@ -20,19 +23,36 @@ abstract class RecyclerViewWithScrollFragment: BaseRecyclerViewFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        initialiseAdapter()
-        _binding = ScrollRecyclerViewBinding.inflate(inflater, container, false).apply {
-            recyclerView.adapter = adapter
-        }
+        _binding = ScrollRecyclerViewBinding.inflate(inflater, container, false)
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // fixme: see if you can add layout manager to the xml layout directly?
-        // binding.recyclerView.layoutManager = LinearLayoutManager(mainActivity)
         binding.recyclerView.itemAnimator = DefaultItemAnimator()
+        binding.seekBar.setListener(this)
+
+        binding.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+
+                val contentSize = binding.recyclerView.computeVerticalScrollRange()
+                binding.seekBar.notifyRecyclerViewContentHeightChanged(contentSize)
+
+                val scrollPosition = binding.recyclerView.computeVerticalScrollOffset()
+                binding.seekBar.notifyRecyclerViewScrollPositionChanged(scrollPosition)
+
+                if (adapter is RecyclerViewScrollbar.ValueLabelListener) {
+                    val scrollProportion = scrollPosition.toFloat() / contentSize
+                    val activePosition = (scrollProportion * adapter.itemCount).roundToInt()
+
+                    val valueLabelText = (adapter as RecyclerViewScrollbar.ValueLabelListener)
+                        .getValueLabelText(activePosition)
+                    binding.seekBar.setValueLabelText(valueLabelText)
+                }
+            }
+        })
     }
 
     fun finishUpdate() {
@@ -42,10 +62,13 @@ abstract class RecyclerViewWithScrollFragment: BaseRecyclerViewFragment() {
         setIsUpdatingFalse()
     }
 
-    /**
-     * Initialise the adapter that should be attached to the RecyclerView.
-     *
-     * @return An initialised instance of a class that extends the Adapter abstract class.
-     */
-    // abstract fun getAdapter() : Adapter
+    override fun onScrollTo(position: Int) {
+        // todo: for the library release, refactor position to scrollPercentage (currently scrollToProportion below)
+        val maximumScrollPosition = binding.recyclerView.computeVerticalScrollRange()
+        val scrollToProportion = if (position > maximumScrollPosition) 1f
+        else position.toFloat() / maximumScrollPosition
+        val scrollToPosition = scrollToProportion * adapter.itemCount
+
+        binding.recyclerView.scrollToPosition(scrollToPosition.roundToInt())
+    }
 }
