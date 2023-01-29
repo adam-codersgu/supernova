@@ -14,7 +14,5 @@
         android:id="@+id/seekBar"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:thumbOnColor="@color/gold"
-        app:valueLabelBackgroundColor="@color/red2" />
+        app:layout_constraintEnd_toEndOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

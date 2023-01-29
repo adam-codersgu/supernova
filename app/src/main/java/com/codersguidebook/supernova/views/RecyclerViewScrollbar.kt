@@ -11,7 +11,6 @@ import android.view.MotionEvent
 import android.view.MotionEvent.*
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
 import com.codersguidebook.supernova.R
 import com.google.android.material.color.MaterialColors
 import kotlin.math.max
@@ -22,8 +21,7 @@ import kotlin.math.roundToInt
  * A custom View that displays a scrollbar for RecyclerView widgets. The scrollbar features a draggable thumb
  * and value label.
  *
- *   FOR LIBRARY RELEASE:
- *   - Look at sourcing all colours from the theme
+ *  FOR LIBRARY RELEASE:
  *   - Could we have some way of inherently linking the View to the RecyclerView (and its adapter)? E.g.
  *   The RecyclerView instance could be passed to the View as a property (if this is possible)
  *   The View could then check that the RV has an adapter
@@ -32,9 +30,8 @@ import kotlin.math.roundToInt
  *   override fun getSectionName(position: Int): String
  *   Which would tell the view what value label character to use
  *   - Will need to create a test app that uses the library and confirm it works as a standalone library
- *   - There should be a minimum width of 200f for value label width property
  *
- *   BENEFITS OF THE LIBRARY:
+ *  BENEFITS OF THE LIBRARY:
  *   - The scrollbar thumb always has a minimum height (unlike the default fast scroll thumb, which
  *   can become too small when the RecyclerView has lots of content. This is a known issue that has been
  *   unresolved for years https://issuetracker.google.com/issues/64729576)
@@ -42,8 +39,8 @@ import kotlin.math.roundToInt
  * @constructor Construct an instance of the scrollbar by supplying the context and attribute set required
  * for the layout editor to manage the View.
  *
- * @param context The context in which the scrollbar is being loaded (Application context is sufficient)
- * @param attrs An attribute set for customising the scrollbar View.
+ * @param context The context in which the scrollbar is being loaded (Application context is sufficient).
+ * @param attrs Values for the scrollbar's customisable attributes.
  */
 class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
@@ -54,9 +51,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
 
     /*
     TODO:
-        - Add custom properties as described here https://developer.android.com/develop/ui/views/layout/custom-views/create-view
-        - The properties should include those specified in the 'FOR LIBRARY RELEASE' comment
-        - Each property needs to be tested when assigning values
+        - Need to rollout the scrollbar to all necessary areas of the app
      */
 
     private var listener: Listener? = null
@@ -64,34 +59,23 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     private var recyclerViewContentHeight: Int? = null
     private var recyclerViewScrollPosition = 0
 
-    private val thumbAndTrackWidth: Int
-    private val trackOffColour = ContextCompat.getColor(context, R.color.onSurface30)
+    private val trackPaint = Paint(ANTI_ALIAS_FLAG)
     private var trackRect = Rect()
 
-    // fixme: Could get all colours from theme then manually apply opacity numbers?
-    //  If this method is successful then could use this method across the entire application
-    //  Start off by logging the values for each variable (the int). Is it a hex code or something that can have opacity added?
-    private val thumbOffColour = ContextCompat.getColor(context, R.color.onSurface84)
+    private val thumbAndTrackWidth: Int
+    private val thumbOffColour: Int
     private val thumbOnColour: Int
     private val thumbMinHeight: Int
+    private val thumbPaint = Paint(ANTI_ALIAS_FLAG)
     private var thumbRect = Rect()
     private var thumbSelected = false
 
-    private var valueLabelWidth: Float
+    private val valueLabelPaint = Paint(ANTI_ALIAS_FLAG)
     private var valueLabelText: String? = null
+    private var valueLabelWidth: Float
 
     private val textBounds = Rect()
     private val textPaint = Paint(ANTI_ALIAS_FLAG)
-
-    private val trackPaint = Paint(ANTI_ALIAS_FLAG).apply {
-        color = trackOffColour
-    }
-
-    private val thumbPaint = Paint(ANTI_ALIAS_FLAG).apply {
-        color = thumbOffColour
-    }
-
-    private val valueLabelPaint = Paint(ANTI_ALIAS_FLAG)
 
     private val animationDuration = context.resources
         .getInteger(android.R.integer.config_mediumAnimTime).toLong()
@@ -126,11 +110,21 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
             try {
                 thumbAndTrackWidth = getDimension(R.styleable.RecyclerViewScrollbar_thumbAndTrackWidth,
                     DEFAULT_THUMB_AND_TRACK_WIDTH).roundToInt()
+                val defaultTrackColour = MaterialColors.getColor(context, R.attr.colorOnSurface, Color.GRAY)
+                // 30% Alpha
+                val defaultTrackColour30 = MaterialColors.compositeARGBWithAlpha(defaultTrackColour, 77)
+                trackPaint.apply {
+                    color = getInt(R.styleable.RecyclerViewScrollbar_trackColor, defaultTrackColour30)
+                }
+
+                val defaultThumbOffColour = MaterialColors.getColor(context, R.attr.colorOnSurface, Color.LTGRAY)
+                // 84% Alpha
+                val defaultThumbOffColour84 = MaterialColors.compositeARGBWithAlpha(defaultThumbOffColour, 214)
+                thumbOffColour = getInt(R.styleable.RecyclerViewScrollbar_thumbOffColor, defaultThumbOffColour84)
+                thumbPaint.apply { color = thumbOffColour }
 
                 thumbMinHeight = getDimension(R.styleable.RecyclerViewScrollbar_thumbMinHeight,
                     thumbAndTrackWidth * 4f).roundToInt()
-               // val defaultThumbOffColour = MaterialColors.getColor(context, R.attr.colorSecondary, Color.CYAN)
-               // thumbOnColour = getInt(R.styleable.RecyclerViewScrollbar_thumbOnColor, defaultThumbOnColour)
                 val defaultThumbOnColour = MaterialColors.getColor(context, R.attr.colorSecondary, Color.CYAN)
                 thumbOnColour = getInt(R.styleable.RecyclerViewScrollbar_thumbOnColor, defaultThumbOnColour)
 
@@ -148,13 +142,6 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
                     textSize = getDimension(R.styleable.RecyclerViewScrollbar_valueLabelTextSize,
                         valueLabelWidth / 2)
                 }
-
-
-                /*
-                <attr name="thumbOffColor" format="reference|color" />
-
-                trackColour*/
-
             } finally {
                 recycle()
             }
