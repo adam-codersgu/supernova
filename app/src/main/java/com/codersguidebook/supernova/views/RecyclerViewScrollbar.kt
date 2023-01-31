@@ -51,11 +51,6 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         const val DEFAULT_THUMB_AND_TRACK_WIDTH = 25f
     }
 
-    /*
-    TODO:
-        - Need to rollout the scrollbar to all necessary areas of the app
-     */
-
     private var listener: Listener? = null
 
     private var recyclerViewContentHeight: Int? = null
