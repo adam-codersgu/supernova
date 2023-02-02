@@ -12,7 +12,7 @@
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
     <com.codersguidebook.supernova.views.RecyclerViewScrollbar
-        android:id="@+id/seekBar"
+        android:id="@+id/scrollBar"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         app:layout_constraintEnd_toEndOf="parent" />

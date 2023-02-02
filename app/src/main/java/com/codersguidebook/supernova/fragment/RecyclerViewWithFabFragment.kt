@@ -14,7 +14,7 @@ import com.codersguidebook.supernova.fragment.adapter.SongAdapter
 import com.codersguidebook.supernova.views.RecyclerViewScrollbar
 import kotlin.math.roundToInt
 
-abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment(), RecyclerViewScrollbar.Listener {
+abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment(), RecyclerViewScrollbar.ScrollbarListener {
 
     override var _binding: ViewBinding? = null
         get() = field as FragmentWithFabBinding?
@@ -35,26 +35,12 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment(), Recycler
         super.onViewCreated(view, savedInstanceState)
 
         binding.scrollRecyclerView.recyclerView.itemAnimator = DefaultItemAnimator()
-        binding.scrollRecyclerView.seekBar.setListener(this)
+        binding.scrollRecyclerView.scrollBar.setListener(this)
 
-        binding.scrollRecyclerView.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
+        binding.scrollRecyclerView.recyclerView.addOnScrollListener(object: RecyclerViewScrollbar
+                .OnScrollListener(binding.scrollRecyclerView.scrollBar) {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-
-                val contentSize = binding.scrollRecyclerView.recyclerView.computeVerticalScrollRange()
-                binding.scrollRecyclerView.seekBar.notifyRecyclerViewContentHeightChanged(contentSize)
-
-                val scrollPosition = binding.scrollRecyclerView.recyclerView.computeVerticalScrollOffset()
-                binding.scrollRecyclerView.seekBar.notifyRecyclerViewScrollPositionChanged(scrollPosition)
-
-                if (adapter is RecyclerViewScrollbar.ValueLabelListener) {
-                    val scrollProportion = scrollPosition.toFloat() / contentSize
-                    val activePosition = (scrollProportion * adapter.itemCount).roundToInt()
-
-                    val valueLabelText = (adapter as RecyclerViewScrollbar.ValueLabelListener)
-                        .getValueLabelText(activePosition)
-                    binding.scrollRecyclerView.seekBar.setValueLabelText(valueLabelText)
-                }
 
                 if (dy > 0 && binding.fab.visibility == VISIBLE) binding.fab.hide()
                 else if (dy < 0 && binding.fab.visibility != VISIBLE) binding.fab.show()

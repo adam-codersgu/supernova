@@ -5,13 +5,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DefaultItemAnimator
-import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.databinding.ScrollRecyclerViewBinding
 import com.codersguidebook.supernova.views.RecyclerViewScrollbar
 import kotlin.math.roundToInt
 
-abstract class RecyclerViewWithScrollFragment: BaseRecyclerViewFragment(), RecyclerViewScrollbar.Listener {
+abstract class RecyclerViewWithScrollFragment: BaseRecyclerViewFragment(), RecyclerViewScrollbar.ScrollbarListener {
 
     override var _binding: ViewBinding? = null
         get() = field as ScrollRecyclerViewBinding?
@@ -31,28 +30,9 @@ abstract class RecyclerViewWithScrollFragment: BaseRecyclerViewFragment(), Recyc
         super.onViewCreated(view, savedInstanceState)
 
         binding.recyclerView.itemAnimator = DefaultItemAnimator()
-        binding.seekBar.setListener(this)
+        binding.scrollBar.setListener(this)
 
-        binding.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-
-                val contentSize = binding.recyclerView.computeVerticalScrollRange()
-                binding.seekBar.notifyRecyclerViewContentHeightChanged(contentSize)
-
-                val scrollPosition = binding.recyclerView.computeVerticalScrollOffset()
-                binding.seekBar.notifyRecyclerViewScrollPositionChanged(scrollPosition)
-
-                if (adapter is RecyclerViewScrollbar.ValueLabelListener) {
-                    val scrollProportion = scrollPosition.toFloat() / contentSize
-                    val activePosition = (scrollProportion * adapter.itemCount).roundToInt()
-
-                    val valueLabelText = (adapter as RecyclerViewScrollbar.ValueLabelListener)
-                        .getValueLabelText(activePosition)
-                    binding.seekBar.setValueLabelText(valueLabelText)
-                }
-            }
-        })
+        binding.recyclerView.addOnScrollListener(RecyclerViewScrollbar.OnScrollListener(binding.scrollBar))
     }
 
     fun finishUpdate() {

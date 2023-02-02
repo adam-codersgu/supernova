@@ -11,6 +11,7 @@ import android.view.MotionEvent
 import android.view.MotionEvent.*
 import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.R
 import com.google.android.material.color.MaterialColors
 import kotlin.math.max
@@ -32,6 +33,10 @@ import kotlin.math.roundToInt
  *   Could have the addOnScrollListener object in an interface that is packaged in the library
  *   and made available to any class (i.e. fragment) that extends it
  *   - Will need to create a test app that uses the library and confirm it works as a standalone library
+ *   - The RecyclerView adapter must implement RecyclerView.Adapter and RecyclerViewScrollbar.ValueLabelListener
+ *   - getOnScrollListener() must be called after the RecyclerView has an adapter assigned? todo: Test this
+ *   - Demonstrate that you can override the OnScrollListener open class as usual
+ *   - In the library package maybe the OnScrollListener can have its own file
  *
  *  BENEFITS OF THE LIBRARY:
  *   - The scrollbar thumb always has a minimum height (unlike the default fast scroll thumb, which
@@ -51,7 +56,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         const val DEFAULT_THUMB_AND_TRACK_WIDTH = 25f
     }
 
-    private var listener: Listener? = null
+    private var scrollbarListener: ScrollbarListener? = null
 
     private var recyclerViewContentHeight: Int? = null
     private var recyclerViewScrollPosition = 0
@@ -223,7 +228,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
                 recyclerViewContentHeight?.let { height ->
                     val scrollProportion = y / measuredHeight
                     val newScrollPosition = scrollProportion * height
-                    listener?.onScrollTo(newScrollPosition.toInt())
+                    scrollbarListener?.onScrollTo(newScrollPosition.toInt())
                 }
                 thumbSelected = true
                 thumbPaint.color = thumbOnColour
@@ -347,7 +352,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         textPaint.getTextBounds(text, 0, (text?.length ?: 0), textBounds)
     }
 
-    interface Listener {
+    interface ScrollbarListener {
         /**
          * A method called when the scrollbar thumb is being dragged.
          *
@@ -356,8 +361,8 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         fun onScrollTo(position: Int)
     }
 
-    fun setListener(listener: Listener) {
-        this.listener = listener
+    fun setListener(scrollbarListener: ScrollbarListener) {
+        this.scrollbarListener = scrollbarListener
     }
 
     interface ValueLabelListener {
@@ -368,5 +373,32 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
          * @return A String containing the text that should be
          */
         fun getValueLabelText(position: Int): String
+    }
+
+    /**
+     * TODO
+     *
+     * @property scrollbar
+     */
+    open class OnScrollListener(private val scrollbar: RecyclerViewScrollbar): RecyclerView.OnScrollListener() {
+        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+            super.onScrolled(recyclerView, dx, dy)
+
+            val contentSize = recyclerView.computeVerticalScrollRange()
+            scrollbar.notifyRecyclerViewContentHeightChanged(contentSize)
+
+            val scrollPosition = recyclerView.computeVerticalScrollOffset()
+            scrollbar.notifyRecyclerViewScrollPositionChanged(scrollPosition)
+
+            if (recyclerView.adapter is ValueLabelListener) {
+                val scrollProportion = scrollPosition.toFloat() / contentSize
+                val itemCount = (recyclerView.adapter as RecyclerView.Adapter).itemCount
+                val activePosition = (scrollProportion * itemCount).roundToInt()
+
+                val valueLabelText = (recyclerView.adapter as ValueLabelListener)
+                    .getValueLabelText(activePosition)
+                scrollbar.setValueLabelText(valueLabelText)
+            }
+        }
     }
 }
