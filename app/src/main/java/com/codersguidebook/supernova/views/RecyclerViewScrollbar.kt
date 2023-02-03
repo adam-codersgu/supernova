@@ -37,6 +37,7 @@ import kotlin.math.roundToInt
  *   - getOnScrollListener() must be called after the RecyclerView has an adapter assigned? todo: Test this
  *   - Demonstrate that you can override the OnScrollListener open class as usual
  *   - In the library package maybe the OnScrollListener can have its own file
+ *   - The ScrollBar is only compatible with androidx.recyclerview.widget.RecyclerView
  *
  *  BENEFITS OF THE LIBRARY:
  *   - The scrollbar thumb always has a minimum height (unlike the default fast scroll thumb, which
@@ -352,6 +353,9 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         textPaint.getTextBounds(text, 0, (text?.length ?: 0), textBounds)
     }
 
+    // TODO: An alternative here could be to bypass the interface entirely and get the fragment
+    //  to directly assign the Scrollbar an instance of the RecyclerView instead, so the View can
+    //  handle the scrollTo events itself
     interface ScrollbarListener {
         /**
          * A method called when the scrollbar thumb is being dragged.
@@ -387,6 +391,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
             val contentSize = recyclerView.computeVerticalScrollRange()
             scrollbar.notifyRecyclerViewContentHeightChanged(contentSize)
 
+            // TODO: Investigate does dx = scrollPosition?
             val scrollPosition = recyclerView.computeVerticalScrollOffset()
             scrollbar.notifyRecyclerViewScrollPositionChanged(scrollPosition)
 
