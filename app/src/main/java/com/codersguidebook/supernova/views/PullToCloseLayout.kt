@@ -12,7 +12,7 @@ import androidx.customview.widget.ViewDragHelper
 import androidx.customview.widget.ViewDragHelper.Callback
 import kotlin.math.abs
 
-class PullToCloseLayout(context: Context, attributeSet: AttributeSet?) : FrameLayout(context, attributeSet) {
+class PullToCloseLayout(context: Context, attrs: AttributeSet?) : FrameLayout(context, attrs) {
     private var listener: Listener? = null
     private val dragHelper: ViewDragHelper
     private var minFlingVelocity = 0f

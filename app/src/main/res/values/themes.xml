@@ -4,6 +4,7 @@
         <item name="colorPrimary">@color/accent</item>
         <item name="colorPrimaryVariant">@color/accent</item>
         <item name="colorSecondary">@color/accent</item>
+        <item name="colorOnSurface">@color/onSurface</item>
         <item name="tabStyle">@style/Widget.Custom.TabLayout</item>
         <item name="android:textViewStyle">@style/Widget.Custom.TextView</item>
         <item name="materialButtonStyle">@style/Widget.MaterialComponents.Button</item>

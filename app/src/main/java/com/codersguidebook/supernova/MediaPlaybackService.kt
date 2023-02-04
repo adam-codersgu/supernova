@@ -67,7 +67,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         }
     }
 
-    private var playbackPositionChecker = object : Runnable {
+    private var playbackPositionRunnable = object : Runnable {
         override fun run() {
             try {
                 if (mediaPlayer?.isPlaying == true) {
@@ -525,7 +525,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             setPlaybackState(builder.build())
         }
         initNoisyReceiver()
-        playbackPositionChecker.run()
+        playbackPositionRunnable.run()
     }
 
     /** Handles playback becoming 'noisy' i.e. headphones being unplugged. */
@@ -537,7 +537,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
     override fun onDestroy() {
         super.onDestroy()
         mediaSessionCompat.controller.transportControls.stop()
-        handler.removeCallbacks(playbackPositionChecker)
+        handler.removeCallbacks(playbackPositionRunnable)
         unregisterReceiver(noisyReceiver)
         mediaSessionCompat.release()
         NotificationManagerCompat.from(this).cancel(1)

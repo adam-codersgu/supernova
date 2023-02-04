@@ -14,12 +14,12 @@ import com.codersguidebook.supernova.dialogs.AlbumOptions
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
-import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
+import com.codersguidebook.supernova.views.RecyclerViewScrollbar
 
 class AlbumsAdapter(private val activity: MainActivity): SongAdapter(activity),
-    FastScrollRecyclerView.SectionedAdapter {
+    RecyclerViewScrollbar.ValueLabelListener {
 
-    override fun getSectionName(position: Int): String {
+    override fun getValueLabelText(position: Int): String {
         return songs[position].albumName[0].uppercase()
     }
 

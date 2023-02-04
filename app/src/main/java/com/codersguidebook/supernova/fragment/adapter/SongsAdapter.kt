@@ -6,12 +6,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
-import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
+import com.codersguidebook.supernova.views.RecyclerViewScrollbar
 
 class SongsAdapter(private val activity: MainActivity): SongAdapter(activity),
-    FastScrollRecyclerView.SectionedAdapter {
+    RecyclerViewScrollbar.ValueLabelListener {
 
-    override fun getSectionName(position: Int): String {
+    override fun getValueLabelText(position: Int): String {
         return songs[position].title[0].uppercase()
     }
 

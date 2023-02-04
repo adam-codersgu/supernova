@@ -13,13 +13,14 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.ArtistOptions
 import com.codersguidebook.supernova.entities.Artist
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
-import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
+import com.codersguidebook.supernova.views.RecyclerViewScrollbar
 
 class ArtistsAdapter(private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>(),
-    FastScrollRecyclerView.SectionedAdapter {
+    RecyclerViewScrollbar.ValueLabelListener {
+
     val artists = mutableListOf<Artist>()
 
-    override fun getSectionName(position: Int): String {
+    override fun getValueLabelText(position: Int): String {
         return artists[position].artistName?.get(0)?.uppercase() ?: ""
     }
 

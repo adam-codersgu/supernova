@@ -1,20 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/recyclerView"
-    android:background="@color/fragment_background"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    app:fastScrollAutoHide="true"
-    app:fastScrollAutoHideDelay="1500"
-    app:fastScrollTrackColor="@android:color/transparent"
-    app:fastScrollThumbInactiveColor="@color/accent"
-    app:fastScrollEnableThumbInactiveColor="true"
-    app:fastScrollPopupBackgroundSize="62dp"
-    app:fastScrollPopupBgColor="@color/accent"
-    app:fastScrollPopupPosition="adjacent"
-    app:fastScrollPopupTextColor="@android:color/white"
-    app:fastScrollPopupTextSize="32dp"
-    app:fastScrollPopupTextVerticalAlignmentMode="font_metrics"
-    app:fastScrollThumbColor="@color/accent"
-    app:fastScrollThumbEnabled="true" />
+    android:layout_height="match_parent">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/fragment_background"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
+    <com.codersguidebook.supernova.views.RecyclerViewScrollbar
+        android:id="@+id/scrollBar"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>

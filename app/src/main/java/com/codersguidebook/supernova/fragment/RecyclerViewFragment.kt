@@ -5,7 +5,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DefaultItemAnimator
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
 
@@ -28,7 +27,6 @@ abstract class RecyclerViewFragment: BaseRecyclerViewFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.root.layoutManager = LinearLayoutManager(mainActivity)
         binding.root.itemAnimator = DefaultItemAnimator()
     }
 

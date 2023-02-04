@@ -3,14 +3,15 @@ package com.codersguidebook.supernova.fragment
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DefaultItemAnimator
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.adapter.SongAdapter
+import com.codersguidebook.supernova.views.RecyclerViewScrollbar
 
 abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
 
@@ -32,14 +33,16 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.scrollRecyclerView.recyclerView.layoutManager = LinearLayoutManager(mainActivity)
         binding.scrollRecyclerView.recyclerView.itemAnimator = DefaultItemAnimator()
+        binding.scrollRecyclerView.scrollBar.recyclerView = binding.scrollRecyclerView.recyclerView
 
-        binding.scrollRecyclerView.recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
+        binding.scrollRecyclerView.recyclerView.addOnScrollListener(object: RecyclerViewScrollbar
+                .OnScrollListener(binding.scrollRecyclerView.scrollBar) {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-                if (dy > 0 && binding.fab.visibility == View.VISIBLE) binding.fab.hide()
-                else if (dy < 0 && binding.fab.visibility != View.VISIBLE) binding.fab.show()
+
+                if (dy > 0 && binding.fab.visibility == VISIBLE) binding.fab.hide()
+                else if (dy < 0 && binding.fab.visibility != VISIBLE) binding.fab.show()
             }
         })
     }

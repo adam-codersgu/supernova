@@ -6,15 +6,16 @@
     android:paddingVertical="10dp">
 
     <include layout="@layout/item_details"
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
         app:layout_constraintEnd_toStartOf="@+id/menu"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+        app:layout_constraintStart_toStartOf="parent" />
 
     <ImageButton
         android:id="@+id/menu"
         android:layout_width="25dp"
         android:layout_height="25dp"
+        android:layout_marginEnd="@dimen/scrollbar_margin"
         android:src="@drawable/ic_more"
         style="@style/Widget.Custom.Button"
         app:layout_constraintBottom_toBottomOf="parent"
