@@ -23,15 +23,6 @@ import kotlin.math.roundToInt
  * and value label.
  *
  *  FOR LIBRARY RELEASE:
- *   - Could we have some way of inherently linking the View to the RecyclerView (and its adapter)? E.g.
- *   The RecyclerView instance could be passed to the View as a property (if this is possible)
- *   The View could then check that the RV has an adapter
- *   The adapter could then be checked to confirm it extends a given interface
- *   The extended interface could include a mandatory abstract function with a signature like:
- *   override fun getSectionName(position: Int): String
- *   Which would tell the view what value label character to use
- *   Could have the addOnScrollListener object in an interface that is packaged in the library
- *   and made available to any class (i.e. fragment) that extends it
  *   - Will need to create a test app that uses the library and confirm it works as a standalone library
  *   - The RecyclerView adapter must implement RecyclerView.Adapter and RecyclerViewScrollbar.ValueLabelListener
  *   - getOnScrollListener() must be called after the RecyclerView has an adapter assigned? todo: Test this
