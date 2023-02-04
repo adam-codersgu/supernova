@@ -9,6 +9,8 @@ import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.MotionEvent
+import android.view.MotionEvent.ACTION_DOWN
+import android.view.MotionEvent.ACTION_MOVE
 import android.view.View
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -277,6 +279,13 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
         }
     }
 
+    /**
+     * Change the drawable theme of the animation objects.
+     *
+     * @param drawable The selected drawable theme.
+     * @param updatePreferences A Boolean indicating whether the shared preferences should be
+     * updated with the selected speed. Default = false.
+     */
     fun changeDrawable(drawable: String, updatePreferences: Boolean = false) {
         drawableList = when (drawable) {
             context.getString(R.string.space) -> drawableListGenerator(spaceDrawables)
@@ -292,10 +301,18 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
                 putString(ANIMATION_TYPE, drawable)
                 apply()
             }
-            Toast.makeText(context, resources.getString(R.string.changes_applied), Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, resources.getString(R.string.changes_applied),
+                Toast.LENGTH_SHORT).show()
         }
     }
 
+    /**
+     * Change the colour of the animation objects.
+     *
+     * @param colour The selected colour.
+     * @param updatePreferences A Boolean indicating whether the shared preferences should be
+     * updated with the selected speed. Default = false.
+     */
     fun changeColour(colour: String, updatePreferences: Boolean = false) {
         colourList = when (colour) {
             context.getString(R.string.blue) -> colourListGenerator(blueColours)
@@ -308,10 +325,18 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
                 putString(ANIMATION_COLOUR, colour)
                 apply()
             }
-            Toast.makeText(context, resources.getString(R.string.changes_applied), Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, resources.getString(R.string.changes_applied),
+                Toast.LENGTH_SHORT).show()
         }
     }
 
+    /**
+     * Change the speed of the animation objects' movement.
+     *
+     * @param speed The selected speed.
+     * @param updatePreferences A Boolean indicating whether the shared preferences should be
+     * updated with the selected speed. Default = false.
+     */
     fun changeSpeed(speed: String, updatePreferences: Boolean = false) {
         speedSetting = when (speed) {
             context.getString(R.string.fast) -> 180
@@ -323,7 +348,8 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
                 putString(ANIMATION_SPEED, speed)
                 apply()
             }
-            Toast.makeText(context, resources.getString(R.string.changes_applied), Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, resources.getString(R.string.changes_applied),
+                Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -333,7 +359,7 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
         val y = event?.y ?: 0f
 
         when (event?.action) {
-            MotionEvent.ACTION_DOWN -> {
+            ACTION_DOWN -> {
                 getTouchedObject(x, y)?.let {
                     selectedObject = objectList[it].apply {
                         this.selected = true
@@ -341,10 +367,11 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
                     return true
                 }
             }
-            MotionEvent.ACTION_MOVE -> {
+            ACTION_MOVE -> {
                 selectedObject?.apply {
                     this.x = x
                     this.y = y
+                    return true
                 }
             }
             else -> {
@@ -356,6 +383,14 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
         return super.onTouchEvent(event)
     }
 
+    /**
+     * Finds the selected animation object following a touch event at a given position.
+     *
+     * @param x The X coordinate of the touch event.
+     * @param y The Y coordinate of the touch event.
+     * @return The index of the selected animation object in the objectList list, or null
+     * if no object was selected.
+     */
     private fun getTouchedObject(x: Float, y: Float): Int? {
         objectList.forEachIndexed { index, obj ->
             val objectX = obj.x.toInt()

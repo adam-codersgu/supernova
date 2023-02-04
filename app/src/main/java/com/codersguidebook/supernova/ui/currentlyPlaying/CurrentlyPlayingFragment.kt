@@ -92,9 +92,6 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
 
         mainActivity.onBackPressedDispatcher.addCallback(viewLifecycleOwner, onBackPressedCallback)
 
-        // The onTouch event should only be propogated to the PullToClose view if animations are disabled
-        binding.root.setOnTouchListener { _, _ -> isAnimationVisible }
-
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
 
         playQueueViewModel.currentlyPlayingSongMetadata.observe(viewLifecycleOwner) {
