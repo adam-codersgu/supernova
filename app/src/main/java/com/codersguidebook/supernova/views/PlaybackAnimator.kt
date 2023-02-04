@@ -3,8 +3,8 @@ package com.codersguidebook.supernova.views
 import android.animation.TimeAnimator
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.res.Resources.NotFoundException
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
@@ -45,55 +45,6 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
         lateinit var drawable: Drawable
     }
 
-    private val redColours = listOf(
-        R.color.red1, R.color.red2, R.color.red3,
-        R.color.red4, R.color.red5, R.color.red6, R.color.red7
-    )
-    private val blueColours = listOf(
-        R.color.blue1, R.color.blue2, R.color.blue3,
-        R.color.blue4, R.color.blue5, R.color.blue6, R.color.blue7
-    )
-    private val nightColours = listOf(
-        R.color.night1, R.color.night2, R.color.night3,
-        R.color.night4, R.color.night5, R.color.night6, R.color.night7
-    )
-    private val pastelColours = listOf(
-        R.color.nav_home, R.color.nav_playing, R.color.nav_playlists,
-        R.color.nav_artists, R.color.nav_albums, R.color.nav_songs, R.color.nav_settings
-    )
-    private val leavesDrawables = listOf(R.drawable.leaf)
-    private val instrumentsDrawables = listOf(
-        R.drawable.drums,
-        R.drawable.piano,
-        R.drawable.saxophone,
-        R.drawable.saxophone
-    )
-    private val spaceDrawables = listOf(
-        R.drawable.star,
-        R.drawable.star,
-        R.drawable.earth,
-        R.drawable.planet,
-        R.drawable.saturn
-    )
-    private val mandalaDrawables = listOf(
-        R.drawable.mandala1,
-        R.drawable.mandala2,
-        R.drawable.mandala3,
-        R.drawable.mandala4
-    )
-    private val animalDrawables = listOf(
-        R.drawable.cat,
-        R.drawable.dolphin,
-        R.drawable.elephant,
-        R.drawable.peacock,
-        R.drawable.wolf
-    )
-    private val flowerDrawables = listOf(
-        R.drawable.flower,
-        R.drawable.poppy,
-        R.drawable.rose1,
-        R.drawable.rose2
-    )
     private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
     private val count = sharedPreferences.getInt(ANIMATION_QUANTITY, 6)
     private val objectList = MutableList(count) { MovingObject() }
@@ -211,7 +162,7 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        if (w != 0 && h != 0) {
+        if (w != 0 && h != 0 && oldw == 0 && oldh == 0) {
             for (obj in objectList) initialiseAnimationObject(obj, true)
         }
     }
@@ -252,31 +203,41 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
     /**
      * Generate a list of colour values for the animation objects.
      *
-     * @param colours A list of colour resource IDs to render.
-     * Default = the list of red colour resource IDs.
-     * @return A list of colour values.
+     * @param array The array resource ID associated with the colours to render.
+     * Default = An array of red colours.
+     * @return An IntArray of colour values.
      */
-    private fun colourListGenerator(colours: List<Int> = redColours): List<Int> {
-        return colours.mapNotNull { colour ->
-            try {
-                ContextCompat.getColor(context, colour)
-            } catch (_: NotFoundException) {
-                null
-            }
+    private fun colourListGenerator(array: Int = R.array.colours_red): IntArray {
+        val typedArray = resources.obtainTypedArray(array)
+
+        val colours = IntArray(typedArray.length())
+        for (i in 0 until typedArray.length()) {
+            colours[i] = typedArray.getColor(i, Color.RED)
         }
+
+        typedArray.recycle()
+        return colours
     }
 
     /**
      * Generate a list of Drawable resources for the animation objects.
      *
-     * @param drawables A list of Drawable resource IDs to render.
-     * Default = the list of Drawable resource IDs for the leaves.
-     * @return A list of Drawable resources.
+     * @param array The array resource ID associated with the drawables to render.
+     * Default = An array of drawables for leaves.
+     * @return An IntArray of Drawable resources.
      */
-    private fun drawableListGenerator(drawables: List<Int> = leavesDrawables): List<Drawable> {
-        return drawables.mapNotNull { drawable ->
-            ContextCompat.getDrawable(context, drawable)
+    private fun drawableListGenerator(array: Int = R.array.drawables_leaves): List<Drawable> {
+        val typedArray = resources.obtainTypedArray(array)
+
+        val drawableIds = IntArray(typedArray.length())
+        for (i in 0 until typedArray.length()) {
+            drawableIds[i] = typedArray.getResourceId(i, R.drawable.leaf)
         }
+
+        typedArray.recycle()
+        return drawableIds.map { id ->
+            ContextCompat.getDrawable(context, id)
+        }.mapNotNull { it }
     }
 
     /**
@@ -288,11 +249,11 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
      */
     fun changeDrawable(drawable: String, updatePreferences: Boolean = false) {
         drawableList = when (drawable) {
-            context.getString(R.string.space) -> drawableListGenerator(spaceDrawables)
-            context.getString(R.string.mandala) -> drawableListGenerator(mandalaDrawables)
-            context.getString(R.string.animals) -> drawableListGenerator(animalDrawables)
-            context.getString(R.string.flowers) -> drawableListGenerator(flowerDrawables)
-            context.getString(R.string.instruments) -> drawableListGenerator(instrumentsDrawables)
+            context.getString(R.string.space) -> drawableListGenerator(R.array.drawables_space)
+            context.getString(R.string.mandala) -> drawableListGenerator(R.array.drawables_mandala)
+            context.getString(R.string.animals) -> drawableListGenerator(R.array.drawables_animal)
+            context.getString(R.string.flowers) -> drawableListGenerator(R.array.drawables_flower)
+            context.getString(R.string.instruments) -> drawableListGenerator(R.array.drawables_instruments)
             else -> drawableListGenerator()
         }
         usingCustomDrawable = false
@@ -302,7 +263,7 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
                 apply()
             }
             Toast.makeText(context, resources.getString(R.string.changes_applied),
-                Toast.LENGTH_SHORT).show()
+                Toast.LENGTH_LONG).show()
         }
     }
 
@@ -315,9 +276,9 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
      */
     fun changeColour(colour: String, updatePreferences: Boolean = false) {
         colourList = when (colour) {
-            context.getString(R.string.blue) -> colourListGenerator(blueColours)
-            context.getString(R.string.night) -> colourListGenerator(nightColours)
-            context.getString(R.string.pastel) -> colourListGenerator(pastelColours)
+            context.getString(R.string.blue) -> colourListGenerator(R.array.colours_blue)
+            context.getString(R.string.night) -> colourListGenerator(R.array.colours_night)
+            context.getString(R.string.pastel) -> colourListGenerator(R.array.colours_pastel)
             else -> colourListGenerator()
         }
         if (updatePreferences){
@@ -326,7 +287,7 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
                 apply()
             }
             Toast.makeText(context, resources.getString(R.string.changes_applied),
-                Toast.LENGTH_SHORT).show()
+                Toast.LENGTH_LONG).show()
         }
     }
 
@@ -349,7 +310,7 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
                 apply()
             }
             Toast.makeText(context, resources.getString(R.string.changes_applied),
-                Toast.LENGTH_SHORT).show()
+                Toast.LENGTH_LONG).show()
         }
     }
 

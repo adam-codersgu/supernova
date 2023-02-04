@@ -32,4 +32,84 @@
         <item>@string/english_code</item>
         <item>@string/spanish_code</item>
     </string-array>
+
+    <integer-array name="colours_red">
+        <item>@color/red1</item>
+        <item>@color/red2</item>
+        <item>@color/red3</item>
+        <item>@color/red4</item>
+        <item>@color/red5</item>
+        <item>@color/red6</item>
+        <item>@color/red7</item>
+    </integer-array>
+
+    <integer-array name="colours_blue">
+        <item>@color/blue1</item>
+        <item>@color/blue2</item>
+        <item>@color/blue3</item>
+        <item>@color/blue4</item>
+        <item>@color/blue5</item>
+        <item>@color/blue6</item>
+        <item>@color/blue7</item>
+    </integer-array>
+
+    <integer-array name="colours_night">
+        <item>@color/night1</item>
+        <item>@color/night2</item>
+        <item>@color/night3</item>
+        <item>@color/night4</item>
+        <item>@color/night5</item>
+        <item>@color/night6</item>
+        <item>@color/night7</item>
+    </integer-array>
+
+    <integer-array name="colours_pastel">
+        <item>@color/nav_home</item>
+        <item>@color/nav_playing</item>
+        <item>@color/nav_playlists</item>
+        <item>@color/nav_artists</item>
+        <item>@color/nav_albums</item>
+        <item>@color/nav_songs</item>
+        <item>@color/nav_settings</item>
+    </integer-array>
+
+    <integer-array name="drawables_leaves">
+        <item>@drawable/leaf</item>
+    </integer-array>
+
+    <integer-array name="drawables_instruments">
+        <item>@drawable/drums</item>
+        <item>@drawable/piano</item>
+        <item>@drawable/saxophone</item>
+    </integer-array>
+
+    <integer-array name="drawables_space">
+        <item>@drawable/star</item>
+        <item>@drawable/star</item>
+        <item>@drawable/earth</item>
+        <item>@drawable/planet</item>
+        <item>@drawable/saturn</item>
+    </integer-array>
+
+    <integer-array name="drawables_mandala">
+        <item>@drawable/mandala1</item>
+        <item>@drawable/mandala2</item>
+        <item>@drawable/mandala3</item>
+        <item>@drawable/mandala4</item>
+    </integer-array>
+
+    <integer-array name="drawables_animal">
+        <item>@drawable/cat</item>
+        <item>@drawable/dolphin</item>
+        <item>@drawable/elephant</item>
+        <item>@drawable/peacock</item>
+        <item>@drawable/wolf</item>
+    </integer-array>
+
+    <integer-array name="drawables_flower">
+        <item>@drawable/flower</item>
+        <item>@drawable/poppy</item>
+        <item>@drawable/rose1</item>
+        <item>@drawable/rose2</item>
+    </integer-array>
 </resources>
