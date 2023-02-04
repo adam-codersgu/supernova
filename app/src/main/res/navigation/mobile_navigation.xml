@@ -71,8 +71,8 @@
         tools:layout="@layout/fragment_with_recycler_view">
         <argument
             android:name="artist"
-            android:defaultValue="@string/default_artist"
-            app:argType="string" />
+            app:argType="string"
+            app:nullable="true" />
     </fragment>
 
     <fragment
@@ -82,8 +82,8 @@
         tools:layout="@layout/fragment_with_fab">
         <argument
             android:name="artist"
-            android:defaultValue="@string/default_artist"
-            app:argType="string" />
+            app:argType="string"
+            app:nullable="true" />
     </fragment>
 
     <fragment
@@ -93,8 +93,8 @@
         tools:layout="@layout/fragment_edit_artist">
         <argument
             android:name="artist"
-            android:defaultValue="@string/default_artist"
-            app:argType="string" />
+            app:argType="string"
+            app:nullable="true" />
         <action
             android:id="@+id/action_finish_edit_artist"
             app:destination="@id/nav_artist"

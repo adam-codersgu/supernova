@@ -149,7 +149,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     }
 
     fun updatePlaylists(playlists: List<Playlist>) = viewModelScope.launch(Dispatchers.IO) {
-        repository.updatePlaylist(playlists)
+        repository.updatePlaylists(playlists)
     }
 
     fun increaseSongPlaysBySongId(songId: Long) = viewModelScope.launch(Dispatchers.IO) {
@@ -330,7 +330,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
             val todayDate = SimpleDateFormat.getDateInstance().format(Date())
             val lastUpdate = sharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null)
             when {
-                todayDate != lastUpdate -> {
+                todayDate != lastUpdate || songIdList.isEmpty() -> {
                     val song = repository.getRandomSong() ?: return@launch
                     songIdList.add(0, song.songId)
                     if (songIdList.size > 30) songIdList.removeAt(songIdList.size - 1)
@@ -341,7 +341,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
                     }
                 }
                 forceUpdate -> {
-                    if (songIdList.isNotEmpty()) songIdList.removeAt(0)
+                    songIdList.removeAt(0)
                     val song = repository.getRandomSong() ?: return@launch
                     songIdList.add(0, song.songId)
                     savePlaylistWithSongIds(this, songIdList)

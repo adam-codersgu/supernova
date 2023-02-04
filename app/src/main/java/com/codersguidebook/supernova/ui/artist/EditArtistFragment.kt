@@ -29,9 +29,8 @@ class EditArtistFragment : BaseEditMusicFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        arguments?.let {
-            val safeArgs = EditArtistFragmentArgs.fromBundle(it)
-            artistName = safeArgs.artist
+        arguments?.let { arguments ->
+            EditArtistFragmentArgs.fromBundle(arguments).artist?.let { artistName = it }
         }
 
         _binding = FragmentEditArtistBinding.inflate(inflater, container, false)

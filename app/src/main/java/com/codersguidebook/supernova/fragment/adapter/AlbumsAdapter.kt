@@ -20,7 +20,7 @@ class AlbumsAdapter(private val activity: MainActivity): SongAdapter(activity),
     RecyclerViewScrollbar.ValueLabelListener {
 
     override fun getValueLabelText(position: Int): String {
-        return songs[position].albumName[0].uppercase()
+        return songs[position].albumName?.get(0)?.uppercase() ?: ""
     }
 
     inner class ViewHolderAlbum(itemView: View) : RecyclerView.ViewHolder(itemView) {

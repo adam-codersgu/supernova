@@ -62,19 +62,23 @@ class HomeFragment : BaseFragment() {
         mostPlayedAdapter.stateRestorationPolicy = PREVENT_WHEN_EMPTY
         recentlyPlayedAdapter.stateRestorationPolicy = PREVENT_WHEN_EMPTY
 
-        binding.songOfTheDayRecyclerView.layoutManager = WrapContentLinearLayoutManager(mainActivity, LinearLayoutManager.HORIZONTAL, false)
+        binding.songOfTheDayRecyclerView.layoutManager = WrapContentLinearLayoutManager(
+            mainActivity, LinearLayoutManager.HORIZONTAL, false)
         binding.songOfTheDayRecyclerView.itemAnimator = DefaultItemAnimator()
         binding.songOfTheDayRecyclerView.adapter = songOfTheDayAdapter
 
-        binding.favouritesRecyclerView.layoutManager = WrapContentLinearLayoutManager(mainActivity, LinearLayoutManager.HORIZONTAL, false)
+        binding.favouritesRecyclerView.layoutManager = WrapContentLinearLayoutManager(
+            mainActivity, LinearLayoutManager.HORIZONTAL, false)
         binding.favouritesRecyclerView.itemAnimator = DefaultItemAnimator()
         binding.favouritesRecyclerView.adapter = favouritesAdapter
 
-        binding.mostPlayedRecyclerView.layoutManager = WrapContentLinearLayoutManager(mainActivity, LinearLayoutManager.HORIZONTAL, false)
+        binding.mostPlayedRecyclerView.layoutManager = WrapContentLinearLayoutManager(
+            mainActivity, LinearLayoutManager.HORIZONTAL, false)
         binding.mostPlayedRecyclerView.itemAnimator = DefaultItemAnimator()
         binding.mostPlayedRecyclerView.adapter = mostPlayedAdapter
 
-        binding.recentlyPlayedRecyclerView.layoutManager = WrapContentLinearLayoutManager(mainActivity, LinearLayoutManager.HORIZONTAL, false)
+        binding.recentlyPlayedRecyclerView.layoutManager = WrapContentLinearLayoutManager(
+            mainActivity, LinearLayoutManager.HORIZONTAL, false)
         binding.recentlyPlayedRecyclerView.itemAnimator = DefaultItemAnimator()
         binding.recentlyPlayedRecyclerView.adapter = recentlyPlayedAdapter
 
@@ -151,8 +155,9 @@ class HomeFragment : BaseFragment() {
             songs.asReversed().take(10)
         } else songs.take(10)
 
-        if (songsSelection.isEmpty()) layout.isGone = true
-        else layout.isVisible = true
+        if (songsSelection.isEmpty() && playlist.name != getString(R.string.song_day)) {
+            layout.isGone = true
+        } else layout.isVisible = true
 
         if (adapter.songs.isEmpty()) {
             adapter.songs.addAll(songsSelection)

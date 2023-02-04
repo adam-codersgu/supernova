@@ -12,7 +12,7 @@ class SongsAdapter(private val activity: MainActivity): SongAdapter(activity),
     RecyclerViewScrollbar.ValueLabelListener {
 
     override fun getValueLabelText(position: Int): String {
-        return songs[position].title[0].uppercase()
+        return songs[position].title?.get(0)?.uppercase() ?: ""
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {

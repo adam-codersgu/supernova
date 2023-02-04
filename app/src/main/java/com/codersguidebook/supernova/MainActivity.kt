@@ -264,11 +264,6 @@ class MainActivity : AppCompatActivity() {
         else storagePermissionHelper.requestPermissions()
     }
 
-    override fun onStart() {
-        super.onStart()
-        musicLibraryViewModel.refreshSongOfTheDay()
-    }
-
     override fun onResume() {
         super.onResume()
         volumeControlStream = AudioManager.STREAM_MUSIC
@@ -917,6 +912,7 @@ class MainActivity : AppCompatActivity() {
                     findSongIdInPlayQueueToRemove(song.songId)
                 }
             }
+            musicLibraryViewModel.refreshSongOfTheDay()
             processLanguageLocale()
         }
     }

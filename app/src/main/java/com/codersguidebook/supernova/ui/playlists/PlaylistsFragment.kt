@@ -39,7 +39,7 @@ class PlaylistsFragment : RecyclerViewFragment() {
 
         val playlistsToDisplay = playlists.toMutableList().apply {
             removeIf { playlist ->
-                playlist.isDefault && playlist.songs.isNullOrBlank()
+                playlist.isDefault && (playlist.songs.isNullOrBlank() || playlist.songs == "[]")
             }
             sortBy { playlist ->
                 playlist.name.uppercase()
