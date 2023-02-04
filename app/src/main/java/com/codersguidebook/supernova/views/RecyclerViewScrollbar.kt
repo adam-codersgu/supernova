@@ -25,7 +25,6 @@ import kotlin.math.roundToInt
  *  FOR LIBRARY RELEASE:
  *   - Will need to create a test app that uses the library and confirm it works as a standalone library
  *   - The RecyclerView adapter must implement RecyclerView.Adapter and RecyclerViewScrollbar.ValueLabelListener
- *   - getOnScrollListener() must be called after the RecyclerView has an adapter assigned? todo: Test this
  *   - Demonstrate that you can override the OnScrollListener open class as usual
  *   - In the library package maybe the OnScrollListener can have its own file
  *   - The ScrollBar is only compatible with androidx.recyclerview.widget.RecyclerView
@@ -386,7 +385,6 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
             val contentSize = recyclerView.computeVerticalScrollRange()
             scrollbar.notifyRecyclerViewContentHeightChanged(contentSize)
 
-            // TODO: Investigate does dx = scrollPosition?
             val scrollPosition = recyclerView.computeVerticalScrollOffset()
             scrollbar.notifyRecyclerViewScrollPositionChanged(scrollPosition)
 
