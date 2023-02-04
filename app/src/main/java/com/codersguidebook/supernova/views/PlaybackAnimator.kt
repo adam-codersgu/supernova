@@ -121,10 +121,10 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
             // Save the current canvas state
             val save = canvas.save()
 
-            // Move the canvas to the center of the leaf
+            // Move the canvas to the center of the animation object
             canvas.translate(movingObject.x, movingObject.y)
 
-            // Rotate the canvas based on how far the leaf has moved
+            // Rotate the canvas based on how far the object has travelled
             val progress = (movingObject.y + objectSize) / measuredHeight
             canvas.rotate(movingObject.spin * progress)
 
@@ -157,45 +157,51 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        mTimeAnimator?.cancel()
-        mTimeAnimator?.setTimeListener(null)
-        mTimeAnimator?.removeAllListeners()
+        mTimeAnimator?.apply {
+            cancel()
+            setTimeListener(null)
+            removeAllListeners()
+        }
         mTimeAnimator = null
     }
 
     /** Start or resume the animator. */
     fun start() {
-        if (mTimeAnimator != null) {
-            if (mTimeAnimator!!.isPaused) resumeAnimator()
-            else mTimeAnimator!!.start()
+        mTimeAnimator?.apply {
+            if (this.isPaused) resumeAnimator()
+            else this.start()
         }
     }
 
     /** Pause the animator. */
     fun pause() {
-        if (mTimeAnimator != null && mTimeAnimator!!.isRunning) {
-            mTimeAnimator!!.pause()
+        if (mTimeAnimator?.isRunning == true) {
+            mTimeAnimator?.pause()
         }
     }
 
     /** Resume the animator */
     private fun resumeAnimator() {
-        if (mTimeAnimator != null && mTimeAnimator!!.isPaused) {
-            mTimeAnimator!!.start()
+        if (mTimeAnimator?.isPaused == true) {
+            mTimeAnimator?.start()
         }
     }
 
+    /**
+     * Update the position of each animation object based on how much time has elapsed.
+     *
+     * @param deltaMs The delta time provided by the TimeAnimator since the last update.
+     */
     private fun updateState(deltaMs: Float) {
         // Converting to seconds since PX/S constants are easier to understand
         val deltaSeconds = deltaMs / 1000f
         for (movingObject in objectList) {
             if (!movingObject.selected) {
                 val objectSize = movingObject.scale * mBaseSize
-                // Move the movingObject based on the elapsed time and it's speed
+                // Move the object based on the elapsed time and it's speed
                 movingObject.y += movingObject.speed * deltaSeconds
 
-                // If the movingObject is completely outside of the view bounds after
-                // updating it's position, recycle it.
+                // If the object is travels outside of the View bounds then recycle it.
                 if (movingObject.y > measuredHeight + objectSize) initialiseAnimationObject(movingObject)
             }
         }
@@ -203,7 +209,7 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        if (w != 0 && h != 0 && oldw == 0 && oldh == 0) {
+        if (w != 0 && h != 0) {
             for (obj in objectList) initialiseAnimationObject(obj, true)
         }
     }
@@ -225,10 +231,8 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
         movingObject.y = if (randomYStart && measuredHeight > 0) Random().nextInt(measuredHeight).toFloat()
         else -objectSize
 
-        // Set the drawable image
         if (drawableList.isNotEmpty()) movingObject.drawable = drawableList.random()
 
-        // Set the drawable colour
         if (colourList.isNotEmpty()) movingObject.colour = colourList.random()
 
         // The alpha is determined by the scale of the star and a random multiplier.
