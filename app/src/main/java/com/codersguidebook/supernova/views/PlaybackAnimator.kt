@@ -3,12 +3,14 @@ package com.codersguidebook.supernova.views
 import android.animation.TimeAnimator
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.res.Resources.NotFoundException
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.MotionEvent
+import android.view.MotionEvent.ACTION_DOWN
+import android.view.MotionEvent.ACTION_MOVE
 import android.view.View
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -43,55 +45,6 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
         lateinit var drawable: Drawable
     }
 
-    private val redColours = listOf(
-        R.color.red1, R.color.red2, R.color.red3,
-        R.color.red4, R.color.red5, R.color.red6, R.color.red7
-    )
-    private val blueColours = listOf(
-        R.color.blue1, R.color.blue2, R.color.blue3,
-        R.color.blue4, R.color.blue5, R.color.blue6, R.color.blue7
-    )
-    private val nightColours = listOf(
-        R.color.night1, R.color.night2, R.color.night3,
-        R.color.night4, R.color.night5, R.color.night6, R.color.night7
-    )
-    private val pastelColours = listOf(
-        R.color.nav_home, R.color.nav_playing, R.color.nav_playlists,
-        R.color.nav_artists, R.color.nav_albums, R.color.nav_songs, R.color.nav_settings
-    )
-    private val leavesDrawables = listOf(R.drawable.leaf)
-    private val instrumentsDrawables = listOf(
-        R.drawable.drums,
-        R.drawable.piano,
-        R.drawable.saxophone,
-        R.drawable.saxophone
-    )
-    private val spaceDrawables = listOf(
-        R.drawable.star,
-        R.drawable.star,
-        R.drawable.earth,
-        R.drawable.planet,
-        R.drawable.saturn
-    )
-    private val mandalaDrawables = listOf(
-        R.drawable.mandala1,
-        R.drawable.mandala2,
-        R.drawable.mandala3,
-        R.drawable.mandala4
-    )
-    private val animalDrawables = listOf(
-        R.drawable.cat,
-        R.drawable.dolphin,
-        R.drawable.elephant,
-        R.drawable.peacock,
-        R.drawable.wolf
-    )
-    private val flowerDrawables = listOf(
-        R.drawable.flower,
-        R.drawable.poppy,
-        R.drawable.rose1,
-        R.drawable.rose2
-    )
     private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
     private val count = sharedPreferences.getInt(ANIMATION_QUANTITY, 6)
     private val objectList = MutableList(count) { MovingObject() }
@@ -121,10 +74,10 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
             // Save the current canvas state
             val save = canvas.save()
 
-            // Move the canvas to the center of the leaf
+            // Move the canvas to the center of the animation object
             canvas.translate(movingObject.x, movingObject.y)
 
-            // Rotate the canvas based on how far the leaf has moved
+            // Rotate the canvas based on how far the object has travelled
             val progress = (movingObject.y + objectSize) / measuredHeight
             canvas.rotate(movingObject.spin * progress)
 
@@ -157,45 +110,51 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        mTimeAnimator?.cancel()
-        mTimeAnimator?.setTimeListener(null)
-        mTimeAnimator?.removeAllListeners()
+        mTimeAnimator?.apply {
+            cancel()
+            setTimeListener(null)
+            removeAllListeners()
+        }
         mTimeAnimator = null
     }
 
     /** Start or resume the animator. */
     fun start() {
-        if (mTimeAnimator != null) {
-            if (mTimeAnimator!!.isPaused) resumeAnimator()
-            else mTimeAnimator!!.start()
+        mTimeAnimator?.apply {
+            if (this.isPaused) resumeAnimator()
+            else this.start()
         }
     }
 
     /** Pause the animator. */
     fun pause() {
-        if (mTimeAnimator != null && mTimeAnimator!!.isRunning) {
-            mTimeAnimator!!.pause()
+        if (mTimeAnimator?.isRunning == true) {
+            mTimeAnimator?.pause()
         }
     }
 
     /** Resume the animator */
     private fun resumeAnimator() {
-        if (mTimeAnimator != null && mTimeAnimator!!.isPaused) {
-            mTimeAnimator!!.start()
+        if (mTimeAnimator?.isPaused == true) {
+            mTimeAnimator?.start()
         }
     }
 
+    /**
+     * Update the position of each animation object based on how much time has elapsed.
+     *
+     * @param deltaMs The delta time provided by the TimeAnimator since the last update.
+     */
     private fun updateState(deltaMs: Float) {
         // Converting to seconds since PX/S constants are easier to understand
         val deltaSeconds = deltaMs / 1000f
         for (movingObject in objectList) {
             if (!movingObject.selected) {
                 val objectSize = movingObject.scale * mBaseSize
-                // Move the movingObject based on the elapsed time and it's speed
+                // Move the object based on the elapsed time and it's speed
                 movingObject.y += movingObject.speed * deltaSeconds
 
-                // If the movingObject is completely outside of the view bounds after
-                // updating it's position, recycle it.
+                // If the object is travels outside of the View bounds then recycle it.
                 if (movingObject.y > measuredHeight + objectSize) initialiseAnimationObject(movingObject)
             }
         }
@@ -225,10 +184,8 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
         movingObject.y = if (randomYStart && measuredHeight > 0) Random().nextInt(measuredHeight).toFloat()
         else -objectSize
 
-        // Set the drawable image
         if (drawableList.isNotEmpty()) movingObject.drawable = drawableList.random()
 
-        // Set the drawable colour
         if (colourList.isNotEmpty()) movingObject.colour = colourList.random()
 
         // The alpha is determined by the scale of the star and a random multiplier.
@@ -246,40 +203,57 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
     /**
      * Generate a list of colour values for the animation objects.
      *
-     * @param colours A list of colour resource IDs to render.
-     * Default = the list of red colour resource IDs.
-     * @return A list of colour values.
+     * @param array The array resource ID associated with the colours to render.
+     * Default = An array of red colours.
+     * @return An IntArray of colour values.
      */
-    private fun colourListGenerator(colours: List<Int> = redColours): List<Int> {
-        return colours.mapNotNull { colour ->
-            try {
-                ContextCompat.getColor(context, colour)
-            } catch (_: NotFoundException) {
-                null
-            }
+    private fun colourListGenerator(array: Int = R.array.colours_red): IntArray {
+        val typedArray = resources.obtainTypedArray(array)
+
+        val colours = IntArray(typedArray.length())
+        for (i in 0 until typedArray.length()) {
+            colours[i] = typedArray.getColor(i, Color.RED)
         }
+
+        typedArray.recycle()
+        return colours
     }
 
     /**
      * Generate a list of Drawable resources for the animation objects.
      *
-     * @param drawables A list of Drawable resource IDs to render.
-     * Default = the list of Drawable resource IDs for the leaves.
-     * @return A list of Drawable resources.
+     * @param array The array resource ID associated with the drawables to render.
+     * Default = An array of drawables for leaves.
+     * @return An IntArray of Drawable resources.
      */
-    private fun drawableListGenerator(drawables: List<Int> = leavesDrawables): List<Drawable> {
-        return drawables.mapNotNull { drawable ->
-            ContextCompat.getDrawable(context, drawable)
+    private fun drawableListGenerator(array: Int = R.array.drawables_leaves): List<Drawable> {
+        val typedArray = resources.obtainTypedArray(array)
+
+        val drawableIds = IntArray(typedArray.length())
+        for (i in 0 until typedArray.length()) {
+            drawableIds[i] = typedArray.getResourceId(i, R.drawable.leaf)
         }
+
+        typedArray.recycle()
+        return drawableIds.map { id ->
+            ContextCompat.getDrawable(context, id)
+        }.mapNotNull { it }
     }
 
+    /**
+     * Change the drawable theme of the animation objects.
+     *
+     * @param drawable The selected drawable theme.
+     * @param updatePreferences A Boolean indicating whether the shared preferences should be
+     * updated with the selected speed. Default = false.
+     */
     fun changeDrawable(drawable: String, updatePreferences: Boolean = false) {
         drawableList = when (drawable) {
-            context.getString(R.string.space) -> drawableListGenerator(spaceDrawables)
-            context.getString(R.string.mandala) -> drawableListGenerator(mandalaDrawables)
-            context.getString(R.string.animals) -> drawableListGenerator(animalDrawables)
-            context.getString(R.string.flowers) -> drawableListGenerator(flowerDrawables)
-            context.getString(R.string.instruments) -> drawableListGenerator(instrumentsDrawables)
+            context.getString(R.string.space) -> drawableListGenerator(R.array.drawables_space)
+            context.getString(R.string.mandala) -> drawableListGenerator(R.array.drawables_mandala)
+            context.getString(R.string.animals) -> drawableListGenerator(R.array.drawables_animal)
+            context.getString(R.string.flowers) -> drawableListGenerator(R.array.drawables_flower)
+            context.getString(R.string.instruments) -> drawableListGenerator(R.array.drawables_instruments)
             else -> drawableListGenerator()
         }
         usingCustomDrawable = false
@@ -288,15 +262,23 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
                 putString(ANIMATION_TYPE, drawable)
                 apply()
             }
-            Toast.makeText(context, resources.getString(R.string.changes_applied), Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, resources.getString(R.string.changes_applied),
+                Toast.LENGTH_LONG).show()
         }
     }
 
+    /**
+     * Change the colour of the animation objects.
+     *
+     * @param colour The selected colour.
+     * @param updatePreferences A Boolean indicating whether the shared preferences should be
+     * updated with the selected speed. Default = false.
+     */
     fun changeColour(colour: String, updatePreferences: Boolean = false) {
         colourList = when (colour) {
-            context.getString(R.string.blue) -> colourListGenerator(blueColours)
-            context.getString(R.string.night) -> colourListGenerator(nightColours)
-            context.getString(R.string.pastel) -> colourListGenerator(pastelColours)
+            context.getString(R.string.blue) -> colourListGenerator(R.array.colours_blue)
+            context.getString(R.string.night) -> colourListGenerator(R.array.colours_night)
+            context.getString(R.string.pastel) -> colourListGenerator(R.array.colours_pastel)
             else -> colourListGenerator()
         }
         if (updatePreferences){
@@ -304,10 +286,18 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
                 putString(ANIMATION_COLOUR, colour)
                 apply()
             }
-            Toast.makeText(context, resources.getString(R.string.changes_applied), Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, resources.getString(R.string.changes_applied),
+                Toast.LENGTH_LONG).show()
         }
     }
 
+    /**
+     * Change the speed of the animation objects' movement.
+     *
+     * @param speed The selected speed.
+     * @param updatePreferences A Boolean indicating whether the shared preferences should be
+     * updated with the selected speed. Default = false.
+     */
     fun changeSpeed(speed: String, updatePreferences: Boolean = false) {
         speedSetting = when (speed) {
             context.getString(R.string.fast) -> 180
@@ -319,7 +309,8 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
                 putString(ANIMATION_SPEED, speed)
                 apply()
             }
-            Toast.makeText(context, resources.getString(R.string.changes_applied), Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, resources.getString(R.string.changes_applied),
+                Toast.LENGTH_LONG).show()
         }
     }
 
@@ -329,7 +320,7 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
         val y = event?.y ?: 0f
 
         when (event?.action) {
-            MotionEvent.ACTION_DOWN -> {
+            ACTION_DOWN -> {
                 getTouchedObject(x, y)?.let {
                     selectedObject = objectList[it].apply {
                         this.selected = true
@@ -337,10 +328,11 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
                     return true
                 }
             }
-            MotionEvent.ACTION_MOVE -> {
+            ACTION_MOVE -> {
                 selectedObject?.apply {
                     this.x = x
                     this.y = y
+                    return true
                 }
             }
             else -> {
@@ -352,6 +344,14 @@ class PlaybackAnimator(context: Context, attrs: AttributeSet) : View(context, at
         return super.onTouchEvent(event)
     }
 
+    /**
+     * Finds the selected animation object following a touch event at a given position.
+     *
+     * @param x The X coordinate of the touch event.
+     * @param y The Y coordinate of the touch event.
+     * @return The index of the selected animation object in the objectList list, or null
+     * if no object was selected.
+     */
     private fun getTouchedObject(x: Float, y: Float): Int? {
         objectList.forEachIndexed { index, obj ->
             val objectX = obj.x.toInt()
