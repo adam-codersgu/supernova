@@ -225,6 +225,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
                 }
                 thumbSelected = true
                 thumbPaint.color = thumbOnColour
+                if (event.action == ACTION_DOWN) invalidate()
                 return true
             }
             // Action cancel = 3; Action up = 1;
