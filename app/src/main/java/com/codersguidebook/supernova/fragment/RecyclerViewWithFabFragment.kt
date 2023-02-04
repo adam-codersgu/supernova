@@ -12,9 +12,8 @@ import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.adapter.SongAdapter
 import com.codersguidebook.supernova.views.RecyclerViewScrollbar
-import kotlin.math.roundToInt
 
-abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment(), RecyclerViewScrollbar.ScrollbarListener {
+abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
 
     override var _binding: ViewBinding? = null
         get() = field as FragmentWithFabBinding?
@@ -35,7 +34,7 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment(), Recycler
         super.onViewCreated(view, savedInstanceState)
 
         binding.scrollRecyclerView.recyclerView.itemAnimator = DefaultItemAnimator()
-        binding.scrollRecyclerView.scrollBar.setListener(this)
+        binding.scrollRecyclerView.scrollBar.recyclerView = binding.scrollRecyclerView.recyclerView
 
         binding.scrollRecyclerView.recyclerView.addOnScrollListener(object: RecyclerViewScrollbar
                 .OnScrollListener(binding.scrollRecyclerView.scrollBar) {
@@ -46,16 +45,6 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment(), Recycler
                 else if (dy < 0 && binding.fab.visibility != VISIBLE) binding.fab.show()
             }
         })
-    }
-
-    override fun onScrollTo(position: Int) {
-        // todo: for the library release, refactor position to scrollPercentage (currently scrollToProportion below)
-        val maximumScrollPosition = binding.scrollRecyclerView.recyclerView.computeVerticalScrollRange()
-        val scrollToProportion = if (position > maximumScrollPosition) 1f
-        else position.toFloat() / maximumScrollPosition
-        val scrollToPosition = scrollToProportion * adapter.itemCount
-
-        binding.scrollRecyclerView.recyclerView.scrollToPosition(scrollToPosition.roundToInt())
     }
 
     /**

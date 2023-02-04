@@ -8,9 +8,8 @@ import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.databinding.ScrollRecyclerViewBinding
 import com.codersguidebook.supernova.views.RecyclerViewScrollbar
-import kotlin.math.roundToInt
 
-abstract class RecyclerViewWithScrollFragment: BaseRecyclerViewFragment(), RecyclerViewScrollbar.ScrollbarListener {
+abstract class RecyclerViewWithScrollFragment: BaseRecyclerViewFragment() {
 
     override var _binding: ViewBinding? = null
         get() = field as ScrollRecyclerViewBinding?
@@ -30,7 +29,7 @@ abstract class RecyclerViewWithScrollFragment: BaseRecyclerViewFragment(), Recyc
         super.onViewCreated(view, savedInstanceState)
 
         binding.recyclerView.itemAnimator = DefaultItemAnimator()
-        binding.scrollBar.setListener(this)
+        binding.scrollBar.recyclerView = binding.recyclerView
 
         binding.recyclerView.addOnScrollListener(RecyclerViewScrollbar.OnScrollListener(binding.scrollBar))
     }
@@ -40,15 +39,5 @@ abstract class RecyclerViewWithScrollFragment: BaseRecyclerViewFragment(), Recyc
             binding.recyclerView.adapter = adapter
         }
         setIsUpdatingFalse()
-    }
-
-    override fun onScrollTo(position: Int) {
-        // todo: for the library release, refactor position to scrollPercentage (currently scrollToProportion below)
-        val maximumScrollPosition = binding.recyclerView.computeVerticalScrollRange()
-        val scrollToProportion = if (position > maximumScrollPosition) 1f
-        else position.toFloat() / maximumScrollPosition
-        val scrollToPosition = scrollToProportion * adapter.itemCount
-
-        binding.recyclerView.scrollToPosition(scrollToPosition.roundToInt())
     }
 }

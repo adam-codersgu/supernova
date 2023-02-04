@@ -38,6 +38,8 @@ import kotlin.math.roundToInt
  *   - Demonstrate that you can override the OnScrollListener open class as usual
  *   - In the library package maybe the OnScrollListener can have its own file
  *   - The ScrollBar is only compatible with androidx.recyclerview.widget.RecyclerView
+ *   - The RecyclerView must be assigned to the recyclerView variable or else scroll actions will not propagate
+ *      Do this using code like binding.scrollBar.recyclerView = binding.recyclerView
  *
  *  BENEFITS OF THE LIBRARY:
  *   - The scrollbar thumb always has a minimum height (unlike the default fast scroll thumb, which
@@ -57,7 +59,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         const val DEFAULT_THUMB_AND_TRACK_WIDTH = 25f
     }
 
-    private var scrollbarListener: ScrollbarListener? = null
+    var recyclerView: RecyclerView? = null
 
     private var recyclerViewContentHeight: Int? = null
     private var recyclerViewScrollPosition = 0
@@ -229,7 +231,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
                 recyclerViewContentHeight?.let { height ->
                     val scrollProportion = y / measuredHeight
                     val newScrollPosition = scrollProportion * height
-                    scrollbarListener?.onScrollTo(newScrollPosition.toInt())
+                    scrollToRecyclerViewPosition(newScrollPosition.toInt())
                 }
                 thumbSelected = true
                 thumbPaint.color = thumbOnColour
@@ -245,6 +247,23 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         }
 
         return super.onTouchEvent(event)
+    }
+
+    /**
+     * A method called when the scrollbar thumb is being dragged. Notifies
+     * the associated RecyclerView (if set) with the new scroll position.
+     *
+     * @param position The position that the user has scrolled to.
+     */
+    private fun scrollToRecyclerViewPosition(position: Int) {
+        recyclerView?.apply {
+            val maximumScrollPosition = this.computeVerticalScrollRange()
+            val scrollToProportion = if (position > maximumScrollPosition) 1f
+            else position.toFloat() / maximumScrollPosition
+            val scrollToPosition = scrollToProportion * (adapter?.itemCount ?: return)
+
+            this.scrollToPosition(scrollToPosition.roundToInt())
+        }
     }
 
     /** Move the thumb along the track to reflect the RecyclerView scroll position */
@@ -353,22 +372,6 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
         textPaint.getTextBounds(text, 0, (text?.length ?: 0), textBounds)
     }
 
-    // TODO: An alternative here could be to bypass the interface entirely and get the fragment
-    //  to directly assign the Scrollbar an instance of the RecyclerView instead, so the View can
-    //  handle the scrollTo events itself
-    interface ScrollbarListener {
-        /**
-         * A method called when the scrollbar thumb is being dragged.
-         *
-         * @param position The position that the user has scrolled to.
-         */
-        fun onScrollTo(position: Int)
-    }
-
-    fun setListener(scrollbarListener: ScrollbarListener) {
-        this.scrollbarListener = scrollbarListener
-    }
-
     interface ValueLabelListener {
         /**
          * Retrieves the text to display in the value label for a given RecyclerView position.
@@ -380,9 +383,10 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     }
 
     /**
-     * TODO
+     * An enhanced version of RecyclerView.OnScrollListener() that conveys scroll events to
+     * a RecyclerViewScrollbar View so that the scrollbar can adjust to changes in scroll position.
      *
-     * @property scrollbar
+     * @property scrollbar The RecyclerViewScrollbar instance that scroll events should be propagated to.
      */
     open class OnScrollListener(private val scrollbar: RecyclerViewScrollbar): RecyclerView.OnScrollListener() {
         override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
