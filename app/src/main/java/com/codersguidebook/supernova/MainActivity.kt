@@ -884,6 +884,7 @@ class MainActivity : AppCompatActivity() {
 
     /** Refresh the music library. Add new songs, remove deleted songs, and implement language changes. */
     private fun refreshMusicLibrary() = lifecycleScope.launch(Dispatchers.Default) {
+        processLanguageLocale()
         val songsToAddToMusicLibrary = mutableListOf<Song>()
 
         getMediaStoreCursor()?.use { cursor ->
@@ -913,7 +914,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             musicLibraryViewModel.refreshSongOfTheDay()
-            processLanguageLocale()
         }
     }
 
