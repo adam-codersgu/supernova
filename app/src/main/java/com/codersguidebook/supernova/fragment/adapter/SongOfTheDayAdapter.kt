@@ -32,7 +32,7 @@ class SongOfTheDayAdapter(private val activity: MainActivity): SongAdapter(activ
         return if (viewType == NO_CONTENT) ViewHolderNoContent(LayoutInflater.from(parent.context)
             .inflate(R.layout.song_of_the_day_no_content, parent, false))
         else ViewHolderSong(LayoutInflater.from(parent.context)
-            .inflate(R.layout.large_home_song, parent, false))
+            .inflate(R.layout.header, parent, false))
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {

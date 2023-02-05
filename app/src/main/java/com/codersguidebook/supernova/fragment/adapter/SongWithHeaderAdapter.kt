@@ -18,10 +18,10 @@ abstract class SongWithHeaderAdapter(activity: MainActivity): SongAdapter(activi
 
     open inner class ViewHolderHeader(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
-        internal var mArtwork = itemView.findViewById<View>(R.id.largeSongArtwork) as ImageView
-        internal var mTitle = itemView.findViewById<View>(R.id.largeTitle) as TextView
-        internal var mArtist = itemView.findViewById<View>(R.id.largeSubtitle) as TextView
-        internal var mSongCount = itemView.findViewById<View>(R.id.largeSubtitle2) as TextView
+        internal var mArtwork = itemView.findViewById<View>(R.id.artwork) as ImageView
+        internal var mTitle = itemView.findViewById<View>(R.id.title) as TextView
+        internal var mArtist = itemView.findViewById<View>(R.id.subtitle) as TextView
+        internal var mSongCount = itemView.findViewById<View>(R.id.subtitle2) as TextView
     }
 
     override fun getItemViewType(position: Int): Int {

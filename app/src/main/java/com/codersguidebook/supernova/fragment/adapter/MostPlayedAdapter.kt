@@ -19,7 +19,7 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return ViewHolderMostPlayedSong(LayoutInflater.from(parent.context)
-            .inflate(R.layout.small_home_song_with_plays, parent, false))
+            .inflate(R.layout.small_preview_with_plays, parent, false))
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {

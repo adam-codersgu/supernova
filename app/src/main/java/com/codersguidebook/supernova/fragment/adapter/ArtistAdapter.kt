@@ -30,15 +30,15 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter(activity) {
 
     inner class ViewHolderHeader(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
-        internal var mArtwork = itemView.findViewById<View>(R.id.largeSongArtwork) as ImageView
+        internal var mArtwork = itemView.findViewById<View>(R.id.artwork) as ImageView
         internal var mArtworkGrid = itemView.findViewById(R.id.imageGrid) as GridLayout
         internal var mArtwork1 = itemView.findViewById<View>(R.id.artwork1) as ImageView
         internal var mArtwork2 = itemView.findViewById<View>(R.id.artwork2) as ImageView
         internal var mArtwork3 = itemView.findViewById<View>(R.id.artwork3) as ImageView
         internal var mArtwork4 = itemView.findViewById<View>(R.id.artwork4) as ImageView
-        internal var mArtist = itemView.findViewById<View>(R.id.largeTitle) as TextView
-        internal var mAlbumCount = itemView.findViewById<View>(R.id.largeSubtitle) as TextView
-        internal var mArtistPlays = itemView.findViewById<View>(R.id.largeSubtitle2) as TextView
+        internal var mArtist = itemView.findViewById<View>(R.id.title) as TextView
+        internal var mAlbumCount = itemView.findViewById<View>(R.id.subtitle) as TextView
+        internal var mArtistPlays = itemView.findViewById<View>(R.id.subtitle2) as TextView
     }
 
     inner class ViewHolderAllSongs(itemView: View) : RecyclerView.ViewHolder(itemView) {

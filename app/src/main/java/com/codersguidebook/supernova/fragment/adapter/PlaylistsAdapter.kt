@@ -20,9 +20,9 @@ class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter
 
     inner class ViewHolderPlaylist(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
-        internal var mArtwork = itemView.findViewById<View>(R.id.smallSongArtwork) as ImageView
-        internal var mPlaylistName = itemView.findViewById<View>(R.id.smallSongTitle) as TextView
-        internal var mSongCount = itemView.findViewById<View>(R.id.smallSongArtistOrCount) as TextView
+        internal var mArtwork = itemView.findViewById<View>(R.id.artwork) as ImageView
+        internal var mPlaylistName = itemView.findViewById<View>(R.id.title) as TextView
+        internal var mSongCount = itemView.findViewById<View>(R.id.subtitle) as TextView
 
         init {
             itemView.isClickable = true
@@ -38,7 +38,7 @@ class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        return ViewHolderPlaylist(LayoutInflater.from(parent.context).inflate(R.layout.small_recycler_grid_preview, parent, false))
+        return ViewHolderPlaylist(LayoutInflater.from(parent.context).inflate(R.layout.small_preview, parent, false))
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
