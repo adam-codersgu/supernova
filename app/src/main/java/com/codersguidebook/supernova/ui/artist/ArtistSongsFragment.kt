@@ -10,13 +10,12 @@ import com.codersguidebook.supernova.fragment.adapter.SongsAdapter
 
 class ArtistSongsFragment : RecyclerViewWithFabFragment() {
 
-    private var artistName = getString(R.string.default_artist)
+    private var artistName = ""
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
-        arguments?.let { arguments ->
-            EditArtistFragmentArgs.fromBundle(arguments).artist?.let { artistName = it }
-        }
+        artistName = EditArtistFragmentArgs.fromBundle(arguments ?: Bundle()).artist
+            ?: getString(R.string.default_artist)
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 

@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 
 class ArtistFragment : RecyclerViewFragment() {
 
-    private var artistName = getString(R.string.default_artist)
+    private var artistName = ""
     override lateinit var adapter: ArtistAdapter
 
     override fun onCreateView(
@@ -25,9 +25,9 @@ class ArtistFragment : RecyclerViewFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        arguments?.let { arguments ->
-            EditArtistFragmentArgs.fromBundle(arguments).artist?.let { artistName = it }
-        }
+        artistName = EditArtistFragmentArgs.fromBundle(arguments ?: Bundle()).artist
+            ?: getString(R.string.default_artist)
+
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 

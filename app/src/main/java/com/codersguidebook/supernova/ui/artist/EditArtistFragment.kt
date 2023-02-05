@@ -21,7 +21,7 @@ class EditArtistFragment : BaseEditMusicFragment() {
     override val binding: FragmentEditArtistBinding
         get() = _binding!! as FragmentEditArtistBinding
 
-    private var artistName = getString(R.string.default_artist)
+    private var artistName = ""
     private var artistSongs = emptyList<Song>()
 
     override fun onCreateView(
@@ -29,9 +29,8 @@ class EditArtistFragment : BaseEditMusicFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        arguments?.let { arguments ->
-            EditArtistFragmentArgs.fromBundle(arguments).artist?.let { artistName = it }
-        }
+        artistName = EditArtistFragmentArgs.fromBundle(arguments ?: Bundle()).artist
+            ?: getString(R.string.default_artist)
 
         _binding = FragmentEditArtistBinding.inflate(inflater, container, false)
 
