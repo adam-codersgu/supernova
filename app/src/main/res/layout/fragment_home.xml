@@ -23,8 +23,7 @@
                 android:id="@+id/textViewSongOfTheDay"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="20dp"
+                android:padding="8dp"
                 android:text="@string/song_day"
                 android:background="?attr/selectableItemBackground"
                 android:textSize="24sp" />
@@ -51,6 +50,7 @@
             android:id="@+id/homeFavourites"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
             android:visibility="gone"
             app:layout_constraintTop_toBottomOf="@id/homeSongOfTheDay" >
 
@@ -58,8 +58,7 @@
                 android:id="@+id/textViewFavourites"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="20dp"
+                android:padding="8dp"
                 android:background="?attr/selectableItemBackground"
                 android:text="@string/favourites"
                 android:textSize="24sp" />
@@ -82,8 +81,7 @@
                 android:id="@+id/textViewMostPlayed"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="20dp"
+                android:padding="8dp"
                 android:text="@string/most_played"
                 android:background="?attr/selectableItemBackground"
                 android:textSize="24sp" />
@@ -107,8 +105,7 @@
                 android:id="@+id/textViewRecentlyPlayed"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="20dp"
+                android:padding="8dp"
                 android:text="@string/recently_played"
                 android:background="?attr/selectableItemBackground"
                 android:textSize="24sp" />
