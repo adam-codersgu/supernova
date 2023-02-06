@@ -20,6 +20,7 @@ import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.ui.playlist.PlaylistFragment
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
+import com.google.android.material.color.MaterialColors
 
 class PlaylistAdapter(private val fragment: PlaylistFragment,
                       private val activity: MainActivity): SongWithHeaderAdapter(activity) {
@@ -145,23 +146,31 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                     } else {
                         activity.getString(R.string.n_plays, plays)
                     }
+
+                    val gold = ContextCompat.getColor(activity, R.color.gold)
+                    val gold60 = MaterialColors.compositeARGBWithAlpha(gold, 153)
+                    val silver = ContextCompat.getColor(activity, R.color.gold)
+                    val silver60 = MaterialColors.compositeARGBWithAlpha(silver, 153)
+                    val bronze = ContextCompat.getColor(activity, R.color.gold)
+                    val bronze60 = MaterialColors.compositeARGBWithAlpha(bronze, 153)
+
                     val textColour = when (position) {
-                        1 -> R.color.gold
-                        2 -> R.color.silver
-                        3 -> R.color.bronze
-                        else -> android.R.color.white
+                        1 -> gold
+                        2 -> silver
+                        3 -> bronze
+                        else -> ContextCompat.getColor(activity, R.color.onSurface)
                     }
                     val textColour60 = when (position) {
-                        1 -> R.color.gold60
-                        2 -> R.color.silver60
-                        3 -> R.color.bronze60
-                        else -> R.color.onSurface60
+                        1 -> gold60
+                        2 -> silver60
+                        3 -> bronze60
+                        else -> ContextCompat.getColor(activity, R.color.onSurface60)
                     }
 
-                    holder.mTitle.setTextColor(ContextCompat.getColor(activity, textColour))
-                    holder.mSubtitle.setTextColor(ContextCompat.getColor(activity, textColour60))
-                    holder.mPlays.setTextColor(ContextCompat.getColor(activity, textColour60))
-                    holder.mMenu?.setColorFilter(ContextCompat.getColor(activity, textColour60))
+                    holder.mTitle.setTextColor(textColour)
+                    holder.mSubtitle.setTextColor(textColour60)
+                    holder.mPlays.setTextColor(textColour60)
+                    holder.mMenu?.setColorFilter(textColour60)
                 }
             }
         }
