@@ -34,9 +34,9 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
 
         val gold = ContextCompat.getColor(activity, R.color.gold)
         val gold60 = MaterialColors.compositeARGBWithAlpha(gold, 153)
-        val silver = ContextCompat.getColor(activity, R.color.gold)
+        val silver = ContextCompat.getColor(activity, R.color.silver)
         val silver60 = MaterialColors.compositeARGBWithAlpha(silver, 153)
-        val bronze = ContextCompat.getColor(activity, R.color.gold)
+        val bronze = ContextCompat.getColor(activity, R.color.bronze)
         val bronze60 = MaterialColors.compositeARGBWithAlpha(bronze, 153)
 
         when (position) {
