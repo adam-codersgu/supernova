@@ -1,15 +1,18 @@
 package com.codersguidebook.supernova.ui.currentlyPlaying
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.bumptech.glide.Glide
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
+import com.google.android.material.color.MaterialColors
 
 class AnimationAdapter(private val fragment: CustomAnimationFragment): RecyclerView.Adapter<ViewHolder>() {
 
@@ -29,8 +32,15 @@ class AnimationAdapter(private val fragment: CustomAnimationFragment): RecyclerV
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         when {
             customAnimationImageIds.size < 6 && position == customAnimationImageIds.size -> {
+                val context = fragment.requireActivity()
+                val onSurfaceColour = MaterialColors.getColor(context, R.attr.colorOnSurface, Color.LTGRAY)
+                // 60% Alpha
+                val onSurfaceColour60 = MaterialColors.compositeARGBWithAlpha(onSurfaceColour, 153)
+                val cameraDrawable = ContextCompat.getDrawable(context, R.drawable.ic_camera)
+                    ?.setTint(onSurfaceColour60)
+
                 Glide.with(fragment)
-                    .load(R.drawable.ic_photo)
+                    .load(cameraDrawable)
                     .into(holder.itemView as ImageView)
 
                 holder.itemView.setOnClickListener {
