@@ -33,7 +33,7 @@
     <style name="Widget.Custom.TabLayout" parent="Widget.MaterialComponents.TabLayout">
         <item name="android:background">@color/tab_background</item>
         <item name="tabBackground">@android:color/transparent</item>
-        <item name="tabTextColor">@color/onSurface60</item>
+        <item name="tabTextColor">@color/inactive</item>
         <item name="tabSelectedTextColor">?attr/colorOnSurface</item>
         <item name="tabIndicatorColor">?attr/colorSecondary</item>
         <item name="tabRippleColor">@color/accent</item>
@@ -51,7 +51,7 @@
 
     <style name="Widget.Custom.Button" parent="Widget.MaterialComponents.Button">
         <item name="android:textColor">?android:attr/textColorPrimary</item>
-        <item name="android:tint">@color/onSurface60</item>
+        <item name="android:tint">@color/inactive</item>
         <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
         <item name="android:scaleType">centerCrop</item>
         <item name="android:stateListAnimator">@null</item>
