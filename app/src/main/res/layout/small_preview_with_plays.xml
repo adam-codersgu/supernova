@@ -30,7 +30,7 @@
         android:layout_height="wrap_content"
         android:singleLine="true"
         android:textSize="14sp"
-        android:textColor="@color/onSurface60"
+        android:textColor="@color/inactive"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/title" />
 
