@@ -73,7 +73,7 @@
             android:layout_height="wrap_content"
             android:singleLine="true"
             android:textSize="18sp"
-            android:textColor="@color/onSurface60" />
+            android:textColor="@color/inactive" />
 
         <TextView
             android:id="@+id/subtitle2"
@@ -81,6 +81,6 @@
             android:layout_height="wrap_content"
             android:singleLine="true"
             android:textSize="18sp"
-            android:textColor="@color/onSurface60" />
+            android:textColor="@color/inactive" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

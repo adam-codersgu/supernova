@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.support.v4.media.MediaMetadataCompat
@@ -39,6 +40,7 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.codersguidebook.supernova.views.PullToCloseLayout
+import com.google.android.material.color.MaterialColors
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
@@ -51,6 +53,8 @@ import java.util.*
 
 class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
 
+    private var accent: Int? = null
+    private var onSurface60: Int? = null
     private val playQueueViewModel: PlayQueueViewModel by activityViewModels()
     private var currentSong: Song? = null
     override var _binding: ViewBinding? = null
@@ -89,6 +93,10 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        accent = MaterialColors.getColor(mainActivity, R.attr.colorAccent, Color.LTGRAY)
+        val onSurface = MaterialColors.getColor(mainActivity, R.attr.colorOnSurface, Color.LTGRAY)
+        onSurface60 = MaterialColors.compositeARGBWithAlpha(onSurface, 153)
 
         mainActivity.onBackPressedDispatcher.addCallback(viewLifecycleOwner, onBackPressedCallback)
 
@@ -266,10 +274,10 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
     private fun setFavouriteButtonStyle(isFavourite: Boolean) {
         if (isFavourite) {
             binding.currentFavourite.setImageResource(R.drawable.ic_heart)
-            binding.currentFavourite.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.accent))
+            accent?.let { binding.currentFavourite.setColorFilter(it) }
         } else {
             binding.currentFavourite.setImageResource(R.drawable.ic_heart_border)
-            binding.currentFavourite.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.onSurface60))
+            onSurface60?.let { binding.currentFavourite.setColorFilter(it) }
         }
     }
 
@@ -317,8 +325,8 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
      */
     private fun setShuffleButtonAppearance(shuffleMode: Int) {
         if (shuffleMode == SHUFFLE_MODE_ALL) {
-            binding.currentButtonShuffle.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.accent))
-        } else binding.currentButtonShuffle.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.onSurface60))
+            accent?.let { binding.currentButtonShuffle.setColorFilter(it) }
+        } else onSurface60?.let { binding.currentButtonShuffle.setColorFilter(it) }
     }
 
     /**
@@ -330,15 +338,15 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
         when (repeatMode) {
             REPEAT_MODE_NONE -> {
                 binding.currentButtonRepeat.setImageDrawable(ContextCompat.getDrawable(requireActivity(), R.drawable.ic_repeat))
-                binding.currentButtonRepeat.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.onSurface60))
+                onSurface60?.let { binding.currentButtonRepeat.setColorFilter(it) }
             }
             REPEAT_MODE_ALL -> {
                 binding.currentButtonRepeat.setImageDrawable(ContextCompat.getDrawable(requireActivity(), R.drawable.ic_repeat))
-                binding.currentButtonRepeat.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.accent))
+                accent?.let { binding.currentButtonRepeat.setColorFilter(it) }
             }
             REPEAT_MODE_ONE -> {
                 binding.currentButtonRepeat.setImageDrawable(ContextCompat.getDrawable(requireActivity(), R.drawable.ic_repeat_one))
-                binding.currentButtonRepeat.setColorFilter(ContextCompat.getColor(requireActivity(), R.color.accent))
+                accent?.let { binding.currentButtonRepeat.setColorFilter(it) }
             }
         }
     }

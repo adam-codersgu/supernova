@@ -1,6 +1,7 @@
 package com.codersguidebook.supernova.fragment.adapter
 
 import android.annotation.SuppressLint
+import android.graphics.Color
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -9,12 +10,12 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.QueueOptions
 import com.codersguidebook.supernova.ui.playQueue.PlayQueueFragment
+import com.google.android.material.color.MaterialColors
 
 class PlayQueueAdapter(private val fragment: PlayQueueFragment
 , private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -54,21 +55,27 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
         holder as ViewHolderPlayQueue
         val currentQueueItemDescription = playQueue[position].description
 
+        val accent = MaterialColors.getColor(activity, R.attr.colorAccent, Color.LTGRAY)
+        val onSurface = MaterialColors.getColor(activity, R.attr.colorOnSurface, Color.LTGRAY)
+        val onSurface60 = MaterialColors.compositeARGBWithAlpha(onSurface, 153)
+
+        holder.handle.drawable.setTint(onSurface60)
+        holder.handle.setOnTouchListener { _, event ->
+            if (event.actionMasked == MotionEvent.ACTION_DOWN) fragment.startDragging(holder)
+            return@setOnTouchListener true
+        }
+
         holder.txtSongTitle.text = currentQueueItemDescription.title
             ?: activity.getString(R.string.default_title)
         holder.txtSongArtist.text = currentQueueItemDescription.subtitle
             ?: activity.getString(R.string.default_artist)
-        if (playQueue[position].queueId == currentlyPlayingQueueId) {
-            holder.txtSongTitle.setTextColor(ContextCompat.getColor(activity, R.color.accent))
-            holder.txtSongArtist.setTextColor(ContextCompat.getColor(activity, R.color.accent))
-        } else {
-            holder.txtSongTitle.setTextColor(ContextCompat.getColor(activity, R.color.onSurface60))
-            holder.txtSongArtist.setTextColor(ContextCompat.getColor(activity, R.color.onSurface60))
-        }
 
-        holder.handle.setOnTouchListener { _, event ->
-            if (event.actionMasked == MotionEvent.ACTION_DOWN) fragment.startDragging(holder)
-            return@setOnTouchListener true
+        if (playQueue[position].queueId == currentlyPlayingQueueId) {
+            holder.txtSongTitle.setTextColor(accent)
+            holder.txtSongArtist.setTextColor(accent)
+        } else {
+            holder.txtSongTitle.setTextColor(onSurface60)
+            holder.txtSongArtist.setTextColor(onSurface60)
         }
     }
 

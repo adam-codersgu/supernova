@@ -30,7 +30,7 @@
             android:maxLength="30"
             android:hint="@string/playlist_name"
             android:textSize="16sp"
-            android:textColor="@color/onSurface60"
+            android:textColor="@color/inactive"
             android:inputType="text"
             android:importantForAutofill="no" />
 

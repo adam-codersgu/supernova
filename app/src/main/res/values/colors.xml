@@ -3,8 +3,7 @@
     <color name="accent">#84C9FB</color>
     <color name="accent12">#1F84C9FB</color>
     <color name="onSurface">#FFFFFF</color>
-    <color name="onSurface60">#99FFFFFF</color>
-    <color name="primary12">#1FBB86FC</color>
+    <color name="inactive">#99FFFFFF</color>
     <color name="tab_background">#111111</color>
     <color name="preview_background">#121212</color>
     <color name="fragment_background">#212121</color>
@@ -12,9 +11,6 @@
     <color name="gold">#D4AF37</color>
     <color name="silver">#C0C0C0</color>
     <color name="bronze">#CD7F32</color>
-    <color name="gold60">#99D4AF37</color>
-    <color name="silver60">#99C0C0C0</color>
-    <color name="bronze60">#99CD7F32</color>
 
     <!-- red colours -->
     <color name="red1">#750000</color>
