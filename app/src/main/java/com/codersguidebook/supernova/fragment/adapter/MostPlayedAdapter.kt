@@ -1,5 +1,6 @@
 package com.codersguidebook.supernova.fragment.adapter
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -32,35 +33,17 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
         holder.mTitle.text = current.title ?: activity.getString(R.string.default_title)
         holder.mSubtitle.text = current.artist ?: activity.getString(R.string.default_artist)
 
-        val gold = ContextCompat.getColor(activity, R.color.gold)
-        val gold60 = MaterialColors.compositeARGBWithAlpha(gold, 153)
-        val silver = ContextCompat.getColor(activity, R.color.silver)
-        val silver60 = MaterialColors.compositeARGBWithAlpha(silver, 153)
-        val bronze = ContextCompat.getColor(activity, R.color.bronze)
-        val bronze60 = MaterialColors.compositeARGBWithAlpha(bronze, 153)
-
-        when (position) {
-            0 -> {
-                holder.mTitle.setTextColor(gold)
-                holder.mSubtitle.setTextColor(gold60)
-                holder.mPlays.setTextColor(gold60)
-            }
-            1 -> {
-                holder.mTitle.setTextColor(silver)
-                holder.mSubtitle.setTextColor(silver60)
-                holder.mPlays.setTextColor(silver60)
-            }
-            2 -> {
-                holder.mTitle.setTextColor(bronze)
-                holder.mSubtitle.setTextColor(bronze60)
-                holder.mPlays.setTextColor(bronze60)
-            }
-            else -> {
-                holder.mTitle.setTextColor(ContextCompat.getColor(activity, android.R.color.white))
-                holder.mSubtitle.setTextColor(ContextCompat.getColor(activity, R.color.onSurface60))
-                holder.mPlays.setTextColor(ContextCompat.getColor(activity, R.color.onSurface60))
-            }
+        val primaryText = when (position) {
+            0 -> ContextCompat.getColor(activity, R.color.gold)
+            1 -> ContextCompat.getColor(activity, R.color.silver)
+            2 -> ContextCompat.getColor(activity, R.color.bronze)
+            else -> MaterialColors.getColor(activity, R.attr.colorOnSurface, Color.LTGRAY)
         }
+        val secondaryText = MaterialColors.compositeARGBWithAlpha(primaryText, 153)
+
+        holder.mTitle.setTextColor(primaryText)
+        holder.mSubtitle.setTextColor(secondaryText)
+        holder.mPlays.setTextColor(secondaryText)
 
         val plays = current.plays
         holder.mPlays.text = if (plays == 1) {

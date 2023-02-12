@@ -113,7 +113,6 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
                 }
 
                 val defaultThumbOffColour = MaterialColors.getColor(context, R.attr.colorOnSurface, Color.LTGRAY)
-                // 84% Alpha
                 val defaultThumbOffColour84 = MaterialColors.compositeARGBWithAlpha(defaultThumbOffColour, 214)
                 thumbOffColour = getInt(R.styleable.RecyclerViewScrollbar_thumbOffColor, defaultThumbOffColour84)
                 thumbPaint.apply { color = thumbOffColour }

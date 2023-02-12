@@ -1,6 +1,7 @@
 package com.codersguidebook.supernova.fragment.adapter
 
 import android.annotation.SuppressLint
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -112,9 +113,10 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                 holder as ViewHolderSongWithHandle
                 val current = songs[position -1]
 
+                val onSurfaceColour = MaterialColors.getColor(activity, R.attr.colorOnSurface, Color.LTGRAY)
                 if (showHandles) {
-                    holder.mArtwork!!.setColorFilter(ContextCompat
-                        .getColor(fragment.requireActivity(), R.color.onSurface60))
+                    holder.mArtwork!!.setColorFilter(MaterialColors
+                        .compositeARGBWithAlpha(onSurfaceColour, 153))
                     holder.mArtwork!!.layoutParams.width = activity.resources
                         .getDimension(R.dimen.handle_width).toInt()
                     Glide.with(fragment)
@@ -147,30 +149,18 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                         activity.getString(R.string.n_plays, plays)
                     }
 
-                    val gold = ContextCompat.getColor(activity, R.color.gold)
-                    val gold60 = MaterialColors.compositeARGBWithAlpha(gold, 153)
-                    val silver = ContextCompat.getColor(activity, R.color.silver)
-                    val silver60 = MaterialColors.compositeARGBWithAlpha(silver, 153)
-                    val bronze = ContextCompat.getColor(activity, R.color.bronze)
-                    val bronze60 = MaterialColors.compositeARGBWithAlpha(bronze, 153)
-
-                    val textColour = when (position) {
-                        1 -> gold
-                        2 -> silver
-                        3 -> bronze
-                        else -> ContextCompat.getColor(activity, R.color.onSurface)
+                    val primaryText = when (position) {
+                        1 -> ContextCompat.getColor(activity, R.color.gold)
+                        2 -> ContextCompat.getColor(activity, R.color.silver)
+                        3 -> ContextCompat.getColor(activity, R.color.bronze)
+                        else -> onSurfaceColour
                     }
-                    val textColour60 = when (position) {
-                        1 -> gold60
-                        2 -> silver60
-                        3 -> bronze60
-                        else -> ContextCompat.getColor(activity, R.color.onSurface60)
-                    }
+                    val secondaryText = MaterialColors.compositeARGBWithAlpha(primaryText, 153)
 
-                    holder.mTitle.setTextColor(textColour)
-                    holder.mSubtitle.setTextColor(textColour60)
-                    holder.mPlays.setTextColor(textColour60)
-                    holder.mMenu?.setColorFilter(textColour60)
+                    holder.mTitle.setTextColor(primaryText)
+                    holder.mSubtitle.setTextColor(secondaryText)
+                    holder.mPlays.setTextColor(secondaryText)
+                    holder.mMenu?.setColorFilter(secondaryText)
                 }
             }
         }
