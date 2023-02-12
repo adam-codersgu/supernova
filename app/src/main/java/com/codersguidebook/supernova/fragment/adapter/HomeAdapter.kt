@@ -17,7 +17,7 @@ open class HomeAdapter(private val activity: MainActivity): SongAdapter(activity
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         holder as ViewHolderSong
-        holder.itemView.rootView.layoutParams.width = DimensionsHelper.convertWidthToDp(activity, 100f)
+        holder.itemView.rootView.layoutParams.width = DimensionsHelper.convertToDp(activity, 100f)
 
         val current = songs[position]
 

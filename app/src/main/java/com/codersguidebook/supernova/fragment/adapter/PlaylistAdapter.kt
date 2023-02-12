@@ -1,11 +1,14 @@
 package com.codersguidebook.supernova.fragment.adapter
 
 import android.annotation.SuppressLint
+import android.app.ActionBar.LayoutParams
 import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewGroup.MarginLayoutParams
 import android.widget.GridLayout
 import android.widget.ImageView
 import android.widget.TextView
@@ -20,6 +23,7 @@ import com.codersguidebook.supernova.dialogs.PlaylistSongOptions
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.ui.playlist.PlaylistFragment
+import com.codersguidebook.supernova.utils.DimensionsHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.google.android.material.color.MaterialColors
 
@@ -117,8 +121,15 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                 if (showHandles) {
                     holder.mArtwork!!.setColorFilter(MaterialColors
                         .compositeARGBWithAlpha(onSurfaceColour, 153))
-                    holder.mArtwork!!.layoutParams.width = activity.resources
-                        .getDimension(R.dimen.handle_width).toInt()
+                    val params = holder.mArtwork!!.layoutParams as MarginLayoutParams
+                    params.width = activity.resources.getDimension(R.dimen.handle_width).toInt()
+                    params.marginStart = DimensionsHelper.convertToDp(activity, 13f)
+                    holder.mArtwork!!.layoutParams = params
+                    /* holder.mArtwork!!.layoutParams = LayoutParams(activity.resources
+                        .getDimension(R.dimen.handle_width).toInt(), MATCH_PARENT).apply {
+                        marginStart = DimensionsHelper.convertToDp(activity, 130f)
+                        marginEnd = DimensionsHelper.convertToDp(activity, 13f)
+                    } */
                     Glide.with(fragment)
                         .load(R.drawable.ic_drag_handle)
                         .into(holder.mArtwork!!)
@@ -127,8 +138,10 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                         return@setOnTouchListener true
                     }
                 } else {
-                    holder.mArtwork!!.layoutParams.width = activity.resources
-                        .getDimension(R.dimen.artwork_preview_width).toInt()
+                    holder.mArtwork!!.layoutParams = LayoutParams(activity.resources
+                        .getDimension(R.dimen.artwork_preview_width).toInt(), MATCH_PARENT).apply {
+                        marginStart = 0
+                    }
                     holder.mArtwork!!.clearColorFilter()
                     holder.mArtwork!!.setOnTouchListener { _, _ ->
                         return@setOnTouchListener true
