@@ -1,13 +1,11 @@
 package com.codersguidebook.supernova.fragment.adapter
 
 import android.annotation.SuppressLint
-import android.app.ActionBar.LayoutParams
 import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.MarginLayoutParams
 import android.widget.GridLayout
 import android.widget.ImageView
@@ -29,7 +27,7 @@ import com.google.android.material.color.MaterialColors
 
 class PlaylistAdapter(private val fragment: PlaylistFragment,
                       private val activity: MainActivity): SongWithHeaderAdapter(activity) {
-    private var showHandles = false
+    var showHandles = false
     var playlist: Playlist? = null
 
     inner class ViewHolderPlaylistHeader(itemView: View) : ViewHolderHeader(itemView) {
@@ -117,38 +115,29 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                 holder as ViewHolderSongWithHandle
                 val current = songs[position -1]
 
+                val params = holder.mArtwork!!.layoutParams as MarginLayoutParams
                 val onSurfaceColour = MaterialColors.getColor(activity, R.attr.colorOnSurface, Color.LTGRAY)
                 if (showHandles) {
-                    holder.mArtwork!!.setColorFilter(MaterialColors
+                    holder.mArtwork?.setColorFilter(MaterialColors
                         .compositeARGBWithAlpha(onSurfaceColour, 153))
-                    val params = holder.mArtwork!!.layoutParams as MarginLayoutParams
                     params.width = activity.resources.getDimension(R.dimen.handle_width).toInt()
                     params.marginStart = DimensionsHelper.convertToDp(activity, 13f)
-                    holder.mArtwork!!.layoutParams = params
-                    /* holder.mArtwork!!.layoutParams = LayoutParams(activity.resources
-                        .getDimension(R.dimen.handle_width).toInt(), MATCH_PARENT).apply {
-                        marginStart = DimensionsHelper.convertToDp(activity, 130f)
-                        marginEnd = DimensionsHelper.convertToDp(activity, 13f)
-                    } */
                     Glide.with(fragment)
                         .load(R.drawable.ic_drag_handle)
                         .into(holder.mArtwork!!)
-                    holder.mArtwork!!.setOnTouchListener { _, event ->
+                    holder.mArtwork?.setOnTouchListener { _, event ->
                         if (event.actionMasked == MotionEvent.ACTION_DOWN) fragment.startDragging(holder)
                         return@setOnTouchListener true
                     }
                 } else {
-                    holder.mArtwork!!.layoutParams = LayoutParams(activity.resources
-                        .getDimension(R.dimen.artwork_preview_width).toInt(), MATCH_PARENT).apply {
-                        marginStart = 0
-                    }
-                    holder.mArtwork!!.clearColorFilter()
-                    holder.mArtwork!!.setOnTouchListener { _, _ ->
-                        return@setOnTouchListener true
-                    }
+                    params.width = activity.resources.getDimension(R.dimen.artwork_preview_width).toInt()
+                    params.marginStart = 0
+                    holder.mArtwork?.clearColorFilter()
+                    holder.mArtwork?.setOnTouchListener { _, _ -> return@setOnTouchListener false }
                     ImageHandlingHelper.loadImageByAlbumId(activity.application,
                         current.albumId, holder.mArtwork!!)
                 }
+                holder.mArtwork!!.layoutParams = params
 
                 holder.mTitle.text = current.title ?: activity.getString(R.string.default_title)
                 holder.mSubtitle.text = current.artist ?: activity.getString(R.string.default_artist)
