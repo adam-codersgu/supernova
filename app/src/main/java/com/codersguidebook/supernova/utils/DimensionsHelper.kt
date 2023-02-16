@@ -7,13 +7,13 @@ import android.util.TypedValue
 object DimensionsHelper {
 
     /**
-     * Convert a given width value to density-independent pixels.
+     * Convert a given numerical value to density-independent pixels.
      *
      * @param context The context in which the display metrics should be retrieved.
-     * @param width The width to be converted to dp.
-     * @return The width as an Integer in dp format.
+     * @param width The number to be converted to dp.
+     * @return The number as an Integer in dp format.
      */
-    fun convertWidthToDp(context: Context, width: Float): Int {
+    fun convertToDp(context: Context, width: Float): Int {
         val widthDp = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP,
             width, context.resources.displayMetrics)

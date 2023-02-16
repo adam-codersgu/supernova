@@ -145,6 +145,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
                     menu.setGroupVisible(R.id.user_playlist_actions, true)
                     reorderPlaylist = menu.findItem(R.id.reorderPlaylist)
                     finishedReorder = menu.findItem(R.id.done)
+                    toggleHandlesMenuItems((adapter as PlaylistAdapter).showHandles)
                 }
             }
 
@@ -168,8 +169,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
                     R.id.reorderPlaylist -> {
                         itemTouchHelper.attachToRecyclerView(binding.scrollRecyclerView.recyclerView)
                         (adapter as PlaylistAdapter).manageHandles(true)
-                        reorderPlaylist.isVisible = false
-                        finishedReorder.isVisible = true
+                        toggleHandlesMenuItems(true)
                     }
                     R.id.editPlaylist -> {
                         playlistName?.let {
@@ -187,13 +187,22 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
                         // null essentially removes the itemTouchHelper from the recycler view
                         itemTouchHelper.attachToRecyclerView(null)
                         (adapter as PlaylistAdapter).manageHandles(false)
-                        reorderPlaylist.isVisible = true
-                        finishedReorder.isVisible = false
+                        toggleHandlesMenuItems(false)
                     }
                     else -> return false
                 }
                 return true
             }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+    }
+
+    /**
+     * Toggle the menu items for interacting with the playlist reordering handles.
+     *
+     * @param handlesVisible A boolean indicating whether the handles are visible.
+     */
+    private fun toggleHandlesMenuItems(handlesVisible: Boolean) {
+        reorderPlaylist.isVisible = !handlesVisible
+        finishedReorder.isVisible = handlesVisible
     }
 }
