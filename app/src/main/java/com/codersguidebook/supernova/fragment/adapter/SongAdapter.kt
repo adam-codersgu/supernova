@@ -46,7 +46,7 @@ abstract class SongAdapter(private val activity: MainActivity): Adapter() {
      *
      * @param newSongs The new list of Song objects that should be displayed.
      */
-    fun processNewSongs(newSongs: List<Song>) {
+    open fun processNewSongs(newSongs: List<Song>) {
         for ((index, song) in newSongs.withIndex()) {
             val recyclerViewIndex = getRecyclerViewIndex(index)
             when {

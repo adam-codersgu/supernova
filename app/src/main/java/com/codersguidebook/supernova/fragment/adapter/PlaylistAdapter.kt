@@ -24,6 +24,7 @@ import com.codersguidebook.supernova.ui.playlist.PlaylistFragment
 import com.codersguidebook.supernova.utils.DimensionsHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.google.android.material.color.MaterialColors
+import kotlin.math.min
 
 class PlaylistAdapter(private val fragment: PlaylistFragment,
                       private val activity: MainActivity): SongWithHeaderAdapter(activity) {
@@ -202,6 +203,12 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                 when {
                     numberOfItemsRemoved == 1 -> notifyItemRemoved(recyclerViewIndex)
                     numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(recyclerViewIndex, numberOfItemsRemoved)
+                }
+
+                // Update the colours of the top 3 most played songs, if appropriate
+                if (playlist?.name == activity.getString(R.string.most_played) && index < 3) {
+                    val maxItemCount = min(songs.size, 3)
+                    notifyItemRangeChanged(index, maxItemCount - index)
                 }
 
                 processLoopIteration(index, song)

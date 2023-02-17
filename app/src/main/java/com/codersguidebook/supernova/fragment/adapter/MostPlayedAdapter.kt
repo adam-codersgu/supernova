@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
+import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.google.android.material.color.MaterialColors
 
@@ -51,5 +52,22 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
         } else {
             activity.getString(R.string.n_plays, plays)
         }
+    }
+
+    override fun processNewSongs(newSongs: List<Song>) {
+        val positionsToUpdate = mutableListOf<Int>()
+        for ((index, song) in newSongs.withIndex()) {
+            if (index >= songs.size) break
+            val currentSong =  songs[index]
+
+            if (index < 3 && (song.title != currentSong.title || song.artist != currentSong.title
+                    || song.plays != currentSong.plays)) {
+                positionsToUpdate.add(index)
+            }
+        }
+
+        super.processNewSongs(newSongs)
+
+        for (position in positionsToUpdate) notifyItemChanged(position)
     }
 }
