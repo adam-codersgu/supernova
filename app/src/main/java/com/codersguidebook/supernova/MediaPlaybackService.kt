@@ -146,8 +146,6 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             // If no alternative currently play queue item ID has been set, then play from the beginning of the queue
             if (currentlyPlayingQueueItemId == -1L) currentlyPlayingQueueItemId = playQueue[0].queueId
 
-            setCurrentMetadata()
-
             mediaPlayer?.apply {
                 stop()
                 release()
@@ -175,7 +173,8 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                     setOnErrorListener(this@MediaPlaybackService)
                     prepare()
                 }
-                // Refresh the notification so user can see the song has changed
+                // Refresh the notification and metadata so user can see the song has changed
+                setCurrentMetadata()
                 refreshNotification()
                 setMediaPlaybackState(STATE_NONE, 0, 0f, null)
             } catch (e: IOException) {
@@ -208,7 +207,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         startService(Intent(applicationContext, MediaBrowserService::class.java))
                         mediaSessionCompat.isActive = true
                         try {
-                            mediaPlayer!!.apply {
+                            mediaPlayer?.apply {
                                 start()
                                 setOnCompletionListener {
                                     val currentlyPlayingQueueItem = getCurrentQueueItem()
