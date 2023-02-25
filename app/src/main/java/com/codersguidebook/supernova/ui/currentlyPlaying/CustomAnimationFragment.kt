@@ -92,7 +92,7 @@ class CustomAnimationFragment : BaseRecyclerViewFragment() {
         registerResult.launch(Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI))
     }
 
-    private fun setupMenu() {
+    override fun setupMenu() {
         (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
             override fun onPrepareMenu(menu: Menu) {
                 menu.findItem(R.id.search)?.isVisible = false

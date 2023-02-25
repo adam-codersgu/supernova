@@ -191,4 +191,5 @@
     <string name="error_media_service_default">A playback error has occurred. If the song file has been moved or deleted please wait for the library to refresh.</string>
     <string name="error_media_service_empty_queue">A playback error has occurred. The play queue is empty.</string>
     <string name="error_media_service_player_state">A playback error has occurred. The media player must be restarted.</string>
+    <string name="no_songs_for_artist">No songs found for this artist.</string>
 </resources>

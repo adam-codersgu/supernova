@@ -3,6 +3,7 @@ package com.codersguidebook.supernova.ui.artist
 import android.os.Build
 import android.os.Bundle
 import android.view.*
+import android.widget.Toast
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
@@ -98,7 +99,12 @@ class ArtistFragment : RecyclerViewFragment() {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) { }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-                val songs = musicLibraryViewModel.activeArtistSongs.value ?: return false
+                val songs = musicLibraryViewModel.activeArtistSongs.value
+                if (songs == null) {
+                    Toast.makeText(activity, getString(R.string.no_songs_for_artist),
+                        Toast.LENGTH_SHORT).show()
+                    return true
+                }
 
                 when (menuItem.itemId) {
                     R.id.artist_play_next -> mainActivity.addSongsToPlayQueue(songs, true)

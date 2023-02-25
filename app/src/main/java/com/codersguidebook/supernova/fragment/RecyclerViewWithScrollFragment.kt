@@ -34,10 +34,10 @@ abstract class RecyclerViewWithScrollFragment: BaseRecyclerViewFragment() {
         binding.recyclerView.addOnScrollListener(RecyclerViewScrollbar.OnScrollListener(binding.scrollBar))
     }
 
-    fun finishUpdate() {
+    override fun finishUpdate() {
         if (binding.recyclerView.adapter == null) {
             binding.recyclerView.adapter = adapter
         }
-        finishUpdate()
+        super.finishUpdate()
     }
 }

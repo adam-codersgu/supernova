@@ -155,7 +155,7 @@ class SearchFragment : BaseRecyclerViewFragment() {
         }
     }
 
-    private fun setupMenu() {
+    override fun setupMenu() {
         (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
             override fun onPrepareMenu(menu: Menu) {
                 val searchItem = menu.findItem(R.id.search)
