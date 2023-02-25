@@ -2,6 +2,7 @@ package com.codersguidebook.supernova.fragment
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.view.MenuHost
 import androidx.recyclerview.widget.RecyclerView
 
 abstract class BaseRecyclerViewFragment: BaseFragment() {
@@ -14,6 +15,7 @@ abstract class BaseRecyclerViewFragment: BaseFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         initialiseAdapter()
+        setupMenu()
     }
 
     /** Convenience method that sets the isUpdating state of the RecyclerView update workflow to true **/
@@ -25,8 +27,13 @@ abstract class BaseRecyclerViewFragment: BaseFragment() {
         isUpdating = true
     }
 
-    /** Convenience method that sets the isUpdating state of the RecyclerView update workflow to false **/
-    fun setIsUpdatingFalse() {
+    /**
+     * Finish the update of the RecyclerView. Invalidate the fragment's menu, set the isUpdating
+     * state of the RecyclerView update workflow to false, and request new data if an
+     * unfulfilled request arrived during a previous update.
+     */
+    open fun finishUpdate() {
+        (requireActivity() as MenuHost).invalidateMenu()
         isUpdating = false
         if (unhandledRequestReceived) {
             unhandledRequestReceived = false
@@ -43,4 +50,7 @@ abstract class BaseRecyclerViewFragment: BaseFragment() {
 
     /** Each fragment that uses a RecyclerView must initialise the adapter variable. */
     abstract fun initialiseAdapter()
+
+    /** Set up the options menu for the fragment. */
+    open fun setupMenu() { }
 }

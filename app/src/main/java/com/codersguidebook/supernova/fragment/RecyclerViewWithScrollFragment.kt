@@ -38,6 +38,6 @@ abstract class RecyclerViewWithScrollFragment: BaseRecyclerViewFragment() {
         if (binding.recyclerView.adapter == null) {
             binding.recyclerView.adapter = adapter
         }
-        setIsUpdatingFalse()
+        finishUpdate()
     }
 }

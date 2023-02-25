@@ -44,7 +44,7 @@ class ArtistFragment : RecyclerViewFragment() {
     /**
      * Refresh the content displayed in the RecyclerView.
      *
-     * @param songs - The up-to-date list of Song objects that should be displayed.
+     * @param songs The up-to-date list of Song objects that should be displayed.
      */
     private fun updateRecyclerView(songs: List<Song>) {
         setIsUpdatingTrue()
@@ -75,7 +75,6 @@ class ArtistFragment : RecyclerViewFragment() {
         // Refresh the header
         adapter.notifyItemChanged(0)
 
-        setupMenu(songs)
         finishUpdate()
     }
 
@@ -87,7 +86,7 @@ class ArtistFragment : RecyclerViewFragment() {
         adapter = ArtistAdapter(mainActivity)
     }
 
-    private fun setupMenu(songs: List<Song>) {
+    override fun setupMenu() {
         (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
             override fun onPrepareMenu(menu: Menu) {
                 menu.setGroupVisible(R.id.menu_group_artist_actions, true)
@@ -99,6 +98,7 @@ class ArtistFragment : RecyclerViewFragment() {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) { }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                val songs = musicLibraryViewModel.activeArtistSongs.value ?: return false
 
                 when (menuItem.itemId) {
                     R.id.artist_play_next -> mainActivity.addSongsToPlayQueue(songs, true)

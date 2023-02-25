@@ -43,7 +43,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
 
     private val activePlaylistName = MutableLiveData<String>()
     private val activePlaylist: LiveData<Playlist?> = Transformations.switchMap(activePlaylistName) {
-        name -> repository.getPlaylistByNameLiveData(name)
+            name -> repository.getPlaylistByNameLiveData(name)
     }
     val activePlaylistSongs: LiveData<List<Song>> = Transformations.switchMap(activePlaylist) { playlist ->
         liveData {
@@ -250,6 +250,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param albumId The album's ID.
      */
     fun setActiveAlbumId(albumId: String) {
+        if (albumId == activeAlbumId.value) return
         activeAlbumId.value = albumId
     }
 
@@ -259,6 +260,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param name The artist's name.
      */
     fun setActiveArtistName(name: String) {
+        if (name == activeArtistName.value) return
         activeArtistName.value = name
     }
 
@@ -268,6 +270,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param name The playlist's name.
      */
     fun setActivePlaylistName(name: String) {
+        if (name == activePlaylistName.value) return
         activePlaylistName.value = name
     }
 

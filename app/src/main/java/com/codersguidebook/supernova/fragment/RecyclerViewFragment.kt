@@ -30,10 +30,10 @@ abstract class RecyclerViewFragment: BaseRecyclerViewFragment() {
         binding.root.itemAnimator = DefaultItemAnimator()
     }
 
-    fun finishUpdate() {
+    override fun finishUpdate() {
         if (binding.root.adapter == null) {
             binding.root.adapter = adapter
         }
-        setIsUpdatingFalse()
+        super.finishUpdate()
     }
 }
