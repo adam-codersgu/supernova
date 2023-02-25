@@ -124,7 +124,6 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
             }
         }
 
-        setupMenu(songs)
         finishUpdate()
     }
 
@@ -136,7 +135,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
         musicLibraryViewModel.activePlaylistSongs.value?.let { updateRecyclerView(it) }
     }
 
-    private fun setupMenu(songs: List<Song>) {
+    override fun setupMenu() {
         (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
             override fun onPrepareMenu(menu: Menu) {
                 menu.setGroupVisible(R.id.universal_playlist_actions, true)
@@ -152,9 +151,10 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) { }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                val songs = musicLibraryViewModel.activePlaylistSongs.value
                 when (menuItem.itemId) {
                     R.id.playPlaylistNext -> {
-                        if (songs.isNotEmpty()){
+                        if (!songs.isNullOrEmpty()){
                             mainActivity.addSongsToPlayQueue(songs, true)
                         } else {
                             Toast.makeText(activity,
@@ -162,7 +162,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
                         }
                     }
                     R.id.queuePlaylist -> {
-                        if (songs.isNotEmpty()) mainActivity.addSongsToPlayQueue(songs)
+                        if (!songs.isNullOrEmpty()) mainActivity.addSongsToPlayQueue(songs)
                         else Toast.makeText(activity,
                             getString(R.string.playlist_contains_zero_songs), Toast.LENGTH_SHORT).show()
                     }
@@ -173,7 +173,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
                     }
                     R.id.editPlaylist -> {
                         playlistName?.let {
-                            val action = PlaylistFragmentDirections.actionEditPlaylist(playlistName!!)
+                            val action = PlaylistFragmentDirections.actionEditPlaylist(it)
                             mainActivity.findNavController(R.id.nav_host_fragment).navigate(action)
                         }
                     }
@@ -184,7 +184,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
                         }
                     }
                     R.id.done -> {
-                        // null essentially removes the itemTouchHelper from the recycler view
+                        // Null essentially removes the itemTouchHelper from the recycler view
                         itemTouchHelper.attachToRecyclerView(null)
                         (adapter as PlaylistAdapter).manageHandles(false)
                         toggleHandlesMenuItems(false)
