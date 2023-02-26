@@ -201,8 +201,8 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
         binding.artwork.setOnClickListener { showSettingsPopup() }
 
         binding.currentSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onStopTrackingTouch(seekBar: SeekBar) {}
-            override fun onStartTrackingTouch(seekBar: SeekBar) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar) { }
+            override fun onStartTrackingTouch(seekBar: SeekBar) { }
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) mainActivity.seekTo(progress)
             }
