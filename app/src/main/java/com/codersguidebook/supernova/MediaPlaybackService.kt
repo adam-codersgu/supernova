@@ -70,10 +70,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
     private var playbackPositionRunnable = object : Runnable {
         override fun run() {
             try {
-                if (mediaPlayer?.isPlaying == true) {
-                    val playbackPosition = mediaPlayer!!.currentPosition.toLong()
-                    setMediaPlaybackState(STATE_PLAYING, playbackPosition, 1f, null)
-                }
+                if (mediaPlayer?.isPlaying == true) setMediaPlaybackState(STATE_PLAYING)
             } finally {
                 handler.postDelayed(this, 1000L)
             }
@@ -176,7 +173,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                 // Refresh the notification and metadata so user can see the song has changed
                 setCurrentMetadata()
                 refreshNotification()
-                setMediaPlaybackState(STATE_NONE, 0, 0f, null)
+                setMediaPlaybackState(STATE_NONE)
             } catch (e: IOException) {
                 error()
             } catch (e: IllegalStateException) {
@@ -217,8 +214,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                                             val bundle = Bundle().apply {
                                                 putLong("finishedSongId", currentlyPlayingSongId.toLong())
                                             }
-                                            setMediaPlaybackState(STATE_SKIPPING_TO_NEXT, 0,
-                                                0f, bundle)
+                                            setMediaPlaybackState(STATE_SKIPPING_TO_NEXT, bundle)
                                         }
                                     }
 
@@ -226,7 +222,9 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                                     when {
                                         repeatMode == REPEAT_MODE_ONE -> {}
                                         repeatMode == REPEAT_MODE_ALL ||
-                                                playQueue.isNotEmpty() && playQueue[playQueue.size - 1].queueId != currentlyPlayingQueueItemId -> {
+                                                playQueue.isNotEmpty() &&
+                                                playQueue[playQueue.size - 1].queueId
+                                                != currentlyPlayingQueueItemId -> {
                                             onSkipToNext()
                                             return@setOnCompletionListener
                                         }
@@ -241,9 +239,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                                 }
                             }
                             refreshNotification()
-                            val playbackPosition = mediaPlayer!!.currentPosition.toLong()
-                            setMediaPlaybackState(STATE_PLAYING, playbackPosition,
-                                1f, getBundleWithSongDuration())
+                            setMediaPlaybackState(STATE_PLAYING, getBundleWithSongDuration())
                         } catch (_: NullPointerException) {
                             error()
                         }
@@ -257,8 +253,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         override fun onPause() {
             super.onPause()
             mediaPlayer?.pause()
-            val playbackPosition = mediaPlayer?.currentPosition?.toLong() ?: 0
-            setMediaPlaybackState(STATE_PAUSED, playbackPosition, 0f, getBundleWithSongDuration())
+            setMediaPlaybackState(STATE_PAUSED, getBundleWithSongDuration())
             refreshNotification()
         }
 
@@ -387,7 +382,8 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
 
             val repeatMode = mediaSessionCompat.controller.repeatMode
             currentlyPlayingQueueItemId = when {
-                playQueue.isNotEmpty() && playQueue[playQueue.size - 1].queueId != currentlyPlayingQueueItemId -> {
+                playQueue.isNotEmpty() &&
+                        playQueue[playQueue.size - 1].queueId != currentlyPlayingQueueItemId -> {
                     val indexOfCurrentQueueItem = playQueue.indexOfFirst {
                         it.queueId == currentlyPlayingQueueItemId
                     }
@@ -417,7 +413,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                     audioManager.abandonAudioFocusRequest(audioFocusRequest)
                 } catch (_: UninitializedPropertyAccessException){ }
             }
-            setMediaPlaybackState(STATE_STOPPED, 0L, 0f, null)
+            setMediaPlaybackState(STATE_STOPPED)
             stopSelf()
         }
 
@@ -431,14 +427,11 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                 if (wasPlaying) this.pause()
 
                 this.seekTo(pos.toInt())
-                val playbackPosition = this.currentPosition.toLong()
 
                 if (wasPlaying) {
                     this.start()
-                    setMediaPlaybackState(STATE_PLAYING, playbackPosition,
-                        1f, getBundleWithSongDuration())
-                } else setMediaPlaybackState(STATE_PAUSED, playbackPosition,
-                    0f, getBundleWithSongDuration())
+                    setMediaPlaybackState(STATE_PLAYING, getBundleWithSongDuration())
+                } else setMediaPlaybackState(STATE_PAUSED, getBundleWithSongDuration())
             }
         }
     }
@@ -447,7 +440,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
      * Generate a Bundle featuring the duration of the currently playing song. The bundle can be
      * packaged with media playback state updates.
      *
-     * @return Bundle - containing a key called duration that holds an Integer representing the
+     * @return Bundle containing a key called duration that holds an Integer representing the
      * duration of the currently playing song.
      */
     private fun getBundleWithSongDuration(): Bundle {
@@ -471,7 +464,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
     /**
      * Construct a MediaDescriptionCompat object based on the metadata supplied in a Bundle.
      *
-     * @param bundle - A Bundle containing the metadata for a given song.
+     * @param bundle A Bundle containing the metadata for a given song.
      * @return A MediaDescriptionCompat object containing the metadata that can be used by the service.
      */
     private fun buildMediaDescriptionFromBundle(bundle: Bundle): MediaDescriptionCompat {
@@ -486,8 +479,8 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
     /**
      * Update the metadata for a given item in the play queue.
      *
-     * @param mediaDescription - A MediaDescriptionCompat object containing the metadata for a given song.
-     * @param queueId - The ID of the target queue item.
+     * @param mediaDescription A MediaDescriptionCompat object containing the metadata for a given song.
+     * @param queueId The ID of the target queue item.
      */
     private fun updateMetadataForQueueItem(mediaDescription: MediaDescriptionCompat, queueId: Long) {
         val index = playQueue.indexOfFirst {
@@ -510,7 +503,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
     /** Set the play queue for the media session and notify all observers of the playback state. */
     private fun setPlayQueue() {
         mediaSessionCompat.setQueue(playQueue)
-        setMediaPlaybackState(mediaSessionCompat.controller.playbackState.state, 0, 0f, null)
+        setMediaPlaybackState(mediaSessionCompat.controller.playbackState.state)
     }
 
     override fun onCreate() {
@@ -610,14 +603,15 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
     /**
      * Dispatch media playback state updates.
      *
-     * @param state - An Integer representing the current playback status.
-     * @param position - The playback position in the currently playing song.
-     * @param playbackSpeed - The speed of playback.
-     * @param bundle - An option bundle of extras to be packaged with the playback status update.
+     * @param state An Integer representing the current playback status.
+     * @param bundle An option bundle of extras to be packaged with the playback status update.
+     * Default = null.
      */
-    private fun setMediaPlaybackState(state: Int, position: Long, playbackSpeed: Float, bundle: Bundle?) {
+    private fun setMediaPlaybackState(state: Int, bundle: Bundle? = null) {
+        val playbackPosition = mediaPlayer?.currentPosition?.toLong() ?: 0L
+        val playbackSpeed = mediaPlayer?.playbackParams?.speed ?: 0f
         val playbackStateBuilder = Builder()
-            .setState(state, position, playbackSpeed)
+            .setState(state, playbackPosition, playbackSpeed)
             .setActiveQueueItemId(currentlyPlayingQueueItemId)
         bundle?.let { playbackStateBuilder.setExtras(it) }
         mediaSessionCompat.setPlaybackState(playbackStateBuilder.build())
@@ -645,7 +639,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
      * Retrieve the album artwork stored by the app for a given album ID.
      * If no artwork is found then a default artwork image is returned instead.
      *
-     * @param albumId - The ID of the album that artwork should be retrieved for.
+     * @param albumId The ID of the album that artwork should be retrieved for.
      * @return A Bitmap representation of the album artwork.
      */
     private fun getArtworkByAlbumId(albumId: String?): Bitmap {
@@ -689,12 +683,12 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
     /**
      * Handle errors that occur during playback
      *
-     * @param message - A String detailing the reason for the error. The error message
+     * @param message A String detailing the reason for the error. The error message
      * will be displayed to the user in a toast notification. By default, a generic error
      * message will be shown.
      */
     private fun error(message: String = getString(R.string.error_media_service_default)) {
-        setMediaPlaybackState(STATE_ERROR, 0, 0F, null)
+        setMediaPlaybackState(STATE_ERROR)
         mediaSessionCompat.controller.transportControls.stop()
         stopForeground(STOP_FOREGROUND_REMOVE)
         Toast.makeText(application, message, Toast.LENGTH_LONG).show()
