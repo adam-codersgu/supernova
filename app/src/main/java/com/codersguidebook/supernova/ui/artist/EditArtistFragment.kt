@@ -11,7 +11,6 @@ import androidx.navigation.findNavController
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentEditArtistBinding
-import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.BaseEditMusicFragment
 
 class EditArtistFragment : BaseEditMusicFragment() {
@@ -22,7 +21,6 @@ class EditArtistFragment : BaseEditMusicFragment() {
         get() = _binding!! as FragmentEditArtistBinding
 
     private var artistName = ""
-    private var artistSongs = emptyList<Song>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -43,25 +41,24 @@ class EditArtistFragment : BaseEditMusicFragment() {
         binding.editArtistName.text = SpannableStringBuilder(artistName)
 
         musicLibraryViewModel.setActiveArtistName(artistName)
-
-        musicLibraryViewModel.activeArtistSongs.observe(viewLifecycleOwner) { songs ->
-            artistSongs = songs
-        }
     }
 
     override fun menuItemSelected(menuItem: MenuItem): Boolean {
         return when (menuItem.itemId) {
             R.id.save -> {
                 val newName = binding.editArtistName.text.toString()
+                val songs = musicLibraryViewModel.activeArtistSongs.value
 
                 when {
                     newName.isEmpty() -> Toast.makeText(activity, getString(R.string.artist_name_cannot_be_empty),
                         Toast.LENGTH_SHORT).show()
                     newName == artistName -> Toast.makeText(activity, getString(R.string.artist_name_not_changed),
                         Toast.LENGTH_SHORT).show()
+                    songs == null -> Toast.makeText(activity, getString(R.string.no_songs_for_artist),
+                        Toast.LENGTH_SHORT).show()
                     else -> {
-                        for (song in artistSongs) song.artist = newName
-                        mainActivity.updateSongs(artistSongs)
+                        for (song in songs) song.artist = newName
+                        mainActivity.updateSongs(songs)
                         Toast.makeText(activity, getString(R.string.artist_updated),
                             Toast.LENGTH_SHORT).show()
                         val action = EditArtistFragmentDirections.actionFinishEditArtist(artistName)

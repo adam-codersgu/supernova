@@ -14,6 +14,7 @@ abstract class BaseRecyclerViewFragment: BaseFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         initialiseAdapter()
+        setupMenu()
     }
 
     /** Convenience method that sets the isUpdating state of the RecyclerView update workflow to true **/
@@ -25,8 +26,11 @@ abstract class BaseRecyclerViewFragment: BaseFragment() {
         isUpdating = true
     }
 
-    /** Convenience method that sets the isUpdating state of the RecyclerView update workflow to false **/
-    fun setIsUpdatingFalse() {
+    /**
+     * Finish the update of the RecyclerView. Set the isUpdating state of the RecyclerView update workflow
+     * to false and request new data if an unfulfilled request arrived during a previous update.
+     */
+    open fun finishUpdate() {
         isUpdating = false
         if (unhandledRequestReceived) {
             unhandledRequestReceived = false
@@ -43,4 +47,7 @@ abstract class BaseRecyclerViewFragment: BaseFragment() {
 
     /** Each fragment that uses a RecyclerView must initialise the adapter variable. */
     abstract fun initialiseAdapter()
+
+    /** Set up the options menu for the fragment. */
+    open fun setupMenu() { }
 }

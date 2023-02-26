@@ -3,6 +3,7 @@ package com.codersguidebook.supernova.ui.album
 import android.os.Build
 import android.os.Bundle
 import android.view.*
+import android.widget.Toast
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
@@ -51,21 +52,21 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
 
         super.updateRecyclerView(songs)
 
-        // Refresh the header
+        // Refresh the header and menu
         (adapter as AlbumAdapter).notifyItemChanged(0)
-
-        setupMenu(songs)
+        (requireActivity() as MenuHost).invalidateMenu()
     }
 
     override fun requestNewData() {
         musicLibraryViewModel.activeAlbumSongs.value?.let { updateRecyclerView(it) }
     }
 
-    private fun setupMenu(songs: List<Song>) {
+    override fun setupMenu() {
         (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
             override fun onPrepareMenu(menu: Menu) {
                 menu.setGroupVisible(R.id.menu_group_album_actions, true)
-                if (songs.isNotEmpty()) {
+                val songs = musicLibraryViewModel.activeAlbumSongs.value
+                if (!songs.isNullOrEmpty()) {
                     val distinctArtists = songs.distinctBy {
                         it.artist
                     }
@@ -79,6 +80,13 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) { }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                val songs = musicLibraryViewModel.activeAlbumSongs.value
+                if (songs == null) {
+                    Toast.makeText(activity, getString(R.string.no_songs_for_album),
+                        Toast.LENGTH_SHORT).show()
+                    return true
+                }
+
                 when (menuItem.itemId) {
                     R.id.album_play_next -> {
                         mainActivity.addSongsToPlayQueue(songs, true)

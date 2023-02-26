@@ -69,10 +69,10 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
         finishUpdate()
     }
 
-    fun finishUpdate() {
+    override fun finishUpdate() {
         if (binding.scrollRecyclerView.recyclerView.adapter == null) {
             binding.scrollRecyclerView.recyclerView.adapter = adapter
         }
-        setIsUpdatingFalse()
+        super.finishUpdate()
     }
 }

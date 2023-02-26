@@ -57,8 +57,7 @@ class EditPlaylistFragment : BaseEditMusicFragment() {
             lifecycleScope.launch(Dispatchers.Main) {
                 playlist = withContext(Dispatchers.IO) {
                     musicLibraryViewModel.getPlaylistByName(name)
-                }
-                playlist?.let {
+                }?.also {
                     if (!ImageHandlingHelper.loadImageByPlaylist(mainActivity.application,
                             it, binding.artwork)) {
                         musicLibraryViewModel.activePlaylistSongs.observe(viewLifecycleOwner) { songs ->
@@ -72,7 +71,7 @@ class EditPlaylistFragment : BaseEditMusicFragment() {
             }
         }
 
-        binding.artwork.setOnClickListener {  }
+        binding.artwork.setOnClickListener { getImage() }
 
         binding.editArtworkIcon.setOnClickListener { getImage() }
     }

@@ -118,7 +118,7 @@ class ControlsFragment : BaseFragment() {
     /**
      * Use the currently playing song's metadata to update the user interface.
      *
-     * @param metadata - MediaMetadataCompat object detailing the currently playing song's metadata, or null
+     * @param metadata MediaMetadataCompat object detailing the currently playing song's metadata, or null
      * if playback has stopped and any loaded metadata should be cleared.
      */
     private fun updateCurrentlyDisplayedMetadata(metadata: MediaMetadataCompat?) {

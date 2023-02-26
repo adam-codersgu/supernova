@@ -13,14 +13,12 @@ import androidx.viewbinding.ViewBinding
 import com.bumptech.glide.Glide
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentEditAlbumBinding
-import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.BaseEditMusicFragment
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
 class EditAlbumFragment : BaseEditMusicFragment() {
 
     private var albumId: String? = null
-    private var albumSongs = emptyList<Song>()
 
     override var _binding: ViewBinding? = null
         get() = field as FragmentEditAlbumBinding?
@@ -49,9 +47,10 @@ class EditAlbumFragment : BaseEditMusicFragment() {
             musicLibraryViewModel.setActiveAlbumId(albumId)
 
             musicLibraryViewModel.activeAlbumSongs.observe(viewLifecycleOwner) { songs ->
-                this.albumSongs = songs
-                binding.editAlbumTitle.text = SpannableStringBuilder(albumSongs[0].albumName)
-                binding.editAlbumYear.text = SpannableStringBuilder(albumSongs[0].year)
+                val songToUseForDisplay = if (songs.isNotEmpty()) songs[0]
+                else return@observe
+                binding.editAlbumTitle.text = SpannableStringBuilder(songToUseForDisplay.albumName)
+                binding.editAlbumYear.text = SpannableStringBuilder(songToUseForDisplay.year)
             }
         }
 
@@ -64,7 +63,11 @@ class EditAlbumFragment : BaseEditMusicFragment() {
     override fun menuItemSelected(menuItem: MenuItem): Boolean {
         return when (menuItem.itemId) {
             R.id.save -> {
-                if (albumSongs.isNotEmpty()) {
+                val songs = musicLibraryViewModel.activeAlbumSongs.value
+                if (songs.isNullOrEmpty()) {
+                    Toast.makeText(activity, getString(R.string.no_songs_for_album),
+                        Toast.LENGTH_SHORT).show()
+                } else {
                     val newAlbumTitle = binding.editAlbumTitle.text.toString()
                     val newAlbumYear = binding.editAlbumYear.text.toString()
 
@@ -79,12 +82,12 @@ class EditAlbumFragment : BaseEditMusicFragment() {
                                     albumId!!, albumArt)
                             }
 
-                            if (newAlbumTitle != albumSongs[0].title || newAlbumYear != albumSongs[0].year) {
-                                for (song in albumSongs) {
+                            if (newAlbumTitle != songs[0].title || newAlbumYear != songs[0].year) {
+                                for (song in songs) {
                                     song.albumName = newAlbumTitle
                                     song.year = newAlbumYear
                                 }
-                                mainActivity.updateSongs(albumSongs)
+                                mainActivity.updateSongs(songs)
                             }
 
                             val action = EditAlbumFragmentDirections.actionFinishEditAlbum(albumId!!)

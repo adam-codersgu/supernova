@@ -239,7 +239,7 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
     /**
      * Use the currently playing song's metadata to update the user interface.
      *
-     * @param metadata - MediaMetadataCompat object detailing the currently playing song's metadata, or null
+     * @param metadata MediaMetadataCompat object detailing the currently playing song's metadata, or null
      * if playback has stopped and any loaded metadata should be cleared.
      */
     private fun updateCurrentlyDisplayedMetadata(metadata: MediaMetadataCompat?) = lifecycleScope.launch(Dispatchers.Main) {
@@ -268,7 +268,7 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
      * Set the style of the favourite button based on whether the currently playing
      * song is a favourite.
      *
-     * @param isFavourite - A Boolean indicating whether the currently playing song is
+     * @param isFavourite A Boolean indicating whether the currently playing song is
      * a favourite.
      */
     private fun setFavouriteButtonStyle(isFavourite: Boolean) {
@@ -284,7 +284,7 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
     /**
      * Set a list of custom image URIs as the animation images.
      *
-     * @param imageIds - The IDs of the user's custom animation images.
+     * @param imageIds The IDs of the user's custom animation images.
      */
     private fun setCustomDrawables(imageIds: List<String>) {
         val directory = ContextWrapper(mainActivity).getDir("customAnimation", Context.MODE_PRIVATE)
@@ -321,7 +321,7 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
     /**
      * Set the tint of the shuffle button based on the active shuffle mode.
      *
-     * @param shuffleMode - An Integer representing the active shuffle mode preference.
+     * @param shuffleMode An Integer representing the active shuffle mode preference.
      */
     private fun setShuffleButtonAppearance(shuffleMode: Int) {
         if (shuffleMode == SHUFFLE_MODE_ALL) {
@@ -332,7 +332,7 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
     /**
      * Set the tint and drawable of the repeat button based on the active repeat mode.
      *
-     * @param repeatMode - An Integer representing the active repeat mode preference.
+     * @param repeatMode An Integer representing the active repeat mode preference.
      */
     private fun setRepeatButtonAppearance(repeatMode: Int) {
         when (repeatMode) {

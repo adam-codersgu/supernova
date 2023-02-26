@@ -159,4 +159,7 @@
     <string name="default_album">Álbum desconocido</string>
     <string name="default_artist">Artista desconocido</string>
     <string name="default_title">Canción desconocida</string>
+
+    <string name="no_songs_for_album">No se encontraron canciones para este álbum.</string>
+    <string name="no_songs_for_artist">No se encontraron canciones para este artista.</string>
 </resources>
