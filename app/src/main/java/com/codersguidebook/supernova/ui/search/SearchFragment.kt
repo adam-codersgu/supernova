@@ -11,7 +11,6 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.data.MusicDatabase
@@ -61,7 +60,7 @@ class SearchFragment : BaseRecyclerViewFragment() {
 
         mainActivity.onBackPressedDispatcher.addCallback(viewLifecycleOwner, onBackPressedCallback)
 
-        binding.recyclerView.itemAnimator = DefaultItemAnimator()
+        binding.recyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
 
         binding.chipGroup.setOnCheckedStateChangeListener { _, checkedIds ->
             if (adapter.itemCount > 0) adapter.clearRecyclerView()

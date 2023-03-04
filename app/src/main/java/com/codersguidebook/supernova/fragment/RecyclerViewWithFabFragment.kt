@@ -5,7 +5,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.View.VISIBLE
 import android.view.ViewGroup
-import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
@@ -33,18 +32,18 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.scrollRecyclerView.recyclerView.itemAnimator = DefaultItemAnimator()
+        binding.scrollRecyclerView.recyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
         binding.scrollRecyclerView.scrollBar.recyclerView = binding.scrollRecyclerView.recyclerView
 
         binding.scrollRecyclerView.recyclerView.addOnScrollListener(object: RecyclerViewScrollbar
-                .OnScrollListener(binding.scrollRecyclerView.scrollBar) {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
+            .OnScrollListener(binding.scrollRecyclerView.scrollBar) {
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    super.onScrolled(recyclerView, dx, dy)
 
-                if (dy > 0 && binding.fab.visibility == VISIBLE) binding.fab.hide()
-                else if (dy < 0 && binding.fab.visibility != VISIBLE) binding.fab.show()
-            }
-        })
+                    if (dy > 0 && binding.fab.visibility == VISIBLE) binding.fab.hide()
+                    else if (dy < 0 && binding.fab.visibility != VISIBLE) binding.fab.show()
+               }
+            })
     }
 
     /**
