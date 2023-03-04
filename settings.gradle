@@ -7,4 +7,3 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Supernova"
 include ':app'
-include ':recyclerview-fastscroller-with-value-label'
