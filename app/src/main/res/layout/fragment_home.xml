@@ -11,13 +11,14 @@
         android:id="@+id/home_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="8dp" >
+        android:paddingBottom="8dp">
 
         <RelativeLayout
             android:id="@+id/homeSongOfTheDay"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintTop_toTopOf="parent" >
+            android:visibility="gone"
+            app:layout_constraintTop_toTopOf="parent">
 
             <TextView
                 android:id="@+id/textViewSongOfTheDay"
@@ -52,7 +53,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:visibility="gone"
-            app:layout_constraintTop_toBottomOf="@id/homeSongOfTheDay" >
+            app:layout_constraintTop_toBottomOf="@id/homeSongOfTheDay">
 
             <TextView
                 android:id="@+id/textViewFavourites"
