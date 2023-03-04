@@ -3,10 +3,10 @@ package com.codersguidebook.supernova.fragment.adapter
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.codersguidebook.recyclerviewfastscrollerwithvaluelabel.RecyclerViewScrollbar
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
-import com.codersguidebook.supernova.views.RecyclerViewScrollbar
 
 class SongsAdapter(private val activity: MainActivity): SongAdapter(activity),
     RecyclerViewScrollbar.ValueLabelListener {

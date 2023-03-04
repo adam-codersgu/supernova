@@ -1,18 +1,15 @@
-package com.codersguidebook.supernova.views
+package com.codersguidebook.recyclerviewfastscrollerwithvaluelabel
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
-import android.graphics.Paint.ANTI_ALIAS_FLAG
 import android.util.AttributeSet
 import android.view.MotionEvent
-import android.view.MotionEvent.*
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.codersguidebook.supernova.R
 import com.google.android.material.color.MaterialColors
 import kotlin.math.max
 import kotlin.math.min
@@ -54,23 +51,23 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
     private var recyclerViewContentHeight: Int? = null
     private var recyclerViewScrollPosition = 0
 
-    private val trackPaint = Paint(ANTI_ALIAS_FLAG)
+    private val trackPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private var trackRect = Rect()
 
     private val thumbAndTrackWidth: Int
     private val thumbOffColour: Int
     private val thumbOnColour: Int
     private val thumbMinHeight: Int
-    private val thumbPaint = Paint(ANTI_ALIAS_FLAG)
+    private val thumbPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private var thumbRect = Rect()
     private var thumbSelected = false
 
-    private val valueLabelPaint = Paint(ANTI_ALIAS_FLAG)
+    private val valueLabelPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private var valueLabelText: String? = null
     private var valueLabelWidth: Float
 
     private val textBounds = Rect()
-    private val textPaint = Paint(ANTI_ALIAS_FLAG)
+    private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG)
 
     private val animationDuration = context.resources
         .getInteger(android.R.integer.config_mediumAnimTime).toLong()
@@ -103,37 +100,49 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
             attrs, R.styleable.RecyclerViewScrollbar, 0, 0).apply {
 
             try {
-                thumbAndTrackWidth = getDimension(R.styleable.RecyclerViewScrollbar_thumbAndTrackWidth,
-                    DEFAULT_THUMB_AND_TRACK_WIDTH).roundToInt()
-                val defaultTrackColour = MaterialColors.getColor(context, R.attr.colorOnSurface, Color.GRAY)
+                thumbAndTrackWidth = getDimension(
+                    R.styleable.RecyclerViewScrollbar_thumbAndTrackWidth,
+                    DEFAULT_THUMB_AND_TRACK_WIDTH
+                ).roundToInt()
+                val defaultTrackColour =
+                    MaterialColors.getColor(context, R.attr.colorOnSurface, Color.GRAY)
                 // 30% Alpha
-                val defaultTrackColour30 = MaterialColors.compositeARGBWithAlpha(defaultTrackColour, 77)
+                val defaultTrackColour30 =
+                    MaterialColors.compositeARGBWithAlpha(defaultTrackColour, 77)
                 trackPaint.apply {
                     color = getInt(R.styleable.RecyclerViewScrollbar_trackColor, defaultTrackColour30)
                 }
 
-                val defaultThumbOffColour = MaterialColors.getColor(context, R.attr.colorOnSurface, Color.LTGRAY)
-                val defaultThumbOffColour84 = MaterialColors.compositeARGBWithAlpha(defaultThumbOffColour, 214)
+                val defaultThumbOffColour =
+                    MaterialColors.getColor(context, R.attr.colorOnSurface, Color.LTGRAY)
+                val defaultThumbOffColour84 =
+                    MaterialColors.compositeARGBWithAlpha(defaultThumbOffColour, 214)
                 thumbOffColour = getInt(R.styleable.RecyclerViewScrollbar_thumbOffColor, defaultThumbOffColour84)
                 thumbPaint.apply { color = thumbOffColour }
 
-                thumbMinHeight = getDimension(R.styleable.RecyclerViewScrollbar_thumbMinHeight,
+                thumbMinHeight = getDimension(
+                    R.styleable.RecyclerViewScrollbar_thumbMinHeight,
                     thumbAndTrackWidth * 4f).roundToInt()
-                val defaultThumbOnColour = MaterialColors.getColor(context, R.attr.colorSecondary, Color.CYAN)
+                val defaultThumbOnColour =
+                    MaterialColors.getColor(context, R.attr.colorSecondary, Color.CYAN)
                 thumbOnColour = getInt(R.styleable.RecyclerViewScrollbar_thumbOnColor, defaultThumbOnColour)
 
-                valueLabelWidth = getDimension(R.styleable.RecyclerViewScrollbar_valueLabelWidth,
-                    DEFAULT_VALUE_LABEL_WIDTH)
+                valueLabelWidth = getDimension(
+                    R.styleable.RecyclerViewScrollbar_valueLabelWidth,
+                    DEFAULT_VALUE_LABEL_WIDTH
+                )
                 valueLabelPaint.apply {
                     color = getInt(R.styleable.RecyclerViewScrollbar_valueLabelBackgroundColor, defaultThumbOnColour)
                 }
 
-                val defaultTextColour = MaterialColors.getColor(context, R.attr.textFillColor, Color.BLACK)
+                val defaultTextColour =
+                    MaterialColors.getColor(context, R.attr.textFillColor, Color.BLACK)
                 textPaint.apply {
                     color = getInt(R.styleable.RecyclerViewScrollbar_valueLabelTextColor, defaultTextColour)
                     style = Paint.Style.FILL
                     textAlign = Paint.Align.CENTER
-                    textSize = getDimension(R.styleable.RecyclerViewScrollbar_valueLabelTextSize,
+                    textSize = getDimension(
+                        R.styleable.RecyclerViewScrollbar_valueLabelTextSize,
                         valueLabelWidth / 2)
                 }
             } finally {
@@ -215,7 +224,7 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
 
         when (event?.action) {
             // Action down = 0; Action move = 2;
-            ACTION_DOWN, ACTION_MOVE -> {
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
                 visibility = VISIBLE
                 recyclerViewContentHeight?.let { height ->
                     val scrollProportion = y / measuredHeight
@@ -224,11 +233,11 @@ class RecyclerViewScrollbar(context: Context, attrs: AttributeSet) : View(contex
                 }
                 thumbSelected = true
                 thumbPaint.color = thumbOnColour
-                if (event.action == ACTION_DOWN) invalidate()
+                if (event.action == MotionEvent.ACTION_DOWN) invalidate()
                 return true
             }
             // Action cancel = 3; Action up = 1;
-            ACTION_CANCEL, ACTION_UP -> {
+            MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP -> {
                 thumbSelected = false
                 thumbPaint.color = thumbOffColour
                 invalidate()
