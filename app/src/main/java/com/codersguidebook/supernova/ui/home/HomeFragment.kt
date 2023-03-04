@@ -11,7 +11,6 @@ import android.view.ViewGroup
 import android.widget.RelativeLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
 import androidx.viewbinding.ViewBinding
@@ -66,22 +65,22 @@ class HomeFragment : BaseFragment() {
 
         binding.songOfTheDayRecyclerView.layoutManager = WrapContentLinearLayoutManager(
             mainActivity, LinearLayoutManager.HORIZONTAL, false)
-        binding.songOfTheDayRecyclerView.itemAnimator = DefaultItemAnimator()
+        binding.songOfTheDayRecyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
         binding.songOfTheDayRecyclerView.adapter = songOfTheDayAdapter
 
         binding.favouritesRecyclerView.layoutManager = WrapContentLinearLayoutManager(
             mainActivity, LinearLayoutManager.HORIZONTAL, false)
-        binding.favouritesRecyclerView.itemAnimator = DefaultItemAnimator()
+        binding.favouritesRecyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
         binding.favouritesRecyclerView.adapter = favouritesAdapter
 
         binding.mostPlayedRecyclerView.layoutManager = WrapContentLinearLayoutManager(
             mainActivity, LinearLayoutManager.HORIZONTAL, false)
-        binding.mostPlayedRecyclerView.itemAnimator = DefaultItemAnimator()
+        binding.mostPlayedRecyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
         binding.mostPlayedRecyclerView.adapter = mostPlayedAdapter
 
         binding.recentlyPlayedRecyclerView.layoutManager = WrapContentLinearLayoutManager(
             mainActivity, LinearLayoutManager.HORIZONTAL, false)
-        binding.recentlyPlayedRecyclerView.itemAnimator = DefaultItemAnimator()
+        binding.recentlyPlayedRecyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
         binding.recentlyPlayedRecyclerView.adapter = recentlyPlayedAdapter
 
         binding.refreshSongOfTheDay.setOnClickListener {

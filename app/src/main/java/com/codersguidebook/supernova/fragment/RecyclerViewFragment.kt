@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.databinding.FragmentWithRecyclerViewBinding
 
@@ -27,7 +26,7 @@ abstract class RecyclerViewFragment: BaseRecyclerViewFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.root.itemAnimator = DefaultItemAnimator()
+        binding.root.itemAnimator = getItemAnimatorWithNoChangeAnimation()
     }
 
     override fun finishUpdate() {

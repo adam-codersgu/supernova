@@ -15,7 +15,6 @@ import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
-import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.R
@@ -69,7 +68,7 @@ class CustomAnimationFragment : BaseRecyclerViewFragment() {
         setupMenu()
 
         binding.root.layoutManager = GridLayoutManager(context, 3)
-        binding.root.itemAnimator = DefaultItemAnimator()
+        binding.root.itemAnimator = getItemAnimatorWithNoChangeAnimation()
 
         return binding.root
     }

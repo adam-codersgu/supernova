@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.MusicLibraryViewModel
@@ -28,5 +29,17 @@ abstract class BaseFragment: Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    /**
+     * Convenience method that returns a RecyclerView item animator which has animations for
+     * item updates disabled.
+     *
+     * @return A DefaultItemAnimator instance with its supportsChangeAnimations attribute set to false.
+     */
+    fun getItemAnimatorWithNoChangeAnimation(): DefaultItemAnimator {
+        return DefaultItemAnimator().apply {
+            supportsChangeAnimations = false
+        }
     }
 }
