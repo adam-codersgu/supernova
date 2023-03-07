@@ -94,7 +94,9 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
                     musicLibraryViewModel.getPlaylistByName(name)
                 }
                 (adapter as PlaylistAdapter).playlist = playlist
-                adapter.notifyItemChanged(0)
+                binding.scrollRecyclerView.recyclerView.post {
+                    adapter.notifyItemChanged(0)
+                }
             }
         }
     }
