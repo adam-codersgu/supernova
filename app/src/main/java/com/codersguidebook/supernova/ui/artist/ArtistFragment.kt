@@ -68,7 +68,9 @@ class ArtistFragment : RecyclerViewFragment() {
                 val plays = musicLibraryViewModel.getSongPlaysByArtist(artistName)
                 if (plays != adapter.plays) {
                     adapter.plays = plays
-                    adapter.notifyItemChanged(0)
+                    binding.root.post {
+                        adapter.notifyItemChanged(0)
+                    }
                 }
             }
         }
