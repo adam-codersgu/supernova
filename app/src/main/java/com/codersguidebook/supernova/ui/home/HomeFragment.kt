@@ -1,14 +1,12 @@
 package com.codersguidebook.supernova.ui.home
 
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
-import android.view.View.GONE
-import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.RelativeLayout
+import androidx.core.view.isGone
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -156,23 +154,9 @@ class HomeFragment : BaseFragment() {
             songs.asReversed().take(10)
         } else songs.take(10)
 
-        val previousVisibility = layout.visibility
-        val newVisibility= if (songsSelection.isEmpty() && playlist.name != getString(R.string.song_day)) GONE
-        else VISIBLE
-
-        if (previousVisibility != newVisibility) {
-            val alpha = if (newVisibility == VISIBLE) 1f else 0f
-            val animationDuration = resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
-
-            layout.animate()
-                .alpha(alpha)
-                .setDuration(animationDuration)
-                .setListener(object : AnimatorListenerAdapter() {
-                    override fun onAnimationEnd(animation: Animator) {
-                        layout.visibility = newVisibility
-                    }
-                })
-        }
+        if (songsSelection.isEmpty() && playlist.name != getString(R.string.song_day)) {
+            layout.isGone = true
+        } else layout.isVisible = true
 
         if (adapter.songs.isEmpty()) {
             adapter.songs.addAll(songsSelection)
