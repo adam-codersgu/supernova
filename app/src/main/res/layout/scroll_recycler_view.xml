@@ -11,7 +11,7 @@
         android:background="@color/fragment_background"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
-    <com.codersguidebook.recyclerviewfastscrollerwithvaluelabel.RecyclerViewScrollbar
+    <com.codersguidebook.recyclerviewfastscroller.RecyclerViewScrollbar
         android:id="@+id/scrollBar"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
