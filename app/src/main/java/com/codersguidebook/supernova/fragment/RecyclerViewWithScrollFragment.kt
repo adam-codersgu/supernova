@@ -28,9 +28,9 @@ abstract class RecyclerViewWithScrollFragment: BaseRecyclerViewFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding.recyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
-        binding.scrollBar.recyclerView = binding.recyclerView
+        binding.scrollbar.recyclerView = binding.recyclerView
 
-        binding.recyclerView.addOnScrollListener(RecyclerViewScrollbar.OnScrollListener(binding.scrollBar))
+        binding.recyclerView.addOnScrollListener(RecyclerViewScrollbar.OnScrollListener(binding.scrollbar))
     }
 
     override fun finishUpdate() {

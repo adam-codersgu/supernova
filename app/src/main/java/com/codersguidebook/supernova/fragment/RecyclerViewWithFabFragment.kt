@@ -33,10 +33,10 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding.scrollRecyclerView.recyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
-        binding.scrollRecyclerView.scrollBar.recyclerView = binding.scrollRecyclerView.recyclerView
+        binding.scrollRecyclerView.scrollbar.recyclerView = binding.scrollRecyclerView.recyclerView
 
         binding.scrollRecyclerView.recyclerView.addOnScrollListener(object: RecyclerViewScrollbar
-            .OnScrollListener(binding.scrollRecyclerView.scrollBar) {
+            .OnScrollListener(binding.scrollRecyclerView.scrollbar) {
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                     super.onScrolled(recyclerView, dx, dy)
 
