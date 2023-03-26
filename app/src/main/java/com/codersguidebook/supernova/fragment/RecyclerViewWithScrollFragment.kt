@@ -5,8 +5,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.viewbinding.ViewBinding
+import com.codersguidebook.recyclerviewfastscroller.RecyclerViewScrollbar
 import com.codersguidebook.supernova.databinding.ScrollRecyclerViewBinding
-import com.codersguidebook.supernova.views.RecyclerViewScrollbar
 
 abstract class RecyclerViewWithScrollFragment: BaseRecyclerViewFragment() {
 
@@ -28,9 +28,8 @@ abstract class RecyclerViewWithScrollFragment: BaseRecyclerViewFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding.recyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
-        binding.scrollBar.recyclerView = binding.recyclerView
-
-        binding.recyclerView.addOnScrollListener(RecyclerViewScrollbar.OnScrollListener(binding.scrollBar))
+        binding.scrollbar.recyclerView = binding.recyclerView
+        binding.recyclerView.addOnScrollListener(RecyclerViewScrollbar.OnScrollListener(binding.scrollbar))
     }
 
     override fun finishUpdate() {

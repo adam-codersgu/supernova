@@ -11,9 +11,9 @@
         android:background="@color/fragment_background"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
-    <com.codersguidebook.supernova.views.RecyclerViewScrollbar
-        android:id="@+id/scrollBar"
+    <com.codersguidebook.recyclerviewfastscroller.RecyclerViewScrollbar
+        android:id="@+id/scrollbar"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="@id/recyclerView" />
 </androidx.constraintlayout.widget.ConstraintLayout>

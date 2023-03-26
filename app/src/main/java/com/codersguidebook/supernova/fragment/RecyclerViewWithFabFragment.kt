@@ -8,11 +8,10 @@ import android.view.ViewGroup
 import androidx.core.view.MenuHost
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
+import com.codersguidebook.recyclerviewfastscroller.RecyclerViewScrollbar
 import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.adapter.SongAdapter
-import com.codersguidebook.supernova.fragment.adapter.SongWithHeaderAdapter
-import com.codersguidebook.supernova.views.RecyclerViewScrollbar
 
 abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
 
@@ -35,10 +34,10 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding.scrollRecyclerView.recyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
-        binding.scrollRecyclerView.scrollBar.recyclerView = binding.scrollRecyclerView.recyclerView
+        binding.scrollRecyclerView.scrollbar.recyclerView = binding.scrollRecyclerView.recyclerView
 
         binding.scrollRecyclerView.recyclerView.addOnScrollListener(object: RecyclerViewScrollbar
-            .OnScrollListener(binding.scrollRecyclerView.scrollBar) {
+            .OnScrollListener(binding.scrollRecyclerView.scrollbar) {
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                     super.onScrolled(recyclerView, dx, dy)
 

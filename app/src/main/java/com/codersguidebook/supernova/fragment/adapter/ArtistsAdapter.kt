@@ -8,12 +8,12 @@ import android.widget.ImageButton
 import android.widget.TextView
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
+import com.codersguidebook.recyclerviewfastscroller.RecyclerViewScrollbar
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.ArtistOptions
 import com.codersguidebook.supernova.entities.Artist
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
-import com.codersguidebook.supernova.views.RecyclerViewScrollbar
 
 class ArtistsAdapter(private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>(),
     RecyclerViewScrollbar.ValueLabelListener {

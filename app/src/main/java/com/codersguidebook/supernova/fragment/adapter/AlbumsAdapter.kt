@@ -8,13 +8,13 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
+import com.codersguidebook.recyclerviewfastscroller.RecyclerViewScrollbar
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.AlbumOptions
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
-import com.codersguidebook.supernova.views.RecyclerViewScrollbar
 
 class AlbumsAdapter(private val activity: MainActivity): SongAdapter(activity),
     RecyclerViewScrollbar.ValueLabelListener {
