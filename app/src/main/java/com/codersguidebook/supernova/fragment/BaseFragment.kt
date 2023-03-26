@@ -39,7 +39,7 @@ abstract class BaseFragment: Fragment() {
      */
     fun getItemAnimatorWithNoChangeAnimation(): DefaultItemAnimator {
         return DefaultItemAnimator().apply {
-            supportsChangeAnimations = false
+            changeDuration = 0L
         }
     }
 }

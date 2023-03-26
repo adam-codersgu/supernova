@@ -110,8 +110,12 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter(activity) {
                 val albumIds = songs.map { it.albumId }
 
                 when {
-                    albumIds.size == 1 -> ImageHandlingHelper.loadImageByAlbumId(activity.application,
-                        albumIds[0], holder.mArtwork)
+                    albumIds.size == 1 -> {
+                        holder.mArtwork.isVisible = true
+                        holder.mArtworkGrid.isGone = true
+                        ImageHandlingHelper.loadImageByAlbumId(activity.application,
+                            albumIds[0], holder.mArtwork)
+                    }
                     albumIds.size > 1 -> {
                         holder.mArtwork.isGone = true
                         holder.mArtworkGrid.isVisible = true

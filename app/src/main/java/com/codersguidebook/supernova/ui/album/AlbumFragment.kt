@@ -51,10 +51,6 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
         (adapter as AlbumAdapter).displayDiscNumbers = discNumbers.size > 1
 
         super.updateRecyclerView(songs)
-
-        // Refresh the header and menu
-        (adapter as AlbumAdapter).notifyItemChanged(0)
-        (requireActivity() as MenuHost).invalidateMenu()
     }
 
     override fun requestNewData() {

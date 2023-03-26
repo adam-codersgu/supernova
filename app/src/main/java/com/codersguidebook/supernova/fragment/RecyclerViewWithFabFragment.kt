@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.View.VISIBLE
 import android.view.ViewGroup
+import androidx.core.view.MenuHost
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.recyclerviewfastscroller.RecyclerViewScrollbar
@@ -72,6 +73,11 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
         if (binding.scrollRecyclerView.recyclerView.adapter == null) {
             binding.scrollRecyclerView.recyclerView.adapter = adapter
         }
+
+        // Refresh the header and menu (if applicable)
+        if (adapter is SongWithHeaderAdapter) adapter.notifyItemChanged(0)
+        (requireActivity() as MenuHost).invalidateMenu()
+
         super.finishUpdate()
     }
 }

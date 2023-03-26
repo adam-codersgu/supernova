@@ -97,8 +97,12 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                             if (albumIds.size > 3)  ImageHandlingHelper.loadImageByAlbumId(activity.application,
                                 albumIds[3], holder.mArtwork4)
                         }
-                        songs.isNotEmpty() -> ImageHandlingHelper.loadImageByAlbumId(activity.application,
-                            albumIds[0], holder.mArtwork)
+                        songs.isNotEmpty() -> {
+                            holder.mArtwork.isVisible = true
+                            holder.mArtworkGrid.isGone = true
+                            ImageHandlingHelper.loadImageByAlbumId(activity.application,
+                                albumIds[0], holder.mArtwork)
+                        }
                     }
                 }
 
