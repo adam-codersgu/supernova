@@ -1,8 +1,9 @@
 package com.codersguidebook.supernova.fragment.adapter
 
-import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.Adapter
+import androidx.recyclerview.widget.RecyclerView.ViewHolder
 
-abstract class Adapter: RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+abstract class Adapter: Adapter<ViewHolder>() {
 
     /**
      * Convenience method for retrieving the target index of RecyclerView element updates.
