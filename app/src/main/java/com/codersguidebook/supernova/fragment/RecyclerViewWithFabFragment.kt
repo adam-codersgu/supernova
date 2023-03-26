@@ -12,6 +12,7 @@ import com.codersguidebook.recyclerviewfastscroller.RecyclerViewScrollbar
 import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.adapter.SongAdapter
+import com.codersguidebook.supernova.fragment.adapter.SongWithHeaderAdapter
 
 abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
 
