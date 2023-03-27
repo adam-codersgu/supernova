@@ -12,6 +12,7 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.google.android.material.color.MaterialColors
+import kotlin.math.min
 
 class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activity) {
 
@@ -55,19 +56,26 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
     }
 
     override fun processNewSongs(newSongs: List<Song>) {
-        val positionsToUpdate = mutableListOf<Int>()
-        for ((index, song) in newSongs.withIndex()) {
-            if (index >= songs.size) break
-            val currentSong =  songs[index]
+        var index = 0
+        var numberOfItemsToUpdate: Int? = null
 
-            if (index < 3 && (song.title != currentSong.title || song.artist != currentSong.title
-                    || song.plays != currentSong.plays)) {
-                positionsToUpdate.add(index)
-            }
-        }
+        do {
+            if (index >= newSongs.size || index >= songs.size) break
+
+            val song = newSongs[index]
+            val currentSong = songs[index]
+
+            if (song.title != currentSong.title || song.artist != currentSong.title
+                        || song.plays != currentSong.plays) {
+                numberOfItemsToUpdate = min(6, newSongs.size) - index
+                break
+            } else ++index
+        } while (index < min(6, newSongs.size))
 
         super.processNewSongs(newSongs)
 
-        for (position in positionsToUpdate) notifyItemChanged(position)
+        numberOfItemsToUpdate?.let { numberOfItems ->
+            notifyItemRangeChanged(index, numberOfItems)
+        }
     }
 }
