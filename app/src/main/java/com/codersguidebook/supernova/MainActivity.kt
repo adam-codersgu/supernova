@@ -736,32 +736,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Opens a dialog window allowing the user to add a list of songs to new and existing
-     * playlists.
+     * Open a dialog window allowing the user to add songs to new and existing playlists.
      *
      * @param songs The list of Song objects to be added to a playlist.
      */
-    fun openAddToPlaylistDialog(songs: List<Song>) {
+    fun openAddToPlaylistDialog(songs: List<Song>) = lifecycleScope.launch(Dispatchers.Main) {
         val songIds = songs.map { it.songId }
 
         val positiveButtonClick = { _: DialogInterface, _: Int ->
             openDialog(CreatePlaylist(songIds))
         }
 
-        // Retrieving all the user-created playlists
-        val userPlaylists = musicLibraryViewModel.allPlaylists.value?.filterNot {
-            it.isDefault
-        } ?: listOf()
+        val userPlaylists = withContext(Dispatchers.IO) {
+            musicLibraryViewModel.getAllUserPlaylists()
+        }
 
         // If the user has not created any playlists then skip straight to the create new playlist dialog
         if (userPlaylists.isEmpty()) {
             openDialog(CreatePlaylist(songIds))
-            return
+            return@launch
         }
 
         val userPlaylistNames = userPlaylists.map { it.name }.toTypedArray()
 
-        AlertDialog.Builder(this).apply {
+        AlertDialog.Builder(this@MainActivity).apply {
             setTitle(getString(R.string.select_playlist))
             setItems(userPlaylistNames) { _, index ->
                 val playlist = userPlaylists[index]

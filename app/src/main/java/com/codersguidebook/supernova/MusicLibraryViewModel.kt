@@ -366,4 +366,11 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @return A list of Playlist objects.
      */
     suspend fun getAllPlaylists(): List<Playlist> = repository.getAllPlaylists()
+
+    /**
+     * Fetch all the playlists held by the database that were created by the user.
+     *
+     * @return A list of Playlist objects.
+     */
+    suspend fun getAllUserPlaylists(): List<Playlist> = repository.getAllUserPlaylists()
 }
