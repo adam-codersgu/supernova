@@ -40,6 +40,8 @@ class MusicRepository(private val musicDao: MusicDao, private val playlistDao: P
 
     suspend fun getAllPlaylists(): List<Playlist> = playlistDao.getAllPlaylists()
 
+    suspend fun getAllUserPlaylists(): List<Playlist> = playlistDao.getAllUserPlaylists()
+
     fun updatePlaylists(playlists: List<Playlist>){
         for (playlist in playlists) playlistDao.update(playlist)
     }

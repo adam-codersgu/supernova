@@ -19,6 +19,9 @@ interface PlaylistDao {
     @Query("SELECT * from playlists")
     suspend fun getAllPlaylists(): List<Playlist>
 
+    @Query("SELECT * from playlists WHERE is_default_playlist = false")
+    suspend fun getAllUserPlaylists(): List<Playlist>
+
     @Query("SELECT * from playlists ORDER BY playlist_name")
     fun getAllPlaylistsOrderByName(): LiveData<List<Playlist>>
 
