@@ -13,12 +13,10 @@ android {
         applicationId "com.codersguidebook.supernova"
         minSdk 29
         targetSdk 33
-        versionCode 13
-        versionName "1.8"
+        versionCode 14
+        versionName "2.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        // FIXME: Need to install Android Studio Flamingo and upgrade Gradle to include the below
-        //  Then upgrade APG (ctrl+shift+alt+s shortcut) to the criteria specified in https://developer.android.com/guide/topics/resources/app-languages#known-issues
         // resConfigs ("en-GB", "es")
     }
 
