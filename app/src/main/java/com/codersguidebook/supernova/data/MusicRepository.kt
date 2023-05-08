@@ -7,12 +7,12 @@ import com.codersguidebook.supernova.entities.Song
 
 class MusicRepository(private val musicDao: MusicDao, private val playlistDao: PlaylistDao) {
 
-    val allSongs: LiveData<List<Song>> = musicDao.getAllSongsOrderByTitle()
-    val allArtists: LiveData<List<Artist>> = musicDao.getAllArtists()
-    val mostPlayedSongsById: LiveData<List<Long>> = musicDao.getMostPlayedSongsById()
+    val allSongs: LiveData<List<Song>> = musicDao.getSongsOrderByTitle()
+    val allArtists: LiveData<List<Artist>> = musicDao.getArtists()
+    val mostPlayedSongsById: LiveData<List<Long>> = musicDao.getSongIdsOrderBySongPlays()
     val allPlaylists: LiveData<List<Playlist>> = playlistDao.getAllPlaylistsOrderByName()
 
-    suspend fun getAllSongs(): List<Song> = musicDao.getAllSongs()
+    suspend fun getAllSongs(): List<Song> = musicDao.getSongs()
 
     suspend fun saveSongs(songs: List<Song>) {
         for (song in songs) musicDao.insert(song)

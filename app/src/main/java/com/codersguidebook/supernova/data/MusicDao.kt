@@ -18,13 +18,13 @@ interface MusicDao {
     suspend fun update(song: Song)
 
     @Query("SELECT * from music_library")
-    suspend fun getAllSongs(): List<Song>
+    suspend fun getSongs(): List<Song>
 
     @Query("SELECT song_artist, count(*) FROM music_library GROUP BY song_artist")
-    fun getAllArtists(): LiveData<List<Artist>>
+    fun getArtists(): LiveData<List<Artist>>
 
     @Query("SELECT * from music_library ORDER BY song_title")
-    fun getAllSongsOrderByTitle(): LiveData<List<Song>>
+    fun getSongsOrderByTitle(): LiveData<List<Song>>
 
     @Query("SELECT * from music_library WHERE song_album_id = :albumId ORDER BY song_track")
     suspend fun getSongsByAlbumIdOrderByTrack(albumId: String): List<Song>
@@ -45,7 +45,7 @@ interface MusicDao {
     fun getSongsByArtist(artist: String): LiveData<List<Song>>
 
     @Query("SELECT songId FROM music_library WHERE song_plays > 0 ORDER BY song_plays DESC LIMIT :limit")
-    fun getMostPlayedSongsById(limit: Int = 30): LiveData<List<Long>>
+    fun getSongIdsOrderBySongPlays(limit: Int = 30): LiveData<List<Long>>
 
     @Query("UPDATE music_library SET song_plays = song_plays + 1 WHERE songId = :songId")
     fun increaseSongPlaysBySongId(songId: Long)
