@@ -174,11 +174,11 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                 setCurrentMetadata()
                 refreshNotification()
                 setMediaPlaybackState(STATE_NONE)
-            } catch (e: IOException) {
+            } catch (_: IOException) {
                 error()
-            } catch (e: IllegalStateException) {
+            } catch (_: IllegalStateException) {
                 error(getString(R.string.error_media_service_player_state))
-            } catch (e: IllegalArgumentException) {
+            } catch (_: IllegalArgumentException) {
                 error()
             }
         }
