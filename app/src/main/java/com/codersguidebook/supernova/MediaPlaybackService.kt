@@ -9,6 +9,7 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.AudioManager.*
 import android.media.MediaPlayer
+import android.media.MediaPlayer.*
 import android.os.*
 import android.provider.MediaStore
 import android.service.media.MediaBrowserService
@@ -29,6 +30,7 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTI
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PAUSE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PLAY
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PREVIOUS
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MEDIA_ERROR_EMPTY_PLAY_QUEUE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
@@ -41,7 +43,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 
-class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorListener {
+class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
 
     private var currentlyPlayingQueueItemId = -1L
     private val logTag = "AudioPlayer"
@@ -136,11 +138,11 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
             super.onPrepare()
 
             if (playQueue.isEmpty()) {
-                error(getString(R.string.error_media_service_empty_queue))
+                onError(mediaPlayer, MEDIA_ERROR_UNKNOWN, MEDIA_ERROR_EMPTY_PLAY_QUEUE)
                 return
             }
 
-            // If no alternative currently play queue item ID has been set, then play from the beginning of the queue
+            // If no queue item ID has been set, then start from the beginning of the play queue
             if (currentlyPlayingQueueItemId == -1L) currentlyPlayingQueueItemId = playQueue[0].queueId
 
             mediaPlayer?.apply {
@@ -156,8 +158,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                         it.toLong())
                 }
                 if (currentQueueItemUri == null) {
-                    Toast.makeText(application, getString(R.string.error_media_service_default),
-                        Toast.LENGTH_LONG).show()
+                    onError(mediaPlayer, MEDIA_ERROR_UNKNOWN, MEDIA_ERROR_MALFORMED)
                     return
                 }
                 mediaPlayer = MediaPlayer().apply {
@@ -175,11 +176,11 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                 refreshNotification()
                 setMediaPlaybackState(STATE_NONE)
             } catch (_: IOException) {
-                error()
+                onError(mediaPlayer, MEDIA_ERROR_UNKNOWN, MEDIA_ERROR_IO)
             } catch (_: IllegalStateException) {
-                error(getString(R.string.error_media_service_player_state))
+                onError(mediaPlayer, MEDIA_ERROR_UNKNOWN, MEDIA_ERROR_IO)
             } catch (_: IllegalArgumentException) {
-                error()
+                onError(mediaPlayer, MEDIA_ERROR_UNKNOWN, MEDIA_ERROR_MALFORMED)
             }
         }
 
@@ -241,12 +242,12 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
                             refreshNotification()
                             setMediaPlaybackState(STATE_PLAYING, getBundleWithSongDuration())
                         } catch (_: NullPointerException) {
-                            error()
+                            onError(mediaPlayer, MEDIA_ERROR_UNKNOWN, 0)
                         }
                     }
                 }
             } catch (_: IllegalStateException) {
-                error(getString(R.string.error_media_service_player_state))
+                onError(mediaPlayer, MEDIA_ERROR_UNKNOWN, MEDIA_ERROR_IO)
             }
         }
 
@@ -680,22 +681,20 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MediaPlayer.OnErrorLis
         return super.onStartCommand(intent, flags, startId)
     }
 
-    /**
-     * Handle errors that occur during playback
-     *
-     * @param message A String detailing the reason for the error. The error message
-     * will be displayed to the user in a toast notification. By default, a generic error
-     * message will be shown.
-     */
-    private fun error(message: String = getString(R.string.error_media_service_default)) {
+    override fun onError(mp: MediaPlayer?, what: Int, extra: Int): Boolean {
         setMediaPlaybackState(STATE_ERROR)
         mediaSessionCompat.controller.transportControls.stop()
         stopForeground(STOP_FOREGROUND_REMOVE)
-        Toast.makeText(application, message, Toast.LENGTH_LONG).show()
-    }
 
-    override fun onError(mp: MediaPlayer?, what: Int, extra: Int): Boolean {
-        error()
+        val message = when (extra) {
+            MEDIA_ERROR_EMPTY_PLAY_QUEUE -> {
+                getString(R.string.error_media_service_empty_queue)
+            }
+            MEDIA_ERROR_IO -> getString(R.string.error_media_service_player_state)
+            else -> getString(R.string.error_media_service_default)
+        }
+        Toast.makeText(application, message, Toast.LENGTH_LONG).show()
+
         return true
     }
 }
