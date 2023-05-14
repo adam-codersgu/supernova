@@ -46,7 +46,6 @@ import java.io.IOException
 class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
 
     private var currentlyPlayingQueueItemId = -1L
-    private val logTag = "AudioPlayer"
     private val handler = Handler(Looper.getMainLooper())
     private var mediaPlayer: MediaPlayer? = null
     private val playQueue: MutableList<QueueItem> = mutableListOf()
@@ -510,7 +509,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
     override fun onCreate() {
         super.onCreate()
 
-        mediaSessionCompat = MediaSessionCompat(baseContext, logTag).apply {
+        mediaSessionCompat = MediaSessionCompat(baseContext, NOTIFICATION_CHANNEL_ID).apply {
             setFlags(MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS)
             setCallback(mediaSessionCallback)
             setSessionToken(sessionToken)
