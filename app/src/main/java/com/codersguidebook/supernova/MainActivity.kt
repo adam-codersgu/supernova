@@ -110,8 +110,8 @@ class MainActivity : AppCompatActivity() {
                 MediaControllerCompat.setMediaController(this@MainActivity, mediaControllerCompat)
             }
 
-            val mediaController = MediaControllerCompat.getMediaController(this@MainActivity)
-            mediaController.registerCallback(controllerCallback)
+            MediaControllerCompat.getMediaController(this@MainActivity)
+                .registerCallback(controllerCallback)
 
             restoreMediaSession()
         }
