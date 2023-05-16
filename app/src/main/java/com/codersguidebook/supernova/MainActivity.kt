@@ -367,7 +367,7 @@ class MainActivity : AppCompatActivity() {
     /** Respond to clicks on the play/pause button **/
     fun playPauseControl() {
         when (mediaController.playbackState?.state) {
-            PlaybackState.STATE_PAUSED -> play()
+            PlaybackState.STATE_PAUSED -> mediaController.transportControls.play()
             PlaybackState.STATE_PLAYING -> mediaController.transportControls.pause()
             else -> {
                 // Load and play the user's music library if the play queue is empty
@@ -454,9 +454,6 @@ class MainActivity : AppCompatActivity() {
         return newRepeatMode
     }
 
-    /** Commence playback of the currently loaded song. */
-    private fun play() = mediaController.transportControls.play()
-
     /** Skip back to the previous track in the play queue (or restart the current song if less that five seconds in). */
     fun skipBack() = mediaController.transportControls.skipToPrevious()
 
@@ -525,8 +522,7 @@ class MainActivity : AppCompatActivity() {
 
         val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
         mediaControllerCompat.addQueueItem(startSongDesc)
-        mediaControllerCompat.transportControls.skipToQueueItem(startSongIndex.toLong())
-        mediaControllerCompat.transportControls.play()
+        skipToAndPlayQueueItem(startSongIndex.toLong())
 
         for ((index, song) in songs.withIndex()) {
             if (index == startSongIndex) continue
@@ -601,7 +597,7 @@ class MainActivity : AppCompatActivity() {
      *
      * @param queueItemId The ID of the target QueueItem object.
      */
-    fun skipToQueueItem(queueItemId: Long) {
+    fun skipToAndPlayQueueItem(queueItemId: Long) {
         mediaController.transportControls.skipToQueueItem(queueItemId)
         mediaController.transportControls.play()
     }

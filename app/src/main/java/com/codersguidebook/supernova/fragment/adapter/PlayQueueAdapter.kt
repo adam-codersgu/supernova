@@ -32,7 +32,7 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
         init {
             itemView.isClickable = true
             itemView.setOnClickListener {
-                activity.skipToQueueItem(playQueue[layoutPosition].queueId)
+                activity.skipToAndPlayQueueItem(playQueue[layoutPosition].queueId)
             }
             btnSongMenu.setOnClickListener {
                 val isCurrentlyPlayingSelected =
