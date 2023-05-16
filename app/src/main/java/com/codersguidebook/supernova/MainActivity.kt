@@ -117,8 +117,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private var controllerCallback = object : MediaControllerCompat.Callback() {
-
+    private val controllerCallback = object : MediaControllerCompat.Callback() {
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
             super.onPlaybackStateChanged(state)
             refreshPlayQueue()
@@ -129,15 +128,7 @@ class MainActivity : AppCompatActivity() {
 
             playQueueViewModel.playbackState.value = state?.state ?: STATE_NONE
             when (state?.state) {
-                STATE_PLAYING -> {
-                    currentPlaybackPosition = state.position.toInt()
-                    state.extras?.let {
-                        currentPlaybackDuration = it.getInt("duration", 0)
-                        playQueueViewModel.playbackDuration.value = currentPlaybackDuration
-                    }
-                    playQueueViewModel.playbackPosition.value = currentPlaybackPosition
-                }
-                STATE_PAUSED -> {
+                STATE_PLAYING, STATE_PAUSED -> {
                     currentPlaybackPosition = state.position.toInt()
                     state.extras?.let {
                         currentPlaybackDuration = it.getInt("duration", 0)
