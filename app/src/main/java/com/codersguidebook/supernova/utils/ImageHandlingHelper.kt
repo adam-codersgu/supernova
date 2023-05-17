@@ -23,9 +23,9 @@ object ImageHandlingHelper {
     /**
      * Load album art into a user interface View.
      *
-     * @param application - The application that should serve as the context.
-     * @param albumId - The ID of the album that artwork should be loaded for.
-     * @param view - The user interface View that the artwork should be displayed in.
+     * @param application The application that should serve as the context.
+     * @param albumId The ID of the album that artwork should be loaded for.
+     * @param view The user interface View that the artwork should be displayed in.
      */
     fun loadImageByAlbumId(application: Application, albumId: String?, view: ImageView) {
         var file: File? = null
@@ -40,9 +40,9 @@ object ImageHandlingHelper {
      * Create a File object for the image file associated with a given playlist
      * and load the artwork into a user interface View.
      *
-     * @param application - The application that should serve as the context.
-     * @param playlist - The Playlist object that artwork should be loaded for.
-     * @param view - The user interface View that the artwork should be displayed in.
+     * @param application The application that should serve as the context.
+     * @param playlist The Playlist object that artwork should be loaded for.
+     * @param view The user interface View that the artwork should be displayed in.
      * @return A Boolean indicating whether artwork was successfully found and loaded.
      */
     fun loadImageByPlaylist(application: Application, playlist: Playlist, view: ImageView) : Boolean {
@@ -58,9 +58,9 @@ object ImageHandlingHelper {
      * Create a File object for the image file associated with a given custom
      * animation object and load the image into a user interface View.
      *
-     * @param application - The application that should serve as the context.
-     * @param imageId - The image ID that an image should be loaded for.
-     * @param view - The user interface View that the artwork should be displayed in.
+     * @param application The application that should serve as the context.
+     * @param imageId The image ID that an image should be loaded for.
+     * @param view The user interface View that the artwork should be displayed in.
      * @return A Boolean indicating whether artwork was successfully found and loaded.
      */
     fun loadImageByCustomAnimationImageId(application: Application, imageId: String, view: ImageView) {
@@ -72,9 +72,9 @@ object ImageHandlingHelper {
     /**
      * Display a given image using Glide.
      *
-     * @param application - The application that should serve as the context.
-     * @param file - A File object that references the image to be displayed.
-     * @param view - The user interface View in which the image should be rendered.
+     * @param application The application that should serve as the context.
+     * @param file A File object that references the image to be displayed.
+     * @param view The user interface View in which the image should be rendered.
      */
     private fun displayImageByFile(application: Application, file: File?, view: ImageView) {
         Glide.with(application)
@@ -90,8 +90,8 @@ object ImageHandlingHelper {
     /**
      * Delete the image file associated with a given album ID.
      *
-     * @param application - The application that should serve as the context.
-     * @param resourceId - The ID of the resource that should be evaluated.
+     * @param application The application that should serve as the context.
+     * @param resourceId The ID of the resource that should be evaluated.
      */
     fun deleteAlbumArtByResourceId(application: Application, resourceId: String) {
         val directory = ContextWrapper(application).getDir(ALBUM_ART_DIRECTORY, Context.MODE_PRIVATE)
@@ -101,8 +101,8 @@ object ImageHandlingHelper {
     /**
      * Delete the image file associated with a given playlist ID.
      *
-     * @param application - The application that should serve as the context.
-     * @param resourceId - The ID of the resource that an image should be loaded for.
+     * @param application The application that should serve as the context.
+     * @param resourceId The ID of the resource that an image should be loaded for.
      */
     fun deletePlaylistArtByResourceId(application: Application, resourceId: String) {
         val directory = ContextWrapper(application).getDir(PLAYLIST_ART_DIRECTORY, Context.MODE_PRIVATE)
@@ -112,8 +112,8 @@ object ImageHandlingHelper {
     /**
      * Delete a given file if it exists.
      *
-     * @param directory - A File object detailing the directory that contains the file to delete.
-     * @param resourceId - The ID that identifies the file to delete.
+     * @param directory A File object detailing the directory that contains the file to delete.
+     * @param resourceId The ID that identifies the file to delete.
      */
     private fun deleteFileIfExists(directory: File, resourceId: String) {
         val path = File(directory, "$resourceId.jpg")
@@ -124,8 +124,8 @@ object ImageHandlingHelper {
      * Determines whether an image file matching a given resource ID is present in the album
      * art directory.
      *
-     * @param application - The application that should serve as the context.
-     * @param resourceId - The ID of the resource that should be evaluated.
+     * @param application The application that should serve as the context.
+     * @param resourceId The ID of the resource that should be evaluated.
      * @return A Boolean indicating whether a matching image file was found.
      */
     fun doesAlbumArtExistByResourceId(application: Application, resourceId: String) : Boolean {
@@ -136,9 +136,9 @@ object ImageHandlingHelper {
     /**
      * Save an image to the album art directory.
      *
-     * @param application - The application that should serve as the context.
-     * @param resourceId - The ID of the resource that an image should be loaded for.
-     * @param image - A Bitmap representation of the image to be saved.
+     * @param application The application that should serve as the context.
+     * @param resourceId The ID of the resource that an image should be loaded for.
+     * @param image A Bitmap representation of the image to be saved.
      */
     fun saveAlbumArtByResourceId(application: Application, resourceId: String, image: Bitmap) {
         val directory = ContextWrapper(application).getDir(ALBUM_ART_DIRECTORY, Context.MODE_PRIVATE)
@@ -148,9 +148,9 @@ object ImageHandlingHelper {
     /**
      * Save an image to the custom animation directory.
      *
-     * @param application - The application that should serve as the context.
-     * @param resourceId - The ID of the resource that an image should be loaded for.
-     * @param image - A Bitmap representation of the image to be saved.
+     * @param application The application that should serve as the context.
+     * @param resourceId The ID of the resource that an image should be loaded for.
+     * @param image A Bitmap representation of the image to be saved.
      */
     fun saveCustomAnimationImageByResourceId(application: Application, resourceId: String, image: Bitmap) {
         val directory = ContextWrapper(application).getDir(ANIMATION_IMAGE_DIRECTORY, Context.MODE_PRIVATE)
@@ -160,9 +160,9 @@ object ImageHandlingHelper {
     /**
      * Save an image to the playlist art directory.
      *
-     * @param application - The application that should serve as the context.
-     * @param resourceId - The ID of the resource that an image should be loaded for.
-     * @param image - A Bitmap representation of the image to be saved.
+     * @param application The application that should serve as the context.
+     * @param resourceId The ID of the resource that an image should be loaded for.
+     * @param image A Bitmap representation of the image to be saved.
      */
     fun savePlaylistArtByResourceId(application: Application, resourceId: String, image: Bitmap) {
         val directory = ContextWrapper(application).getDir(PLAYLIST_ART_DIRECTORY, Context.MODE_PRIVATE)
@@ -172,9 +172,9 @@ object ImageHandlingHelper {
     /**
      * Create a File object for a given directory path and save an image to that directory.
      *
-     * @param directory - A File object detailing the directory in which the image should be saved.
-     * @param resourceId - The resource ID that should be used in the file name.
-     * @param image - A Bitmap representation of the image to be saved.
+     * @param directory A File object detailing the directory in which the image should be saved.
+     * @param resourceId The resource ID that should be used in the file name.
+     * @param image A Bitmap representation of the image to be saved.
      */
     private fun createFileAndSaveImage(directory: File, resourceId: String, image: Bitmap) {
         val path = File(directory, "$resourceId.jpg")
