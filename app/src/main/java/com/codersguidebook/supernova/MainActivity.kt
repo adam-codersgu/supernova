@@ -214,7 +214,7 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         binding.navView.setupWithNavController(navController)
 
-        val mOnNavigationItemSelectedListener = NavigationView.OnNavigationItemSelectedListener { item ->
+        val onNavigationItemSelectedListener = NavigationView.OnNavigationItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> navController.navigate(R.id.nav_home)
                 R.id.nav_queue -> navController.navigate(R.id.nav_queue)
@@ -242,7 +242,7 @@ class MainActivity : AppCompatActivity() {
             binding.drawerLayout.closeDrawer(GravityCompat.START)
             true
         }
-        binding.navView.setNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
+        binding.navView.setNavigationItemSelectedListener(onNavigationItemSelectedListener)
         binding.navView.itemIconTintList = null
 
         val handler = Handler(Looper.getMainLooper())
