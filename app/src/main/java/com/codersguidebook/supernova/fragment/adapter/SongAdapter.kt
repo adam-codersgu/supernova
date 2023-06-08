@@ -50,6 +50,10 @@ abstract class SongAdapter(private val activity: MainActivity): Adapter() {
         for ((index, song) in newSongs.withIndex()) {
             val recyclerViewIndex = getRecyclerViewIndex(index)
             when {
+                songs.isEmpty() -> {
+                    songs.addAll(newSongs)
+                    notifyItemRangeInserted(0, newSongs.size)
+                }
                 index >= songs.size -> {
                     songs.add(song)
                     notifyItemInserted(recyclerViewIndex)

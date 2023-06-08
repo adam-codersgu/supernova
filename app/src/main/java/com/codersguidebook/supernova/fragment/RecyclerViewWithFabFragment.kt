@@ -60,12 +60,7 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
             mainActivity.playNewPlayQueue(songs, shuffle = true)
         }
 
-        if (adapter.songs.isEmpty()) {
-            adapter.songs.addAll(songs)
-            adapter.notifyItemRangeInserted(0, songs.size)
-        } else {
-            adapter.processNewSongs(songs)
-        }
+        adapter.processNewSongs(songs)
 
         finishUpdate()
     }
