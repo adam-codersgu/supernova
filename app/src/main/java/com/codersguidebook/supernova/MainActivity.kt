@@ -489,10 +489,9 @@ class MainActivity : AppCompatActivity() {
 
     /** Save the queueId of the currently playing queue item to the shared preferences file. */
     private fun savePlayQueueId(queueId: Long) = lifecycleScope.launch(Dispatchers.IO) {
-        currentQueueItemId = queueId
         playQueueViewModel.currentQueueItemId.postValue(queueId)
         sharedPreferences.edit().apply {
-            putLong(CURRENT_QUEUE_ITEM_ID, currentQueueItemId)
+            putLong(CURRENT_QUEUE_ITEM_ID, queueId)
             apply()
         }
     }
