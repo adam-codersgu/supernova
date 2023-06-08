@@ -63,15 +63,16 @@ abstract class SongAdapter(private val activity: MainActivity): Adapter() {
                         continue
                     }
 
-                    // Check if song(s) has/have been removed from the list
-                    val songIsRemoved = newSongs.find { it.songId == songs[index].songId } == null
-                    if (songIsRemoved) {
+                    fun songIdsDoNotMatchAtCurrentIndex(): Boolean {
+                        return newSongs.find { it.songId == songs[index].songId } == null
+                    }
+
+                    if (songIdsDoNotMatchAtCurrentIndex()) {
                         var numberOfItemsRemoved = 0
                         do {
                             songs.removeAt(index)
                             ++numberOfItemsRemoved
-                        } while (index < songs.size &&
-                            newSongs.find { it.songId == songs[index].songId } == null)
+                        } while (index < songs.size && songIdsDoNotMatchAtCurrentIndex())
 
                         when {
                             numberOfItemsRemoved == 1 -> notifyItemRemoved(recyclerViewIndex)

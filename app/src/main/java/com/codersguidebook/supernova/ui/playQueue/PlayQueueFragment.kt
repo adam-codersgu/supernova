@@ -133,15 +133,13 @@ class PlayQueueFragment : RecyclerViewFragment() {
     override fun onResume() {
         super.onResume()
 
-        // This code finds the position in the recycler view list of the currently playing song,
-        // and scrolls to it.
-        val currentlyPlayingQueueIndex = adapter.playQueue.indexOfFirst { queueItem ->
+        val currentlyPlayingQueueItemIndex = adapter.playQueue.indexOfFirst { queueItem ->
             queueItem.queueId == adapter.currentlyPlayingQueueId
         }
 
-        if (currentlyPlayingQueueIndex != -1) {
+        if (currentlyPlayingQueueItemIndex != -1) {
             (binding.root.layoutManager as LinearLayoutManager)
-                .scrollToPositionWithOffset(currentlyPlayingQueueIndex, 0)
+                .scrollToPositionWithOffset(currentlyPlayingQueueItemIndex, 0)
         }
     }
 

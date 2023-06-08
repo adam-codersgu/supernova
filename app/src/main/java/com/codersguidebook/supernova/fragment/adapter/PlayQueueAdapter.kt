@@ -79,7 +79,7 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
         }
     }
 
-    internal fun changeCurrentlyPlayingQueueItemId(newQueueId: Long) {
+    fun changeCurrentlyPlayingQueueItemId(newQueueId: Long) {
         val oldCurrentlyPlayingIndex = playQueue.indexOfFirst {
             it.queueId == currentlyPlayingQueueId
         }
