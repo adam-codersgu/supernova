@@ -94,7 +94,7 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        accent = MaterialColors.getColor(mainActivity, R.attr.colorAccent, Color.LTGRAY)
+        accent = MaterialColors.getColor(mainActivity, R.attr.colorAccent, Color.CYAN)
         val onSurface = MaterialColors.getColor(mainActivity, R.attr.colorOnSurface, Color.LTGRAY)
         onSurface60 = MaterialColors.compositeARGBWithAlpha(onSurface, 153)
 
@@ -196,9 +196,9 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
 
         binding.currentClose.setOnClickListener { this.pullToCloseDismissed() }
 
-        binding.currentSettings.setOnClickListener { showSettingsPopup() }
+        binding.currentSettings.setOnClickListener { showPopup() }
 
-        binding.artwork.setOnClickListener { showSettingsPopup() }
+        binding.artwork.setOnClickListener { showPopup() }
 
         binding.currentSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onStopTrackingTouch(seekBar: SeekBar) { }
@@ -351,7 +351,7 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
         }
     }
 
-    private fun showSettingsPopup() {
+    private fun showPopup() {
         PopupMenu(this.context, binding.currentSettings).apply {
             inflate(R.menu.currently_playing_menu)
 
