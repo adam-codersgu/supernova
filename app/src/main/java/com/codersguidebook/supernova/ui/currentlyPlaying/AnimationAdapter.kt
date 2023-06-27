@@ -1,6 +1,5 @@
 package com.codersguidebook.supernova.ui.currentlyPlaying
 
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,7 +11,6 @@ import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.bumptech.glide.Glide
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
-import com.google.android.material.color.MaterialColors
 
 class AnimationAdapter(private val fragment: CustomAnimationFragment): RecyclerView.Adapter<ViewHolder>() {
 
@@ -33,11 +31,7 @@ class AnimationAdapter(private val fragment: CustomAnimationFragment): RecyclerV
         when {
             customAnimationImageIds.size < 6 && position == customAnimationImageIds.size -> {
                 val context = fragment.requireActivity()
-                val onSurfaceColour = MaterialColors.getColor(context, R.attr.colorOnSurface, Color.LTGRAY)
-                // 60% Alpha
-                val onSurfaceColour60 = MaterialColors.compositeARGBWithAlpha(onSurfaceColour, 153)
                 val cameraDrawable = ContextCompat.getDrawable(context, R.drawable.ic_camera)
-                    ?.setTint(onSurfaceColour60)
 
                 Glide.with(fragment)
                     .load(cameraDrawable)
@@ -75,7 +69,7 @@ class AnimationAdapter(private val fragment: CustomAnimationFragment): RecyclerV
     /**
      * Remove a given image from the adapter based on its ID.
      *
-     * @param imageId - The ID of the image.
+     * @param imageId The ID of the image.
      */
     fun removeItemByImageId(imageId: String) {
         val indexOfImage =  customAnimationImageIds.indexOfFirst { it == imageId }
@@ -90,7 +84,7 @@ class AnimationAdapter(private val fragment: CustomAnimationFragment): RecyclerV
      * Load an image into the adapter based on its ID. If the ID already exists in the adapter, then
      * that image will be replaced. Otherwise, a new image will be added.
      *
-     * @param imageId - The ID of the image to be displayed.
+     * @param imageId The ID of the image to be displayed.
      */
     fun loadImageId(imageId: String) {
         val indexOfImage =  customAnimationImageIds.indexOfFirst { it == imageId }
