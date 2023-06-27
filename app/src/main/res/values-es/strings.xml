@@ -11,7 +11,6 @@
     <string name="developer_body">Esta aplicación fue desarrollada por Adam Hawke. Contacto: hello@codersguidebook.com</string>
     <string name="about">Sobre</string>
     <string name="albums">Álbumes</string>
-    <string name="app_preferences">Preferencias de la aplicación</string>
     <string name="artists">Artistas</string>
     <string name="home">Casa</string>
     <string name="play_queue">Cola de reproducción</string>
@@ -46,7 +45,6 @@
     <string name="repeat_current_playlist">Repetir la lista de reproducción actual</string>
     <string name="save">Guardar</string>
     <string name="save_play_queue">Guardar cola de reproducción como lista de reproducción</string>
-    <string name="submit">Enviar</string>
     <string name="album">Álbum</string>
     <string name="album_title">Título del álbum</string>
     <string name="album_year">Año del álbum</string>
@@ -63,13 +61,11 @@
     <string name="edit_artist">Editar información del artista</string>
     <string name="favourites">Favoritos</string>
     <string name="library">Mi biblioteca</string>
-    <string name="more">Más</string>
     <string name="most_played">Más jugado</string>
     <string name="n_albums">%1$d álbumes</string>
     <string name="n_plays">%1$d reproducciones</string>
     <string name="name">Nombre</string>
     <string name="night">Noche</string>
-    <string name="no">No</string>
     <string name="no_results">No se han encontrado resultados</string>
     <string name="one_album">1 álbum</string>
     <string name="one_play">1 reproducción</string>
@@ -85,9 +81,7 @@
     <string name="song_of_the_day_will_be_displayed_here">La canción del día aparecerá aquí una vez que se cree su biblioteca de música.</string>
     <string name="title">Título</string>
     <string name="track">Pista</string>
-    <string name="use_custom_image">Usar imagen personalizada</string>
     <string name="year">Año</string>
-    <string name="yes">Sí</string>
     <string name="album_artwork">Carátula del álbum</string>
     <string name="album_information">Información del álbum</string>
     <string name="close_currently_playing">Cerrar la reproducción actual</string>
@@ -109,9 +103,7 @@
     <string name="check_fields_not_empty">Verifique que ninguno de los campos esté vacío</string>
     <string name="details_saved">Detalles guardados</string>
     <string name="empty_play_queue">La cola de reproducción está vacía.</string>
-    <string name="image_set">Conjunto de imágenes</string>
     <string name="item_saved">%1$s guardado</string>
-    <string name="item_added_play_queue">El %1$s se ha agregado a la cola de reproducción</string>
     <string name="play_queue_shuffled">La cola de reproducción se barajó</string>
     <string name="play_queue_unshuffled">La cola de reproducción no se barajó</string>
     <string name="playlist_already_exists">Ya existe una lista de reproducción con ese nombre</string>

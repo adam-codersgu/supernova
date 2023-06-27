@@ -11,17 +11,16 @@
         android:title="@string/play_queue"
         android:icon="@drawable/ic_queue" />
 
-    <group android:id="@+id/menu_group_animations">
+    <group>
 
-        <item android:id="@+id/menu_animations"
-            android:title="@string/animations" >
+        <item android:title="@string/animations" >
 
             <menu>
                 <item android:id="@+id/animation_play"
                     android:title="@string/show_hide_animations" >
                 </item>
 
-                <item android:id="@+id/menu_animation_colour"
+                <item
                     android:title="@string/animation_colour"
                     app:showAsAction="never">
 
@@ -37,7 +36,7 @@
                     </menu>
                 </item>
 
-                <item android:id="@+id/menu_animation_drawable"
+                <item
                     android:title="@string/animation_images"
                     app:showAsAction="never">
 
@@ -62,7 +61,7 @@
                     </menu>
                 </item>
 
-                <item android:id="@+id/menu_animation_speed"
+                <item
                     android:title="@string/animation_speed"
                     app:showAsAction="never">
 

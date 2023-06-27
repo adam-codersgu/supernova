@@ -15,7 +15,6 @@
     <!-- Navigation -->
     <string name="about">About</string>
     <string name="albums">Albums</string>
-    <string name="app_preferences">App preferences</string>
     <string name="artists">Artists</string>
     <string name="home">Home</string>
     <string name="play_queue">Play queue</string>
@@ -55,7 +54,6 @@
     <string name="repeat_current_playlist">Repeat current playlist</string>
     <string name="save">Save</string>
     <string name="save_play_queue">Save play queue as playlist</string>
-    <string name="submit">Submit</string>
 
     <!-- Labels -->
     <string name="album">Album</string>
@@ -82,13 +80,11 @@
     <string name="english_code" translatable="false">en</string>
     <string name="favourites">Favourites</string>
     <string name="library">My Library</string>
-    <string name="more">More</string>
     <string name="most_played">Most played</string>
     <string name="n_albums">%1$d albums</string>
     <string name="n_plays">%1$d plays</string>
     <string name="name">Name</string>
     <string name="night">Night</string>
-    <string name="no">No</string>
     <string name="no_results">No results found</string>
     <string name="one_album">1 album</string>
     <string name="one_play">1 play</string>
@@ -106,9 +102,7 @@
     <string name="spanish_code" translatable="false">es</string>
     <string name="title">Title</string>
     <string name="track">Track</string>
-    <string name="use_custom_image">Use custom image</string>
     <string name="year">Year</string>
-    <string name="yes">Yes</string>
 
     <!-- Accessibility -->
     <string name="album_artwork">Album artwork</string>
@@ -143,9 +137,7 @@
     <string name="check_fields_not_empty">Check none of the fields are empty</string>
     <string name="details_saved">Details saved</string>
     <string name="empty_play_queue">The play queue is empty.</string>
-    <string name="image_set">Image set!</string>
     <string name="item_saved">%1$s saved</string>
-    <string name="item_added_play_queue">%1$s has been added to the play queue</string>
     <string name="play_queue_shuffled">Play queue shuffled</string>
     <string name="play_queue_unshuffled">Play queue unshuffled</string>
     <string name="playlist_already_exists">A playlist with that name already exists</string>
