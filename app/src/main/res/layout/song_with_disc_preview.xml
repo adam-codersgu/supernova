@@ -5,10 +5,10 @@
 
     <TextView
         android:id="@+id/discNumber"
-        android:layout_width="40dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="6dp"
-        android:layout_marginTop="6dp"
+        android:visibility="gone"
+        android:padding="6dp"
         android:textColor="@color/accent"
         android:singleLine="true"
         android:textSize="14sp" />
@@ -18,7 +18,8 @@
         android:id="@+id/songPreviewLayout"
         android:background="?attr/selectableItemBackground"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_below="@id/discNumber">
 
         <TextView
             android:id="@+id/songTrack"

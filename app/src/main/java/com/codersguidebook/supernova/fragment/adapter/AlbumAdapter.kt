@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
+import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
@@ -76,7 +77,7 @@ class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(ac
                 holder as ViewHolderSongWithDisc
                 val current = songs[position -1]
 
-                holder.mDisc.isVisible = false
+                holder.mDisc.isGone = true
                 if (displayDiscNumbers && songs.size > 1) {
                     if (position - 1 == 0 || songs[position -1].track.toString().substring(0, 1) !=
                         songs[position -2].track.toString().substring(0, 1)) {
