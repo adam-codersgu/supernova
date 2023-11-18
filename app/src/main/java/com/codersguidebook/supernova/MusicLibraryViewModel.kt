@@ -1,8 +1,13 @@
 package com.codersguidebook.supernova
 
 import android.app.Application
-import androidx.lifecycle.*
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import androidx.lifecycle.Transformations
+import androidx.lifecycle.liveData
+import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
 import com.codersguidebook.supernova.data.MusicDatabase
 import com.codersguidebook.supernova.data.MusicRepository
@@ -17,13 +22,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
 
 class MusicLibraryViewModel(application: Application) : AndroidViewModel(application) {
 
     private val musicDao = MusicDatabase.getDatabase(application, viewModelScope).musicDao()
     private val playlistDao = MusicDatabase.getDatabase(application, viewModelScope).playlistDao()
-    private val repository = MusicRepository(musicDao, playlistDao)
+    var repository = MusicRepository(musicDao, playlistDao)
     private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(application)
     val allSongs: LiveData<List<Song>> = repository.allSongs
     val allArtists: LiveData<List<Artist>> = repository.allArtists
