@@ -28,7 +28,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
 
     private val musicDao = MusicDatabase.getDatabase(application, viewModelScope).musicDao()
     private val playlistDao = MusicDatabase.getDatabase(application, viewModelScope).playlistDao()
-    var repository = MusicRepository(musicDao, playlistDao)
+    private val repository = MusicRepository(musicDao, playlistDao)
     private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(application)
     val allSongs: LiveData<List<Song>> = repository.allSongs
     val allArtists: LiveData<List<Artist>> = repository.allArtists
