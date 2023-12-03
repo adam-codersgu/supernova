@@ -3,6 +3,7 @@ package com.codersguidebook.supernova
 import android.app.Application
 import androidx.lifecycle.MutableLiveData
 import com.codersguidebook.supernova.entities.Playlist
+import com.codersguidebook.supernova.testutils.ReflectionUtils
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -28,8 +29,29 @@ class MusicLibraryViewModelTest {
     @Test
     fun setActiveAlbumId_success() {
         // Given no album ID is set
-        val activeAlbumIdField = musicLibraryViewModel.javaClass.getDeclaredField("activeAlbumId")
-        activeAlbumIdField.isAccessible = true
+        val activeAlbumIdField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeAlbumId")
+        val activeAlbumId = (activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<*>).value as String?
+        assertNull(activeAlbumId)
+        
+        // When setActiveAlbumId is called with a valid String
+        val expectedActiveAlbumId = "3"
+        musicLibraryViewModel.setActiveAlbumId(expectedActiveAlbumId)
+
+        // Then the supplied String will be assigned to the activeAlbumId field
+        val actualActiveAlbumId = (activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<*>).value as String?
+        assertEquals(expectedActiveAlbumId, actualActiveAlbumId)
+    }
+
+    @Test
+    fun setActiveAlbumId_null_success() {
+        // Given no album ID is set
+        val activeAlbumIdField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeAlbumId")
+
+        // TODO RESUME - WE ARE TRYING TO GET THE POSTVALUE MEMBER FUNCTION OF THE MUTABLE LIVE DATA CLASS THEN CALL IT
+        // TO SET A TEST SETUP VALUE
+        (activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<*>).javaClass
+
+        // activeAlbumIdField.get .set(musicLibraryViewModel, "2")
         val activeAlbumId = (activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<*>).value as String?
         assertNull(activeAlbumId)
 
@@ -43,8 +65,8 @@ class MusicLibraryViewModelTest {
 
 
         // TODO: RESUME
-        //  Assign some of the above reflection steps to test helper methods?
         //  Write further tests for setActiveAlbumId e.g. play around with null values?
+        //  Also a test if the new value is the same value - see if there's a way to preset the value using reflection
     }
 
 
