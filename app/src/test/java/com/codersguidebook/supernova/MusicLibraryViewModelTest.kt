@@ -43,29 +43,25 @@ class MusicLibraryViewModelTest {
     }
 
     @Test
-    fun setActiveAlbumId_null_success() {
-        // Given no album ID is set
+    fun setActiveAlbumId_empty_string_success() {
+        // Given the album ID is set to 2
         val activeAlbumIdField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeAlbumId")
+        @SuppressWarnings("UNCHECKED_CAST")
+        (activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<String>).value = "2"
 
-        // TODO RESUME - WE ARE TRYING TO GET THE POSTVALUE MEMBER FUNCTION OF THE MUTABLE LIVE DATA CLASS THEN CALL IT
-        // TO SET A TEST SETUP VALUE
-        (activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<*>).javaClass
+        val initialActiveAlbumId = (activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<*>).value as String?
+        assertEquals("2", initialActiveAlbumId)
 
-        // activeAlbumIdField.get .set(musicLibraryViewModel, "2")
-        val activeAlbumId = (activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<*>).value as String?
-        assertNull(activeAlbumId)
-
-        // When setActiveAlbumId is called with a valid String
-        val expectedActiveAlbumId = "3"
-        musicLibraryViewModel.setActiveAlbumId(expectedActiveAlbumId)
+        // When setActiveAlbumId is called with an empty String
+        musicLibraryViewModel.setActiveAlbumId("")
 
         // Then the supplied String will be assigned to the activeAlbumId field
         val actualActiveAlbumId = (activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<*>).value as String?
-        assertEquals(expectedActiveAlbumId, actualActiveAlbumId)
+        assertEquals("", actualActiveAlbumId)
 
 
         // TODO: RESUME
-        //  Write further tests for setActiveAlbumId e.g. play around with null values?
+        //  Write further tests for setActiveAlbumId
         //  Also a test if the new value is the same value - see if there's a way to preset the value using reflection
     }
 
