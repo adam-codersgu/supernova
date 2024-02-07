@@ -14,6 +14,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
+@Suppress("UNCHECKED_CAST")
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 class MusicLibraryViewModelTest {
@@ -30,34 +31,31 @@ class MusicLibraryViewModelTest {
     fun setActiveAlbumId_success() {
         // Given no album ID is set
         val activeAlbumIdField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeAlbumId")
-        val activeAlbumId = (activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<*>).value as String?
-        assertNull(activeAlbumId)
+        val activeAlbumId = activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<String>
+        assertNull(activeAlbumId.value)
         
         // When setActiveAlbumId is called with a valid String
         val expectedActiveAlbumId = "3"
         musicLibraryViewModel.setActiveAlbumId(expectedActiveAlbumId)
 
         // Then the supplied String will be assigned to the activeAlbumId field
-        val actualActiveAlbumId = (activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<*>).value as String?
-        assertEquals(expectedActiveAlbumId, actualActiveAlbumId)
+        assertEquals(expectedActiveAlbumId, activeAlbumId.value)
     }
 
     @Test
     fun setActiveAlbumId_empty_string_success() {
         // Given the album ID is set to 2
         val activeAlbumIdField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeAlbumId")
-        @SuppressWarnings("UNCHECKED_CAST")
-        (activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<String>).value = "2"
+        val activeAlbumId = activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<String>
+        activeAlbumId.value = "2"
 
-        val initialActiveAlbumId = (activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<*>).value as String?
-        assertEquals("2", initialActiveAlbumId)
+        assertEquals("2", activeAlbumId.value)
 
         // When setActiveAlbumId is called with an empty String
         musicLibraryViewModel.setActiveAlbumId("")
 
         // Then the supplied String will be assigned to the activeAlbumId field
-        val actualActiveAlbumId = (activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<*>).value as String?
-        assertEquals("", actualActiveAlbumId)
+        assertEquals("", activeAlbumId.value)
 
 
         // TODO: RESUME
