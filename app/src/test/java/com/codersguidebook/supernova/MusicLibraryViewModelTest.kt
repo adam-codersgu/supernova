@@ -56,11 +56,37 @@ class MusicLibraryViewModelTest {
 
         // Then the supplied String will be assigned to the activeAlbumId field
         assertEquals("", activeAlbumId.value)
+    }
 
+    @Test
+    fun setActiveArtistName_success() {
+        // Given no artist name is set
+        val activeArtistNameField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeArtistName")
+        val activeArtistName = activeArtistNameField.get(musicLibraryViewModel) as MutableLiveData<String>
+        assertNull(activeArtistName.value)
 
-        // TODO: RESUME
-        //  Write further tests for setActiveAlbumId
-        //  Also a test if the new value is the same value - see if there's a way to preset the value using reflection
+        // When setActiveArtistName is called with a valid String
+        val expectedActiveArtistName = "Band B"
+        musicLibraryViewModel.setActiveArtistName(expectedActiveArtistName)
+
+        // Then the supplied String will be assigned to the activeArtistName field
+        assertEquals(expectedActiveArtistName, activeArtistName.value)
+    }
+
+    @Test
+    fun setActiveArtistName_empty_string_success() {
+        // Given the album ID is set to 2
+        val activeArtistNameField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeArtistName")
+        val activeArtistName = activeArtistNameField.get(musicLibraryViewModel) as MutableLiveData<String>
+        activeArtistName.value = "Band A"
+
+        assertEquals("Band A", activeArtistName.value)
+
+        // When setActiveAlbumId is called with an empty String
+        musicLibraryViewModel.setActiveArtistName("")
+
+        // Then the supplied String will be assigned to the activeArtistName field
+        assertEquals("", activeArtistName.value)
     }
 
 
