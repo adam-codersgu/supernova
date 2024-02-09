@@ -2,14 +2,19 @@ package com.codersguidebook.supernova
 
 import android.app.Application
 import androidx.lifecycle.MutableLiveData
+import com.codersguidebook.supernova.data.MusicRepository
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.testutils.ReflectionUtils
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mockito
+import org.mockito.Mockito.mock
 import org.mockito.MockitoAnnotations
+import org.mockito.kotlin.doReturn
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
@@ -25,6 +30,32 @@ class MusicLibraryViewModelTest {
     fun setup() {
         MockitoAnnotations.openMocks(this)
         musicLibraryViewModel = MusicLibraryViewModel(RuntimeEnvironment.getApplication())
+    }
+
+    @Test
+    fun getPlaylistByName_playlist_exists() = runTest {
+        val mockPlaylist = whenGetPlaylistByNameReturnPlaylistA()
+
+        val playlist = musicLibraryViewModel.getPlaylistByName("Playlist A")
+
+        assertEquals(mockPlaylist.toString(), playlist.toString())
+    }
+
+    @Test
+    fun getPlaylistByName_playlist_does_not_exist() = runTest {
+        whenGetPlaylistByNameReturnPlaylistA()
+
+        val playlist = musicLibraryViewModel.getPlaylistByName("Playlist B")
+
+        assertNull(playlist)
+    }
+
+    private suspend fun whenGetPlaylistByNameReturnPlaylistA(): Playlist {
+        val mockRepository = mock(MusicRepository::class.java)
+        val mockPlaylist = getMockPlaylist()
+        Mockito.`when`(mockRepository.getPlaylistByName("Playlist A")).doReturn(mockPlaylist)
+        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "repository", mockRepository)
+        return mockPlaylist
     }
 
     @Test
@@ -75,30 +106,21 @@ class MusicLibraryViewModelTest {
 
     @Test
     fun setActiveArtistName_empty_string_success() {
-        // Given the album ID is set to 2
+        // Given the artist name is set to Band A
         val activeArtistNameField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeArtistName")
         val activeArtistName = activeArtistNameField.get(musicLibraryViewModel) as MutableLiveData<String>
         activeArtistName.value = "Band A"
 
         assertEquals("Band A", activeArtistName.value)
 
-        // When setActiveAlbumId is called with an empty String
+        // When setActiveArtistName is called with an empty String
         musicLibraryViewModel.setActiveArtistName("")
 
         // Then the supplied String will be assigned to the activeArtistName field
         assertEquals("", activeArtistName.value)
     }
 
-
-    /* = runTest {
-        Mockito.`when`(repository.getAllPlaylists()).doReturn(getMockPlaylists())
-        // assertTrue(musicLibraryViewModel.getAllPlaylists().isEmpty())
-        assertEquals("test", musicLibraryViewModel.getAllPlaylists()[0].name)
-    } */
-
-    private fun getMockPlaylists(): List<Playlist> {
-        val playlist = Playlist(1, "test", "1", false)
-        return listOf(playlist)
-        // return listOf()
+    private fun getMockPlaylist(): Playlist {
+        return Playlist(1, "Playlist A", "1", false)
     }
 }

@@ -9,4 +9,9 @@ object ReflectionUtils {
         targetField.isAccessible = true
         return targetField
     }
+
+    fun replaceFieldWithMock(targetObject: Any, fieldName: String, mockObject: Any) {
+        val field = setFieldVisible(targetObject, fieldName)
+        field.set(targetObject, mockObject)
+    }
 }
