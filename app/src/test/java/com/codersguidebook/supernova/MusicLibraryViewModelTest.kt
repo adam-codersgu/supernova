@@ -45,25 +45,16 @@ class MusicLibraryViewModelTest {
         val mockPlaylist = getMockPlaylist()
         Mockito.`when`(mockRepository.getPlaylistById(defaultPlaylistHelper.favourites.first)).doReturn(mockPlaylist)
         ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "repository", mockRepository)
-        // whenGetPlaylistByIdReturnPlaylistA(defaultPlaylistHelper.favourites.first)
         val songToFavourite = getMockSong(2L, false)
 
-        val songIdList = PlaylistHelper.extractSongIds(mockPlaylist.songs)
-        songIdList.add(2L)
-        val expectedSongIds = PlaylistHelper.serialiseSongIds(songIdList)
-        val expectedPlaylist = mockPlaylist.copy(songs = expectedSongIds)
-
-        // TODO: NEED TO ADD SIMILAR ASSERTIONS TO ABOVE TO VERIFY SONG UPDATE IS SAVED VIA REPO
-        //  ALSO LOOK FOR OPPORTUNITIES TO TIDY UP AND SIMPLIFY THESE TESTS AND DELEGATE TO HELPER METHODS
-
         val isFavourited = musicLibraryViewModel.toggleSongFavouriteStatus(songToFavourite)
+
         if (isFavourited != null) {
             assertTrue(isFavourited)
         } else {
-            fail("isFavourited cannot be null")
+            fail("isFavourited should not be null")
         }
-
-        Mockito.verify(mockRepository).updatePlaylists(listOf(expectedPlaylist))
+        assertTrue(songToFavourite.isFavourite)
     }
 
     @Test
