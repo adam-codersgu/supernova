@@ -230,6 +230,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
             updateSongs(listOf(song))
             return song.isFavourite
         }
+        // FIXME: It would perhaps be better to throw an exception if something goes wrong e.g. playlistNotFoundException
         return null
     }
 
