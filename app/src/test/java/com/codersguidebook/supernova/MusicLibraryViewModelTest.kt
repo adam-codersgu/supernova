@@ -8,6 +8,7 @@ import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.testutils.ReflectionUtils
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
+import io.kotest.inspectors.forAll
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -176,6 +177,20 @@ class MusicLibraryViewModelTest {
 
         // Then the supplied String will be assigned to the activeArtistName field
         assertEquals("", activeArtistName.value)
+    }
+
+    @Test
+    fun getAllUserPlaylists_success() = runTest {
+        val mockRepository = mock(MusicRepository::class.java)
+        val mockPlaylist = getMockPlaylist()
+        Mockito.`when`(mockRepository.getAllUserPlaylists()).doReturn(listOf(mockPlaylist))
+        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "repository", mockRepository)
+
+        val playlists = musicLibraryViewModel.getAllUserPlaylists()
+        assertEquals(1, playlists.size)
+        playlists.forAll {
+            !it.isDefault
+        }
     }
 
     // TODO: Delegate the below playlist and song data setup methods to a fixture class
