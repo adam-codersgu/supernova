@@ -180,10 +180,22 @@ class MusicLibraryViewModelTest {
     }
 
     @Test
+    fun getAllPlaylists_success() = runTest {
+        val mockRepository = mock(MusicRepository::class.java)
+        val userPlaylist = getMockPlaylist()
+        val defaultPlaylist = getMockFavouritesPlaylist()
+        Mockito.`when`(mockRepository.getAllPlaylists()).doReturn(listOf(userPlaylist, defaultPlaylist))
+        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "repository", mockRepository)
+
+        val playlists = musicLibraryViewModel.getAllPlaylists()
+        assertEquals(2, playlists.size)
+    }
+
+    @Test
     fun getAllUserPlaylists_success() = runTest {
         val mockRepository = mock(MusicRepository::class.java)
-        val mockPlaylist = getMockPlaylist()
-        Mockito.`when`(mockRepository.getAllUserPlaylists()).doReturn(listOf(mockPlaylist))
+        val userPlaylist = getMockPlaylist()
+        Mockito.`when`(mockRepository.getAllUserPlaylists()).doReturn(listOf(userPlaylist))
         ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "repository", mockRepository)
 
         val playlists = musicLibraryViewModel.getAllUserPlaylists()
