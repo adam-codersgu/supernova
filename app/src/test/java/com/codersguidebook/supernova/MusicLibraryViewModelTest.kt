@@ -4,7 +4,8 @@ import android.app.Application
 import androidx.lifecycle.MutableLiveData
 import com.codersguidebook.supernova.data.MusicRepository
 import com.codersguidebook.supernova.entities.Playlist
-import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockPlaylist
+import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSong
 import com.codersguidebook.supernova.testutils.ReflectionUtils
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
@@ -210,19 +211,5 @@ class MusicLibraryViewModelTest {
         val songIds = PlaylistHelper.serialiseSongIds(listOf(getMockSong(true).songId))
         return Playlist(defaultPlaylistHelper.favourites.first,
             defaultPlaylistHelper.favourites.second, songIds, true)
-    }
-
-    private fun getMockPlaylist(): Playlist {
-        val songIds = PlaylistHelper.serialiseSongIds(listOf(getMockSong().songId))
-        return Playlist(1, "Playlist A", songIds, false)
-    }
-
-    private fun getMockSong(isFavourite: Boolean = false): Song {
-        return getMockSong(1L, isFavourite)
-    }
-
-    private fun getMockSong(songId: Long, isFavourite: Boolean = false): Song {
-        return Song(songId, 1, "Title", "Artist", "Album",
-            "1", "2024", isFavourite)
     }
 }
