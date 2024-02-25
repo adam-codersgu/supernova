@@ -23,7 +23,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
 import org.mockito.MockitoAnnotations
+import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
@@ -193,22 +195,48 @@ class MusicLibraryViewModelTest {
         val mockPlaylist = getMockSongOfTheDayPlaylist()
         Mockito.`when`(mockRepository.getPlaylistById(defaultPlaylistHelper.songOfTheDay.first)).doReturn(mockPlaylist)
         Mockito.`when`(mockRepository.getRandomSong()).doReturn(getMockSong(2L))
-        Mockito.`when`(mockSharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null)).doReturn(null)
+        Mockito.`when`(mockSharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null))
+            .doReturn(null)
         Mockito.`when`(mockSharedPreferences.edit()).doReturn(mockEditor)
         ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "repository", mockRepository)
         ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "sharedPreferences", mockSharedPreferences)
 
-        musicLibraryViewModel.refreshSongOfTheDay()
-        // FIXME - Need to use a better solution for pausing the thread - also other tests already written that could benefit e.g. favourites tests?
-        sleep(100)
+        refreshSongOfTheDay()
 
         Mockito.verify(mockRepository).updatePlaylists(listOf(mockPlaylist))
         val todayDate = SimpleDateFormat.getDateInstance().format(Date())
         Mockito.verify(mockEditor).putString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, todayDate)
     }
 
-    // todo refreshSongOfTheDay_alreadyLoadedForToday_success
-    //  Have some tests for the force update
+    @Test
+    fun refreshSongOfTheDay_alreadyLoadedForToday_success() = runTest {
+        val todayDate = SimpleDateFormat.getDateInstance().format(Date())
+
+        val mockRepository = mock(MusicRepository::class.java)
+        val mockSharedPreferences = mock(SharedPreferences::class.java)
+        val mockEditor = mock(SharedPreferences.Editor::class.java)
+        val mockPlaylist = getMockSongOfTheDayPlaylist()
+        Mockito.`when`(mockRepository.getPlaylistById(defaultPlaylistHelper.songOfTheDay.first)).doReturn(mockPlaylist)
+        Mockito.`when`(mockRepository.getRandomSong()).doReturn(getMockSong(2L))
+        Mockito.`when`(mockSharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null))
+            .doReturn(todayDate)
+        Mockito.`when`(mockSharedPreferences.edit()).doReturn(mockEditor)
+        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "repository", mockRepository)
+        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "sharedPreferences", mockSharedPreferences)
+
+        refreshSongOfTheDay()
+
+        Mockito.verify(mockRepository, never()).updatePlaylists(any())
+        Mockito.verify(mockEditor, never()).putString(any(), any())
+    }
+
+    private fun refreshSongOfTheDay() {
+        musicLibraryViewModel.refreshSongOfTheDay()
+        // FIXME - Need to use a better solution for pausing the thread - also other tests already written that could benefit e.g. favourites tests?
+        sleep(100)
+    }
+
+    // todo Have some tests for the force update
     //  Have tests for a 30 song length playlist
 
     @Test
