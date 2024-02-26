@@ -203,6 +203,9 @@ class MusicLibraryViewModelTest {
 
         refreshSongOfTheDay()
 
+        assertEquals(2, PlaylistHelper.extractSongIds(mockPlaylist.songs).size)
+        assertEquals(1L, PlaylistHelper.extractSongIds(mockPlaylist.songs)[0])
+        assertEquals(2L, PlaylistHelper.extractSongIds(mockPlaylist.songs)[1])
         Mockito.verify(mockRepository).updatePlaylists(listOf(mockPlaylist))
         val todayDate = SimpleDateFormat.getDateInstance().format(Date())
         Mockito.verify(mockEditor).putString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, todayDate)
@@ -226,12 +229,38 @@ class MusicLibraryViewModelTest {
 
         refreshSongOfTheDay()
 
+        assertEquals(1, PlaylistHelper.extractSongIds(mockPlaylist.songs).size)
+        assertEquals(1L, PlaylistHelper.extractSongIds(mockPlaylist.songs)[0])
         Mockito.verify(mockRepository, never()).updatePlaylists(any())
         Mockito.verify(mockEditor, never()).putString(any(), any())
     }
 
-    private fun refreshSongOfTheDay() {
-        musicLibraryViewModel.refreshSongOfTheDay()
+    @Test
+    fun refreshSongOfTheDay_forceUpdate_success() = runTest {
+        val todayDate = SimpleDateFormat.getDateInstance().format(Date())
+
+        val mockRepository = mock(MusicRepository::class.java)
+        val mockSharedPreferences = mock(SharedPreferences::class.java)
+        val mockEditor = mock(SharedPreferences.Editor::class.java)
+        val mockPlaylist = getMockSongOfTheDayPlaylist()
+        Mockito.`when`(mockRepository.getPlaylistById(defaultPlaylistHelper.songOfTheDay.first)).doReturn(mockPlaylist)
+        Mockito.`when`(mockRepository.getRandomSong()).doReturn(getMockSong(2L))
+        Mockito.`when`(mockSharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null))
+            .doReturn(todayDate)
+        Mockito.`when`(mockSharedPreferences.edit()).doReturn(mockEditor)
+        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "repository", mockRepository)
+        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "sharedPreferences", mockSharedPreferences)
+
+        refreshSongOfTheDay(true)
+
+        assertEquals(1, PlaylistHelper.extractSongIds(mockPlaylist.songs).size)
+        assertEquals(2L, PlaylistHelper.extractSongIds(mockPlaylist.songs)[0])
+        Mockito.verify(mockRepository).updatePlaylists(listOf(mockPlaylist))
+        Mockito.verify(mockEditor, never()).putString(any(), any())
+    }
+
+    private fun refreshSongOfTheDay(forceUpdate: Boolean = false) {
+        musicLibraryViewModel.refreshSongOfTheDay(forceUpdate)
         // FIXME - Need to use a better solution for pausing the thread - also other tests already written that could benefit e.g. favourites tests?
         sleep(100)
     }
