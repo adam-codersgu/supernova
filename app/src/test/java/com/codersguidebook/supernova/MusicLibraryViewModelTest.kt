@@ -204,8 +204,8 @@ class MusicLibraryViewModelTest {
         refreshSongOfTheDay()
 
         assertEquals(2, PlaylistHelper.extractSongIds(mockPlaylist.songs).size)
-        assertEquals(1L, PlaylistHelper.extractSongIds(mockPlaylist.songs)[0])
-        assertEquals(2L, PlaylistHelper.extractSongIds(mockPlaylist.songs)[1])
+        assertEquals(2L, PlaylistHelper.extractSongIds(mockPlaylist.songs)[0])
+        assertEquals(1L, PlaylistHelper.extractSongIds(mockPlaylist.songs)[1])
         Mockito.verify(mockRepository).updatePlaylists(listOf(mockPlaylist))
         val todayDate = SimpleDateFormat.getDateInstance().format(Date())
         Mockito.verify(mockEditor).putString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, todayDate)
@@ -259,14 +259,45 @@ class MusicLibraryViewModelTest {
         Mockito.verify(mockEditor, never()).putString(any(), any())
     }
 
+    @Test
+    fun refreshSongOfTheDay_30SongsLimitReached_success() = runTest {
+        val mockRepository = mock(MusicRepository::class.java)
+        val mockSharedPreferences = mock(SharedPreferences::class.java)
+        val mockEditor = mock(SharedPreferences.Editor::class.java)
+        val mockPlaylist = getMockSongOfTheDayPlaylist(30)
+        Mockito.`when`(mockRepository.getPlaylistById(defaultPlaylistHelper.songOfTheDay.first)).doReturn(mockPlaylist)
+        Mockito.`when`(mockRepository.getRandomSong()).doReturn(getMockSong(31L))
+        Mockito.`when`(mockSharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null))
+            .doReturn(null)
+        Mockito.`when`(mockSharedPreferences.edit()).doReturn(mockEditor)
+        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "repository", mockRepository)
+        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "sharedPreferences", mockSharedPreferences)
+        assertMaxLengthSongOfTheDayPlaylistElements(mockPlaylist, 1L, 30L)
+
+        refreshSongOfTheDay()
+
+        assertMaxLengthSongOfTheDayPlaylistElements(mockPlaylist, 31L, 29L)
+        Mockito.verify(mockRepository).updatePlaylists(listOf(mockPlaylist))
+        val todayDate = SimpleDateFormat.getDateInstance().format(Date())
+        Mockito.verify(mockEditor).putString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, todayDate)
+    }
+
+    private fun assertMaxLengthSongOfTheDayPlaylistElements(playlist: Playlist,
+                                                            expectedIdOfFirstElement: Long,
+                                                            expectedIdOfLastElement: Long) {
+        val extractedSongs = PlaylistHelper.extractSongIds(playlist.songs)
+        assertEquals(30, extractedSongs.size)
+        assertEquals(expectedIdOfFirstElement, extractedSongs[0])
+        assertEquals(expectedIdOfLastElement, extractedSongs[extractedSongs.size - 1])
+    }
+
     private fun refreshSongOfTheDay(forceUpdate: Boolean = false) {
         musicLibraryViewModel.refreshSongOfTheDay(forceUpdate)
         // FIXME - Need to use a better solution for pausing the thread - also other tests already written that could benefit e.g. favourites tests?
         sleep(100)
     }
 
-    // todo Have some tests for the force update
-    //  Have tests for a 30 song length playlist
+    // todo Tidy test setup
 
     @Test
     fun getAllSongs_success() = runTest {
@@ -312,9 +343,12 @@ class MusicLibraryViewModelTest {
             defaultPlaylistHelper.favourites.second, songIds, true)
     }
 
-    private fun getMockSongOfTheDayPlaylist(): Playlist {
-        val songIds = PlaylistHelper.serialiseSongIds(listOf(getMockSong().songId))
+    private fun getMockSongOfTheDayPlaylist(songQty: Int = 1): Playlist {
+        val songIds = mutableListOf<Long>()
+        for (i in 1..songQty) {
+            songIds.add(i.toLong())
+        }
         return Playlist(defaultPlaylistHelper.songOfTheDay.first,
-            defaultPlaylistHelper.songOfTheDay.second, songIds, true)
+            defaultPlaylistHelper.songOfTheDay.second, PlaylistHelper.serialiseSongIds(songIds), true)
     }
 }
