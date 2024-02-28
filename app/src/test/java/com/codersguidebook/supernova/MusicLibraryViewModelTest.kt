@@ -39,6 +39,12 @@ import java.util.Date
 @Config(application = Application::class)
 class MusicLibraryViewModelTest {
 
+    private val today = SimpleDateFormat.getDateInstance().format(Date())
+
+    private val mockRepository = mock(MusicRepository::class.java)
+    private val mockSharedPreferences = mock(SharedPreferences::class.java)
+    private val mockEditor = mock(SharedPreferences.Editor::class.java)
+
     private lateinit var defaultPlaylistHelper: DefaultPlaylistHelper
     private lateinit var musicLibraryViewModel: MusicLibraryViewModel
 
@@ -47,6 +53,9 @@ class MusicLibraryViewModelTest {
         MockitoAnnotations.openMocks(this)
         defaultPlaylistHelper = DefaultPlaylistHelper(RuntimeEnvironment.getApplication())
         musicLibraryViewModel = MusicLibraryViewModel(RuntimeEnvironment.getApplication())
+        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "repository", mockRepository)
+        Mockito.`when`(mockSharedPreferences.edit()).doReturn(mockEditor)
+        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "sharedPreferences", mockSharedPreferences)
     }
 
     @Test
@@ -80,17 +89,13 @@ class MusicLibraryViewModelTest {
     }
 
     private suspend fun repositoryShouldReturnFavouritesPlaylistById() {
-        val mockRepository = mock(MusicRepository::class.java)
         val mockPlaylist = getMockFavouritesPlaylist()
         Mockito.`when`(mockRepository.getPlaylistById(defaultPlaylistHelper.favourites.first)).doReturn(mockPlaylist)
-        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "repository", mockRepository)
     }
 
     @Test
     fun toggleSongFavouriteStatus_error_favourites_playlist_not_found() = runTest {
-        val mockRepository = mock(MusicRepository::class.java)
         Mockito.`when`(mockRepository.getPlaylistById(defaultPlaylistHelper.favourites.first)).doReturn(null)
-        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "repository", mockRepository)
         val songToFavourite = getMockSong(2L, false)
 
         val isFavourited = musicLibraryViewModel.toggleSongFavouriteStatus(songToFavourite)
@@ -118,10 +123,8 @@ class MusicLibraryViewModelTest {
     }
 
     private suspend fun whenGetPlaylistByNameReturnPlaylistA(): Playlist {
-        val mockRepository = mock(MusicRepository::class.java)
         val mockPlaylist = getMockPlaylist()
         Mockito.`when`(mockRepository.getPlaylistByName("Playlist A")).doReturn(mockPlaylist)
-        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "repository", mockRepository)
         return mockPlaylist
     }
 
@@ -189,17 +192,7 @@ class MusicLibraryViewModelTest {
 
     @Test
     fun refreshSongOfTheDay_notLoadedForToday_success() = runTest {
-        val mockRepository = mock(MusicRepository::class.java)
-        val mockSharedPreferences = mock(SharedPreferences::class.java)
-        val mockEditor = mock(SharedPreferences.Editor::class.java)
-        val mockPlaylist = getMockSongOfTheDayPlaylist()
-        Mockito.`when`(mockRepository.getPlaylistById(defaultPlaylistHelper.songOfTheDay.first)).doReturn(mockPlaylist)
-        Mockito.`when`(mockRepository.getRandomSong()).doReturn(getMockSong(2L))
-        Mockito.`when`(mockSharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null))
-            .doReturn(null)
-        Mockito.`when`(mockSharedPreferences.edit()).doReturn(mockEditor)
-        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "repository", mockRepository)
-        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "sharedPreferences", mockSharedPreferences)
+        val mockPlaylist = configureSongOfTheDayPlaylistByLastUpdated(null)
 
         refreshSongOfTheDay()
 
@@ -213,19 +206,7 @@ class MusicLibraryViewModelTest {
 
     @Test
     fun refreshSongOfTheDay_alreadyLoadedForToday_success() = runTest {
-        val todayDate = SimpleDateFormat.getDateInstance().format(Date())
-
-        val mockRepository = mock(MusicRepository::class.java)
-        val mockSharedPreferences = mock(SharedPreferences::class.java)
-        val mockEditor = mock(SharedPreferences.Editor::class.java)
-        val mockPlaylist = getMockSongOfTheDayPlaylist()
-        Mockito.`when`(mockRepository.getPlaylistById(defaultPlaylistHelper.songOfTheDay.first)).doReturn(mockPlaylist)
-        Mockito.`when`(mockRepository.getRandomSong()).doReturn(getMockSong(2L))
-        Mockito.`when`(mockSharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null))
-            .doReturn(todayDate)
-        Mockito.`when`(mockSharedPreferences.edit()).doReturn(mockEditor)
-        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "repository", mockRepository)
-        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "sharedPreferences", mockSharedPreferences)
+        val mockPlaylist = configureSongOfTheDayPlaylistByLastUpdated(today)
 
         refreshSongOfTheDay()
 
@@ -237,19 +218,7 @@ class MusicLibraryViewModelTest {
 
     @Test
     fun refreshSongOfTheDay_forceUpdate_success() = runTest {
-        val todayDate = SimpleDateFormat.getDateInstance().format(Date())
-
-        val mockRepository = mock(MusicRepository::class.java)
-        val mockSharedPreferences = mock(SharedPreferences::class.java)
-        val mockEditor = mock(SharedPreferences.Editor::class.java)
-        val mockPlaylist = getMockSongOfTheDayPlaylist()
-        Mockito.`when`(mockRepository.getPlaylistById(defaultPlaylistHelper.songOfTheDay.first)).doReturn(mockPlaylist)
-        Mockito.`when`(mockRepository.getRandomSong()).doReturn(getMockSong(2L))
-        Mockito.`when`(mockSharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null))
-            .doReturn(todayDate)
-        Mockito.`when`(mockSharedPreferences.edit()).doReturn(mockEditor)
-        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "repository", mockRepository)
-        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "sharedPreferences", mockSharedPreferences)
+        val mockPlaylist = configureSongOfTheDayPlaylistByLastUpdated(today)
 
         refreshSongOfTheDay(true)
 
@@ -259,27 +228,29 @@ class MusicLibraryViewModelTest {
         Mockito.verify(mockEditor, never()).putString(any(), any())
     }
 
+    private suspend fun configureSongOfTheDayPlaylistByLastUpdated(dateLastUpdated: String?) : Playlist{
+        val mockPlaylist = getMockSongOfTheDayPlaylist()
+        Mockito.`when`(mockRepository.getPlaylistById(defaultPlaylistHelper.songOfTheDay.first)).doReturn(mockPlaylist)
+        Mockito.`when`(mockRepository.getRandomSong()).doReturn(getMockSong(2L))
+        Mockito.`when`(mockSharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null))
+            .doReturn(dateLastUpdated)
+        return mockPlaylist
+    }
+
     @Test
     fun refreshSongOfTheDay_30SongsLimitReached_success() = runTest {
-        val mockRepository = mock(MusicRepository::class.java)
-        val mockSharedPreferences = mock(SharedPreferences::class.java)
-        val mockEditor = mock(SharedPreferences.Editor::class.java)
         val mockPlaylist = getMockSongOfTheDayPlaylist(30)
         Mockito.`when`(mockRepository.getPlaylistById(defaultPlaylistHelper.songOfTheDay.first)).doReturn(mockPlaylist)
         Mockito.`when`(mockRepository.getRandomSong()).doReturn(getMockSong(31L))
         Mockito.`when`(mockSharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null))
             .doReturn(null)
-        Mockito.`when`(mockSharedPreferences.edit()).doReturn(mockEditor)
-        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "repository", mockRepository)
-        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "sharedPreferences", mockSharedPreferences)
         assertMaxLengthSongOfTheDayPlaylistElements(mockPlaylist, 1L, 30L)
 
         refreshSongOfTheDay()
 
         assertMaxLengthSongOfTheDayPlaylistElements(mockPlaylist, 31L, 29L)
         Mockito.verify(mockRepository).updatePlaylists(listOf(mockPlaylist))
-        val todayDate = SimpleDateFormat.getDateInstance().format(Date())
-        Mockito.verify(mockEditor).putString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, todayDate)
+        Mockito.verify(mockEditor).putString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, today)
     }
 
     private fun assertMaxLengthSongOfTheDayPlaylistElements(playlist: Playlist,
@@ -297,14 +268,10 @@ class MusicLibraryViewModelTest {
         sleep(100)
     }
 
-    // todo Tidy test setup
-
     @Test
     fun getAllSongs_success() = runTest {
-        val mockRepository = mock(MusicRepository::class.java)
         val song = getMockSong()
         Mockito.`when`(mockRepository.getAllSongs()).doReturn(listOf(song))
-        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "repository", mockRepository)
 
         val songs = musicLibraryViewModel.getAllSongs()
         assertEquals(1, songs.size)
@@ -312,11 +279,9 @@ class MusicLibraryViewModelTest {
 
     @Test
     fun getAllPlaylists_success() = runTest {
-        val mockRepository = mock(MusicRepository::class.java)
         val userPlaylist = getMockPlaylist()
         val defaultPlaylist = getMockFavouritesPlaylist()
         Mockito.`when`(mockRepository.getAllPlaylists()).doReturn(listOf(userPlaylist, defaultPlaylist))
-        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "repository", mockRepository)
 
         val playlists = musicLibraryViewModel.getAllPlaylists()
         assertEquals(2, playlists.size)
@@ -324,10 +289,8 @@ class MusicLibraryViewModelTest {
 
     @Test
     fun getAllUserPlaylists_success() = runTest {
-        val mockRepository = mock(MusicRepository::class.java)
         val userPlaylist = getMockPlaylist()
         Mockito.`when`(mockRepository.getAllUserPlaylists()).doReturn(listOf(userPlaylist))
-        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "repository", mockRepository)
 
         val playlists = musicLibraryViewModel.getAllUserPlaylists()
         assertEquals(1, playlists.size)
