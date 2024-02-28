@@ -5,8 +5,10 @@ import android.content.SharedPreferences
 import androidx.lifecycle.MutableLiveData
 import com.codersguidebook.supernova.data.MusicRepository
 import com.codersguidebook.supernova.entities.Playlist
+import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockFavouritesPlaylist
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockPlaylist
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSong
+import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSongOfTheDayPlaylist
 import com.codersguidebook.supernova.params.SharedPreferencesConstants
 import com.codersguidebook.supernova.testutils.ReflectionUtils
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
@@ -297,21 +299,5 @@ class MusicLibraryViewModelTest {
         playlists.forAll {
             !it.isDefault
         }
-    }
-
-    // TODO: Delegate the below playlist and song data setup methods to a fixture class
-    private fun getMockFavouritesPlaylist(): Playlist {
-        val songIds = PlaylistHelper.serialiseSongIds(listOf(getMockSong(true).songId))
-        return Playlist(defaultPlaylistHelper.favourites.first,
-            defaultPlaylistHelper.favourites.second, songIds, true)
-    }
-
-    private fun getMockSongOfTheDayPlaylist(songQty: Int = 1): Playlist {
-        val songIds = mutableListOf<Long>()
-        for (i in 1..songQty) {
-            songIds.add(i.toLong())
-        }
-        return Playlist(defaultPlaylistHelper.songOfTheDay.first,
-            defaultPlaylistHelper.songOfTheDay.second, PlaylistHelper.serialiseSongIds(songIds), true)
     }
 }
