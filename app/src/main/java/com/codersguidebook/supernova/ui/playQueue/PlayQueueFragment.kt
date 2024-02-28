@@ -12,7 +12,10 @@ import androidx.core.view.MenuProvider
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.recyclerview.widget.ItemTouchHelper.*
+import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG
+import androidx.recyclerview.widget.ItemTouchHelper.DOWN
+import androidx.recyclerview.widget.ItemTouchHelper.SimpleCallback
+import androidx.recyclerview.widget.ItemTouchHelper.UP
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.PlayQueueViewModel
@@ -42,7 +45,6 @@ class PlayQueueFragment : RecyclerViewFragment() {
                 viewHolder.itemView.alpha = 1.0f
 
                 if (to != null && queueItem != null) {
-                    playQueueViewModel.playQueue.value = adapter.playQueue
                     mainActivity.notifyQueueItemMoved(queueItem!!.queueId, to!!)
                     to = null
                     queueItem = null
