@@ -1,8 +1,13 @@
 package com.codersguidebook.supernova
 
 import android.app.Application
-import androidx.lifecycle.*
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import androidx.lifecycle.Transformations
+import androidx.lifecycle.liveData
+import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
 import com.codersguidebook.supernova.data.MusicDatabase
 import com.codersguidebook.supernova.data.MusicRepository
@@ -17,7 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
 
 class MusicLibraryViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -225,6 +230,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
             updateSongs(listOf(song))
             return song.isFavourite
         }
+        // FIXME: It would perhaps be better to throw an exception if something goes wrong e.g. playlistNotFoundException
         return null
     }
 
