@@ -94,8 +94,8 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        accent = MaterialColors.getColor(mainActivity, R.attr.colorAccent, Color.CYAN)
-        val onSurface = MaterialColors.getColor(mainActivity, R.attr.colorOnSurface, Color.LTGRAY)
+        accent = MaterialColors.getColor(mainActivity, com.google.android.material.R.attr.colorAccent, Color.CYAN)
+        val onSurface = MaterialColors.getColor(mainActivity, com.google.android.material.R.attr.colorOnSurface, Color.LTGRAY)
         onSurface60 = MaterialColors.compositeARGBWithAlpha(onSurface, 153)
 
         mainActivity.onBackPressedDispatcher.addCallback(viewLifecycleOwner, onBackPressedCallback)

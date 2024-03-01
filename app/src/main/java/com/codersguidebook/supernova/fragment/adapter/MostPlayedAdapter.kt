@@ -39,7 +39,7 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
             0 -> ContextCompat.getColor(activity, R.color.gold)
             1 -> ContextCompat.getColor(activity, R.color.silver)
             2 -> ContextCompat.getColor(activity, R.color.bronze)
-            else -> MaterialColors.getColor(activity, R.attr.colorOnSurface, Color.LTGRAY)
+            else -> MaterialColors.getColor(activity, com.google.android.material.R.attr.colorOnSurface, Color.LTGRAY)
         }
         val secondaryText = MaterialColors.compositeARGBWithAlpha(primaryText, 153)
 
