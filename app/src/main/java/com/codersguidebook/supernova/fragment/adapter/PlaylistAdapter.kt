@@ -121,7 +121,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                 val current = songs[position -1]
 
                 val params = holder.mArtwork!!.layoutParams as MarginLayoutParams
-                val onSurfaceColour = MaterialColors.getColor(activity, R.attr.colorOnSurface, Color.LTGRAY)
+                val onSurfaceColour = MaterialColors.getColor(activity, com.google.android.material.R.attr.colorOnSurface, Color.LTGRAY)
                 if (showHandles) {
                     holder.mArtwork?.setColorFilter(MaterialColors
                         .compositeARGBWithAlpha(onSurfaceColour, 153))

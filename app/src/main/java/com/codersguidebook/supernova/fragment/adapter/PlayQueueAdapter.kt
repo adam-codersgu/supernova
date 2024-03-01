@@ -55,8 +55,8 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
         holder as ViewHolderPlayQueue
         val currentQueueItemDescription = playQueue[position].description
 
-        val accent = MaterialColors.getColor(activity, R.attr.colorAccent, Color.CYAN)
-        val onSurface = MaterialColors.getColor(activity, R.attr.colorOnSurface, Color.LTGRAY)
+        val accent = MaterialColors.getColor(activity, com.google.android.material.R.attr.colorAccent, Color.CYAN)
+        val onSurface = MaterialColors.getColor(activity, com.google.android.material.R.attr.colorOnSurface, Color.LTGRAY)
         val onSurface60 = MaterialColors.compositeARGBWithAlpha(onSurface, 153)
 
         holder.handle.drawable.setTint(onSurface60)

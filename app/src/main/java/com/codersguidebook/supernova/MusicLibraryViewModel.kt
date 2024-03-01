@@ -5,8 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
-import androidx.lifecycle.Transformations
 import androidx.lifecycle.liveData
+import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
 import com.codersguidebook.supernova.data.MusicDatabase
@@ -37,20 +37,20 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     private val defaultPlaylistHelper: DefaultPlaylistHelper = DefaultPlaylistHelper(application)
 
     private val activeAlbumId = MutableLiveData<String>()
-    val activeAlbumSongs: LiveData<List<Song>> = Transformations.switchMap(activeAlbumId) {
+    val activeAlbumSongs: LiveData<List<Song>> = activeAlbumId.switchMap {
             albumId -> repository.getSongsByAlbumId(albumId)
     }
 
     private val activeArtistName = MutableLiveData<String>()
-    val activeArtistSongs: LiveData<List<Song>> = Transformations.switchMap(activeArtistName) {
+    val activeArtistSongs: LiveData<List<Song>> = activeArtistName.switchMap {
             name -> repository.getSongsByArtist(name)
     }
 
     private val activePlaylistName = MutableLiveData<String>()
-    private val activePlaylist: LiveData<Playlist?> = Transformations.switchMap(activePlaylistName) {
+    private val activePlaylist: LiveData<Playlist?> = activePlaylistName.switchMap {
             name -> repository.getPlaylistByNameLiveData(name)
     }
-    val activePlaylistSongs: LiveData<List<Song>> = Transformations.switchMap(activePlaylist) { playlist ->
+    val activePlaylistSongs: LiveData<List<Song>> = activePlaylist.switchMap { playlist ->
         liveData {
             emit(extractPlaylistSongs(playlist?.songs))
         }
