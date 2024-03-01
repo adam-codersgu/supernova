@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace "com.codersguidebook.supernova"
+    namespace = "com.codersguidebook.supernova"
     compileSdk = 34
 
     defaultConfig {
@@ -18,7 +18,7 @@ android {
         versionName = "2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        resourceConfigurations += ["en-rGB", "es"]
+        resourceConfigurations += listOf("en-rGB", "es")
     }
 
     buildTypes {
@@ -31,8 +31,10 @@ android {
         }
     }
     testOptions {
-        unitTests.returnDefaultValues = true
-        unitTests.includeAndroidResources = true
+        unitTests {
+            isReturnDefaultValues = true
+            isIncludeAndroidResources = true
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -60,12 +62,12 @@ dependencies {
     testImplementation("org.mockito:mockito-core:5.7.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:3.2.0")
     testImplementation("org.robolectric:robolectric:4.11.1")
-    androidtestImplementation("androidx.test.ext:junit:1.1.5")
-    androidtestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
     implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
 
-    def lifecycle_version = "2.7.0"
+    val lifecycle_version = "2.7.0"
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version")
     implementation("androidx.lifecycle:lifecycle-viewmodel-savedstate:$lifecycle_version")
@@ -78,7 +80,7 @@ dependencies {
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("androidx.viewpager2:viewpager2:1.0.0")
 
-    def room_version = "2.6.1"
+    val room_version = "2.6.1"
     implementation("androidx.room:room-runtime:$room_version")
     ksp("androidx.room:room-compiler:$room_version")
     implementation("androidx.room:room-ktx:$room_version")
