@@ -74,7 +74,7 @@ abstract class SongAdapter(private val activity: MainActivity): Adapter() {
                     if (songIdsDoNotMatchAtCurrentIndex()) {
                         var numberOfItemsRemoved = 0
                         do {
-                            songs.removeAt(index)
+                            removeSong(index)
                             ++numberOfItemsRemoved
                         } while (index < songs.size && songIdsDoNotMatchAtCurrentIndex())
 
@@ -91,7 +91,7 @@ abstract class SongAdapter(private val activity: MainActivity): Adapter() {
                     // Check if the song has been moved earlier in the list
                     val oldIndex = songs.indexOfFirst { it.songId == song.songId }
                     if (oldIndex != -1 && oldIndex > index) {
-                        songs.removeAt(oldIndex)
+                        removeSong(oldIndex)
                         songs.add(index, song)
                         notifyItemMoved(getRecyclerViewIndex(oldIndex), recyclerViewIndex)
                         continue
@@ -101,7 +101,7 @@ abstract class SongAdapter(private val activity: MainActivity): Adapter() {
                     var newIndex = newSongs.indexOfFirst { it.songId == songs[index].songId }
                     if (newIndex != -1) {
                         do {
-                            songs.removeAt(index)
+                            removeSong(index)
 
                             if (newIndex <= songs.size) {
                                 songs.add(newIndex, song)
@@ -136,5 +136,9 @@ abstract class SongAdapter(private val activity: MainActivity): Adapter() {
             repeat(numberItemsToRemove) { songs.removeLast() }
             notifyItemRangeRemoved(getRecyclerViewIndex(newSongs.size), numberItemsToRemove)
         }
+    }
+
+    open fun removeSong(index: Int) {
+        songs.removeAt(index)
     }
 }
