@@ -1,8 +1,12 @@
 package com.codersguidebook.supernova.ui.album
 
-import android.os.Build
 import android.os.Bundle
-import android.view.*
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
@@ -68,9 +72,6 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
                     }
                     if (distinctArtists.size != 1) menu.findItem(R.id.album_view_artist).isVisible = false
                 }
-                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
-                    menu.findItem(R.id.album_delete_album).isVisible = false
-                }
             }
 
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) { }
@@ -99,9 +100,7 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
                     }
                     R.id.album_delete_album -> {
                         // Delete Album feature only available from SDK 30 and up
-                        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
-                            mainActivity.deleteSongs(songs)
-                        }
+                        mainActivity.deleteSongs(songs)
                     }
                     else -> return false
                 }

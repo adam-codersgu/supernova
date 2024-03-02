@@ -78,20 +78,35 @@ class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(ac
                 val current = songs[position -1]
 
                 holder.mDisc.isGone = true
-                if (displayDiscNumbers && songs.size > 1) {
-                    if (position - 1 == 0 || songs[position -1].track.toString().substring(0, 1) !=
-                        songs[position -2].track.toString().substring(0, 1)) {
-                        holder.mDisc.isVisible = true
-                        val disc = current.track.toString().substring(0, 1)
-                        val text = activity.getString(R.string.disc_number, disc)
-                        holder.mDisc.text = text
-                    }
+                if (shouldDisplayDiscNumber(position)) {
+                    holder.mDisc.isVisible = true
+                    val disc = current.track.toString().substring(0, 1)
+                    val text = activity.getString(R.string.disc_number, disc)
+                    holder.mDisc.text = text
                 }
 
                 holder.mTrack.text = current.track.toString().substring(1, 4).toInt().toString()
                 holder.mTitle.text = current.title ?: activity.getString(R.string.default_title)
                 holder.mSubtitle.text = current.artist ?: activity.getString(R.string.default_artist)
             }
+        }
+    }
+
+    private fun shouldDisplayDiscNumber(position: Int): Boolean {
+        if (displayDiscNumbers && songs.size > 1) {
+            if (position - 1 == 0 || songs[position -1].track.toString().substring(0, 1) !=
+                songs[position -2].track.toString().substring(0, 1)) {
+                return true
+            }
+        }
+        return false
+    }
+
+    override fun removeSong(index: Int) {
+        val discNumberShouldBeDisplayed = shouldDisplayDiscNumber(index)
+        super.removeSong(index)
+        if (discNumberShouldBeDisplayed) {
+            notifyItemChanged(index)
         }
     }
 }
