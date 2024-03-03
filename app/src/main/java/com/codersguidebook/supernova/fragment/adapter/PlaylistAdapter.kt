@@ -51,14 +51,14 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
 
             itemView.setOnLongClickListener {
                 if (!showHandles) playlist?.let {
-                    activity.openDialog(PlaylistSongOptions(songs, layoutPosition - 1, it))
+                    activity.openDialog(PlaylistSongOptions(songs[layoutPosition - 1], layoutPosition - 1, it))
                 }
                 return@setOnLongClickListener true
             }
 
             mMenu?.setOnClickListener {
                 playlist?.let {
-                    activity.openDialog(PlaylistSongOptions(songs, layoutPosition - 1, it))
+                    activity.openDialog(PlaylistSongOptions(songs[layoutPosition - 1], layoutPosition - 1, it))
                 }
             }
         }
@@ -204,10 +204,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                 } while (index < songs.size &&
                     song.songId != songs[index].songId)
 
-                when {
-                    numberOfItemsRemoved == 1 -> notifyItemRemoved(recyclerViewIndex)
-                    numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(recyclerViewIndex, numberOfItemsRemoved)
-                }
+                notifyItemRangeRemoved(recyclerViewIndex, numberOfItemsRemoved)
 
                 // Update the colours of the top 3 most played songs, if appropriate
                 if (playlist?.name == activity.getString(R.string.most_played) && index < 3) {
