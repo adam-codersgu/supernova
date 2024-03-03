@@ -15,11 +15,12 @@ import com.codersguidebook.supernova.fragment.BaseDialogFragment
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 import com.codersguidebook.supernova.ui.songs.SongsFragmentDirections
+import com.codersguidebook.supernova.utils.PlaylistHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class PlaylistSongOptions(private val songs: MutableList<Song>,
+class PlaylistSongOptions(private val song: Song,
                           private val position: Int,
                           private val playlist: Playlist
 ) : BaseDialogFragment() {
@@ -31,9 +32,6 @@ class PlaylistSongOptions(private val songs: MutableList<Song>,
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         _binding = PlaylistSongOptionsBinding.inflate(inflater)
-
-        val song = if (position < songs.size) songs[position]
-        else return super.onCreateDialog(savedInstanceState)
 
         binding.optionsTitle.text = song.title
 
@@ -91,9 +89,9 @@ class PlaylistSongOptions(private val songs: MutableList<Song>,
         if (playlist.name == getString(R.string.most_played) || playlist.name == getString(R.string.favourites)) {
             binding.removeSong.isGone = true
         } else {
-            binding.removeSong.setOnClickListener{
-                songs.removeAt(position)
-                val songIds = songs.map { song -> song.songId }
+            binding.removeSong.setOnClickListener {
+                val songIds = PlaylistHelper.extractSongIds(playlist.songs)
+                songIds.removeAt(position)
                 musicLibraryViewModel.savePlaylistWithSongIds(playlist, songIds)
                 dismiss()
             }
