@@ -7,11 +7,12 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.entities.SongPlays
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-@Database(entities = [Song::class, Playlist::class], version = 1, exportSchema = false)
+@Database(entities = [Song::class, Playlist::class, SongPlays::class], version = 2, exportSchema = false)
 abstract class MusicDatabase : RoomDatabase() {
 
     abstract fun musicDao(): MusicDao
