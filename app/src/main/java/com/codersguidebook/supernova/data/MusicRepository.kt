@@ -4,8 +4,10 @@ import androidx.lifecycle.LiveData
 import com.codersguidebook.supernova.entities.Artist
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.entities.SongPlays
 
-class MusicRepository(private val musicDao: MusicDao, private val playlistDao: PlaylistDao) {
+class MusicRepository(private val musicDao: MusicDao, private val playlistDao: PlaylistDao,
+    private val songPlaysDao: SongPlaysDao) {
 
     val allSongs: LiveData<List<Song>> = musicDao.getSongsOrderByTitle()
     val allArtists: LiveData<List<Artist>> = musicDao.getArtists()
@@ -46,7 +48,14 @@ class MusicRepository(private val musicDao: MusicDao, private val playlistDao: P
         for (playlist in playlists) playlistDao.update(playlist)
     }
 
-    fun increaseSongPlaysBySongId(songId: Long) = musicDao.increaseSongPlaysBySongId(songId)
+    suspend fun increaseSongPlaysBySongId(songId: Long) {
+        val songPlaysEntry = songPlaysDao.getPlaysTodayBySongId(songId)
+        if (songPlaysEntry == null) {
+            songPlaysDao.insert(SongPlays(0, songId, qtyOfPlays = 1))
+        } else {
+            songPlaysDao.update(songPlaysEntry.copy(qtyOfPlays = songPlaysEntry.qtyOfPlays + 1))
+        }
+    }
 
     suspend fun getSongById(songId: Long): Song? = musicDao.getSongById(songId)
 

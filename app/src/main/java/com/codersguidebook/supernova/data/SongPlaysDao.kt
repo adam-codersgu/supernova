@@ -17,6 +17,9 @@ interface SongPlaysDao {
     @Update(onConflict = OnConflictStrategy.REPLACE)
     suspend fun update(songPlays: SongPlays)
 
+    @Query("SELECT * FROM SongPlays WHERE song_id = :songId AND date = CURRENT_DATE")
+    suspend fun getPlaysTodayBySongId(songId: Long): SongPlays?
+
     @Query("DELETE FROM SongPlays WHERE song_id = :songId")
     suspend fun deleteBySongId(songId: Long)
 

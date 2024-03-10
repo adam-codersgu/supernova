@@ -26,9 +26,11 @@ import java.util.Date
 
 class MusicLibraryViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val musicDao = MusicDatabase.getDatabase(application, viewModelScope).musicDao()
-    private val playlistDao = MusicDatabase.getDatabase(application, viewModelScope).playlistDao()
-    private val repository = MusicRepository(musicDao, playlistDao)
+    private val database = MusicDatabase.getDatabase(application, viewModelScope)
+    private val musicDao = database.musicDao()
+    private val playlistDao = database.playlistDao()
+    private val songPlaysDao = database.songPlaysDao()
+    private val repository = MusicRepository(musicDao, playlistDao, songPlaysDao)
     private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(application)
     val allSongs: LiveData<List<Song>> = repository.allSongs
     val allArtists: LiveData<List<Artist>> = repository.allArtists

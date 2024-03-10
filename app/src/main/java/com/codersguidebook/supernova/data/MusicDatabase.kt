@@ -19,6 +19,7 @@ abstract class MusicDatabase : RoomDatabase() {
 
     abstract fun musicDao(): MusicDao
     abstract fun playlistDao(): PlaylistDao
+    abstract fun songPlaysDao(): SongPlaysDao
 
     companion object {
         @Volatile
