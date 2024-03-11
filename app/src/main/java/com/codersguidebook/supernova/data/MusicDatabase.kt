@@ -13,7 +13,6 @@ import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-@TypeConverters(Converters::class)
 @Database(entities = [Song::class, Playlist::class, SongPlays::class], version = 2, exportSchema = false)
 abstract class MusicDatabase : RoomDatabase() {
 

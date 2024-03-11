@@ -49,7 +49,7 @@ class MusicRepository(private val musicDao: MusicDao, private val playlistDao: P
     }
 
     suspend fun increaseSongPlaysBySongId(songId: Long) {
-        val songPlaysEntry = songPlaysDao.getPlaysTodayBySongId(songId)
+        val songPlaysEntry = songPlaysDao.getPlaysBySongIdAndDate(songId)
         if (songPlaysEntry == null) {
             songPlaysDao.insert(SongPlays(0, songId, qtyOfPlays = 1))
         } else {

@@ -7,6 +7,7 @@ import androidx.room.Query
 import androidx.room.Update
 import com.codersguidebook.supernova.entities.SongPlays
 import com.codersguidebook.supernova.entities.TotalPlaysForSong
+import java.time.LocalDate
 
 @Dao
 interface SongPlaysDao {
@@ -17,8 +18,9 @@ interface SongPlaysDao {
     @Update(onConflict = OnConflictStrategy.REPLACE)
     suspend fun update(songPlays: SongPlays)
 
-    @Query("SELECT * FROM SongPlays WHERE song_id = :songId AND date = CURRENT_DATE")
-    suspend fun getPlaysTodayBySongId(songId: Long): SongPlays?
+    @Query("SELECT * FROM SongPlays WHERE song_id = :songId AND date = :date")
+    suspend fun getPlaysBySongIdAndDate(songId: Long,
+                                        date: String = LocalDate.now().toString()): SongPlays?
 
     @Query("DELETE FROM SongPlays WHERE song_id = :songId")
     suspend fun deleteBySongId(songId: Long)
