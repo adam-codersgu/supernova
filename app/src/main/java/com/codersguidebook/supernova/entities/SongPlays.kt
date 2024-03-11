@@ -12,7 +12,7 @@ import java.time.LocalDate
 data class SongPlays(
     @PrimaryKey val songPlaysId: Long,
     @ColumnInfo(name = "song_id") val songId: Long,
-    val date: String = LocalDate.now().toString(),
+    val epochDays: Long = LocalDate.now().toEpochDay(),
     // qtyOfPlays refers to the number of plays on the given date
     var qtyOfPlays: Int = 0
 ) : Parcelable
