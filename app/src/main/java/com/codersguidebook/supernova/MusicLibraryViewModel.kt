@@ -58,7 +58,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
-    private val mostPlayedSongsObserver: Observer<List<Long>> = Observer<List<Long>> {
+    private val mostPlayedSongsObserver: Observer<List<Long>> = Observer {
         viewModelScope.launch(Dispatchers.IO) {
             getPlaylistById(defaultPlaylistHelper.mostPlayed.first)?.apply {
                 val mostPlayedSongs = PlaylistHelper.serialiseSongIds(it)
@@ -71,6 +71,9 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     }
 
     init {
+        val timeframe = sharedPreferences.getString(SharedPreferencesConstants.MOST_PLAYED_PLAYLIST_TIMEFRAME,
+            "all_time") ?: "all_time"
+        repository.setMostPlayedPlaylistStartDate(timeframe)
         repository.mostPlayedSongsById.observeForever(mostPlayedSongsObserver)
     }
 

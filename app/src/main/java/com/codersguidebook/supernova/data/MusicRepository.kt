@@ -1,18 +1,39 @@
 package com.codersguidebook.supernova.data
 
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.switchMap
 import com.codersguidebook.supernova.entities.Artist
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.entities.SongPlays
+import java.time.LocalDate
 
 class MusicRepository(private val musicDao: MusicDao, private val playlistDao: PlaylistDao,
     private val songPlaysDao: SongPlaysDao) {
 
     val allSongs: LiveData<List<Song>> = musicDao.getSongsOrderByTitle()
     val allArtists: LiveData<List<Artist>> = musicDao.getArtists()
-    val mostPlayedSongsById: LiveData<List<Long>> = musicDao.getSongIdsOrderBySongPlays()
     val allPlaylists: LiveData<List<Playlist>> = playlistDao.getAllPlaylistsOrderByName()
+
+    private val mostPlayedPlaylistStartDate = MutableLiveData<Long>()
+    val mostPlayedSongsById: LiveData<List<Long>> = mostPlayedPlaylistStartDate.switchMap {
+            day -> songPlaysDao.getMostPlayedSongsSinceDay(day = day)
+    }
+
+    init {
+        mostPlayedPlaylistStartDate.postValue(0L)
+    }
+
+    fun setMostPlayedPlaylistStartDate(timeframe: String) {
+        val date = when (timeframe) {
+            "Last Week" -> LocalDate.now().minusWeeks(1)
+            "Last Month" -> LocalDate.now().minusMonths(1)
+            "Last Year" -> LocalDate.now().minusYears(1)
+            else -> LocalDate.ofEpochDay(0L)
+        }
+        mostPlayedPlaylistStartDate.postValue(date.toEpochDay())
+    }
 
     suspend fun getAllSongs(): List<Song> = musicDao.getSongs()
 
@@ -49,7 +70,7 @@ class MusicRepository(private val musicDao: MusicDao, private val playlistDao: P
     }
 
     suspend fun increaseSongPlaysBySongId(songId: Long) {
-        val songPlaysEntry = songPlaysDao.getPlaysBySongIdAndDate(songId)
+        val songPlaysEntry = songPlaysDao.getPlaysBySongIdAndEpochDays(songId)
         if (songPlaysEntry == null) {
             songPlaysDao.insert(SongPlays(0, songId, qtyOfPlays = 1))
         } else {

@@ -44,19 +44,13 @@ interface MusicDao {
     @Query("SELECT * FROM music_library WHERE song_artist = :artist ORDER BY song_title")
     fun getSongsByArtist(artist: String): LiveData<List<Song>>
 
-    @Query("SELECT songId FROM music_library WHERE song_plays > 0 ORDER BY song_plays DESC LIMIT :limit")
-    fun getSongIdsOrderBySongPlays(limit: Int = 30): LiveData<List<Long>>
-
-    @Query("UPDATE music_library SET song_plays = song_plays + 1 WHERE songId = :songId")
-    fun increaseSongPlaysBySongId(songId: Long)
-
     @Query("SELECT * FROM music_library WHERE songId = :songId")
     suspend fun getSongById(songId: Long): Song?
 
     @Query("SELECT * FROM music_library ORDER BY RANDOM() LIMIT 1")
     suspend fun getRandomSong(): Song?
 
-    /* @Transaction
+    /* FIXME @Transaction
     @Query("SELECT * FROM music_library WHERE songId = :songId")
     fun getSongWithSongPlays(songId: Long): SongWithSongPlays? */
 }
