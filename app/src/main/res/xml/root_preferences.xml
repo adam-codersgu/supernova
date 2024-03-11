@@ -1,13 +1,23 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory app:title="Language">
+    <PreferenceCategory app:title="@string/language">
 
         <ListPreference
             app:defaultValue="@string/english_code"
             app:entries="@array/language_entries"
             app:entryValues="@array/language_values"
             app:key="application_language"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/most_played_timeframe">
+
+        <ListPreference
+            app:defaultValue="@string/all_time"
+            app:entries="@array/most_played_timeframes"
+            app:entryValues="@array/most_played_timeframes"
+            app:key="most_played_timeframe"
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 

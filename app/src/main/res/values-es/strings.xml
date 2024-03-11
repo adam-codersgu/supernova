@@ -154,4 +154,11 @@
 
     <string name="no_songs_for_album">No se encontraron canciones para este álbum.</string>
     <string name="no_songs_for_artist">No se encontraron canciones para este artista.</string>
+
+    <string name="language">Idioma</string>
+    <string name="all_time">Todo el tiempo</string>
+    <string name="last_month">El mes pasado</string>
+    <string name="last_week">La semana pasada</string>
+    <string name="last_year">El año pasado</string>
+    <string name="most_played_timeframe">Periodo de tiempo de la lista de reproducción más reproducida</string>
 </resources>
