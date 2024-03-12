@@ -32,9 +32,6 @@ interface MusicDao {
     @Query("SELECT * FROM music_library WHERE song_album_id = :albumId ORDER BY song_track")
     fun getSongsByAlbumIdOrderByTrackLiveData(albumId: String): LiveData<List<Song>>
 
-    @Query("SELECT SUM(song_plays) FROM music_library WHERE song_artist = :artistName")
-    suspend fun getSongPlaysByArtist(artistName: String): Int
-
     @Query("SELECT * FROM music_library WHERE song_title LIKE :search OR song_artist LIKE :search OR song_album_name LIKE :search LIMIT :limit")
     suspend fun getSongsLikeSearch(search: String, limit: Int = 100): List<Song>
 

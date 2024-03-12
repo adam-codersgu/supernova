@@ -18,15 +18,18 @@ interface SongPlaysDao {
     @Update(onConflict = OnConflictStrategy.REPLACE)
     suspend fun update(songPlays: SongPlays)
 
-    @Query("SELECT * FROM SongPlays WHERE song_id = :songId AND epochDays = :day")
+    @Query("SELECT * FROM SongPlays WHERE songId = :songId AND epochDays = :day")
     suspend fun getPlaysBySongIdAndEpochDays(songId: Long,
                                              day: Long = LocalDate.now().toEpochDay()): SongPlays?
 
-    @Query("DELETE FROM SongPlays WHERE song_id = :songId")
+    @Query("SELECT SUM(qtyOfPlays) FROM SongPlays WHERE songId IN (:songIds)")
+    suspend fun getSongPlaysWhereSongIdIn(songIds: List<Long>): Int
+
+    @Query("DELETE FROM SongPlays WHERE songId = :songId")
     suspend fun deleteBySongId(songId: Long)
 
-    @Query("SELECT song_id FROM SongPlays WHERE epochDays >= :day " +
-            "GROUP BY song_id " +
+    @Query("SELECT songId FROM SongPlays WHERE epochDays >= :day " +
+            "GROUP BY songId " +
             "ORDER BY sum(qtyOfPlays) LIMIT :limit")
     fun getMostPlayedSongsSinceDay(limit: Int = 30, day: Long): LiveData<List<Long>>
 }
