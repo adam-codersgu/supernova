@@ -12,9 +12,10 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.google.android.material.color.MaterialColors
-import kotlin.math.min
 
 class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activity) {
+
+    private val songAndPlaysPairs = mutableListOf<Pair<Song, Int>>()
 
     inner class ViewHolderMostPlayedSong(itemView: View) : ViewHolderSong(itemView) {
 
@@ -47,7 +48,7 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
         holder.mSubtitle.setTextColor(secondaryText)
         holder.mPlays.setTextColor(secondaryText)
 
-        val plays = current.plays
+        val plays = songAndPlaysPairs.find { it.first.songId == current.songId }?.second ?: 0
         holder.mPlays.text = if (plays == 1) {
             activity.getString(R.string.one_play)
         } else {
@@ -55,27 +56,41 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
         }
     }
 
-    override fun processNewSongs(newSongs: List<Song>) {
-        var index = 0
-        var numberOfItemsToUpdate: Int? = null
-
-        do {
-            if (index >= newSongs.size || index >= songs.size) break
-
-            val song = newSongs[index]
-            val currentSong = songs[index]
-
-            if (song.title != currentSong.title || song.artist != currentSong.title
-                        || song.plays != currentSong.plays) {
-                numberOfItemsToUpdate = min(6, newSongs.size) - index
-                break
-            } else ++index
-        } while (index < min(6, newSongs.size))
-
-        super.processNewSongs(newSongs)
-
-        numberOfItemsToUpdate?.let { numberOfItems ->
-            notifyItemRangeChanged(index, numberOfItems)
+    fun addNewListOfSongs(songsWithPlays: List<Pair<Song, Int>>) {
+        if (songs.isNotEmpty()) {
+            val songsQty = songs.size
+            songs.clear()
+            notifyItemRangeRemoved(0, songsQty)
         }
+
+        songs.addAll(songsWithPlays.map {it.first})
+        loadSongsWithPlays(songsWithPlays)
+        notifyItemRangeInserted(0, songs.size)
+    }
+
+    fun refreshSongsWithPlays(songsWithPlays: List<Pair<Song, Int>>) {
+        var index = 0
+        val indicesToUpdate = mutableListOf<Int>()
+
+        while (index < listOf(songsWithPlays.size, songAndPlaysPairs.size, songs.size).min()) {
+            if (songsWithPlays[index].second != songAndPlaysPairs[index].second) {
+                indicesToUpdate.add(index)
+            }
+            ++index
+        }
+
+        loadSongsWithPlays(songsWithPlays)
+
+        if (indicesToUpdate.size == 1) {
+            notifyItemChanged(indicesToUpdate[0])
+        } else if (indicesToUpdate.size > 1) {
+            notifyItemRangeChanged(indicesToUpdate[0],
+                indicesToUpdate[indicesToUpdate.size - 1] - indicesToUpdate[0])
+        }
+    }
+
+    private fun loadSongsWithPlays(songsWithPlays: List<Pair<Song, Int>>) {
+        songAndPlaysPairs.clear()
+        songAndPlaysPairs.addAll(songsWithPlays)
     }
 }

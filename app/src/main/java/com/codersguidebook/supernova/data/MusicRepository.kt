@@ -64,6 +64,8 @@ class MusicRepository(private val musicDao: MusicDao, private val playlistDao: P
         return songPlaysDao.getSongPlaysWhereSongIdIn(songIds)
     }
 
+    suspend fun getSongPlaysBySongIds(songIds: List<Long>) = songPlaysDao.getSongPlaysBySongIds(songIds)
+
     suspend fun getAllPlaylists(): List<Playlist> = playlistDao.getAllPlaylists()
 
     suspend fun getAllUserPlaylists(): List<Playlist> = playlistDao.getAllUserPlaylists()

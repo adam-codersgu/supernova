@@ -206,6 +206,8 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
         return repository.getSongPlaysByArtist(artistName)
     }
 
+    suspend fun getSongPlaysBySongIds(songIds: List<Long>) = repository.getSongPlaysBySongIds(songIds)
+
     /**
      * Toggle the isFavourite field for a given Song object. Also update the favourites
      * playlist accordingly.

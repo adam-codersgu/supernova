@@ -22,6 +22,9 @@ interface SongPlaysDao {
     suspend fun getPlaysBySongIdAndEpochDays(songId: Long,
                                              day: Long = LocalDate.now().toEpochDay()): SongPlays?
 
+    @Query("SELECT qtyOfPlays FROM SongPlays WHERE songId IN (:songIds)")
+    suspend fun getSongPlaysBySongIds(songIds: List<Long>): List<Int>
+
     @Query("SELECT SUM(qtyOfPlays) FROM SongPlays WHERE songId IN (:songIds)")
     suspend fun getSongPlaysWhereSongIdIn(songIds: List<Long>): Int
 
