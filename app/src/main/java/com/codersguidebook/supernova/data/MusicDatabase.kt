@@ -27,7 +27,7 @@ abstract class MusicDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 val epochDay = LocalDate.now().minusWeeks(2).toEpochDay()
                 db.execSQL("INSERT INTO SongPlays (songId, epochDays, qtyOfPlays) " +
-                        "SELECT songId, '$epochDay', song_plays FROM music_table")
+                        "SELECT songId, $epochDay, song_plays FROM music_table")
                 db.execSQL("ALTER TABLE music_table DROP COLUMN song_plays")
             }
         }
