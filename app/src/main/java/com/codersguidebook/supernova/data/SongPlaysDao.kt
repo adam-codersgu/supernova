@@ -35,6 +35,6 @@ interface SongPlaysDao {
 
     @Query("SELECT songId FROM SongPlays WHERE epochDays >= :day " +
             "GROUP BY songId " +
-            "ORDER BY sum(qtyOfPlays) LIMIT :limit")
+            "ORDER BY sum(qtyOfPlays) DESC LIMIT :limit")
     fun getMostPlayedSongsSinceDay(limit: Int = 30, day: Long): LiveData<List<Long>>
 }
