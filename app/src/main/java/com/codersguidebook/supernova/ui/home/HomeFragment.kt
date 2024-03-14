@@ -158,7 +158,7 @@ class HomeFragment : BaseFragment() {
             mostPlayedAdapter.addNewListOfSongs(songs, songPlays)
         } else {
             mostPlayedAdapter.processNewSongs(songs)
-            mostPlayedAdapter.refreshSongsWithPlays(songPlays)
+            mostPlayedAdapter.refreshSongPlays(songPlays)
         }
     }
 

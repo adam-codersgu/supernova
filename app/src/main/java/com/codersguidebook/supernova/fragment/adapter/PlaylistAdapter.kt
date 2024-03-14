@@ -30,6 +30,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                       private val activity: MainActivity): SongWithHeaderAdapter(activity) {
     var showHandles = false
     var playlist: Playlist? = null
+    private val songIdsAndPlays = hashMapOf<Long, Int>()
 
     inner class ViewHolderPlaylistHeader(itemView: View) : ViewHolderHeader(itemView) {
 
@@ -149,7 +150,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
 
                 if (playlist?.name == activity.getString(R.string.most_played)) {
                     holder.mPlays.isVisible = true
-                    val plays = current.plays
+                    val plays = songIdsAndPlays[current.songId] ?: 0
                     holder.mPlays.text = if (plays == 1) {
                         activity.getString(R.string.one_play)
                     } else {
@@ -219,5 +220,32 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                 notifyItemChanged(recyclerViewIndex)
             }
         }
+    }
+
+    fun refreshSongPlays(newSongPlays: Map<Long, Int>) {
+        val songIdsToRefresh = mutableListOf<Long>()
+        for ((songId, qtyOfPlays) in newSongPlays) {
+            if (qtyOfPlays != songIdsAndPlays[songId]) {
+                songIdsToRefresh.add(songId)
+            }
+        }
+
+        loadSongPlays(newSongPlays)
+
+        if (songIdsToRefresh.isEmpty()) return
+
+        val songIndicesToRefresh = mutableListOf<Int>()
+        for (songId in songIdsToRefresh) {
+            songIndicesToRefresh.add(songs.indexOfFirst { it.songId == songId })
+        }
+        songIndicesToRefresh.sort()
+
+        notifyItemRangeChanged(songIndicesToRefresh[0],
+            songIndicesToRefresh[songIndicesToRefresh.size - 1] - songIndicesToRefresh[0])
+    }
+
+    private fun loadSongPlays(songPlays: Map<Long, Int>) {
+        songIdsAndPlays.clear()
+        songIdsAndPlays.putAll(songPlays)
     }
 }

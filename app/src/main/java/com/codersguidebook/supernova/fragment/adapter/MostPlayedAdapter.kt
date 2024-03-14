@@ -68,7 +68,7 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
         notifyItemRangeInserted(0, songs.size)
     }
 
-    fun refreshSongsWithPlays(newSongPlays: Map<Long, Int>) {
+    fun refreshSongPlays(newSongPlays: Map<Long, Int>) {
         val songIdsToRefresh = mutableListOf<Long>()
         for ((songId, qtyOfPlays) in newSongPlays) {
             if (qtyOfPlays != songIdsAndPlays[songId]) {
