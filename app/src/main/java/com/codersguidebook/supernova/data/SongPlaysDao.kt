@@ -3,6 +3,7 @@ package com.codersguidebook.supernova.data
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.MapColumn
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
@@ -22,8 +23,9 @@ interface SongPlaysDao {
     suspend fun getPlaysBySongIdAndEpochDays(songId: Long,
                                              day: Long = LocalDate.now().toEpochDay()): SongPlays?
 
-    @Query("SELECT qtyOfPlays FROM SongPlays WHERE songId IN (:songIds)")
-    suspend fun getSongPlaysBySongIds(songIds: List<Long>): List<Int>
+    @Query("SELECT songId, qtyOfPlays FROM SongPlays WHERE songId IN (:songIds)")
+    suspend fun getSongPlaysBySongIds(songIds: List<Long>): Map<@MapColumn(columnName = "songId") String,
+            @MapColumn(columnName = "qtyOfPlays") Int>
 
     @Query("SELECT SUM(qtyOfPlays) FROM SongPlays WHERE songId IN (:songIds)")
     suspend fun getSongPlaysWhereSongIdIn(songIds: List<Long>): Int
