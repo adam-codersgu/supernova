@@ -24,9 +24,9 @@ interface SongPlaysDao {
                                              day: Long = LocalDate.now().toEpochDay()): SongPlays?
 
     @Query("SELECT songId, sum(qtyOfPlays) FROM SongPlays WHERE songId IN (:songIds) " +
-            "GROUP BY songId")
-    suspend fun getSongPlaysBySongIds(songIds: List<Long>): Map<@MapColumn(columnName = "songId") Long,
-            @MapColumn(columnName = "sum(qtyOfPlays)") Int>
+            "AND epochDays >= :day GROUP BY songId")
+    suspend fun getSongPlaysBySongIdsAndDay(songIds: List<Long>, day: Long):
+            Map<@MapColumn(columnName = "songId") Long, @MapColumn(columnName = "sum(qtyOfPlays)") Int>
 
     @Query("SELECT SUM(qtyOfPlays) FROM SongPlays WHERE songId IN (:songIds) " +
             "GROUP BY songId")

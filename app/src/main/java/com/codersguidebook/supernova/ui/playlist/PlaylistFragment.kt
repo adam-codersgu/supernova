@@ -138,7 +138,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
     }
 
     private fun loadSongPlays(songs: List<Song>) = lifecycleScope.launch(Dispatchers.Main)  {
-        val songPlays = musicLibraryViewModel.getSongPlaysBySongIds(songs.map { it.songId })
+        val songPlays = musicLibraryViewModel.getSongPlaysBySongIdsAndTimeframe(songs.map { it.songId })
         (adapter as PlaylistAdapter).refreshSongPlays(songPlays)
     }
 

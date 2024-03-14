@@ -152,7 +152,7 @@ class HomeFragment : BaseFragment() {
         if (songs.isEmpty()) binding.homeMostPlayed.isGone = true
         else binding.homeMostPlayed.isVisible = true
 
-        val songPlays = musicLibraryViewModel.getSongPlaysBySongIds(songs.map { it.songId })
+        val songPlays = musicLibraryViewModel.getSongPlaysBySongIdsAndTimeframe(songs.map { it.songId })
 
         if (mostPlayedAdapter.songs.isEmpty()) {
             mostPlayedAdapter.addNewListOfSongs(songs, songPlays)

@@ -21,18 +21,20 @@ class MusicRepository(private val musicDao: MusicDao, private val playlistDao: P
             day -> songPlaysDao.getMostPlayedSongsSinceDay(day = day)
     }
 
-    init {
-        mostPlayedPlaylistStartDate.postValue(0L)
+    fun setMostPlayedPlaylistStartDate(timeframe: String) {
+        val newDate = getEpochDayByTimeframe(timeframe)
+        if (newDate != mostPlayedPlaylistStartDate.value) {
+            mostPlayedPlaylistStartDate.postValue(newDate)
+        }
     }
 
-    fun setMostPlayedPlaylistStartDate(timeframe: String) {
-        val date = when (timeframe) {
+    private fun getEpochDayByTimeframe(timeframe: String): Long {
+        return when (timeframe) {
             "Last Week" -> LocalDate.now().minusWeeks(1)
             "Last Month" -> LocalDate.now().minusMonths(1)
             "Last Year" -> LocalDate.now().minusYears(1)
             else -> LocalDate.ofEpochDay(0L)
-        }
-        mostPlayedPlaylistStartDate.postValue(date.toEpochDay())
+        }.toEpochDay()
     }
 
     suspend fun getAllSongs(): List<Song> = musicDao.getSongs()
@@ -64,7 +66,8 @@ class MusicRepository(private val musicDao: MusicDao, private val playlistDao: P
         return songPlaysDao.getSongPlaysWhereSongIdIn(songIds)
     }
 
-    suspend fun getSongPlaysBySongIds(songIds: List<Long>) = songPlaysDao.getSongPlaysBySongIds(songIds)
+    suspend fun getSongPlaysBySongIdsAndTimeframe(songIds: List<Long>, timeframe: String) =
+        songPlaysDao.getSongPlaysBySongIdsAndDay(songIds, getEpochDayByTimeframe(timeframe))
 
     suspend fun getAllPlaylists(): List<Playlist> = playlistDao.getAllPlaylists()
 

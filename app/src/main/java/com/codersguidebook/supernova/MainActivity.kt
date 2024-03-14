@@ -259,6 +259,11 @@ class MainActivity : AppCompatActivity() {
         volumeControlStream = AudioManager.STREAM_MUSIC
     }
 
+    override fun onRestart() {
+        super.onRestart()
+        musicLibraryViewModel.setMostPlayedPlaylistTimeframe()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
 

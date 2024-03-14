@@ -71,9 +71,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     }
 
     init {
-        val timeframe = sharedPreferences.getString(SharedPreferencesConstants.MOST_PLAYED_PLAYLIST_TIMEFRAME,
-            "all_time") ?: "all_time"
-        repository.setMostPlayedPlaylistStartDate(timeframe)
+        setMostPlayedPlaylistTimeframe()
         repository.mostPlayedSongsById.observeForever(mostPlayedSongsObserver)
     }
 
@@ -81,6 +79,11 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
         super.onCleared()
         repository.mostPlayedSongsById.removeObserver(mostPlayedSongsObserver)
     }
+
+    fun setMostPlayedPlaylistTimeframe() = repository.setMostPlayedPlaylistStartDate(getMostPlayedTimeframe())
+
+    private fun getMostPlayedTimeframe() = sharedPreferences
+        .getString(SharedPreferencesConstants.MOST_PLAYED_PLAYLIST_TIMEFRAME, "all_time") ?: "all_time"
 
     /**
      * Delete a given Song object from the database and any playlists it appears in.
@@ -204,7 +207,8 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      */
     suspend fun getSongPlaysByArtist(artistName: String) = repository.getSongPlaysByArtist(artistName)
 
-    suspend fun getSongPlaysBySongIds(songIds: List<Long>) = repository.getSongPlaysBySongIds(songIds)
+    suspend fun getSongPlaysBySongIdsAndTimeframe(songIds: List<Long>) =
+        repository.getSongPlaysBySongIdsAndTimeframe(songIds, getMostPlayedTimeframe())
 
     /**
      * Toggle the isFavourite field for a given Song object. Also update the favourites
