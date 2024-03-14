@@ -15,7 +15,7 @@ import com.google.android.material.color.MaterialColors
 
 class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activity) {
 
-    private val songAndPlaysPairs = mutableListOf<Pair<Song, Int>>()
+    private val songIdsAndPlays = hashMapOf<Long, Int>()
 
     inner class ViewHolderMostPlayedSong(itemView: View) : ViewHolderSong(itemView) {
 
@@ -48,7 +48,7 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
         holder.mSubtitle.setTextColor(secondaryText)
         holder.mPlays.setTextColor(secondaryText)
 
-        val plays = songAndPlaysPairs.find { it.first.songId == current.songId }?.second ?: 0
+        val plays = songIdsAndPlays[current.songId] ?: 0
         holder.mPlays.text = if (plays == 1) {
             activity.getString(R.string.one_play)
         } else {
@@ -56,41 +56,42 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
         }
     }
 
-    fun addNewListOfSongs(songsWithPlays: List<Pair<Song, Int>>) {
+    fun addNewListOfSongs(newSongs: List<Song>, songPlays: Map<Long, Int>) {
         if (songs.isNotEmpty()) {
             val songsQty = songs.size
             songs.clear()
             notifyItemRangeRemoved(0, songsQty)
         }
 
-        songs.addAll(songsWithPlays.map {it.first})
-        loadSongsWithPlays(songsWithPlays)
+        songs.addAll(newSongs)
+        loadSongPlays(songPlays)
         notifyItemRangeInserted(0, songs.size)
     }
 
-    fun refreshSongsWithPlays(songsWithPlays: List<Pair<Song, Int>>) {
-        var index = 0
-        val indicesToUpdate = mutableListOf<Int>()
-
-        while (index < listOf(songsWithPlays.size, songAndPlaysPairs.size, songs.size).min()) {
-            if (songsWithPlays[index].second != songAndPlaysPairs[index].second) {
-                indicesToUpdate.add(index)
+    fun refreshSongsWithPlays(newSongPlays: Map<Long, Int>) {
+        val songIdsToRefresh = mutableListOf<Long>()
+        for ((songId, qtyOfPlays) in newSongPlays) {
+            if (qtyOfPlays != songIdsAndPlays[songId]) {
+                songIdsToRefresh.add(songId)
             }
-            ++index
         }
 
-        loadSongsWithPlays(songsWithPlays)
+        loadSongPlays(newSongPlays)
 
-        if (indicesToUpdate.size == 1) {
-            notifyItemChanged(indicesToUpdate[0])
-        } else if (indicesToUpdate.size > 1) {
-            notifyItemRangeChanged(indicesToUpdate[0],
-                indicesToUpdate[indicesToUpdate.size - 1] - indicesToUpdate[0])
+        if (songIdsToRefresh.isEmpty()) return
+
+        val songIndicesToRefresh = mutableListOf<Int>()
+        for (songId in songIdsToRefresh) {
+            songIndicesToRefresh.add(songs.indexOfFirst { it.songId == songId })
         }
+        songIndicesToRefresh.sort()
+
+        notifyItemRangeChanged(songIndicesToRefresh[0],
+            songIndicesToRefresh[songIndicesToRefresh.size - 1] - songIndicesToRefresh[0])
     }
 
-    private fun loadSongsWithPlays(songsWithPlays: List<Pair<Song, Int>>) {
-        songAndPlaysPairs.clear()
-        songAndPlaysPairs.addAll(songsWithPlays)
+    private fun loadSongPlays(songPlays: Map<Long, Int>) {
+        songIdsAndPlays.clear()
+        songIdsAndPlays.putAll(songPlays)
     }
 }

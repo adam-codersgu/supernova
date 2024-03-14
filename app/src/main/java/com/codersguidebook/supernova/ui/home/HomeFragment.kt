@@ -154,16 +154,11 @@ class HomeFragment : BaseFragment() {
 
         val songPlays = musicLibraryViewModel.getSongPlaysBySongIds(songs.map { it.songId })
 
-        val songAndPlaysPairs = mutableListOf<Pair<Song, Int>>()
-        songs.forEachIndexed { index, song ->
-            songAndPlaysPairs.add(Pair(song, songPlays[index]))
-        }
-
         if (mostPlayedAdapter.songs.isEmpty()) {
-            mostPlayedAdapter.addNewListOfSongs(songAndPlaysPairs)
+            mostPlayedAdapter.addNewListOfSongs(songs, songPlays)
         } else {
             mostPlayedAdapter.processNewSongs(songs)
-            mostPlayedAdapter.refreshSongsWithPlays(songAndPlaysPairs)
+            mostPlayedAdapter.refreshSongsWithPlays(songPlays)
         }
     }
 
