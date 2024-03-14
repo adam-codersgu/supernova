@@ -88,6 +88,8 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         playlistName?.let { name ->
+            musicLibraryViewModel.setActivePlaylistName(name)
+
             lifecycleScope.launch(Dispatchers.Main) {
                 playlist = withContext(Dispatchers.IO) {
                     musicLibraryViewModel.getPlaylistByName(name)
@@ -96,11 +98,9 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
                 binding.scrollRecyclerView.recyclerView.post {
                     adapter.notifyItemChanged(0)
                 }
-            }
-
-            musicLibraryViewModel.setActivePlaylistName(name)
-            musicLibraryViewModel.activePlaylistSongs.observe(viewLifecycleOwner) { songs ->
-                updateRecyclerView(songs)
+                musicLibraryViewModel.activePlaylistSongs.observe(viewLifecycleOwner) { songs ->
+                    updateRecyclerView(songs)
+                }
             }
         }
     }
@@ -112,6 +112,10 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
 
         binding.fab.setOnClickListener {
             mainActivity.playNewPlayQueue(songs, shuffle = true)
+        }
+
+        if (this.playlistName == getString(R.string.most_played)) {
+            loadSongPlays(songs)
         }
 
         if (adapter.songs.isEmpty()) {
@@ -128,10 +132,6 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
                 adapter.notifyItemRangeRemoved(
                     adapter.getRecyclerViewIndex(songs.size), numberItemsToRemove)
             }
-        }
-
-        if (songs.isNotEmpty() && this.playlist?.name == getString(R.string.most_played)) {
-            loadSongPlays(songs)
         }
 
         finishUpdate()

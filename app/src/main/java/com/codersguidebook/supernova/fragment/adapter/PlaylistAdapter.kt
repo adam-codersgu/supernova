@@ -230,8 +230,6 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
             }
         }
 
-        loadSongPlays(newSongPlays)
-
         if (songIdsToRefresh.isEmpty()) return
 
         val songIndicesToRefresh = mutableListOf<Int>()
@@ -239,6 +237,8 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
             songIndicesToRefresh.add(songs.indexOfFirst { it.songId == songId })
         }
         songIndicesToRefresh.sort()
+
+        loadSongPlays(newSongPlays)
 
         val rangeOfIndicesAffected = songIndicesToRefresh[songIndicesToRefresh.size - 1] - songIndicesToRefresh[0]
         val numberOfItemsToChange = if (songIndicesToRefresh[0] < 3 && rangeOfIndicesAffected < 3) {
