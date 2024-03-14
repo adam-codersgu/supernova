@@ -1,7 +1,12 @@
 package com.codersguidebook.supernova.ui.playlist
 
 import android.os.Bundle
-import android.view.*
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
@@ -85,10 +90,6 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
         playlistName?.let { name ->
             musicLibraryViewModel.setActivePlaylistName(name)
 
-            musicLibraryViewModel.activePlaylistSongs.observe(viewLifecycleOwner) { songs ->
-                updateRecyclerView(songs)
-            }
-
             lifecycleScope.launch(Dispatchers.Main) {
                 playlist = withContext(Dispatchers.IO) {
                     musicLibraryViewModel.getPlaylistByName(name)
@@ -96,6 +97,9 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
                 (adapter as PlaylistAdapter).playlist = playlist
                 binding.scrollRecyclerView.recyclerView.post {
                     adapter.notifyItemChanged(0)
+                }
+                musicLibraryViewModel.activePlaylistSongs.observe(viewLifecycleOwner) { songs ->
+                    updateRecyclerView(songs)
                 }
             }
         }
@@ -108,6 +112,10 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
 
         binding.fab.setOnClickListener {
             mainActivity.playNewPlayQueue(songs, shuffle = true)
+        }
+
+        if (this.playlistName == getString(R.string.most_played)) {
+            loadSongPlays(songs)
         }
 
         if (adapter.songs.isEmpty()) {
@@ -127,6 +135,11 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
         }
 
         finishUpdate()
+    }
+
+    private fun loadSongPlays(songs: List<Song>) = lifecycleScope.launch(Dispatchers.Main)  {
+        val songPlays = musicLibraryViewModel.getSongPlaysBySongIdsAndTimeframe(songs.map { it.songId })
+        (adapter as PlaylistAdapter).refreshSongPlays(songPlays)
     }
 
     override fun initialiseAdapter() {

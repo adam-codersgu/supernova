@@ -15,6 +15,7 @@ import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentHomeBinding
 import com.codersguidebook.supernova.entities.Playlist
+import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.BaseFragment
 import com.codersguidebook.supernova.fragment.adapter.HomeAdapter
 import com.codersguidebook.supernova.fragment.adapter.MostPlayedAdapter
@@ -126,7 +127,7 @@ class HomeFragment : BaseFragment() {
         }
 
         playlists.find { it.name == getString(R.string.most_played) }?.let {
-            processPlaylist(it, mostPlayedAdapter, binding.homeMostPlayed)
+            processMostPlayedPlaylist(it)
         }
 
         playlists.find { it.name == getString(R.string.recently_played) }?.let {
@@ -144,29 +145,40 @@ class HomeFragment : BaseFragment() {
         musicLibraryViewModel.allPlaylists.value?.let { extractPlaylists(it) }
     }
 
+    private suspend fun processMostPlayedPlaylist(playlist: Playlist)
+            = lifecycleScope.launch(Dispatchers.Main) {
+        val songs = getSongs(playlist)
+
+        if (songs.isEmpty()) binding.homeMostPlayed.isGone = true
+        else binding.homeMostPlayed.isVisible = true
+
+        val songPlays = musicLibraryViewModel.getSongPlaysBySongIdsAndTimeframe(songs.map { it.songId })
+
+        if (mostPlayedAdapter.songs.isEmpty()) {
+            mostPlayedAdapter.addNewListOfSongs(songs, songPlays)
+        } else {
+            mostPlayedAdapter.processNewSongs(songs)
+            mostPlayedAdapter.refreshSongPlays(songPlays)
+        }
+    }
+
     private suspend fun processPlaylist(playlist: Playlist, adapter: SongAdapter, layout: RelativeLayout)
         = lifecycleScope.launch(Dispatchers.Main) {
-        val songs = withContext(Dispatchers.IO) {
-            musicLibraryViewModel.extractPlaylistSongs(playlist.songs)
-        }
+        val songs = getSongs(playlist)
 
-        val songsSelection = if (playlist.name == getString(R.string.favourites)) {
-            songs.asReversed().take(10)
-        } else songs.take(10)
-
-        if (songsSelection.isEmpty() && playlist.name != getString(R.string.song_day)) {
+        if (songs.isEmpty() && playlist.name != getString(R.string.song_day)) {
             layout.isGone = true
         } else layout.isVisible = true
 
         if (adapter.songs.isEmpty()) {
-            adapter.songs.addAll(songsSelection)
-            if (songsSelection.isNotEmpty() && playlist.name == getString(R.string.song_day)) {
+            adapter.songs.addAll(songs)
+            if (songs.isNotEmpty() && playlist.name == getString(R.string.song_day)) {
                 adapter.notifyItemRemoved(0)
             }
-            adapter.notifyItemRangeInserted(0, songsSelection.size)
+            adapter.notifyItemRangeInserted(0, songs.size)
         } else {
-            adapter.processNewSongs(songsSelection)
-            if (songsSelection.isNotEmpty()) {
+            adapter.processNewSongs(songs)
+            if (songs.isNotEmpty()) {
                 when (playlist.name) {
                     getString(R.string.song_day) -> {
                         binding.songOfTheDayRecyclerView.scrollToPosition(0)
@@ -177,5 +189,14 @@ class HomeFragment : BaseFragment() {
                 }
             }
         }
+    }
+
+    private suspend fun getSongs(playlist: Playlist): List<Song> {
+        val songs = withContext(Dispatchers.IO) {
+            musicLibraryViewModel.extractPlaylistSongs(playlist.songs)
+        }
+        return if (playlist.name == getString(R.string.favourites)) {
+            songs.asReversed().take(10)
+        } else songs.take(10)
     }
 }

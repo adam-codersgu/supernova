@@ -112,4 +112,11 @@
         <item>@drawable/rose1</item>
         <item>@drawable/rose2</item>
     </integer-array>
+
+    <string-array name="most_played_timeframes">
+        <item>@string/all_time</item>
+        <item>@string/last_week</item>
+        <item>@string/last_month</item>
+        <item>@string/last_year</item>
+    </string-array>
 </resources>

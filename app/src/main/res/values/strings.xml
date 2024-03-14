@@ -60,6 +60,7 @@
     <string name="album_title">Album title</string>
     <string name="album_year">Album year</string>
     <string name="all_songs">All songs</string>
+    <string name="all_time">All-time</string>
     <string name="artist">Artist</string>
     <string name="artist_information">Artist information</string>
     <string name="artist_name">Artist name</string>
@@ -79,8 +80,13 @@
     <string name="english" translatable="false">English</string>
     <string name="english_code" translatable="false">en</string>
     <string name="favourites">Favourites</string>
+    <string name="language">Language</string>
+    <string name="last_month">Last Month</string>
+    <string name="last_week">Last Week</string>
+    <string name="last_year">Last Year</string>
     <string name="library">My Library</string>
     <string name="most_played">Most played</string>
+    <string name="most_played_timeframe">Most played playlist timeframe</string>
     <string name="n_albums">%1$d albums</string>
     <string name="n_plays">%1$d plays</string>
     <string name="name">Name</string>

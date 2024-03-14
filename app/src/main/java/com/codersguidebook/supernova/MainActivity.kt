@@ -27,7 +27,6 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
@@ -258,6 +257,11 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         volumeControlStream = AudioManager.STREAM_MUSIC
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        musicLibraryViewModel.setMostPlayedPlaylistTimeframe()
     }
 
     override fun onDestroy() {
@@ -637,7 +641,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             supportActionBar?.setDisplayShowTitleEnabled(true)
             windowInsetsController.systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE
+                WindowInsetsControllerCompat.BEHAVIOR_DEFAULT
             windowInsetsController.show(WindowInsetsCompat.Type.statusBars())
 
             binding.toolbar.isVisible = true
@@ -696,8 +700,6 @@ class MainActivity : AppCompatActivity() {
      *
      * @param songs A list of Song objects to be deleted
      */
-    // For SDK 30 and higher
-    @RequiresApi(Build.VERSION_CODES.R)
     fun deleteSongs(songs: List<Song>) {
         val uris = songs.map { song ->
             ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, song.songId)

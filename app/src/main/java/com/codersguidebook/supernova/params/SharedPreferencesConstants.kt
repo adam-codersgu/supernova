@@ -13,6 +13,7 @@ class SharedPreferencesConstants {
         const val DEFAULT_PLAYLIST_LANGUAGE = "default_playlist_language"
         const val CURRENT_QUEUE_ITEM_ID = "current_queue_item_id"
         const val CUSTOM_ANIMATION_IMAGE_IDS = "animation_image_ids"
+        const val MOST_PLAYED_PLAYLIST_TIMEFRAME = "most_played_timeframe"
         const val PLAY_QUEUE_ITEM_PAIRS = "play_queue"
         const val PLAYBACK_DURATION = "playback_duration"
         const val PLAYBACK_POSITION = "playback_position"

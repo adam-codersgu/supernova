@@ -17,6 +17,5 @@ data class Song(
     @ColumnInfo(name = "song_album_name") var albumName: String?,
     @ColumnInfo(name = "song_album_id") val albumId: String,
     @ColumnInfo(name = "song_year") var year: String,
-    @ColumnInfo(name = "song_favourite") var isFavourite: Boolean = false,
-    @ColumnInfo(name = "song_plays") var plays: Int = 0
+    @ColumnInfo(name = "song_favourite") var isFavourite: Boolean = false
 ) : Parcelable

@@ -26,14 +26,14 @@ interface MusicDao {
     @Query("SELECT * from music_library ORDER BY song_title")
     fun getSongsOrderByTitle(): LiveData<List<Song>>
 
+    @Query("SELECT songId from music_library WHERE song_artist = :artistName")
+    suspend fun getSongIdsByArtist(artistName: String): List<Long>
+
     @Query("SELECT * from music_library WHERE song_album_id = :albumId ORDER BY song_track")
     suspend fun getSongsByAlbumIdOrderByTrack(albumId: String): List<Song>
 
     @Query("SELECT * FROM music_library WHERE song_album_id = :albumId ORDER BY song_track")
     fun getSongsByAlbumIdOrderByTrackLiveData(albumId: String): LiveData<List<Song>>
-
-    @Query("SELECT SUM(song_plays) FROM music_library WHERE song_artist = :artistName")
-    suspend fun getSongPlaysByArtist(artistName: String): Int
 
     @Query("SELECT * FROM music_library WHERE song_title LIKE :search OR song_artist LIKE :search OR song_album_name LIKE :search LIMIT :limit")
     suspend fun getSongsLikeSearch(search: String, limit: Int = 100): List<Song>
@@ -44,15 +44,13 @@ interface MusicDao {
     @Query("SELECT * FROM music_library WHERE song_artist = :artist ORDER BY song_title")
     fun getSongsByArtist(artist: String): LiveData<List<Song>>
 
-    @Query("SELECT songId FROM music_library WHERE song_plays > 0 ORDER BY song_plays DESC LIMIT :limit")
-    fun getSongIdsOrderBySongPlays(limit: Int = 30): LiveData<List<Long>>
-
-    @Query("UPDATE music_library SET song_plays = song_plays + 1 WHERE songId = :songId")
-    fun increaseSongPlaysBySongId(songId: Long)
-
     @Query("SELECT * FROM music_library WHERE songId = :songId")
     suspend fun getSongById(songId: Long): Song?
 
     @Query("SELECT * FROM music_library ORDER BY RANDOM() LIMIT 1")
     suspend fun getRandomSong(): Song?
+
+    /* FIXME @Transaction
+    @Query("SELECT * FROM music_library WHERE songId = :songId")
+    fun getSongWithSongPlays(songId: Long): SongWithSongPlays? */
 }
