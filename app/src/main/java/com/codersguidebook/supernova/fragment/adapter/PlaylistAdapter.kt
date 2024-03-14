@@ -240,8 +240,11 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
         }
         songIndicesToRefresh.sort()
 
-        notifyItemRangeChanged(songIndicesToRefresh[0],
-            songIndicesToRefresh[songIndicesToRefresh.size - 1] - songIndicesToRefresh[0])
+        val rangeOfIndicesAffected = songIndicesToRefresh[songIndicesToRefresh.size - 1] - songIndicesToRefresh[0]
+        val numberOfItemsToChange = if (songIndicesToRefresh[0] < 3 && rangeOfIndicesAffected < 3) {
+            min(3, songIndicesToRefresh.size - 1 - songIndicesToRefresh[0])
+        } else rangeOfIndicesAffected
+        notifyItemRangeChanged(songIndicesToRefresh[0], numberOfItemsToChange)
     }
 
     private fun loadSongPlays(songPlays: Map<Long, Int>) {

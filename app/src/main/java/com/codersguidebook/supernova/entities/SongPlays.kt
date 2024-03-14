@@ -9,7 +9,7 @@ import java.time.LocalDate
 @Entity
 @Parcelize
 data class SongPlays(
-    @PrimaryKey val songPlaysId: Long,
+    @PrimaryKey(autoGenerate = true) val songPlaysId: Long,
     val songId: Long,
     val epochDays: Long = LocalDate.now().toEpochDay(),
     // qtyOfPlays refers to the number of plays on the given date

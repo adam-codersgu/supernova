@@ -14,7 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
-@Database(entities = [Song::class, Playlist::class, SongPlays::class], version = 2, exportSchema = false)
+@Database(entities = [Song::class, Playlist::class, SongPlays::class], version = 3, exportSchema = false)
 abstract class MusicDatabase : RoomDatabase() {
 
     abstract fun musicDao(): MusicDao
@@ -45,6 +45,20 @@ abstract class MusicDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `SongPlays_backup` " +
+                        "(`songPlaysId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`songId` INTEGER NOT NULL, `epochDays` INTEGER NOT NULL, " +
+                        "`qtyOfPlays` INTEGER NOT NULL)")
+                db.execSQL("INSERT INTO SongPlays_backup SELECT " +
+                        "songPlaysId, songId, epochDays, qtyOfPlays " +
+                        "FROM SongPlays")
+                db.execSQL("DROP TABLE SongPlays")
+                db.execSQL("ALTER TABLE SongPlays_backup RENAME TO SongPlays")
+            }
+        }
+
         @Volatile
         private var database: MusicDatabase? = null
 
@@ -59,7 +73,7 @@ abstract class MusicDatabase : RoomDatabase() {
                     // destroy the earlier database if the version is incremented
                     .fallbackToDestructiveMigration()
                     .addCallback(MusicDatabaseCallback(context, scope))
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
             }
 
