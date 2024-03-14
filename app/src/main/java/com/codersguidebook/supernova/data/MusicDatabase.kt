@@ -26,9 +26,22 @@ abstract class MusicDatabase : RoomDatabase() {
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 val epochDay = LocalDate.now().minusWeeks(2).toEpochDay()
+                db.execSQL("CREATE TABLE IF NOT EXISTS `SongPlays` " +
+                        "(`songPlaysId` INTEGER NOT NULL, `songId` INTEGER NOT NULL, " +
+                        "`epochDays` INTEGER NOT NULL, `qtyOfPlays` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`songPlaysId`))")
                 db.execSQL("INSERT INTO SongPlays (songId, epochDays, qtyOfPlays) " +
-                        "SELECT songId, $epochDay, song_plays FROM music_table")
-                db.execSQL("ALTER TABLE music_table DROP COLUMN song_plays")
+                        "SELECT songId, $epochDay, song_plays FROM music_library")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `music_library_backup` " +
+                        "(`songId` INTEGER NOT NULL, `song_track` INTEGER NOT NULL, " +
+                        "`song_title` TEXT, `song_artist` TEXT, `song_album_name` TEXT, " +
+                        "`song_album_id` TEXT NOT NULL, `song_year` TEXT NOT NULL, " +
+                        "`song_favourite` INTEGER NOT NULL, PRIMARY KEY(`songId`))")
+                db.execSQL("INSERT INTO music_library_backup SELECT " +
+                        "songId, song_track, song_title, song_artist, song_album_name, " +
+                        "song_album_id, song_year, song_favourite FROM music_library")
+                db.execSQL("DROP TABLE music_library")
+                db.execSQL("ALTER TABLE music_library_backup RENAME TO music_library")
             }
         }
 

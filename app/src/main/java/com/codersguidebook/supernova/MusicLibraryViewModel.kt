@@ -202,9 +202,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @param artistName The name of the artist.
      * @return An Integer representing the number of songs found.
      */
-    suspend fun getSongPlaysByArtist(artistName: String): Int {
-        return repository.getSongPlaysByArtist(artistName)
-    }
+    suspend fun getSongPlaysByArtist(artistName: String) = repository.getSongPlaysByArtist(artistName)
 
     suspend fun getSongPlaysBySongIds(songIds: List<Long>) = repository.getSongPlaysBySongIds(songIds)
 
