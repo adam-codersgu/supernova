@@ -49,8 +49,4 @@ interface MusicDao {
 
     @Query("SELECT * FROM music_library ORDER BY RANDOM() LIMIT 1")
     suspend fun getRandomSong(): Song?
-
-    /* FIXME @Transaction
-    @Query("SELECT * FROM music_library WHERE songId = :songId")
-    fun getSongWithSongPlays(songId: Long): SongWithSongPlays? */
 }
