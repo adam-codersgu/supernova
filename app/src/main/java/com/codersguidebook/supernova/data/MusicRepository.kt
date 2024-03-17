@@ -45,7 +45,10 @@ class MusicRepository(private val musicDao: MusicDao, private val playlistDao: P
 
     suspend fun savePlaylist(playlist: Playlist) = playlistDao.insert(playlist)
 
-    suspend fun deleteSong(song: Song) = musicDao.delete(song)
+    suspend fun deleteSong(song: Song) {
+        musicDao.delete(song)
+        songPlaysDao.deleteBySongId(song.songId)
+    }
 
     suspend fun deletePlaylist(playlist: Playlist) = playlistDao.delete(playlist)
 

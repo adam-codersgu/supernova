@@ -678,7 +678,6 @@ class MainActivity : AppCompatActivity() {
      *
      * @param songId The media ID of the song to be deleted.
      */
-    // For SDK 29
     fun deleteSongById(songId: Long) {
         musicLibraryViewModel.songIdToDelete = songId
         try {
