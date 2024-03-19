@@ -11,6 +11,16 @@
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="@string/homepage_playlist_qty">
+
+        <SeekBarPreference
+            app:key="homepage_playlist_qty"
+            app:defaultValue="10"
+            app:title="@string/song_quantity"
+            app:min="3"
+            android:max="30" />
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="@string/most_played_timeframe">
 
         <ListPreference
@@ -59,7 +69,7 @@
         <SeekBarPreference
             app:key="animation_quantity"
             app:defaultValue="6"
-            app:title="Number of animation objects"
+            app:title="@string/number_animation_objects"
             app:showSeekBarValue="true"
             app:min="1"
             android:max="10" />
@@ -67,7 +77,7 @@
         <SeekBarPreference
             app:key="animation_spin"
             app:defaultValue="20"
-            app:title="Spin speed"
+            app:title="@string/spin_speed"
             app:min="1"
             android:max="180" />
     </PreferenceCategory>
