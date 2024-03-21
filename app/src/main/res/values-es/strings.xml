@@ -161,4 +161,8 @@
     <string name="last_week">La semana pasada</string>
     <string name="last_year">El año pasado</string>
     <string name="most_played_timeframe">Periodo de tiempo de la lista de reproducción más reproducida</string>
+    <string name="homepage_playlist_qty">Cantidad de canciones de la lista de reproducción de la página de inicio</string>
+    <string name="number_animation_objects">Número de objetos de animación</string>
+    <string name="song_quantity">Cantidad de canción</string>
+    <string name="spin_speed">Velocidad de centrifugado</string>
 </resources>

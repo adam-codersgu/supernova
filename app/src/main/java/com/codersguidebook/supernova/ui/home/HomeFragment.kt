@@ -1,5 +1,6 @@
 package com.codersguidebook.supernova.ui.home
 
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,6 +10,7 @@ import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
 import androidx.viewbinding.ViewBinding
@@ -22,6 +24,7 @@ import com.codersguidebook.supernova.fragment.adapter.MostPlayedAdapter
 import com.codersguidebook.supernova.fragment.adapter.SongAdapter
 import com.codersguidebook.supernova.fragment.adapter.SongOfTheDayAdapter
 import com.codersguidebook.supernova.fragment.layoutmanager.WrapContentLinearLayoutManager
+import com.codersguidebook.supernova.params.SharedPreferencesConstants
 import com.codersguidebook.supernova.ui.playlists.PlaylistsFragmentDirections
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -39,6 +42,7 @@ class HomeFragment : BaseFragment() {
     private lateinit var favouritesAdapter: HomeAdapter
     private lateinit var mostPlayedAdapter: MostPlayedAdapter
     private lateinit var recentlyPlayedAdapter: HomeAdapter
+    private lateinit var sharedPreferences: SharedPreferences
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -51,6 +55,8 @@ class HomeFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
 
         songOfTheDayAdapter = SongOfTheDayAdapter(mainActivity)
         favouritesAdapter = HomeAdapter(mainActivity)
@@ -192,11 +198,12 @@ class HomeFragment : BaseFragment() {
     }
 
     private suspend fun getSongs(playlist: Playlist): List<Song> {
+        val songQty = sharedPreferences.getInt(SharedPreferencesConstants.HOMEPAGE_PLAYLIST_QTY, 10)
         val songs = withContext(Dispatchers.IO) {
             musicLibraryViewModel.extractPlaylistSongs(playlist.songs)
         }
         return if (playlist.name == getString(R.string.favourites)) {
-            songs.asReversed().take(10)
-        } else songs.take(10)
+            songs.asReversed().take(songQty)
+        } else songs.take(songQty)
     }
 }
