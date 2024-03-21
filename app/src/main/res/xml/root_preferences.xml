@@ -18,6 +18,7 @@
             app:defaultValue="10"
             app:title="@string/song_quantity"
             app:min="3"
+            app:showSeekBarValue="true"
             android:max="30" />
     </PreferenceCategory>
 
