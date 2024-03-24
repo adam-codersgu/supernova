@@ -121,7 +121,7 @@
             android:text="@string/track"
             android:textSize="12sp"
             app:layout_constraintTop_toBottomOf="@id/editSongArtist"
-            app:layout_constraintStart_toStartOf="@id/editSongTrack"/>
+            app:layout_constraintStart_toStartOf="@id/editSongTrack" />
 
         <EditText
             android:id="@+id/editSongTrack"
@@ -162,5 +162,23 @@
             app:layout_constraintTop_toBottomOf="@id/editSongYearHeading"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@id/editSongTrack" />
+
+        <TextView
+            android:id="@+id/rememberPlaybackProgressHeading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="4dp"
+            android:text="@string/remember_progress"
+            android:textSize="12sp"
+            app:layout_constraintTop_toBottomOf="@id/editSongTrack"
+            app:layout_constraintStart_toStartOf="@id/editSongTrackHeading" />
+
+        <CheckBox
+            android:id="@+id/rememberPlaybackProgress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="4dp"
+            app:layout_constraintTop_toBottomOf="@id/rememberPlaybackProgressHeading"
+            app:layout_constraintStart_toStartOf="@id/editSongTrack" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

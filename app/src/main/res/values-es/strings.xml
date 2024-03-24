@@ -165,4 +165,5 @@
     <string name="number_animation_objects">Número de objetos de animación</string>
     <string name="song_quantity">Cantidad de canción</string>
     <string name="spin_speed">Velocidad de centrifugado</string>
+    <string name="remember_progress">¿Recuerdas el progreso de la reproducción?</string>
 </resources>
