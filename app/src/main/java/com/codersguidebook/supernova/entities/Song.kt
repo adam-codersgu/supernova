@@ -20,4 +20,9 @@ data class Song(
     @ColumnInfo(name = "song_favourite") var isFavourite: Boolean = false,
     @ColumnInfo(name = "remember_progress") var rememberProgress: Boolean = false,
     @ColumnInfo(name = "playback_progress") var playbackProgress: Long = 0L
-) : Parcelable
+) : Parcelable {
+
+    fun resetProgress() {
+        this.playbackProgress = 0L
+    }
+}

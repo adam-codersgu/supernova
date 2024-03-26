@@ -88,6 +88,8 @@ class EditSongFragment : BaseEditMusicFragment() {
                         song!!.artist = newArtist
                         song!!.track = completeTrack
                         song!!.year = newYear
+
+                        if (newRememberProgress != song!!.rememberProgress) song!!.resetProgress()
                         song!!.rememberProgress = newRememberProgress
 
                         mainActivity.updateSongs(listOf(song!!))
