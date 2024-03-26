@@ -54,6 +54,7 @@ class EditSongFragment : BaseEditMusicFragment() {
         binding.editSongTrack.text = SpannableStringBuilder(song?.track.toString().substring(1, 4)
             .toInt().toString())
         binding.editSongYear.text = SpannableStringBuilder(song?.year)
+        binding.rememberPlaybackProgress.isSelected = song?.rememberProgress ?: false
     }
 
     override fun menuItemSelected(menuItem: MenuItem): Boolean {
@@ -64,6 +65,7 @@ class EditSongFragment : BaseEditMusicFragment() {
                 val newDisc = binding.editSongDisc.text.toString()
                 val newTrack = binding.editSongTrack.text.toString()
                 val newYear = binding.editSongYear.text.toString()
+                val newRememberProgress = binding.rememberPlaybackProgress.isSelected
 
                 // check no fields are blank
                 if (newTitle.isNotEmpty() && newArtist.isNotEmpty() && newDisc.isNotEmpty() && newTrack.isNotEmpty() && newYear.isNotEmpty()) {
@@ -73,7 +75,8 @@ class EditSongFragment : BaseEditMusicFragment() {
                         2 -> newDisc + "0" + newTrack
                         else -> newDisc + "00" + newTrack
                     }.toInt()
-                    if (newTitle != song!!.title || newArtist != song!!.artist || completeTrack != song!!.track || newYear != song!!.year || newArtwork != null) {
+                    if (newTitle != song!!.title || newArtist != song!!.artist || completeTrack != song!!.track || newYear != song!!.year || newArtwork != null
+                        || newRememberProgress != song!!.rememberProgress) {
 
                         // artwork has been changed
                         newArtwork?.let { artwork ->
@@ -85,6 +88,7 @@ class EditSongFragment : BaseEditMusicFragment() {
                         song!!.artist = newArtist
                         song!!.track = completeTrack
                         song!!.year = newYear
+                        song!!.rememberProgress = newRememberProgress
 
                         mainActivity.updateSongs(listOf(song!!))
                     }
