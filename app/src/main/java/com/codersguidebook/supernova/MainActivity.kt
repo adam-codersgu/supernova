@@ -254,6 +254,13 @@ class MainActivity : AppCompatActivity() {
         else storagePermissionHelper.requestPermissions()
     }
 
+    override fun onPause() {
+        super.onPause()
+        val currentMediaId = playQueueViewModel.currentlyPlayingSongMetadata.value
+            ?.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)?.toLong()
+        musicLibraryViewModel.savePlaybackProgress(currentMediaId, currentPlaybackPosition)
+    }
+
     override fun onResume() {
         super.onResume()
         volumeControlStream = AudioManager.STREAM_MUSIC
