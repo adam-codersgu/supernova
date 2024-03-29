@@ -91,6 +91,10 @@ class MusicRepository(private val musicDao: MusicDao, private val playlistDao: P
 
     suspend fun getSongById(songId: Long): Song? = musicDao.getSongById(songId)
 
+    suspend fun savePlaybackProgress(mediaId: Long, playbackPosition: Int) {
+        musicDao.savePlaybackProgress(mediaId, playbackPosition)
+    }
+
     suspend fun getRandomSong(): Song? = musicDao.getRandomSong()
 
     fun getPlaylistByNameLiveData(name: String): LiveData<Playlist?> = playlistDao.getPlaylistByNameLiveData(name)

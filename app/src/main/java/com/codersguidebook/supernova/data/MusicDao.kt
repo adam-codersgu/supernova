@@ -49,4 +49,7 @@ interface MusicDao {
 
     @Query("SELECT * FROM music_library ORDER BY RANDOM() LIMIT 1")
     suspend fun getRandomSong(): Song?
+
+    @Query("UPDATE music_library SET playback_progress = :playbackPosition WHERE songId = :mediaId")
+    suspend fun savePlaybackProgress(mediaId: Long, playbackPosition: Int)
 }

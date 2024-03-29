@@ -257,7 +257,7 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         val currentMediaId = playQueueViewModel.currentlyPlayingSongMetadata.value
-            ?.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)?.toLong()
+            ?.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)?.toLong() ?: return
         musicLibraryViewModel.savePlaybackProgress(currentMediaId, currentPlaybackPosition)
     }
 
