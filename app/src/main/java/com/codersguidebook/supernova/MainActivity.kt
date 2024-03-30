@@ -149,6 +149,7 @@ class MainActivity : AppCompatActivity() {
                         val finishedSongId = it.getLong("finishedSongId", -1L)
                         if (finishedSongId == -1L) return@let
                         musicLibraryViewModel.increaseSongPlaysBySongId(finishedSongId)
+                        musicLibraryViewModel.savePlaybackProgress(finishedSongId, 0)
                         musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(finishedSongId)
                     }
                 }
