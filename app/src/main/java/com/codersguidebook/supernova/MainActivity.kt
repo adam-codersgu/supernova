@@ -161,9 +161,16 @@ class MainActivity : AppCompatActivity() {
         override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
             super.onMetadataChanged(metadata)
 
-            if (metadata?.description?.mediaId !=
-                playQueueViewModel.currentlyPlayingSongMetadata.value?.description?.mediaId) {
+            val mediaId = metadata?.description?.mediaId
+            if (mediaId != playQueueViewModel.currentlyPlayingSongMetadata.value?.description?.mediaId) {
                 playQueueViewModel.playbackPosition.value = 0
+                lifecycleScope.launch(Dispatchers.IO) {
+                    withContext(Dispatchers.IO) {
+                        musicLibraryViewModel.getSongById(mediaId?.toLong() ?: return@withContext null)
+                    }?.let { song ->
+                        if (song.rememberProgress) seekTo(song.playbackProgress.toInt())
+                    }
+                }
             }
 
             playQueueViewModel.currentlyPlayingSongMetadata.value = metadata
