@@ -54,7 +54,7 @@ class EditSongFragment : BaseEditMusicFragment() {
         binding.editSongTrack.text = SpannableStringBuilder(song?.track.toString().substring(1, 4)
             .toInt().toString())
         binding.editSongYear.text = SpannableStringBuilder(song?.year)
-        binding.rememberPlaybackProgress.isSelected = song?.rememberProgress ?: false
+        binding.rememberPlaybackProgress.isChecked = song?.rememberProgress ?: false
     }
 
     override fun menuItemSelected(menuItem: MenuItem): Boolean {
@@ -65,7 +65,7 @@ class EditSongFragment : BaseEditMusicFragment() {
                 val newDisc = binding.editSongDisc.text.toString()
                 val newTrack = binding.editSongTrack.text.toString()
                 val newYear = binding.editSongYear.text.toString()
-                val newRememberProgress = binding.rememberPlaybackProgress.isSelected
+                val newRememberProgress = binding.rememberPlaybackProgress.isChecked
 
                 // check no fields are blank
                 if (newTitle.isNotEmpty() && newArtist.isNotEmpty() && newDisc.isNotEmpty() && newTrack.isNotEmpty() && newYear.isNotEmpty()) {
