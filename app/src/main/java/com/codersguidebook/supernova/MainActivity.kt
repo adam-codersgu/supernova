@@ -123,6 +123,7 @@ class MainActivity : AppCompatActivity() {
             if (state?.activeQueueItemId != currentQueueItemId) {
                 currentQueueItemId = state?.activeQueueItemId ?: -1
                 savePlayQueueId(currentQueueItemId)
+                // TODO I think better to move playback progress saving here?
             }
 
             playQueueViewModel.playbackState.value = state?.state ?: STATE_NONE
@@ -161,12 +162,16 @@ class MainActivity : AppCompatActivity() {
         override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
             super.onMetadataChanged(metadata)
 
-            val mediaId = metadata?.description?.mediaId
-            if (mediaId != playQueueViewModel.currentlyPlayingSongMetadata.value?.description?.mediaId) {
+            val newMediaId = metadata?.description?.mediaId
+            val prevMediaId = playQueueViewModel.currentlyPlayingSongMetadata.value?.description?.mediaId
+            if (newMediaId != prevMediaId) {
+                if (prevMediaId != null) {
+                    musicLibraryViewModel.savePlaybackProgress(prevMediaId.toLong(), currentPlaybackPosition)
+                }
                 playQueueViewModel.playbackPosition.value = 0
                 lifecycleScope.launch(Dispatchers.IO) {
                     withContext(Dispatchers.IO) {
-                        musicLibraryViewModel.getSongById(mediaId?.toLong() ?: return@withContext null)
+                        musicLibraryViewModel.getSongById(newMediaId?.toLong() ?: return@withContext null)
                     }?.let { song ->
                         if (song.rememberProgress) seekTo(song.playbackProgress.toInt())
                     }
