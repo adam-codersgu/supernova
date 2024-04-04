@@ -121,9 +121,15 @@ class MainActivity : AppCompatActivity() {
             super.onPlaybackStateChanged(state)
             refreshPlayQueue()
             if (state?.activeQueueItemId != currentQueueItemId) {
+                playQueue.find { it.queueId == currentQueueItemId }?.let { queueItem ->
+                    val mediaId = queueItem.description.mediaId?.toLong() ?: return@let
+                    val position = if (state?.state == STATE_SKIPPING_TO_NEXT) 0
+                    else currentPlaybackPosition
+                    musicLibraryViewModel.savePlaybackProgress(mediaId, position)
+                }
+
                 currentQueueItemId = state?.activeQueueItemId ?: -1
                 savePlayQueueId(currentQueueItemId)
-                // TODO I think better to move playback progress saving here?
             }
 
             playQueueViewModel.playbackState.value = state?.state ?: STATE_NONE
@@ -150,7 +156,6 @@ class MainActivity : AppCompatActivity() {
                         val finishedSongId = it.getLong("finishedSongId", -1L)
                         if (finishedSongId == -1L) return@let
                         musicLibraryViewModel.increaseSongPlaysBySongId(finishedSongId)
-                        musicLibraryViewModel.savePlaybackProgress(finishedSongId, 0)
                         musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(finishedSongId)
                     }
                 }
@@ -165,9 +170,6 @@ class MainActivity : AppCompatActivity() {
             val newMediaId = metadata?.description?.mediaId
             val prevMediaId = playQueueViewModel.currentlyPlayingSongMetadata.value?.description?.mediaId
             if (newMediaId != prevMediaId) {
-                if (prevMediaId != null) {
-                    musicLibraryViewModel.savePlaybackProgress(prevMediaId.toLong(), currentPlaybackPosition)
-                }
                 playQueueViewModel.playbackPosition.value = 0
                 lifecycleScope.launch(Dispatchers.IO) {
                     withContext(Dispatchers.IO) {
