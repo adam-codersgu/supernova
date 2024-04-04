@@ -123,7 +123,7 @@ class MainActivity : AppCompatActivity() {
             if (state?.activeQueueItemId != currentQueueItemId) {
                 playQueue.find { it.queueId == currentQueueItemId }?.let { queueItem ->
                     val mediaId = queueItem.description.mediaId?.toLong() ?: return@let
-                    val position = if (state?.state == STATE_SKIPPING_TO_NEXT) 0
+                    val position = if (currentPlaybackPosition > currentPlaybackDuration * 0.95) 0
                     else currentPlaybackPosition
                     musicLibraryViewModel.savePlaybackProgress(mediaId, position)
                 }
