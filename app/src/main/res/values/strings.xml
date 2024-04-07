@@ -101,6 +101,7 @@
     <string name="playlist_information">Playlist information</string>
     <string name="playlist_name">Playlist name</string>
     <string name="recently_played">Recently played</string>
+    <string name="remember_progress">Remember playback progress?</string>
     <string name="search_hint">Search music</string>
     <string name="search_results">Search results</string>
     <string name="select_playlist">Select a playlist or create a new one</string>

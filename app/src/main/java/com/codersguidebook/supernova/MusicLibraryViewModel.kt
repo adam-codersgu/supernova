@@ -189,6 +189,10 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      */
     suspend fun getSongById(songId: Long) : Song? = repository.getSongById(songId)
 
+    fun savePlaybackProgress(mediaId: Long, playbackPosition: Int) = viewModelScope.launch(Dispatchers.IO) {
+        repository.savePlaybackProgress(mediaId, playbackPosition)
+    }
+
     /**
      * Retrieve the Song objects associated with a given album ID.
      *

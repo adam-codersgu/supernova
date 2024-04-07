@@ -14,7 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
-@Database(entities = [Song::class, Playlist::class, SongPlays::class], version = 3, exportSchema = false)
+@Database(entities = [Song::class, Playlist::class, SongPlays::class], version = 4, exportSchema = false)
 abstract class MusicDatabase : RoomDatabase() {
 
     abstract fun musicDao(): MusicDao
@@ -59,6 +59,15 @@ abstract class MusicDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE music_library ADD COLUMN remember_progress " +
+                        "INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE music_library ADD COLUMN playback_progress " +
+                        "INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         @Volatile
         private var database: MusicDatabase? = null
 
@@ -73,7 +82,7 @@ abstract class MusicDatabase : RoomDatabase() {
                     // destroy the earlier database if the version is incremented
                     .fallbackToDestructiveMigration()
                     .addCallback(MusicDatabaseCallback(context, scope))
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .build()
             }
 

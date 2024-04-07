@@ -121,6 +121,13 @@ class MainActivity : AppCompatActivity() {
             super.onPlaybackStateChanged(state)
             refreshPlayQueue()
             if (state?.activeQueueItemId != currentQueueItemId) {
+                playQueue.find { it.queueId == currentQueueItemId }?.let { queueItem ->
+                    val mediaId = queueItem.description.mediaId?.toLong() ?: return@let
+                    val position = if (currentPlaybackPosition > currentPlaybackDuration * 0.95) 0
+                    else currentPlaybackPosition
+                    musicLibraryViewModel.savePlaybackProgress(mediaId, position)
+                }
+
                 currentQueueItemId = state?.activeQueueItemId ?: -1
                 savePlayQueueId(currentQueueItemId)
             }
@@ -160,9 +167,17 @@ class MainActivity : AppCompatActivity() {
         override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
             super.onMetadataChanged(metadata)
 
-            if (metadata?.description?.mediaId !=
-                playQueueViewModel.currentlyPlayingSongMetadata.value?.description?.mediaId) {
+            val newMediaId = metadata?.description?.mediaId
+            val prevMediaId = playQueueViewModel.currentlyPlayingSongMetadata.value?.description?.mediaId
+            if (newMediaId != prevMediaId) {
                 playQueueViewModel.playbackPosition.value = 0
+                lifecycleScope.launch(Dispatchers.IO) {
+                    withContext(Dispatchers.IO) {
+                        musicLibraryViewModel.getSongById(newMediaId?.toLong() ?: return@withContext null)
+                    }?.let { song ->
+                        if (song.rememberProgress) seekTo(song.playbackProgress.toInt())
+                    }
+                }
             }
 
             playQueueViewModel.currentlyPlayingSongMetadata.value = metadata
@@ -252,6 +267,13 @@ class MainActivity : AppCompatActivity() {
 
         if (storagePermissionHelper.hasReadPermission()) refreshMusicLibrary()
         else storagePermissionHelper.requestPermissions()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        val currentMediaId = playQueueViewModel.currentlyPlayingSongMetadata.value
+            ?.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)?.toLong() ?: return
+        musicLibraryViewModel.savePlaybackProgress(currentMediaId, currentPlaybackPosition)
     }
 
     override fun onResume() {

@@ -381,7 +381,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
             super.onSkipToNext()
 
             val repeatMode = mediaSessionCompat.controller.repeatMode
-            currentlyPlayingQueueItemId = when {
+            onSkipToQueueItem(when {
                 playQueue.isNotEmpty() &&
                         playQueue[playQueue.size - 1].queueId != currentlyPlayingQueueItemId -> {
                     val indexOfCurrentQueueItem = playQueue.indexOfFirst {
@@ -392,9 +392,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
                 // We are at the end of the queue. Check whether we should start over from the beginning
                 repeatMode == REPEAT_MODE_ALL -> playQueue[0].queueId
                 else -> return
-            }
-
-            onSkipToQueueItem(currentlyPlayingQueueItemId)
+            })
         }
 
         override fun onStop() {

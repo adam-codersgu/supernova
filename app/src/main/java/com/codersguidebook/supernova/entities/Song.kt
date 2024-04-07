@@ -17,5 +17,12 @@ data class Song(
     @ColumnInfo(name = "song_album_name") var albumName: String?,
     @ColumnInfo(name = "song_album_id") val albumId: String,
     @ColumnInfo(name = "song_year") var year: String,
-    @ColumnInfo(name = "song_favourite") var isFavourite: Boolean = false
-) : Parcelable
+    @ColumnInfo(name = "song_favourite") var isFavourite: Boolean = false,
+    @ColumnInfo(name = "remember_progress") var rememberProgress: Boolean = false,
+    @ColumnInfo(name = "playback_progress") var playbackProgress: Long = 0L
+) : Parcelable {
+
+    fun resetProgress() {
+        this.playbackProgress = 0L
+    }
+}
