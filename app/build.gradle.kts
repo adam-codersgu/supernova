@@ -8,12 +8,12 @@ plugins {
 
 android {
     namespace = "com.codersguidebook.supernova"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.codersguidebook.supernova"
         minSdk = 31
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 15
         versionName = "2.1"
 

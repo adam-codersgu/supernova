@@ -1,7 +1,9 @@
 package com.codersguidebook.supernova
 
+import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.app.PendingIntent
 import android.content.*
+import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.AudioAttributes
@@ -23,6 +25,7 @@ import android.support.v4.media.session.PlaybackStateCompat.*
 import android.text.TextUtils
 import android.view.KeyEvent
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.media.MediaBrowserServiceCompat
@@ -595,7 +598,13 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
             priority = NotificationCompat.PRIORITY_DEFAULT
         }
         // Display the notification and place the service in the foreground
-        startForeground(1, builder.build())
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.TIRAMISU) {
+            // Pre-SDK 34
+            startForeground(1, builder.build())
+        } else {
+            // SDK 34 and up
+            startForeground(1, builder.build(), FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
+        }
     }
 
     /**
