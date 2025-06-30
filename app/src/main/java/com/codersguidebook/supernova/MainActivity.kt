@@ -19,6 +19,7 @@ import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.media.session.PlaybackStateCompat.*
 import android.util.Size
 import android.view.Menu
+import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
 import android.widget.SearchView
@@ -269,6 +270,18 @@ class MainActivity : AppCompatActivity() {
 
         if (storagePermissionHelper.hasReadPermission()) refreshMusicLibrary()
         else storagePermissionHelper.requestPermissions()
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.body) { v, windowInsets ->
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                leftMargin = insets.left
+                bottomMargin = insets.bottom
+                rightMargin = insets.right
+                topMargin = insets.top
+            }
+
+            WindowInsetsCompat.CONSUMED
+        }
     }
 
     override fun onPause() {
