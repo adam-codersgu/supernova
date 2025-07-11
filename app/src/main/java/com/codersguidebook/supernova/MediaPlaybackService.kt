@@ -29,8 +29,11 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.media.MediaBrowserServiceCompat
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
+import androidx.media3.session.MediaSessionService
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_NEXT
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PAUSE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PLAY
@@ -44,8 +47,8 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.UPDATE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
-import com.google.android.gms.common.ConnectionResult
-import com.google.common.collect.ImmutableList
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
@@ -55,33 +58,34 @@ import java.io.IOException
  *
  * https://developer.android.com/media/implement/surfaces/mobile
  */
-class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
+class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
 
     private var currentlyPlayingQueueItemId = -1L
-    private val handler = Handler(Looper.getMainLooper())
+    // private val handler = Handler(Looper.getMainLooper())
     private var mediaPlayer: MediaPlayer? = null
     private val playQueue: MutableList<QueueItem> = mutableListOf()
-    private lateinit var audioFocusRequest: AudioFocusRequest
+    // private lateinit var audioFocusRequest: AudioFocusRequest
     // private lateinit var mediaSessionCompat: MediaSessionCompat
-    private lateinit var mediaSession: MediaSession
+    private lateinit var player: Player
+    private var mediaSession: MediaSession? = null
 
-    private val afChangeListener = OnAudioFocusChangeListener { focusChange ->
+    /* private val afChangeListener = OnAudioFocusChangeListener { focusChange ->
         when (focusChange) {
             AUDIOFOCUS_LOSS, AUDIOFOCUS_LOSS_TRANSIENT -> {
-                mediaSession. .controller.transportControls.pause()
+                mediaSession.controller.transportControls.pause()
             }
             AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> mediaPlayer?.setVolume(0.3f, 0.3f)
             AUDIOFOCUS_GAIN -> mediaPlayer?.setVolume(1.0f, 1.0f)
         }
-    }
+    } */
 
     private val noisyReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            if (mediaPlayer != null && mediaPlayer!!.isPlaying) mediaSessionCallback.onPause()
+            if (mediaPlayer != null && mediaPlayer!!.isPlaying) mediaSession!!.player.pause()
         }
     }
 
-    private var playbackPositionRunnable = object : Runnable {
+    /* private var playbackPositionRunnable = object : Runnable {
         override fun run() {
             try {
                 if (mediaPlayer?.isPlaying == true) setMediaPlaybackState(STATE_PLAYING)
@@ -445,7 +449,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
                 } else setMediaPlaybackState(STATE_PAUSED, getBundleWithSongDuration())
             }
         }
-    }
+    } */
 
     /**
      * Generate a Bundle featuring the duration of the currently playing song. The bundle can be
@@ -493,7 +497,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
      * @param mediaDescription A MediaDescriptionCompat object containing the metadata for a given song.
      * @param queueId The ID of the target queue item.
      */
-    private fun updateMetadataForQueueItem(mediaDescription: MediaDescriptionCompat, queueId: Long) {
+    /* private fun updateMetadataForQueueItem(mediaDescription: MediaDescriptionCompat, queueId: Long) {
         val index = playQueue.indexOfFirst {
             it.queueId == queueId
         }
@@ -509,13 +513,13 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
             refreshNotification()
         }
         setPlayQueue()
-    }
+    } */
 
     /** Set the play queue for the media session and notify all observers of the playback state. */
-    private fun setPlayQueue() {
+    /* private fun setPlayQueue() {
         mediaSession.setQueue(playQueue)
         setMediaPlaybackState(mediaSession.controller.playbackState.state)
-    }
+    } */
 
     override fun onCreate() {
         super.onCreate()
@@ -527,30 +531,26 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
             val builder = Builder().setActions(PlaybackStateCompat.ACTION_PLAY)
             setPlaybackState(builder.build())
         } */
-        val player = ExoPlayer.Builder(this).build()
-        mediaSession = MediaSession.Builder(this, player)
-                .setCallback(MyCallback())
-                .build()
+        player = ExoPlayer.Builder(this).build()
+        mediaSession = MediaSession.Builder(this, player).setCallback(this).build()
         initNoisyReceiver()
-        playbackPositionRunnable.run()
+        // playbackPositionRunnable.run()
     }
 
-    private inner class MyCallback : MediaSession.Callback {
-        override fun onConnect(
-            session: MediaSession,
-            controller: MediaSession.ControllerInfo
-        ): ConnectionResult {
-            return AcceptedResultBuilder(session)
-                .setAvailableSessionCommands(
-                    ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
-                        .add(customCommandFavorites)
-                        .build()
-                )
-                .build()
-        }
+    override fun onAddMediaItems(
+        mediaSession: MediaSession,
+        controller: MediaSession.ControllerInfo,
+        mediaItems: MutableList<MediaItem>
+    ): ListenableFuture<MutableList<MediaItem>> {
+        val updatedMediaItems = mediaItems.map { it.buildUpon().setUri(it.mediaId).build() }.toMutableList()
+        return Futures.immediateFuture(updatedMediaItems)
+    }
+
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? =
+        mediaSession
 
 
-        /** Handles playback becoming 'noisy' i.e. headphones being unplugged. */
+    /** Handles playback becoming 'noisy' i.e. headphones being unplugged. */
     private fun initNoisyReceiver() {
         val filter = IntentFilter(ACTION_AUDIO_BECOMING_NOISY)
         registerReceiver(noisyReceiver, filter)
@@ -558,15 +558,35 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
 
     override fun onDestroy() {
         super.onDestroy()
+        mediaSession?.run {
+            release()
+            player.release()
+            mediaSession = null
+        }
+        unregisterReceiver(noisyReceiver)
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        val player = mediaSession?.player
+        if (player!!.playWhenReady) {
+            player.pause()
+        }
+        stopSelf()
+    }
+
+
+    /* override fun onDestroy() {
+        super.onDestroy()
         mediaSessionCompat.controller.transportControls.stop()
         handler.removeCallbacks(playbackPositionRunnable)
         unregisterReceiver(noisyReceiver)
         mediaSessionCompat.release()
         NotificationManagerCompat.from(this).cancel(1)
-    }
+    } */
 
     /** Refresh the metadata displayed in the media player notification and handle user interactions. */
-    private fun refreshNotification() {
+    /* private fun refreshNotification() {
         val isPlaying = mediaPlayer?.isPlaying ?: false
         val playPauseIntent = if (isPlaying) {
             Intent(applicationContext, MediaPlaybackService::class.java).setAction(ACTION_PAUSE)
@@ -634,7 +654,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
             // SDK 34 and up
             startForeground(1, builder.build(), FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
         }
-    }
+    } */
 
     /**
      * Dispatch media playback state updates.
@@ -643,7 +663,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
      * @param bundle An option bundle of extras to be packaged with the playback status update.
      * Default = null.
      */
-    private fun setMediaPlaybackState(state: Int, bundle: Bundle? = null) {
+    /* private fun setMediaPlaybackState(state: Int, bundle: Bundle? = null) {
         val playbackPosition = mediaPlayer?.currentPosition?.toLong() ?: 0L
         val playbackSpeed = mediaPlayer?.playbackParams?.speed ?: 0f
         val playbackStateBuilder = Builder()
@@ -651,10 +671,10 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
             .setActiveQueueItemId(currentlyPlayingQueueItemId)
         bundle?.let { playbackStateBuilder.setExtras(it) }
         mediaSessionCompat.setPlaybackState(playbackStateBuilder.build())
-    }
+    } */
 
     /** Set the media session metadata to information about the currently playing song. */
-    private fun setCurrentMetadata() {
+    /* private fun setCurrentMetadata() {
         val currentQueueItem = getCurrentQueueItem() ?: return
         val currentQueueItemDescription = currentQueueItem.description
         val metadataBuilder= MediaMetadataCompat.Builder().apply {
@@ -669,7 +689,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
             putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, albumId)
         }
         mediaSessionCompat.setMetadata(metadataBuilder.build())
-    }
+    } */
 
     /**
      * Retrieve the album artwork stored by the app for a given album ID.
@@ -678,7 +698,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
      * @param albumId The ID of the album that artwork should be retrieved for.
      * @return A Bitmap representation of the album artwork.
      */
-    private fun getArtworkByAlbumId(albumId: String?): Bitmap {
+    /* private fun getArtworkByAlbumId(albumId: String?): Bitmap {
         albumId?.let {
             try {
                 val directory = ContextWrapper(applicationContext).getDir("albumArt", Context.MODE_PRIVATE)
@@ -731,5 +751,5 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
         Toast.makeText(application, message, Toast.LENGTH_LONG).show()
 
         return true
-    }
+    } */
 }

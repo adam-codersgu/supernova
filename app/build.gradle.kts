@@ -56,7 +56,6 @@ dependencies {
     implementation("androidx.navigation:navigation-ui-ktx:2.9.1")
     implementation("androidx.media3:media3-exoplayer:1.7.1")
     implementation("androidx.media3:media3-session:1.7.1")
-    implementation("com.google.android.gms:play-services-basement:18.7.1")
     testImplementation("io.kotest:kotest-runner-junit5:5.6.2")
     testImplementation("io.kotest:kotest-assertions-core:5.6.2")
     testImplementation("junit:junit:4.13.2")
