@@ -29,6 +29,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.media.MediaBrowserServiceCompat
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.MediaSession
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_NEXT
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PAUSE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PLAY
@@ -42,10 +44,17 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.UPDATE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
+import com.google.android.gms.common.ConnectionResult
+import com.google.common.collect.ImmutableList
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 
+/**
+ * DOCUMENTATION
+ *
+ * https://developer.android.com/media/implement/surfaces/mobile
+ */
 class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
 
     private var currentlyPlayingQueueItemId = -1L
@@ -53,12 +62,13 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
     private var mediaPlayer: MediaPlayer? = null
     private val playQueue: MutableList<QueueItem> = mutableListOf()
     private lateinit var audioFocusRequest: AudioFocusRequest
-    private lateinit var mediaSessionCompat: MediaSessionCompat
+    // private lateinit var mediaSessionCompat: MediaSessionCompat
+    private lateinit var mediaSession: MediaSession
 
     private val afChangeListener = OnAudioFocusChangeListener { focusChange ->
         when (focusChange) {
             AUDIOFOCUS_LOSS, AUDIOFOCUS_LOSS_TRANSIENT -> {
-                mediaSessionCompat.controller.transportControls.pause()
+                mediaSession. .controller.transportControls.pause()
             }
             AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> mediaPlayer?.setVolume(0.3f, 0.3f)
             AUDIOFOCUS_GAIN -> mediaPlayer?.setVolume(1.0f, 1.0f)
@@ -133,7 +143,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
                 playQueue.add(playQueue.size, queueItem)
             }
 
-            mediaSessionCompat.setQueue(playQueue)
+            mediaSession.setQueue(playQueue)
         }
 
         override fun onPrepare() {
@@ -383,7 +393,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
         override fun onSkipToNext() {
             super.onSkipToNext()
 
-            val repeatMode = mediaSessionCompat.controller.repeatMode
+            val repeatMode = mediaSession.controller.repeatMode
             onSkipToQueueItem(when {
                 playQueue.isNotEmpty() &&
                         playQueue[playQueue.size - 1].queueId != currentlyPlayingQueueItemId -> {
@@ -402,7 +412,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
             super.onStop()
 
             playQueue.clear()
-            mediaSessionCompat.setQueue(playQueue)
+            mediaSession.setQueue(playQueue)
             currentlyPlayingQueueItemId = -1L
             if (mediaPlayer != null) {
                 mediaPlayer?.stop()
@@ -503,25 +513,44 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), OnErrorListener {
 
     /** Set the play queue for the media session and notify all observers of the playback state. */
     private fun setPlayQueue() {
-        mediaSessionCompat.setQueue(playQueue)
-        setMediaPlaybackState(mediaSessionCompat.controller.playbackState.state)
+        mediaSession.setQueue(playQueue)
+        setMediaPlaybackState(mediaSession.controller.playbackState.state)
     }
 
     override fun onCreate() {
         super.onCreate()
 
-        mediaSessionCompat = MediaSessionCompat(baseContext, NOTIFICATION_CHANNEL_ID).apply {
+        /* mediaSessionCompat = MediaSessionCompat(baseContext, NOTIFICATION_CHANNEL_ID).apply {
             setFlags(MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS)
             setCallback(mediaSessionCallback)
             setSessionToken(sessionToken)
             val builder = Builder().setActions(PlaybackStateCompat.ACTION_PLAY)
             setPlaybackState(builder.build())
-        }
+        } */
+        val player = ExoPlayer.Builder(this).build()
+        mediaSession = MediaSession.Builder(this, player)
+                .setCallback(MyCallback())
+                .build()
         initNoisyReceiver()
         playbackPositionRunnable.run()
     }
 
-    /** Handles playback becoming 'noisy' i.e. headphones being unplugged. */
+    private inner class MyCallback : MediaSession.Callback {
+        override fun onConnect(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo
+        ): ConnectionResult {
+            return AcceptedResultBuilder(session)
+                .setAvailableSessionCommands(
+                    ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
+                        .add(customCommandFavorites)
+                        .build()
+                )
+                .build()
+        }
+
+
+        /** Handles playback becoming 'noisy' i.e. headphones being unplugged. */
     private fun initNoisyReceiver() {
         val filter = IntentFilter(ACTION_AUDIO_BECOMING_NOISY)
         registerReceiver(noisyReceiver, filter)

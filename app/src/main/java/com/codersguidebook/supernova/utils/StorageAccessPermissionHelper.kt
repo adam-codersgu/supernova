@@ -4,7 +4,6 @@ import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.Manifest.permission.READ_MEDIA_AUDIO
 import android.Manifest.permission.READ_MEDIA_IMAGES
 import android.app.Activity
-import android.app.ActivityManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -13,14 +12,13 @@ import android.provider.Settings
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
-import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.params.PermissionConstants.Companion.EXTERNAL_STORAGE_PERMISSION
 
 /** Helper to access the device's storage. */
 class StorageAccessPermissionHelper(private val activity: Activity) {
 
     /** Check to see we have the necessary permissions for this app. */
-    fun hasReadPermission(): Boolean {
+    fun hasPermissions(): Boolean {
         return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             // Pre-SDK 33
             checkSelfPermission(activity, READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
@@ -47,7 +45,7 @@ class StorageAccessPermissionHelper(private val activity: Activity) {
     }
 
     /** Check to see if we need to show the rationale for this permission. */
-    fun shouldShowRequestPermissionRationale(): Boolean {
+    fun shouldShowPermissionRationale(): Boolean {
         return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             // Pre-SDK 33
             ActivityCompat.shouldShowRequestPermissionRationale(activity, READ_EXTERNAL_STORAGE)

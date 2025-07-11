@@ -268,7 +268,7 @@ class MainActivity : AppCompatActivity() {
                 true, it)
         }
 
-        if (storagePermissionHelper.hasReadPermission()) refreshMusicLibrary()
+        if (storagePermissionHelper.hasPermissions()) refreshMusicLibrary()
         else storagePermissionHelper.requestPermissions()
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.body) { v, windowInsets ->
@@ -857,10 +857,10 @@ class MainActivity : AppCompatActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>,
                                             grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (!storagePermissionHelper.hasReadPermission()) {
+        if (!storagePermissionHelper.hasPermissions()) {
             Toast.makeText(this, getString(R.string.storage_permission_needed),
                 Toast.LENGTH_LONG).show()
-            if (!storagePermissionHelper.shouldShowRequestPermissionRationale()) {
+            if (!storagePermissionHelper.shouldShowPermissionRationale()) {
                 // Permission denied with checking "Do not ask again".
                 storagePermissionHelper.launchPermissionSettings()
             }
