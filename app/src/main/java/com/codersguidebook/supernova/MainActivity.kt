@@ -36,6 +36,12 @@ import androidx.core.view.*
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.common.Player.COMMAND_PLAY_PAUSE
+import androidx.media3.common.Player.COMMAND_PREPARE
+import androidx.media3.common.Player.COMMAND_SET_MEDIA_ITEM
+import androidx.media3.session.SessionToken
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
@@ -67,6 +73,8 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.codersguidebook.supernova.utils.*
 import com.google.android.material.navigation.NavigationView
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.MoreExecutors
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
@@ -85,7 +93,8 @@ class MainActivity : AppCompatActivity() {
     private val mediaDescriptionManager = MediaDescriptionCompatManager()
     private var mediaStoreContentObserver: MediaStoreContentObserver? = null
     private var musicDatabase: MusicDatabase? = null
-    private lateinit var mediaBrowser: MediaBrowserCompat
+    private lateinit var controller: MediaController
+    private lateinit var controllerFuture: ListenableFuture<MediaController>
     private lateinit var musicLibraryViewModel: MusicLibraryViewModel
     private lateinit var searchView: SearchView
     private lateinit var sharedPreferences: SharedPreferences
@@ -118,72 +127,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val controllerCallback = object : MediaControllerCompat.Callback() {
-        override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
-            super.onPlaybackStateChanged(state)
-            refreshPlayQueue()
-            if (state?.activeQueueItemId != currentQueueItemId) {
-                playQueue.find { it.queueId == currentQueueItemId }?.let { queueItem ->
-                    val mediaId = queueItem.description.mediaId?.toLong() ?: return@let
-                    val position = if (currentPlaybackPosition > currentPlaybackDuration * 0.95) 0
-                    else currentPlaybackPosition
-                    musicLibraryViewModel.savePlaybackProgress(mediaId, position)
-                }
 
-                currentQueueItemId = state?.activeQueueItemId ?: -1
-                savePlayQueueId(currentQueueItemId)
-            }
 
-            playQueueViewModel.playbackState.value = state?.state ?: STATE_NONE
-            when (state?.state) {
-                STATE_PLAYING, STATE_PAUSED -> {
-                    currentPlaybackPosition = state.position.toInt()
-                    state.extras?.let {
-                        currentPlaybackDuration = it.getInt("duration", 0)
-                        playQueueViewModel.playbackDuration.value = currentPlaybackDuration
-                    }
-                    playQueueViewModel.playbackPosition.value = currentPlaybackPosition
+    override fun onStart() {
+        super.onStart()
+        val sessionToken = SessionToken(this, ComponentName(this, MediaPlaybackService::class.java))
+        controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
+        controllerFuture.addListener(
+            {
+                if (controllerFuture.isDone) {
+                    controller = controllerFuture.get()
+                    initController()
                 }
-                STATE_STOPPED -> {
-                    currentPlaybackDuration = 0
-                    playQueueViewModel.playbackDuration.value = 0
-                    currentPlaybackPosition = 0
-                    playQueueViewModel.playbackPosition.value = 0
-                    playQueueViewModel.currentlyPlayingSongMetadata.value = null
-                }
-                // Called when playback of a song has completed.
-                // Need to increment the song_plays count for that Song object by 1.
-                STATE_SKIPPING_TO_NEXT -> {
-                    state.extras?.let {
-                        val finishedSongId = it.getLong("finishedSongId", -1L)
-                        if (finishedSongId == -1L) return@let
-                        musicLibraryViewModel.increaseSongPlaysBySongId(finishedSongId)
-                        musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(finishedSongId)
-                    }
-                }
-                STATE_ERROR -> refreshMusicLibrary()
-                else -> return
-            }
-        }
-
-        override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
-            super.onMetadataChanged(metadata)
-
-            val newMediaId = metadata?.description?.mediaId
-            val prevMediaId = playQueueViewModel.currentlyPlayingSongMetadata.value?.description?.mediaId
-            if (newMediaId != prevMediaId) {
-                playQueueViewModel.playbackPosition.value = 0
-                lifecycleScope.launch(Dispatchers.IO) {
-                    withContext(Dispatchers.IO) {
-                        musicLibraryViewModel.getSongById(newMediaId?.toLong() ?: return@withContext null)
-                    }?.let { song ->
-                        if (song.rememberProgress) seekTo(song.playbackProgress.toInt())
-                    }
-                }
-            }
-
-            playQueueViewModel.currentlyPlayingSongMetadata.value = metadata
-        }
+            }, MoreExecutors.directExecutor()
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -320,6 +277,143 @@ class MainActivity : AppCompatActivity() {
             apply()
         }
     }
+
+    // @OptIn(UnstableApi::class)
+    private fun initController() {
+        controller.addListener(object : Player.Listener {
+
+            override fun onPositionDiscontinuity(
+                oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int
+            ) {
+                val currentposition = controller.currentPosition.toInt() / 1000
+                binding.seekbar.progress = currentposition
+                binding.time.text =
+                    getTimeString(currentposition) + "/" + getTimeString(controller.duration.toInt() / 1000)
+            }
+
+            override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+                super.onMediaMetadataChanged(mediaMetadata)
+                log("onMediaMetadataChanged=$mediaMetadata")
+            }
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                super.onIsPlayingChanged(isPlaying)
+                log("onIsPlayingChanged=$isPlaying")
+
+                duration = controller.duration.toInt() / 1000
+                binding.seekbar.max = duration
+                binding.time.text = "0:00 / " + getTimeString(duration)
+            }
+
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                super.onPlaybackStateChanged(playbackState)
+                log("onPlaybackStateChanged=${getStateName(playbackState)}")
+
+                if (Player.STATE_BUFFERING == playbackState) {
+                    binding.progressBar.show()
+                } else {
+                    binding.progressBar.hide()
+                }
+
+                if (playbackState == Player.STATE_READY && controller.playWhenReady) {
+                    binding.btnPlayPause.setImageDrawable(resources.getDrawable(R.drawable.pause))
+                } else {
+                    binding.btnPlayPause.setImageDrawable(resources.getDrawable(R.drawable.play))
+                }
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                super.onPlayerError(error)
+                log("onPlayerError=${error.stackTraceToString()}")
+            }
+
+            override fun onPlayerErrorChanged(error: PlaybackException?) {
+                super.onPlayerErrorChanged(error)
+                log("onPlayerErrorChanged=${error?.stackTraceToString()}")
+            }
+        })
+
+        binding.progressBar.hide()
+        playMedia(mediaUrl)
+
+        val handler = Handler(Looper.getMainLooper())
+        handler.post(object : Runnable {
+            override fun run() {
+                val currentposition = controller.currentPosition.toInt() / 1000
+                binding.seekbar.progress = currentposition
+                binding.time.setText(getTimeString(currentposition) + "/" + getTimeString(duration))
+                handler.postDelayed(this, 1000)
+            }
+        })
+    }
+
+    /* private val controllerCallback = object : MediaControllerCompat.Callback() {
+        override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
+            super.onPlaybackStateChanged(state)
+            refreshPlayQueue()
+            if (state?.activeQueueItemId != currentQueueItemId) {
+                playQueue.find { it.queueId == currentQueueItemId }?.let { queueItem ->
+                    val mediaId = queueItem.description.mediaId?.toLong() ?: return@let
+                    val position = if (currentPlaybackPosition > currentPlaybackDuration * 0.95) 0
+                    else currentPlaybackPosition
+                    musicLibraryViewModel.savePlaybackProgress(mediaId, position)
+                }
+
+                currentQueueItemId = state?.activeQueueItemId ?: -1
+                savePlayQueueId(currentQueueItemId)
+            }
+
+            playQueueViewModel.playbackState.value = state?.state ?: STATE_NONE
+            when (state?.state) {
+                STATE_PLAYING, STATE_PAUSED -> {
+                    currentPlaybackPosition = state.position.toInt()
+                    state.extras?.let {
+                        currentPlaybackDuration = it.getInt("duration", 0)
+                        playQueueViewModel.playbackDuration.value = currentPlaybackDuration
+                    }
+                    playQueueViewModel.playbackPosition.value = currentPlaybackPosition
+                }
+                STATE_STOPPED -> {
+                    currentPlaybackDuration = 0
+                    playQueueViewModel.playbackDuration.value = 0
+                    currentPlaybackPosition = 0
+                    playQueueViewModel.playbackPosition.value = 0
+                    playQueueViewModel.currentlyPlayingSongMetadata.value = null
+                }
+                // Called when playback of a song has completed.
+                // Need to increment the song_plays count for that Song object by 1.
+                STATE_SKIPPING_TO_NEXT -> {
+                    state.extras?.let {
+                        val finishedSongId = it.getLong("finishedSongId", -1L)
+                        if (finishedSongId == -1L) return@let
+                        musicLibraryViewModel.increaseSongPlaysBySongId(finishedSongId)
+                        musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(finishedSongId)
+                    }
+                }
+                STATE_ERROR -> refreshMusicLibrary()
+                else -> return
+            }
+        }
+
+        override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
+            super.onMetadataChanged(metadata)
+
+            val newMediaId = metadata?.description?.mediaId
+            val prevMediaId = playQueueViewModel.currentlyPlayingSongMetadata.value?.description?.mediaId
+            if (newMediaId != prevMediaId) {
+                playQueueViewModel.playbackPosition.value = 0
+                lifecycleScope.launch(Dispatchers.IO) {
+                    withContext(Dispatchers.IO) {
+                        musicLibraryViewModel.getSongById(newMediaId?.toLong() ?: return@withContext null)
+                    }?.let { song ->
+                        if (song.rememberProgress) seekTo(song.playbackProgress.toInt())
+                    }
+                }
+            }
+
+            playQueueViewModel.currentlyPlayingSongMetadata.value = metadata
+        }
+    } */
 
     /** Process changes to the user's selected language locale, or load its initial value */
     private fun processLanguageLocale() = lifecycleScope.launch(Dispatchers.IO) {
