@@ -1,6 +1,9 @@
 package com.codersguidebook.supernova.entities
 
+import android.os.Bundle
 import android.os.Parcelable
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -24,5 +27,21 @@ data class Song(
 
     fun resetProgress() {
         this.playbackProgress = 0L
+    }
+
+    private fun getMetadata(): MediaMetadata {
+        val extras = Bundle().apply {
+            putString("mediaId", this@Song.songId.toString())
+        }
+        return MediaMetadata.Builder()
+            .setExtras(extras)
+            .build()
+    }
+
+    fun getMediaItem(queueId: String): MediaItem {
+        return MediaItem.Builder()
+            .setMediaId(queueId)
+            .setMediaMetadata(getMetadata())
+            .build()
     }
 }

@@ -6,11 +6,6 @@ package com.codersguidebook.supernova.params
  **/
 class MediaServiceConstants {
     companion object {
-        const val ACTION_PLAY = "play"
-        const val ACTION_PAUSE = "pause"
-        const val ACTION_NEXT = "next"
-        const val ACTION_PREVIOUS = "previous"
-        const val MEDIA_ERROR_EMPTY_PLAY_QUEUE = -1010
         const val MOVE_QUEUE_ITEM = "moveQueueItem"
         const val NO_ACTION = -1
         const val NOTIFICATION_CHANNEL_ID = "supernova"
@@ -19,6 +14,5 @@ class MediaServiceConstants {
         const val SET_SHUFFLE_MODE = "setShuffleMode"
         const val SONG_DELETED = 0
         const val SONG_UPDATED = 1
-        const val UPDATE_QUEUE_ITEM = "updateQueueItem"
     }
 }
