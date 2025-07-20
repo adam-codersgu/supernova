@@ -31,10 +31,15 @@ data class Song(
 
     private fun getMetadata(): MediaMetadata {
         val extras = Bundle().apply {
+            // TODO - CONSTANTS
+            putString("albumId", this@Song.albumId)
             putString("mediaId", this@Song.songId.toString())
         }
         return MediaMetadata.Builder()
+            .setAlbumTitle(this@Song.albumName)
+            .setArtist(this@Song.artist)
             .setExtras(extras)
+            .setTitle(this@Song.title)
             .build()
     }
 
