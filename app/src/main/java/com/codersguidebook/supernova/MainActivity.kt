@@ -50,7 +50,6 @@ import com.codersguidebook.supernova.dialogs.CreatePlaylist
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MEDIA_ID
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NO_ACTION
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_REPEAT_MODE
@@ -284,7 +283,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onPlaybackStateChanged(playbackState: Int) {
                 if (playbackState == Player.STATE_READY) {
-                    playQueueViewModel.isPlaying.value = controller.playWhenReady
+                    playQueueViewModel.isPlaying.value = controller.isPlaying
                 } else if (playbackState == Player.STATE_ENDED) {
                     currentPlaybackDuration = 0
                     playQueueViewModel.playbackDuration.value = 0
@@ -377,32 +376,24 @@ class MainActivity : AppCompatActivity() {
      * @param queueId The queue ID of the item to be moved.
      * @param newIndex The new index in the play queue that the item should occupy.
      */
-    fun notifyQueueItemMoved(queueId: Long, newIndex: Int) {
-        val bundle = Bundle().apply {
-            putLong("queueItemId", queueId)
-            putInt("newIndex", newIndex)
-        }
+    fun notifyQueueItemMoved(queueId: String, newIndex: Int) {
+        val currentIndex = playQueueViewModel.playQueue.value?.indexOfFirst {
+            i -> i.mediaId == queueId
+        } ?: return
 
-        mdiaController.sendCommand(, bundle, null)
+        controller.moveMediaItem(currentIndex, newIndex)
     }
 
     /** Respond to clicks on the play/pause button **/
     fun playPauseControl() {
-        when (mdiaController.playbackState?.state) {
-            PlaybackState.STATE_PAUSED -> mediaController.transportControls.play()
-            PlaybackState.STATE_PLAYING -> mediaController.transportControls.pause()
-            else -> {
-                // Load and play the user's music library if the play queue is empty
-                if (playQueueViewModel.playQueue.value.isNullOrEmpty()) {
-                    playNewPlayQueue(musicLibraryViewModel.allSongs.value ?: return)
-                }
-                else {
-                    // It's possible a queue has been built without ever pressing play.
-                    // In which case, commence playback
-                    mediaController.transportControls.prepare()
-                    mediaController.transportControls.play()
-                }
+        if (!playQueueViewModel.playQueue.value.isNullOrEmpty()) {
+            if (controller.isPlaying) {
+                controller.pause()
+            } else {
+                controller.play()
             }
+        } else {
+            playNewPlayQueue(musicLibraryViewModel.allSongs.value ?: return)
         }
     }
 
@@ -477,11 +468,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Skip back to the previous track in the play queue (or restart the current song if less that five seconds in). */
-    fun skipBack() = mdiaController.transportControls.skipToPrevious()
+    fun skipBack() = controller.seekToPreviousMediaItem()
 
     /** Skip forward to the next song in the play queue. */
-    fun skipForward() = mdiaController.transportControls.skipToNext()
+    fun skipForward() = controller.seekToNextMediaItem()
 
+    // fixme - https://stackoverflow.com/q/78729407
     /** Rewind the playback of the current song. */
     fun fastRewind() = mdiaController.transportControls.rewind()
 
@@ -528,7 +520,7 @@ class MainActivity : AppCompatActivity() {
                 getString(R.string.error_generic_playback), Toast.LENGTH_LONG).show()
             return@launch
         }
-        mdiaController.transportControls.stop()
+        controller.stop()
 
         val startSongIndex = if (shuffle) (songs.indices).random()
         else startIndex
@@ -605,7 +597,7 @@ class MainActivity : AppCompatActivity() {
      *
      * @param position An Integer representing the desired playback position.
      */
-    fun seekTo(position: Int) = mdiaController.transportControls.seekTo(position.toLong())
+    fun seekTo(position: Int) = controller.seekTo(position.toLong())
 
     /**
      * Skip to a specific item in the play queue based on its ID.
@@ -614,7 +606,7 @@ class MainActivity : AppCompatActivity() {
      */
     fun skipToAndPlayQueueItem(queueItemId: Long) {
         mdiaController.transportControls.skipToQueueItem(queueItemId)
-        mdiaController.transportControls.play()
+        controller.play()
     }
 
     /**
