@@ -6,7 +6,8 @@ package com.codersguidebook.supernova.params
  **/
 class MediaServiceConstants {
     companion object {
-        const val MOVE_QUEUE_ITEM = "moveQueueItem"
+        const val ALBUM_ID = "albumId"
+        const val MEDIA_ID = "mediaId"
         const val NO_ACTION = -1
         const val NOTIFICATION_CHANNEL_ID = "supernova"
         const val SET_REPEAT_MODE = "setRepeatMode"

@@ -49,6 +49,7 @@ import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.dialogs.CreatePlaylist
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MEDIA_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NO_ACTION
@@ -212,9 +213,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        // TODO - CONSTANT
         val currentMediaId = playQueueViewModel.currentlyPlayingSongMetadata.value
-            ?.extras?.getString("mediaId")?.toLong() ?: return
+            ?.extras?.getString(MEDIA_ID)?.toLong() ?: return
         musicLibraryViewModel.savePlaybackProgress(currentMediaId, currentPlaybackPosition)
     }
 
@@ -266,9 +266,8 @@ class MainActivity : AppCompatActivity() {
 
             override fun onMediaMetadataChanged(metadata: MediaMetadata) {
                 super.onMediaMetadataChanged(metadata)
-                // TODO - CONSTANT (TIMES 2)
-                val newMediaId = metadata.extras?.getString("mediaId")
-                val prevMediaId = playQueueViewModel.currentlyPlayingSongMetadata.value?.extras?.getString("mediaId")
+                val newMediaId = metadata.extras?.getString(MEDIA_ID)
+                val prevMediaId = playQueueViewModel.currentlyPlayingSongMetadata.value?.extras?.getString(MEDIA_ID)
                 if (newMediaId != prevMediaId) {
                     playQueueViewModel.playbackPosition.value = 0
                     lifecycleScope.launch(Dispatchers.IO) {
@@ -367,8 +366,7 @@ class MainActivity : AppCompatActivity() {
      */
     private fun findSongIdInPlayQueueToRemove(songId: Long) = lifecycleScope.launch(Dispatchers.Default) {
         val queueItemsToRemove = playQueueViewModel.playQueue.value?.filter {
-            // TODO - CONSTANT
-            it.mediaMetadata.extras?.getString("mediaId") == songId.toString()
+            it.mediaMetadata.extras?.getString(MEDIA_ID) == songId.toString()
         }?.map { i -> i.mediaId } ?: return@launch
         removeQueueItemById(queueItemsToRemove)
     }
@@ -385,12 +383,12 @@ class MainActivity : AppCompatActivity() {
             putInt("newIndex", newIndex)
         }
 
-        mediaController.sendCommand(MOVE_QUEUE_ITEM, bundle, null)
+        mdiaController.sendCommand(, bundle, null)
     }
 
     /** Respond to clicks on the play/pause button **/
     fun playPauseControl() {
-        when (mediaController.playbackState?.state) {
+        when (mdiaController.playbackState?.state) {
             PlaybackState.STATE_PAUSED -> mediaController.transportControls.play()
             PlaybackState.STATE_PLAYING -> mediaController.transportControls.pause()
             else -> {
@@ -444,7 +442,7 @@ class MainActivity : AppCompatActivity() {
             putInt(SHUFFLE_MODE, shuffleMode)
         }
 
-        mediaController.sendCommand(SET_SHUFFLE_MODE, bundle, null)
+        mdiaController.sendCommand(SET_SHUFFLE_MODE, bundle, null)
     }
 
     /**
@@ -467,7 +465,7 @@ class MainActivity : AppCompatActivity() {
         val bundle = Bundle().apply {
             putInt(REPEAT_MODE, newRepeatMode)
         }
-        mediaController.sendCommand(SET_REPEAT_MODE, bundle, null)
+        mdiaController.sendCommand(SET_REPEAT_MODE, bundle, null)
 
         when (newRepeatMode) {
             REPEAT_MODE_NONE -> Toast.makeText(this, getString(R.string.repeat_mode_none), Toast.LENGTH_SHORT).show()
@@ -479,16 +477,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Skip back to the previous track in the play queue (or restart the current song if less that five seconds in). */
-    fun skipBack() = mediaController.transportControls.skipToPrevious()
+    fun skipBack() = mdiaController.transportControls.skipToPrevious()
 
     /** Skip forward to the next song in the play queue. */
-    fun skipForward() = mediaController.transportControls.skipToNext()
+    fun skipForward() = mdiaController.transportControls.skipToNext()
 
     /** Rewind the playback of the current song. */
-    fun fastRewind() = mediaController.transportControls.rewind()
+    fun fastRewind() = mdiaController.transportControls.rewind()
 
     /** Fast forward the playback of the current song. */
-    fun fastForward() = mediaController.transportControls.fastForward()
+    fun fastForward() = mdiaController.transportControls.fastForward()
 
     /**
      * Convert the list of MediaDescriptionCompat objects for each item in the play queue to JSON
@@ -530,7 +528,7 @@ class MainActivity : AppCompatActivity() {
                 getString(R.string.error_generic_playback), Toast.LENGTH_LONG).show()
             return@launch
         }
-        mediaController.transportControls.stop()
+        mdiaController.transportControls.stop()
 
         val startSongIndex = if (shuffle) (songs.indices).random()
         else startIndex
@@ -543,7 +541,7 @@ class MainActivity : AppCompatActivity() {
 
         when {
             shuffle -> setShuffleMode(SHUFFLE_MODE_ALL)
-            mediaControllerCompat.shuffleMode == SHUFFLE_MODE_ALL -> setShuffleMode(SHUFFLE_MODE_NONE)
+            mdiaControllerCompat.shuffleMode == SHUFFLE_MODE_ALL -> setShuffleMode(SHUFFLE_MODE_NONE)
         }
     }
 
@@ -607,7 +605,7 @@ class MainActivity : AppCompatActivity() {
      *
      * @param position An Integer representing the desired playback position.
      */
-    fun seekTo(position: Int) = mediaController.transportControls.seekTo(position.toLong())
+    fun seekTo(position: Int) = mdiaController.transportControls.seekTo(position.toLong())
 
     /**
      * Skip to a specific item in the play queue based on its ID.
@@ -615,8 +613,8 @@ class MainActivity : AppCompatActivity() {
      * @param queueItemId The ID of the target QueueItem object.
      */
     fun skipToAndPlayQueueItem(queueItemId: Long) {
-        mediaController.transportControls.skipToQueueItem(queueItemId)
-        mediaController.transportControls.play()
+        mdiaController.transportControls.skipToQueueItem(queueItemId)
+        mdiaController.transportControls.play()
     }
 
     /**
@@ -792,9 +790,8 @@ class MainActivity : AppCompatActivity() {
         for (song in songs) {
             // All occurrences of the song need to be updated in the play queue
             val playQueue = playQueueViewModel.playQueue.value
-            // TODO - CONSTANT
             val affectedQueueItems = playQueue?.filter {
-                it.mediaMetadata.extras?.getString("mediaId") == song.songId.toString()
+                it.mediaMetadata.extras?.getString(MEDIA_ID) == song.songId.toString()
             }
             if (affectedQueueItems?.isEmpty() != false) continue
 
@@ -862,13 +859,13 @@ class MainActivity : AppCompatActivity() {
         val repeatBundle = Bundle().apply {
             putInt(REPEAT_MODE, repeatMode)
         }
-        mediaController.sendCommand(SET_REPEAT_MODE, repeatBundle, null)
+        mdiaController.sendCommand(SET_REPEAT_MODE, repeatBundle, null)
 
         val shuffleMode = sharedPreferences.getInt(SHUFFLE_MODE, SHUFFLE_MODE_NONE)
         val shuffleBundle = Bundle().apply {
             putInt(SHUFFLE_MODE, shuffleMode)
         }
-        mediaController.sendCommand(SET_SHUFFLE_MODE, shuffleBundle, null)
+        mdiaController.sendCommand(SET_SHUFFLE_MODE, shuffleBundle, null)
 
         val queueItemPairsJson = sharedPreferences.getString(PLAY_QUEUE_ITEMS, null) ?: return@launch
         val currentQueueItemId = sharedPreferences.getString(CURRENT_QUEUE_ITEM_ID, null)
