@@ -10,8 +10,6 @@ class MediaServiceConstants {
         const val MEDIA_ID = "mediaId"
         const val NO_ACTION = -1
         const val NOTIFICATION_CHANNEL_ID = "supernova"
-        const val SET_REPEAT_MODE = "setRepeatMode"
-        const val SET_SHUFFLE_MODE = "setShuffleMode"
         const val SONG_DELETED = 0
         const val SONG_UPDATED = 1
     }

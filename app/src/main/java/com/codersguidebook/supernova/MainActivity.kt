@@ -4,7 +4,6 @@ import android.app.*
 import android.content.*
 import android.database.Cursor
 import android.media.AudioManager
-import android.media.session.PlaybackState
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -35,6 +34,9 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.Player.REPEAT_MODE_ALL
+import androidx.media3.common.Player.REPEAT_MODE_OFF
+import androidx.media3.common.Player.REPEAT_MODE_ONE
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.navigation.findNavController
@@ -52,8 +54,6 @@ import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MEDIA_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NO_ACTION
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_REPEAT_MODE
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_SHUFFLE_MODE
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_DELETED
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_UPDATED
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.APPLICATION_LANGUAGE
@@ -400,20 +400,18 @@ class MainActivity : AppCompatActivity() {
     /**
      * Toggle the shuffle mode.
      *
-     * @return An Integer representing the active shuffle mode preference.
+     * @return A Boolean indicating whether the play queue is now shuffled
      */
-    fun toggleShuffleMode(): Int {
-        val newShuffleMode = if (sharedPreferences.getInt(SHUFFLE_MODE, SHUFFLE_MODE_NONE) == SHUFFLE_MODE_NONE) {
-            SHUFFLE_MODE_ALL
-        } else SHUFFLE_MODE_NONE
+    fun toggleShuffleMode(): Boolean {
+        val shouldShuffle = !sharedPreferences.getBoolean(SHUFFLE_MODE, false)
 
-        setShuffleMode(newShuffleMode)
+        setShuffleMode(shouldShuffle)
 
-        if (newShuffleMode == SHUFFLE_MODE_NONE) {
+        if (!shouldShuffle) {
             Toast.makeText(this, getString(R.string.play_queue_unshuffled), Toast.LENGTH_SHORT).show()
         } else Toast.makeText(this, getString(R.string.play_queue_shuffled), Toast.LENGTH_SHORT).show()
 
-        return newShuffleMode
+        return shouldShuffle
     }
 
     /**
@@ -421,19 +419,16 @@ class MainActivity : AppCompatActivity() {
      * N.B. This functionality may be called independently of toggleShuffleMode() e.g. when an
      * album is played on shuffle mode directly from the Album view.
      *
-     * @param shuffleMode An Integer representing the active shuffle mode preference.
+     * @param shuffle A Boolean indicating whether the play queue should be shuffled.
      */
-    private fun setShuffleMode(shuffleMode: Int) {
+    private fun setShuffleMode(shuffle: Boolean) {
         sharedPreferences.edit().apply {
-            putInt(SHUFFLE_MODE, shuffleMode)
+            putBoolean(SHUFFLE_MODE, shuffle)
             apply()
         }
 
-        val bundle = Bundle().apply {
-            putInt(SHUFFLE_MODE, shuffleMode)
-        }
-
-        mdiaController.sendCommand(SET_SHUFFLE_MODE, bundle, null)
+        // FIXME - NO WAY TO GET THE PLAY QUEUE AFTER THIS? MAY NEED TO SHUFFLE IT YOURSELF
+        controller.shuffleModeEnabled = shuffle
     }
 
     /**
@@ -442,10 +437,10 @@ class MainActivity : AppCompatActivity() {
      * @return An Integer representing the active repeat mode preference.
      */
     fun toggleRepeatMode(): Int {
-        val newRepeatMode = when (sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_NONE)) {
-            REPEAT_MODE_NONE -> REPEAT_MODE_ALL
+        val newRepeatMode = when (sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_OFF)) {
+            REPEAT_MODE_OFF -> REPEAT_MODE_ALL
             REPEAT_MODE_ALL -> REPEAT_MODE_ONE
-            else -> REPEAT_MODE_NONE
+            else -> REPEAT_MODE_OFF
         }
 
         sharedPreferences.edit().apply {
@@ -453,13 +448,10 @@ class MainActivity : AppCompatActivity() {
             apply()
         }
 
-        val bundle = Bundle().apply {
-            putInt(REPEAT_MODE, newRepeatMode)
-        }
-        mdiaController.sendCommand(SET_REPEAT_MODE, bundle, null)
+        controller.repeatMode = newRepeatMode
 
         when (newRepeatMode) {
-            REPEAT_MODE_NONE -> Toast.makeText(this, getString(R.string.repeat_mode_none), Toast.LENGTH_SHORT).show()
+            REPEAT_MODE_OFF -> Toast.makeText(this, getString(R.string.repeat_mode_none), Toast.LENGTH_SHORT).show()
             REPEAT_MODE_ALL -> Toast.makeText(this, getString(R.string.repeat_mode_all), Toast.LENGTH_SHORT).show()
             REPEAT_MODE_ONE -> Toast.makeText(this, getString(R.string.repeat_mode_one), Toast.LENGTH_SHORT).show()
         }
@@ -475,10 +467,10 @@ class MainActivity : AppCompatActivity() {
 
     // fixme - https://stackoverflow.com/q/78729407
     /** Rewind the playback of the current song. */
-    fun fastRewind() = mdiaController.transportControls.rewind()
+    fun fastRewind() = controller.seekBack()
 
     /** Fast forward the playback of the current song. */
-    fun fastForward() = mdiaController.transportControls.fastForward()
+    fun fastForward() = controller.seekForward()
 
     /**
      * Convert the list of MediaDescriptionCompat objects for each item in the play queue to JSON
@@ -527,13 +519,13 @@ class MainActivity : AppCompatActivity() {
 
         val playQueue = songs.mapIndexed { i, s -> s.getMediaItem(i.toString()) }.toList()
         controller.setMediaItems(playQueue)
-        skipToAndPlayQueueItem(startSongIndex.toLong())
+        skipToAndPlayQueueItem(startSongIndex.toString())
 
         saveAndPostPlayQueue(playQueue)
 
         when {
-            shuffle -> setShuffleMode(SHUFFLE_MODE_ALL)
-            mdiaControllerCompat.shuffleMode == SHUFFLE_MODE_ALL -> setShuffleMode(SHUFFLE_MODE_NONE)
+            shuffle -> setShuffleMode(true)
+            controller.shuffleModeEnabled -> setShuffleMode(false)
         }
     }
 
@@ -604,8 +596,12 @@ class MainActivity : AppCompatActivity() {
      *
      * @param queueItemId The ID of the target QueueItem object.
      */
-    fun skipToAndPlayQueueItem(queueItemId: Long) {
-        mdiaController.transportControls.skipToQueueItem(queueItemId)
+    fun skipToAndPlayQueueItem(queueItemId: String) {
+        val index = playQueueViewModel.playQueue.value?.indexOfFirst {
+            i -> i.mediaId == queueItemId
+        } ?: return
+        controller.seekTo(index, 0)
+        controller.prepare()
         controller.play()
     }
 
@@ -847,17 +843,12 @@ class MainActivity : AppCompatActivity() {
 
     /** Restore the play queue and playback state from the last save. */
     private fun restoreMediaSession() = lifecycleScope.launch {
-        val repeatMode = sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_NONE)
-        val repeatBundle = Bundle().apply {
-            putInt(REPEAT_MODE, repeatMode)
-        }
-        mdiaController.sendCommand(SET_REPEAT_MODE, repeatBundle, null)
+        val repeatMode = sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_OFF)
+        controller.repeatMode = repeatMode
 
-        val shuffleMode = sharedPreferences.getInt(SHUFFLE_MODE, SHUFFLE_MODE_NONE)
-        val shuffleBundle = Bundle().apply {
-            putInt(SHUFFLE_MODE, shuffleMode)
-        }
-        mdiaController.sendCommand(SET_SHUFFLE_MODE, shuffleBundle, null)
+        // FIXME - REMOVE THIS IF YOU HANDLE THE SHUFFLE BEHAVIOUR YOURSELF
+        val shuffleMode = sharedPreferences.getBoolean(SHUFFLE_MODE, false)
+        controller.shuffleModeEnabled = shuffleMode
 
         val queueItemPairsJson = sharedPreferences.getString(PLAY_QUEUE_ITEMS, null) ?: return@launch
         val currentQueueItemId = sharedPreferences.getString(CURRENT_QUEUE_ITEM_ID, null)
