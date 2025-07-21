@@ -34,17 +34,7 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_NEXT
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PAUSE
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PLAY
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ACTION_PREVIOUS
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MEDIA_ERROR_EMPTY_PLAY_QUEUE
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_REPEAT_MODE
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_SHUFFLE_MODE
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.UPDATE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.google.common.util.concurrent.Futures

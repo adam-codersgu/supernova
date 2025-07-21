@@ -8,8 +8,6 @@ import android.content.SharedPreferences
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.support.v4.media.MediaMetadataCompat
-import android.support.v4.media.session.PlaybackStateCompat.*
 import android.transition.TransitionInflater
 import android.view.LayoutInflater
 import android.view.View
@@ -21,6 +19,10 @@ import androidx.activity.OnBackPressedCallback
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player.REPEAT_MODE_ALL
+import androidx.media3.common.Player.REPEAT_MODE_OFF
+import androidx.media3.common.Player.REPEAT_MODE_ONE
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
@@ -33,6 +35,8 @@ import com.codersguidebook.supernova.SettingsActivity
 import com.codersguidebook.supernova.databinding.FragmentCurrentlyPlayingBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.BaseFragment
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ALBUM_ID
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MEDIA_ID
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_ACTIVE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_TYPE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CUSTOM_ANIMATION_IMAGE_IDS
@@ -176,14 +180,14 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
             }
         }
 
-        val shuffleMode = sharedPreferences.getInt(SHUFFLE_MODE, SHUFFLE_MODE_NONE)
+        val shuffleMode = sharedPreferences.getBoolean(SHUFFLE_MODE, false)
         setShuffleButtonAppearance(shuffleMode)
 
         binding.currentButtonShuffle.setOnClickListener {
             setShuffleButtonAppearance(mainActivity.toggleShuffleMode())
         }
         
-        val repeatMode = sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_NONE)
+        val repeatMode = sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_OFF)
         setRepeatButtonAppearance(repeatMode)
 
         binding.currentButtonRepeat.setOnClickListener {
@@ -242,21 +246,21 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
      * @param metadata MediaMetadataCompat object detailing the currently playing song's metadata, or null
      * if playback has stopped and any loaded metadata should be cleared.
      */
-    private fun updateCurrentlyDisplayedMetadata(metadata: MediaMetadataCompat?) = lifecycleScope.launch(Dispatchers.Main) {
-        val currentMediaId = metadata?.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)?.toLong()
+    private fun updateCurrentlyDisplayedMetadata(metadata: MediaMetadata?) = lifecycleScope.launch(Dispatchers.Main) {
+        val currentMediaId = metadata?.extras?.getString(MEDIA_ID)
         currentSong = withContext(Dispatchers.IO) {
-            if (currentMediaId != null) musicLibraryViewModel.getSongById(currentMediaId)
+            if (currentMediaId != null) musicLibraryViewModel.getSongById(currentMediaId.toLong())
             else null
         }
 
         setFavouriteButtonStyle(currentSong?.isFavourite ?: false)
 
-        binding.title.text = metadata?.getString(MediaMetadataCompat.METADATA_KEY_TITLE)
-        binding.artist.text = metadata?.getString(MediaMetadataCompat.METADATA_KEY_ARTIST)
-        binding.album.text = metadata?.getString(MediaMetadataCompat.METADATA_KEY_ALBUM)
+        binding.title.text = metadata?.title
+        binding.artist.text = metadata?.artist
+        binding.album.text = metadata?.albumTitle
 
         if (metadata != null) {
-            val albumId = metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI)
+            val albumId = metadata.extras?.getString(ALBUM_ID)
             ImageHandlingHelper.loadImageByAlbumId(mainActivity.application, albumId, binding.artwork)
         } else {
             Glide.with(mainActivity)
@@ -321,10 +325,10 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
     /**
      * Set the tint of the shuffle button based on the active shuffle mode.
      *
-     * @param shuffleMode An Integer representing the active shuffle mode preference.
+     * @param shuffleMode A Boolean indicating whether the playlist is currently shuffled.
      */
-    private fun setShuffleButtonAppearance(shuffleMode: Int) {
-        if (shuffleMode == SHUFFLE_MODE_ALL) {
+    private fun setShuffleButtonAppearance(shuffleMode: Boolean) {
+        if (shuffleMode) {
             accent?.let { binding.currentButtonShuffle.setColorFilter(it) }
         } else onSurface60?.let { binding.currentButtonShuffle.setColorFilter(it) }
     }
@@ -336,7 +340,7 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
      */
     private fun setRepeatButtonAppearance(repeatMode: Int) {
         when (repeatMode) {
-            REPEAT_MODE_NONE -> {
+            REPEAT_MODE_OFF -> {
                 binding.currentButtonRepeat.setImageDrawable(ContextCompat.getDrawable(requireActivity(), R.drawable.ic_repeat))
                 onSurface60?.let { binding.currentButtonRepeat.setColorFilter(it) }
             }
