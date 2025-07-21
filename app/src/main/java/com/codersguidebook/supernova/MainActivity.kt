@@ -10,7 +10,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
-import android.support.v4.media.session.PlaybackStateCompat.*
 import android.util.Size
 import android.view.Menu
 import android.view.ViewGroup

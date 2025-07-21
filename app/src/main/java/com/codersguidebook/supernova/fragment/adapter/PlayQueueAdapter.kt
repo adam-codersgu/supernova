@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
@@ -19,8 +20,8 @@ import com.google.android.material.color.MaterialColors
 
 class PlayQueueAdapter(private val fragment: PlayQueueFragment
 , private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-    var currentlyPlayingQueueId = -1L
-    val playQueue = mutableListOf<QueueItem>()
+    var currentlyPlayingQueueId = ""
+    val playQueue = mutableListOf<MediaItem>()
 
     inner class ViewHolderPlayQueue(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
@@ -32,11 +33,11 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
         init {
             itemView.isClickable = true
             itemView.setOnClickListener {
-                activity.skipToAndPlayQueueItem(playQueue[layoutPosition].queueId)
+                activity.skipToAndPlayQueueItem(playQueue[layoutPosition].mediaId)
             }
             btnSongMenu.setOnClickListener {
                 val isCurrentlyPlayingSelected =
-                    playQueue[layoutPosition].queueId == currentlyPlayingQueueId
+                    playQueue[layoutPosition].mediaId == currentlyPlayingQueueId
                 activity.openDialog(
                     QueueOptions(playQueue[layoutPosition],
                     isCurrentlyPlayingSelected)
@@ -53,7 +54,6 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
     @SuppressLint("ClickableViewAccessibility")
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         holder as ViewHolderPlayQueue
-        val currentQueueItemDescription = playQueue[position].description
 
         val accent = MaterialColors.getColor(activity, com.google.android.material.R.attr.colorAccent, Color.CYAN)
         val onSurface = MaterialColors.getColor(activity, com.google.android.material.R.attr.colorOnSurface, Color.LTGRAY)
@@ -65,12 +65,12 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
             return@setOnTouchListener true
         }
 
-        holder.txtSongTitle.text = currentQueueItemDescription.title
+        holder.txtSongTitle.text = playQueue[position].mediaMetadata.title
             ?: activity.getString(R.string.default_title)
-        holder.txtSongArtist.text = currentQueueItemDescription.subtitle
+        holder.txtSongArtist.text = playQueue[position].mediaMetadata.subtitle
             ?: activity.getString(R.string.default_artist)
 
-        if (playQueue[position].queueId == currentlyPlayingQueueId) {
+        if (playQueue[position].mediaId == currentlyPlayingQueueId) {
             holder.txtSongTitle.setTextColor(accent)
             holder.txtSongArtist.setTextColor(accent)
         } else {
@@ -79,16 +79,16 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
         }
     }
 
-    fun changeCurrentlyPlayingQueueItemId(newQueueId: Long) {
+    fun changeCurrentlyPlayingQueueItemId(newQueueId: String) {
         val oldCurrentlyPlayingIndex = playQueue.indexOfFirst {
-            it.queueId == currentlyPlayingQueueId
+            it.mediaId == currentlyPlayingQueueId
         }
 
         currentlyPlayingQueueId = newQueueId
         if (oldCurrentlyPlayingIndex != -1) notifyItemChanged(oldCurrentlyPlayingIndex)
 
         val newCurrentlyPlayingIndex = playQueue.indexOfFirst {
-            it.queueId == currentlyPlayingQueueId
+            it.mediaId == currentlyPlayingQueueId
         }
         if (newCurrentlyPlayingIndex != -1) {
             notifyItemChanged(newCurrentlyPlayingIndex)
@@ -102,8 +102,8 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
      *
      * @param newPlayQueue The new list of QueueItem objects that should be displayed.
      */
-    fun processNewPlayQueue(newPlayQueue: List<QueueItem>) {
-        if (newPlayQueue.map { it.queueId } == playQueue.map { it.queueId }) {
+    fun processNewPlayQueue(newPlayQueue: List<MediaItem>) {
+        if (newPlayQueue.map { it.queueId } == playQueue.map { it.mediaId }) {
             return
         }
 
@@ -113,7 +113,7 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
                     playQueue.add(queueItem)
                     notifyItemInserted(index)
                 }
-                playQueue.find { it.queueId == queueItem.queueId } == null -> {
+                playQueue.find { it.mediaId == queueItem.mediaId } == null -> {
                     playQueue.add(index, queueItem)
                     notifyItemInserted(index)
                 }

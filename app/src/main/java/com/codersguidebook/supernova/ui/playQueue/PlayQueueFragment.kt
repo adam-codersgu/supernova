@@ -1,7 +1,6 @@
 package com.codersguidebook.supernova.ui.playQueue
 
 import android.os.Bundle
-import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -11,6 +10,7 @@ import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
+import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG
 import androidx.recyclerview.widget.ItemTouchHelper.DOWN
@@ -23,6 +23,7 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.CreatePlaylist
 import com.codersguidebook.supernova.fragment.RecyclerViewFragment
 import com.codersguidebook.supernova.fragment.adapter.PlayQueueAdapter
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MEDIA_ID
 
 class PlayQueueFragment : RecyclerViewFragment() {
     private val playQueueViewModel: PlayQueueViewModel by activityViewModels()
@@ -31,7 +32,7 @@ class PlayQueueFragment : RecyclerViewFragment() {
     private val itemTouchHelper by lazy {
         val simpleItemTouchCallback = object : SimpleCallback(UP or DOWN, 0) {
             var to: Int? = null
-            var queueItem: QueueItem? = null
+            var queueItem: MediaItem? = null
 
             override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
                 super.onSelectedChanged(viewHolder, actionState)
@@ -45,7 +46,7 @@ class PlayQueueFragment : RecyclerViewFragment() {
                 viewHolder.itemView.alpha = 1.0f
 
                 if (to != null && queueItem != null) {
-                    mainActivity.notifyQueueItemMoved(queueItem!!.queueId, to!!)
+                    mainActivity.notifyQueueItemMoved(queueItem!!.mediaId, to!!)
                     to = null
                     queueItem = null
                 }
@@ -92,7 +93,7 @@ class PlayQueueFragment : RecyclerViewFragment() {
         playQueueViewModel.playQueue.value?.let { updateRecyclerView(it) }
     }
 
-    private fun updateRecyclerView(playQueue: List<QueueItem>) {
+    private fun updateRecyclerView(playQueue: List<MediaItem>) {
         setIsUpdatingTrue()
 
         if (adapter.playQueue.isEmpty()) {
@@ -118,9 +119,11 @@ class PlayQueueFragment : RecyclerViewFragment() {
                     R.id.savePlayQueue -> {
                         val songIds = mutableListOf<Long>()
                         for (queueItem in adapter.playQueue) {
-                            songIds.add(queueItem.description.mediaId?.toLong() ?: continue)
+                            songIds.add(
+                                queueItem.mediaMetadata.extras?.getString(MEDIA_ID)?.toLong()
+                                    ?: continue
+                            )
                         }
-
                         if (songIds.isNotEmpty()) mainActivity.openDialog(CreatePlaylist(songIds))
                         else Toast.makeText(mainActivity, getString(R.string.empty_play_queue), Toast.LENGTH_SHORT).show()
 
@@ -136,7 +139,7 @@ class PlayQueueFragment : RecyclerViewFragment() {
         super.onResume()
 
         val currentlyPlayingQueueItemIndex = adapter.playQueue.indexOfFirst { queueItem ->
-            queueItem.queueId == adapter.currentlyPlayingQueueId
+            queueItem.mediaId == adapter.currentlyPlayingQueueId
         }
 
         if (currentlyPlayingQueueItemIndex != -1) {
