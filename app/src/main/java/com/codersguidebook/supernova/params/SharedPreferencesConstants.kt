@@ -19,7 +19,7 @@ class SharedPreferencesConstants {
         const val PLAYBACK_DURATION = "playback_duration"
         const val PLAYBACK_POSITION = "playback_position"
         const val REPEAT_MODE = "repeat_mode"
-        const val SHUFFLE_MODE = "shuffle_mode"
+        const val SHUFFLE_MODE = "shuffle_mode_new"
         const val SONG_OF_THE_DAY_LAST_UPDATED = "song_of_the_day_last_updated"
     }
 }

@@ -7,7 +7,9 @@ package com.codersguidebook.supernova.params
 class MediaServiceConstants {
     companion object {
         const val ALBUM_ID = "albumId"
+        // TODO - ULTIMATELY REMOVE CURRENTLY PLAYING METADATA, USE THE MEDIAITEM, AND SOURCE MEDIA ID FROM THERE
         const val MEDIA_ID = "mediaId"
+        const val QUEUE_ID = "queueId"
         const val NO_ACTION = -1
         const val NOTIFICATION_CHANNEL_ID = "supernova"
         const val SONG_DELETED = 0

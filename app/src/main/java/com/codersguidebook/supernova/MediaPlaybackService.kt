@@ -1,77 +1,64 @@
 package com.codersguidebook.supernova
 
-import android.Manifest.permission.READ_EXTERNAL_STORAGE
-import android.app.PendingIntent
 import android.content.*
-import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.AudioManager.*
-import android.media.MediaPlayer
 import android.media.MediaPlayer.*
 import android.os.*
 import android.provider.MediaStore
-import android.service.media.MediaBrowserService
-import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
-import android.support.v4.media.MediaMetadataCompat
-import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
-import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.media.session.PlaybackStateCompat.*
-import android.text.TextUtils
-import android.view.KeyEvent
-import android.widget.Toast
-import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import androidx.media.MediaBrowserServiceCompat
+import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
-import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
-import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
-import java.io.File
-import java.io.FileInputStream
-import java.io.IOException
 
 /**
  * DOCUMENTATION
  *
  * https://developer.android.com/media/implement/surfaces/mobile
  */
+@UnstableApi
 class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
 
     private var currentlyPlayingQueueItemId = -1L
     // private val handler = Handler(Looper.getMainLooper())
-    private var mediaPlayer: MediaPlayer? = null
+    //private var mediaPlayer: MediaPlayer? = null
     private val playQueue: MutableList<QueueItem> = mutableListOf()
-    // private lateinit var audioFocusRequest: AudioFocusRequest
+    private lateinit var audioFocusRequest: AudioFocusRequest
     // private lateinit var mediaSessionCompat: MediaSessionCompat
     private lateinit var player: Player
     private var mediaSession: MediaSession? = null
 
-    /* private val afChangeListener = OnAudioFocusChangeListener { focusChange ->
+    private val afChangeListener = OnAudioFocusChangeListener { focusChange ->
         when (focusChange) {
             AUDIOFOCUS_LOSS, AUDIOFOCUS_LOSS_TRANSIENT -> {
-                mediaSession.controller.transportControls.pause()
+                player.pause()
             }
-            AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> mediaPlayer?.setVolume(0.3f, 0.3f)
-            AUDIOFOCUS_GAIN -> mediaPlayer?.setVolume(1.0f, 1.0f)
+            AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> player.volume = 0.3f
+            AUDIOFOCUS_GAIN -> player.volume = 1.0f
         }
-    } */
+    }
+
+    private val playerListener = object : Player.Listener {
+        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+            super.onPlayWhenReadyChanged(playWhenReady, reason)
+            if (playWhenReady)
+                requestAudioFocus()
+        }
+    }
 
     private val noisyReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            if (mediaPlayer != null && mediaPlayer!!.isPlaying) mediaSession!!.player.pause()
+            if (player.isPlaying) mediaSession!!.player.pause()
         }
     }
 
@@ -195,18 +182,8 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
 
             try {
                 if (mediaPlayer != null && !mediaPlayer!!.isPlaying) {
-                    val audioManager = applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
-                    audioFocusRequest = AudioFocusRequest.Builder(AUDIOFOCUS_GAIN).run {
-                        setAudioAttributes(AudioAttributes.Builder().run {
-                            setOnAudioFocusChangeListener(afChangeListener)
-                            setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                            build()
-                        })
-                        build()
-                    }
 
-                    val audioFocusRequestOutcome = audioManager.requestAudioFocus(audioFocusRequest)
                     if (audioFocusRequestOutcome == AUDIOFOCUS_REQUEST_GRANTED) {
                         startService(Intent(applicationContext, MediaBrowserService::class.java))
                         mediaSessionCompat.isActive = true
@@ -442,20 +419,6 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
     } */
 
     /**
-     * Generate a Bundle featuring the duration of the currently playing song. The bundle can be
-     * packaged with media playback state updates.
-     *
-     * @return Bundle containing a key called duration that holds an Integer representing the
-     * duration of the currently playing song.
-     */
-    private fun getBundleWithSongDuration(): Bundle {
-        val playbackDuration = mediaPlayer?.duration ?: 0
-        return Bundle().apply {
-            putInt("duration", playbackDuration)
-        }
-    }
-
-    /**
      * Retrieves the QueueItem object for the currently playing song.
      *
      * @return QueueItem or null if no currently playing song can be found.
@@ -521,10 +484,32 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
             val builder = Builder().setActions(PlaybackStateCompat.ACTION_PLAY)
             setPlaybackState(builder.build())
         } */
-        player = ExoPlayer.Builder(this).build()
+        player = ExoPlayer.Builder(this).build().also { it.addListener(playerListener) }
         mediaSession = MediaSession.Builder(this, player).setCallback(this).build()
         initNoisyReceiver()
         // playbackPositionRunnable.run()
+    }
+
+    private fun requestAudioFocus() {
+        audioFocusRequest = AudioFocusRequest.Builder(AUDIOFOCUS_GAIN).run {
+            setAudioAttributes(AudioAttributes.Builder().run {
+                setOnAudioFocusChangeListener(afChangeListener)
+                setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                build()
+            })
+            build()
+        }
+        val audioManager = applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        /* val audioFocusRequestOutcome = */ audioManager.requestAudioFocus(audioFocusRequest)
+    }
+
+    override fun onMediaButtonEvent(
+        session: MediaSession,
+        controllerInfo: MediaSession.ControllerInfo,
+        intent: Intent
+    ): Boolean {
+        Log.i("DEBUG", "An intent received with action ${intent.action}")
+        return super.onMediaButtonEvent(session, controllerInfo, intent)
     }
 
     override fun onAddMediaItems(
@@ -532,7 +517,11 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
         controller: MediaSession.ControllerInfo,
         mediaItems: MutableList<MediaItem>
     ): ListenableFuture<MutableList<MediaItem>> {
-        val updatedMediaItems = mediaItems.map { it.buildUpon().setUri(it.mediaId).build() }.toMutableList()
+        val updatedMediaItems = mediaItems.map {
+            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                it.mediaId.toLong())
+            it.buildUpon().setUri(uri).build()
+        }.toMutableList()
         return Futures.immediateFuture(updatedMediaItems)
     }
 

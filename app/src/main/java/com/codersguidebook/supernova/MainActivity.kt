@@ -22,6 +22,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
@@ -36,6 +37,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.Player.REPEAT_MODE_ALL
 import androidx.media3.common.Player.REPEAT_MODE_OFF
 import androidx.media3.common.Player.REPEAT_MODE_ONE
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.navigation.findNavController
@@ -67,7 +69,6 @@ import com.codersguidebook.supernova.utils.*
 import com.google.android.material.navigation.NavigationView
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
@@ -195,6 +196,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @OptIn(UnstableApi::class)
     override fun onStart() {
         super.onStart()
         val sessionToken = SessionToken(this, ComponentName(this, MediaPlaybackService::class.java))
@@ -364,7 +366,7 @@ class MainActivity : AppCompatActivity() {
      */
     private fun findSongIdInPlayQueueToRemove(songId: Long) = lifecycleScope.launch(Dispatchers.Default) {
         val queueItemsToRemove = playQueueViewModel.playQueue.value?.filter {
-            it.mediaMetadata.extras?.getString(MEDIA_ID) == songId.toString()
+            it.mediaId == songId.toString()
         }?.map { i -> i.mediaId } ?: return@launch
         removeQueueItemById(queueItemsToRemove)
     }
@@ -504,28 +506,37 @@ class MainActivity : AppCompatActivity() {
      * N.B. If shuffle is true then the startIndex is ignored.
      * @param shuffle Indicates whether the play queue should be shuffled.
      */
-    fun playNewPlayQueue(songs: List<Song>, startIndex: Int = 0, shuffle: Boolean = false)
-            = lifecycleScope.launch(Dispatchers.Default) {
+    fun playNewPlayQueue(songs: List<Song>, startIndex: Int = 0, shuffle: Boolean = false) {
         if (songs.isEmpty() || startIndex >= songs.size) {
             Toast.makeText(this@MainActivity,
                 getString(R.string.error_generic_playback), Toast.LENGTH_LONG).show()
-            return@launch
+            return
         }
-        controller.stop()
+        if (controller.isPlaying) {
+            controller.stop()
+        }
 
         val startSongIndex = if (shuffle) (songs.indices).random()
         else startIndex
 
         val playQueue = songs.mapIndexed { i, s -> s.getMediaItem(i.toString()) }.toList()
-        controller.setMediaItems(playQueue)
-        skipToAndPlayQueueItem(startSongIndex.toString())
 
-        saveAndPostPlayQueue(playQueue)
+        /* fixme val mediaItem = MediaItem.fromUri("content://media/external/audio/media/1000004448".toUri())
+            .buildUpon()
+            .setMediaId("content://media/external/audio/media/1000004448")
+            .build() */
+        controller.setMediaItems(playQueue)
+// fixme        skipToAndPlayQueueItem(startSongIndex.toString())
+
+        controller.prepare()
+        controller.play()
+
+        /* fixme saveAndPostPlayQueue(playQueue)
 
         when {
             shuffle -> setShuffleMode(true)
             controller.shuffleModeEnabled -> setShuffleMode(false)
-        }
+        } */
     }
 
     /**
@@ -778,7 +789,7 @@ class MainActivity : AppCompatActivity() {
             // All occurrences of the song need to be updated in the play queue
             val playQueue = playQueueViewModel.playQueue.value
             val affectedQueueItems = playQueue?.filter {
-                it.mediaMetadata.extras?.getString(MEDIA_ID) == song.songId.toString()
+                it.mediaId == song.songId.toString()
             }
             if (affectedQueueItems?.isEmpty() != false) continue
 
@@ -852,13 +863,14 @@ class MainActivity : AppCompatActivity() {
         val queueItemPairsJson = sharedPreferences.getString(PLAY_QUEUE_ITEMS, null) ?: return@launch
         val currentQueueItemId = sharedPreferences.getString(CURRENT_QUEUE_ITEM_ID, null)
 
+        //   fixme
         val itemType = object : TypeToken<List<MediaItem>>() {}.type
-        val mediaItems = Gson().fromJson<List<MediaItem>>(queueItemPairsJson, itemType)
-        controller.addMediaItems(mediaItems)
+        //val mediaItems = Gson().fromJson<List<MediaItem>>(queueItemPairsJson, itemType)
+        //controller.addMediaItems(mediaItems)
 
-        val currentItemIndex = mediaItems.indexOfFirst { i -> i.mediaId == currentQueueItemId }
+        //val currentItemIndex = mediaItems.indexOfFirst { i -> i.mediaId == currentQueueItemId }
         val playbackPosition = sharedPreferences.getInt(PLAYBACK_POSITION, 0)
-        controller.seekTo(currentItemIndex, playbackPosition.toLong())
+        //controller.seekTo(currentItemIndex, playbackPosition.toLong())
     }
 
     /** Refresh the music library. Add new songs, remove deleted songs, and implement language changes. */

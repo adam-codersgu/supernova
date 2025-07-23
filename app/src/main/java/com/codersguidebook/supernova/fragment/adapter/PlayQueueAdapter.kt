@@ -2,7 +2,7 @@ package com.codersguidebook.supernova.fragment.adapter
 
 import android.annotation.SuppressLint
 import android.graphics.Color
-import android.support.v4.media.session.MediaSessionCompat.QueueItem
+import android.os.Build
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -103,7 +103,7 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
      * @param newPlayQueue The new list of QueueItem objects that should be displayed.
      */
     fun processNewPlayQueue(newPlayQueue: List<MediaItem>) {
-        if (newPlayQueue.map { it.queueId } == playQueue.map { it.mediaId }) {
+        if (newPlayQueue.map { it.mediaId } == playQueue.map { it.mediaId }) {
             return
         }
 
@@ -117,13 +117,13 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
                     playQueue.add(index, queueItem)
                     notifyItemInserted(index)
                 }
-                newPlayQueue.find { it.queueId == playQueue[index].queueId } == null -> {
+                newPlayQueue.find { it.mediaId == playQueue[index].mediaId } == null -> {
                     var numberOfItemsRemoved = 0
                     do {
                         playQueue.removeAt(index)
                         ++numberOfItemsRemoved
                     } while (index < playQueue.size &&
-                        newPlayQueue.find { it.queueId == playQueue[index].queueId } == null)
+                        newPlayQueue.find { it.mediaId == playQueue[index].mediaId } == null)
 
                     when {
                         numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
@@ -136,7 +136,13 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
 
         if (playQueue.size > newPlayQueue.size) {
             val numberItemsToRemove = playQueue.size - newPlayQueue.size
-            repeat(numberItemsToRemove) { playQueue.removeLast() }
+            repeat(numberItemsToRemove) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                    playQueue.removeLast()
+                } else {
+                    playQueue.removeAt(playQueue.size - 1)
+                }
+            }
             notifyItemRangeRemoved(newPlayQueue.size, numberItemsToRemove)
         }
     }
