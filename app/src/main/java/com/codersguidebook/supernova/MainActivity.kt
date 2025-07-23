@@ -515,11 +515,6 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        if (controller.isPlaying) {
-            controller.stop()
-            controller.clearMediaItems()
-        }
-
         val startSongIndex = if (shuffle) (songs.indices).random()
         else startIndex
 
