@@ -34,11 +34,11 @@ data class Song(
         this.playbackProgress = 0L
     }
 
-    private fun getMetadata(queueId: String): MediaMetadata {
+    private fun getMetadata(queueId: Int): MediaMetadata {
         val extras = Bundle().apply {
             putString(ALBUM_ID, this@Song.albumId)
             putString(MEDIA_ID, this@Song.songId.toString())
-            putString(QUEUE_ID, queueId)
+            putInt(QUEUE_ID, queueId)
         }
         return MediaMetadata.Builder()
             .setAlbumTitle(this@Song.albumName)
@@ -48,7 +48,7 @@ data class Song(
             .build()
     }
 
-    fun getMediaItem(queueId: String): MediaItem {
+    fun getMediaItem(queueId: Int): MediaItem {
         return MediaItem.Builder()
             .setMediaId(this@Song.songId.toString())
             .setMediaMetadata(getMetadata(queueId))

@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.QueueOptions
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.QUEUE_ID
 import com.codersguidebook.supernova.ui.playQueue.PlayQueueFragment
 import com.google.android.material.color.MaterialColors
 
@@ -33,7 +34,7 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
         init {
             itemView.isClickable = true
             itemView.setOnClickListener {
-                activity.skipToAndPlayQueueItem(playQueue[layoutPosition].mediaId)
+                activity.skipToAndPlayQueueItem(playQueue[layoutPosition].mediaMetadata.extras!!.getInt(QUEUE_ID))
             }
             btnSongMenu.setOnClickListener {
                 val isCurrentlyPlayingSelected =
