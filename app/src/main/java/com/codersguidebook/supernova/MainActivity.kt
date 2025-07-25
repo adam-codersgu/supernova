@@ -468,7 +468,6 @@ class MainActivity : AppCompatActivity() {
     /** Skip forward to the next song in the play queue. */
     fun skipForward() = controller.seekToNextMediaItem()
 
-    // fixme - https://stackoverflow.com/q/78729407
     /** Rewind the playback of the current song. */
     fun fastRewind() = controller.seekBack()
 
@@ -520,8 +519,22 @@ class MainActivity : AppCompatActivity() {
 
         val playQueue = songs.mapIndexed { i, s -> s.getMediaItem(i) }.toList()
 
-        controller.setMediaItems(playQueue)
-        skipToAndPlayQueueItem(startSongIndex)
+        if (startSongIndex == 0) {
+            controller.setMediaItems(playQueue)
+        } else {
+            val batch = playQueue.subList(startSongIndex, playQueue.size)
+            controller.setMediaItems(batch)
+        }
+
+        if (!controller.playWhenReady) {
+            controller.prepare()
+        }
+        controller.play()
+
+        if (startSongIndex > 0) {
+            val batch = playQueue.subList(0, startSongIndex)
+            controller.addMediaItems(0, batch)
+        }
 
         saveAndPostPlayQueue(playQueue)
 
@@ -599,12 +612,6 @@ class MainActivity : AppCompatActivity() {
      * @param queueItemId The ID of the target QueueItem object.
      */
     fun skipToAndPlayQueueItem(queueItemId: Int) {
-        if (!controller.playWhenReady) {
-            // TODO - ONLY REMOVE ONCE VERIFIED THE BEHAVIOUR OF THE PLAY QUEUE FRAGMENT
-            Log.i("DEBUG", "Player not ready, so preparing")
-            controller.prepare()
-        }
-
         val currentIndex = controller.currentMediaItemIndex
         val targetIndex = playQueueViewModel.playQueue.value?.indexOfFirst {
             i -> i.mediaMetadata.extras?.getInt(QUEUE_ID) == queueItemId
