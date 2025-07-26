@@ -24,6 +24,7 @@ import com.codersguidebook.supernova.dialogs.CreatePlaylist
 import com.codersguidebook.supernova.fragment.RecyclerViewFragment
 import com.codersguidebook.supernova.fragment.adapter.PlayQueueAdapter
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MEDIA_ID
+import com.codersguidebook.supernova.utils.MediaItemHelper.extractQueueId
 
 class PlayQueueFragment : RecyclerViewFragment() {
     private val playQueueViewModel: PlayQueueViewModel by activityViewModels()
@@ -46,7 +47,8 @@ class PlayQueueFragment : RecyclerViewFragment() {
                 viewHolder.itemView.alpha = 1.0f
 
                 if (to != null && queueItem != null) {
-                    mainActivity.notifyQueueItemMoved(queueItem!!.mediaId, to!!)
+                    mainActivity.notifyQueueItemMoved(
+                        extractQueueId(queueItem!!.mediaId), to!!)
                     to = null
                     queueItem = null
                 }
@@ -79,7 +81,7 @@ class PlayQueueFragment : RecyclerViewFragment() {
         }
 
         playQueueViewModel.currentQueueItemId.observe(viewLifecycleOwner) { position ->
-            position?.let { adapter.changeCurrentlyPlayingQueueItemId(it) }
+            position?.let { adapter.changeCurrentlyPlayingQueueItemId(it.toInt()) }
         }
 
         itemTouchHelper.attachToRecyclerView(binding.root)
@@ -139,7 +141,7 @@ class PlayQueueFragment : RecyclerViewFragment() {
         super.onResume()
 
         val currentlyPlayingQueueItemIndex = adapter.playQueue.indexOfFirst { queueItem ->
-            queueItem.mediaId == adapter.currentlyPlayingQueueId
+            extractQueueId(queueItem.mediaId) == adapter.currentlyPlayingQueueId
         }
 
         if (currentlyPlayingQueueItemIndex != -1) {

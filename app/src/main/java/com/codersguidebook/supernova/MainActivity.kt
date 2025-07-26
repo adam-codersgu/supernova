@@ -56,7 +56,6 @@ import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MEDIA_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NO_ACTION
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.QUEUE_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_DELETED
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_UPDATED
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.APPLICATION_LANGUAGE
@@ -68,6 +67,7 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.codersguidebook.supernova.utils.*
+import com.codersguidebook.supernova.utils.MediaItemHelper.extractQueueId
 import com.google.android.material.navigation.NavigationView
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
@@ -257,7 +257,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 super.onMediaItemTransition(mediaItem, reason)
-                savePlayQueueId(mediaItem?.mediaId)
+                savePlayQueueId(extractQueueId(mediaItem?.mediaId ?: return).toString())
             }
 
             override fun onMediaMetadataChanged(metadata: MediaMetadata) {
@@ -377,9 +377,9 @@ class MainActivity : AppCompatActivity() {
      * @param queueId The queue ID of the item to be moved.
      * @param newIndex The new index in the play queue that the item should occupy.
      */
-    fun notifyQueueItemMoved(queueId: String, newIndex: Int) {
+    fun notifyQueueItemMoved(queueId: Int, newIndex: Int) {
         val currentIndex = playQueueViewModel.playQueue.value?.indexOfFirst {
-            i -> i.mediaId == queueId
+            i -> extractQueueId(i.mediaId)  == queueId
         } ?: return
 
         controller.moveMediaItem(currentIndex, newIndex)
@@ -391,7 +391,7 @@ class MainActivity : AppCompatActivity() {
             if (controller.isPlaying) {
                 controller.pause()
             } else {
-                controller.play()
+                play()
             }
         } else {
             playNewPlayQueue(musicLibraryViewModel.allSongs.value ?: return)
@@ -499,6 +499,8 @@ class MainActivity : AppCompatActivity() {
 
     /** Save the queueId of the currently playing queue item to the shared preferences file. */
     private fun savePlayQueueId(queueId: String?) = lifecycleScope.launch(Dispatchers.IO) {
+        // fixme - temp fix, need to clear queue ID when the play queue is empty - here or somewhere else
+        if (queueId == null) return@launch
         playQueueViewModel.currentQueueItemId.postValue(queueId)
         sharedPreferences.edit().apply {
             putString(CURRENT_QUEUE_ITEM_ID, queueId)
@@ -531,9 +533,10 @@ class MainActivity : AppCompatActivity() {
 
         val startSongIndex = if (shuffle) (songs.indices).random()
         else startIndex
-        skipToQueueIndex(startSongIndex)
+        skipToQueueIndex(startSongIndex, 0)
+        savePlayQueueId(extractQueueId(playQueue[startSongIndex].mediaId).toString())
 
-        controller.play()
+        play()
 
         saveAndPostPlayQueue(playQueue)
 
@@ -542,6 +545,8 @@ class MainActivity : AppCompatActivity() {
             controller.shuffleModeEnabled -> setShuffleMode(false)
         }
     }
+
+    fun play() = controller.play()
 
     /**
      * Add a list of songs to the play queue. The songs can be added to the end of the play queue
@@ -606,28 +611,22 @@ class MainActivity : AppCompatActivity() {
     fun seekTo(position: Int) = controller.seekTo(position.toLong())
 
     /**
-     * Skip to a specific item in the play queue based on its ID.
+     * Skip to a specific item in the play queue based on its index in the play queue.
      *
-     * @param queueItemId The ID of the target QueueItem object.
+     * @param targetIndex The index in the queue to skip to.
      */
-    fun skipToAndPlayQueueItem(queueItemId: Int) {
-        val index = playQueueViewModel.playQueue.value?.indexOfFirst {
-            i -> i.mediaMetadata.extras?.getInt(QUEUE_ID) == queueItemId
-        } ?: queueItemId
-        skipToQueueIndex(index)
-
-        controller.play()
-    }
-
-    private fun skipToQueueIndex(targetIndex: Int) {
-        val currentIndex = controller.currentMediaItemIndex
-        if (targetIndex > currentIndex) {
-            val times = targetIndex - currentIndex
+    fun skipToQueueIndex(targetIndex: Int, currentIndex: Int? = null) {
+        val currentIndex2 = currentIndex ?: playQueueViewModel.playQueue.value?.indexOfFirst {
+            i -> extractQueueId(i.mediaId) ==
+                playQueueViewModel.currentQueueItemId.value?.toInt()
+        } ?: return
+        if (targetIndex > currentIndex2) {
+            val times = targetIndex - currentIndex2
             repeat(times) {
                 controller.seekToNextMediaItem()
             }
         } else {
-            val times = currentIndex - targetIndex
+            val times = currentIndex2 - targetIndex
             repeat(times) {
                 controller.seekToPreviousMediaItem()
             }
@@ -820,8 +819,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun replaceQueueItem(queueItem: MediaItem, song: Song) {
         val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return
-        val queueItemQueueId = queueItem.mediaMetadata.extras?.getInt(QUEUE_ID) ?: return
-        val index = playQueue.indexOfFirst{ i -> i.mediaMetadata.extras?.getInt(QUEUE_ID) ==
+        val queueItemQueueId = extractQueueId(queueItem.mediaId)
+        val index = playQueue.indexOfFirst{ i -> extractQueueId(i.mediaId) ==
                 queueItemQueueId }
         val mediaItem = song.getMediaItem(queueItemQueueId)
         playQueue[index] = mediaItem
@@ -913,7 +912,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val index = mediaItems.indexOfFirst { i -> i.mediaId == currentQueueItemId }
-        skipToQueueIndex(index)
+        skipToQueueIndex(index, 0)
 
         delay(150L)
 

@@ -1,9 +1,8 @@
 package com.codersguidebook.supernova.entities
 
-import android.content.ContentUris
+
 import android.os.Bundle
 import android.os.Parcelable
-import android.provider.MediaStore
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.room.ColumnInfo
@@ -11,7 +10,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ALBUM_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MEDIA_ID
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.QUEUE_ID
+import com.codersguidebook.supernova.utils.MediaItemHelper.combineSongIdAndQueueId
 import kotlinx.parcelize.Parcelize
 
 /** Data class for mapping a song's metadata to a database table called music_library. */
@@ -34,11 +33,10 @@ data class Song(
         this.playbackProgress = 0L
     }
 
-    private fun getMetadata(queueId: Int): MediaMetadata {
+    private fun getMetadata(): MediaMetadata {
         val extras = Bundle().apply {
             putString(ALBUM_ID, this@Song.albumId)
             putString(MEDIA_ID, this@Song.songId.toString())
-            putInt(QUEUE_ID, queueId)
         }
         return MediaMetadata.Builder()
             .setAlbumTitle(this@Song.albumName)
@@ -50,8 +48,8 @@ data class Song(
 
     fun getMediaItem(queueId: Int): MediaItem {
         return MediaItem.Builder()
-            .setMediaId(this@Song.songId.toString())
-            .setMediaMetadata(getMetadata(queueId))
+            .setMediaId(combineSongIdAndQueueId(this@Song.songId, queueId))
+            .setMediaMetadata(getMetadata())
             .build()
     }
 }

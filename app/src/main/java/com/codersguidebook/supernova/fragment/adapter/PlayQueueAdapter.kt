@@ -15,13 +15,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.QueueOptions
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.QUEUE_ID
 import com.codersguidebook.supernova.ui.playQueue.PlayQueueFragment
+import com.codersguidebook.supernova.utils.MediaItemHelper.extractQueueId
 import com.google.android.material.color.MaterialColors
 
 class PlayQueueAdapter(private val fragment: PlayQueueFragment
 , private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-    var currentlyPlayingQueueId = ""
+    var currentlyPlayingQueueId = -1
     val playQueue = mutableListOf<MediaItem>()
 
     inner class ViewHolderPlayQueue(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -34,11 +34,12 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
         init {
             itemView.isClickable = true
             itemView.setOnClickListener {
-                activity.skipToAndPlayQueueItem(playQueue[layoutPosition].mediaMetadata.extras!!.getInt(QUEUE_ID))
+                activity.skipToQueueIndex(layoutPosition)
+                activity.play()
             }
             btnSongMenu.setOnClickListener {
                 val isCurrentlyPlayingSelected =
-                    playQueue[layoutPosition].mediaId == currentlyPlayingQueueId
+                    extractQueueId(playQueue[layoutPosition].mediaId) == currentlyPlayingQueueId
                 activity.openDialog(
                     QueueOptions(playQueue[layoutPosition],
                     isCurrentlyPlayingSelected)
@@ -68,10 +69,10 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
 
         holder.txtSongTitle.text = playQueue[position].mediaMetadata.title
             ?: activity.getString(R.string.default_title)
-        holder.txtSongArtist.text = playQueue[position].mediaMetadata.subtitle
+        holder.txtSongArtist.text = playQueue[position].mediaMetadata.artist
             ?: activity.getString(R.string.default_artist)
 
-        if (playQueue[position].mediaId == currentlyPlayingQueueId) {
+        if (extractQueueId(playQueue[position].mediaId) == currentlyPlayingQueueId) {
             holder.txtSongTitle.setTextColor(accent)
             holder.txtSongArtist.setTextColor(accent)
         } else {
@@ -80,16 +81,16 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
         }
     }
 
-    fun changeCurrentlyPlayingQueueItemId(newQueueId: String) {
+    fun changeCurrentlyPlayingQueueItemId(newQueueId: Int) {
         val oldCurrentlyPlayingIndex = playQueue.indexOfFirst {
-            it.mediaId == currentlyPlayingQueueId
+            extractQueueId(it.mediaId) == currentlyPlayingQueueId
         }
 
         currentlyPlayingQueueId = newQueueId
         if (oldCurrentlyPlayingIndex != -1) notifyItemChanged(oldCurrentlyPlayingIndex)
 
         val newCurrentlyPlayingIndex = playQueue.indexOfFirst {
-            it.mediaId == currentlyPlayingQueueId
+            extractQueueId(it.mediaId) == currentlyPlayingQueueId
         }
         if (newCurrentlyPlayingIndex != -1) {
             notifyItemChanged(newCurrentlyPlayingIndex)
@@ -104,7 +105,8 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
      * @param newPlayQueue The new list of QueueItem objects that should be displayed.
      */
     fun processNewPlayQueue(newPlayQueue: List<MediaItem>) {
-        if (newPlayQueue.map { it.mediaId } == playQueue.map { it.mediaId }) {
+        if (newPlayQueue.map { extractQueueId(it.mediaId) }
+            == playQueue.map { extractQueueId(it.mediaId) }) {
             return
         }
 

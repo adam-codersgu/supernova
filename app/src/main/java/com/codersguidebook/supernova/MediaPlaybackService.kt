@@ -7,8 +7,6 @@ import android.media.AudioManager
 import android.media.AudioManager.*
 import android.media.MediaPlayer.*
 import android.os.*
-import android.provider.MediaStore
-import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat.*
 import android.util.Log
@@ -18,6 +16,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import com.codersguidebook.supernova.utils.MediaItemHelper.getContentUri
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 
@@ -418,62 +417,6 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
         }
     } */
 
-    /**
-     * Retrieves the QueueItem object for the currently playing song.
-     *
-     * @return QueueItem or null if no currently playing song can be found.
-     */
-    private fun getCurrentQueueItem(): QueueItem? {
-        return playQueue.find {
-            it.queueId == currentlyPlayingQueueItemId
-        }
-    }
-
-    /**
-     * Construct a MediaDescriptionCompat object based on the metadata supplied in a Bundle.
-     *
-     * @param bundle A Bundle containing the metadata for a given song.
-     * @return A MediaDescriptionCompat object containing the metadata that can be used by the service.
-     */
-    private fun buildMediaDescriptionFromBundle(bundle: Bundle): MediaDescriptionCompat {
-        return MediaDescriptionCompat.Builder()
-            .setExtras(bundle.getBundle("extras"))
-            .setMediaId(bundle.getString("mediaId"))
-            .setSubtitle(bundle.getString("subtitle"))
-            .setTitle(bundle.getString("title"))
-            .build()
-    }
-
-    /**
-     * Update the metadata for a given item in the play queue.
-     *
-     * @param mediaDescription A MediaDescriptionCompat object containing the metadata for a given song.
-     * @param queueId The ID of the target queue item.
-     */
-    /* private fun updateMetadataForQueueItem(mediaDescription: MediaDescriptionCompat, queueId: Long) {
-        val index = playQueue.indexOfFirst {
-            it.queueId == queueId
-        }
-
-        if (index == -1) return
-
-        playQueue.removeAt(index)
-        val updatedQueueItem = QueueItem(mediaDescription, queueId)
-        playQueue.add(index, updatedQueueItem)
-
-        if (queueId == currentlyPlayingQueueItemId) {
-            setCurrentMetadata()
-            refreshNotification()
-        }
-        setPlayQueue()
-    } */
-
-    /** Set the play queue for the media session and notify all observers of the playback state. */
-    /* private fun setPlayQueue() {
-        mediaSession.setQueue(playQueue)
-        setMediaPlaybackState(mediaSession.controller.playbackState.state)
-    } */
-
     override fun onCreate() {
         super.onCreate()
 
@@ -518,8 +461,7 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
         mediaItems: MutableList<MediaItem>
     ): ListenableFuture<MutableList<MediaItem>> {
         val updatedMediaItems = mediaItems.map {
-            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                it.mediaId.toLong())
+            val uri = getContentUri(it.mediaId)
             it.buildUpon().setUri(uri).build()
         }.toMutableList()
         return Futures.immediateFuture(updatedMediaItems)
@@ -689,30 +631,6 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
         }
         // If an error has occurred or the album ID is null, then return a default artwork image
         return BitmapFactory.decodeResource(applicationContext.resources, R.drawable.no_album_artwork)
-    }
-
-    // Not important for general audio service, required for class
-    override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot? {
-        return if (TextUtils.equals(clientPackageName, packageName)) {
-            BrowserRoot(getString(R.string.app_name), null)
-        } else null
-    }
-
-    // Not important for general audio service, required for class
-    override fun onLoadChildren(parentId: String, result: Result<List<MediaBrowserCompat.MediaItem>>) {
-        result.sendResult(null)
-    }
-
-    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        intent.action?.let { action ->
-            when (action) {
-                ACTION_PLAY -> mediaSessionCallback.onPlay()
-                ACTION_PAUSE -> mediaSessionCallback.onPause()
-                ACTION_NEXT -> mediaSessionCallback.onSkipToNext()
-                ACTION_PREVIOUS -> mediaSessionCallback.onSkipToPrevious()
-            }
-        }
-        return super.onStartCommand(intent, flags, startId)
     }
 
     override fun onError(mp: MediaPlayer?, what: Int, extra: Int): Boolean {
