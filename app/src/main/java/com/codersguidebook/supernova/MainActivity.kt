@@ -26,11 +26,11 @@ import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.edit
 import androidx.core.view.*
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import androidx.media3.common.C.TIME_UNSET
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
@@ -71,17 +71,18 @@ import com.codersguidebook.supernova.utils.*
 import com.google.android.material.navigation.NavigationView
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
+import com.google.gson.ExclusionStrategy
+import com.google.gson.FieldAttributes
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
 
 class MainActivity : AppCompatActivity() {
 
-    private var currentPlaybackPosition = 0
-    private var currentPlaybackDuration = 0
     private var currentQueueItemId: String? = null
     private val playQueueViewModel: PlayQueueViewModel by viewModels()
     private var mediaStoreContentObserver: MediaStoreContentObserver? = null
@@ -215,7 +216,7 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
         val currentMediaId = playQueueViewModel.currentlyPlayingSongMetadata.value
             ?.extras?.getString(MEDIA_ID)?.toLong() ?: return
-        musicLibraryViewModel.savePlaybackProgress(currentMediaId, currentPlaybackPosition)
+        musicLibraryViewModel.savePlaybackProgress(currentMediaId, controller.currentPosition.toInt())
     }
 
     override fun onResume() {
@@ -241,8 +242,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         sharedPreferences.edit().apply {
-            putInt(PLAYBACK_POSITION, currentPlaybackPosition)
-            putInt(PLAYBACK_DURATION, currentPlaybackDuration)
+            putInt(PLAYBACK_POSITION, playQueueViewModel.playbackPosition.value ?: 0)
+            putInt(PLAYBACK_DURATION, playQueueViewModel.playbackDuration.value ?: 0)
             apply()
         }
     }
@@ -250,13 +251,8 @@ class MainActivity : AppCompatActivity() {
     private fun initController() {
         controller.addListener(object : Player.Listener {
 
-            override fun onPositionDiscontinuity(
-                oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int
-            ) {
-                currentPlaybackPosition = controller.currentPosition.toInt()
-                playQueueViewModel.playbackPosition.value = currentPlaybackPosition
-                currentPlaybackDuration = controller.duration.toInt()
-                playQueueViewModel.playbackDuration.value = currentPlaybackDuration
+            override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
+                updatePlaybackDurationAndPosition()
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -269,7 +265,7 @@ class MainActivity : AppCompatActivity() {
                 val newMediaId = metadata.extras?.getString(MEDIA_ID)
                 val prevMediaId = playQueueViewModel.currentlyPlayingSongMetadata.value?.extras?.getString(MEDIA_ID)
                 if (newMediaId != prevMediaId) {
-                    playQueueViewModel.playbackPosition.value = 0
+                    updatePlaybackDurationAndPosition()
                     lifecycleScope.launch(Dispatchers.IO) {
                         withContext(Dispatchers.IO) {
                             musicLibraryViewModel.getSongById(newMediaId?.toLong() ?: return@withContext null)
@@ -279,6 +275,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
+                // todo - have a precaution in here if metadata is missing?
                 playQueueViewModel.currentlyPlayingSongMetadata.value = metadata
             }
 
@@ -286,9 +283,7 @@ class MainActivity : AppCompatActivity() {
                 if (playbackState == Player.STATE_READY) {
                     playQueueViewModel.isPlaying.value = controller.isPlaying
                 } else if (playbackState == Player.STATE_ENDED) {
-                    currentPlaybackDuration = 0
                     playQueueViewModel.playbackDuration.value = 0
-                    currentPlaybackPosition = 0
                     playQueueViewModel.playbackPosition.value = 0
                     playQueueViewModel.currentlyPlayingSongMetadata.value = null
                     playQueueViewModel.isPlaying.value = false
@@ -306,6 +301,11 @@ class MainActivity : AppCompatActivity() {
         })
 
         restoreMediaSession()
+    }
+
+    private fun updatePlaybackDurationAndPosition() {
+        playQueueViewModel.playbackDuration.value = controller.duration.toInt()
+        playQueueViewModel.playbackPosition.value = controller.currentPosition.toInt()
     }
 
     /** Process changes to the user's selected language locale, or load its initial value */
@@ -479,7 +479,17 @@ class MainActivity : AppCompatActivity() {
     private fun saveAndPostPlayQueue(playQueue: List<MediaItem>) = lifecycleScope.launch(Dispatchers.IO) {
         playQueueViewModel.playQueue.postValue(playQueue)
         try {
-            val playQueueJson = GsonBuilder().setPrettyPrinting().create().toJson(playQueue)
+            val strategy = object : ExclusionStrategy {
+                override fun shouldSkipClass(clazz: Class<*>?): Boolean {
+                    return false
+                }
+
+                override fun shouldSkipField(field: FieldAttributes): Boolean {
+                    return field.name == "supportedCommands"
+                }
+            }
+            val playQueueJson = GsonBuilder().setExclusionStrategies(strategy)
+                .setPrettyPrinting().create().toJson(playQueue)
             sharedPreferences.edit().apply {
                 putString(PLAY_QUEUE_ITEMS, playQueueJson)
                 apply()
@@ -512,16 +522,17 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        val startSongIndex = if (shuffle) (songs.indices).random()
-        else startIndex
+        if (controller.isPlaying) controller.pause()
 
         val playQueue = songs.mapIndexed { i, s -> s.getMediaItem(i) }.toList()
+        controller.setMediaItems(playQueue)
 
-        controller.setMediaItems(playQueue, startSongIndex, TIME_UNSET)
+        if (!controller.playWhenReady) controller.prepare()
 
-        if (!controller.playWhenReady) {
-            controller.prepare()
-        }
+        val startSongIndex = if (shuffle) (songs.indices).random()
+        else startIndex
+        skipToQueueIndex(startSongIndex)
+
         controller.play()
 
         saveAndPostPlayQueue(playQueue)
@@ -600,23 +611,26 @@ class MainActivity : AppCompatActivity() {
      * @param queueItemId The ID of the target QueueItem object.
      */
     fun skipToAndPlayQueueItem(queueItemId: Int) {
-        val currentIndex = controller.currentMediaItemIndex
-        val targetIndex = playQueueViewModel.playQueue.value?.indexOfFirst {
+        val index = playQueueViewModel.playQueue.value?.indexOfFirst {
             i -> i.mediaMetadata.extras?.getInt(QUEUE_ID) == queueItemId
         } ?: queueItemId
+        skipToQueueIndex(index)
 
+        controller.play()
+    }
+
+    private fun skipToQueueIndex(targetIndex: Int) {
+        val currentIndex = controller.currentMediaItemIndex
         if (targetIndex > currentIndex) {
             val times = targetIndex - currentIndex
             repeat(times) {
                 controller.seekToNextMediaItem()
             }
-            controller.play()
         } else {
             val times = currentIndex - targetIndex
             repeat(times) {
                 controller.seekToPreviousMediaItem()
             }
-            controller.play()
         }
     }
 
@@ -859,7 +873,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Restore the play queue and playback state from the last save. */
+    @OptIn(UnstableApi::class)
     private fun restoreMediaSession() = lifecycleScope.launch {
+        sharedPreferences.edit {
+            // remove("play_queue")
+            // remove("play_queue_new")
+        }
+
         val repeatMode = sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_OFF)
         controller.repeatMode = repeatMode
 
@@ -870,14 +890,36 @@ class MainActivity : AppCompatActivity() {
         val queueItemPairsJson = sharedPreferences.getString(PLAY_QUEUE_ITEMS, null) ?: return@launch
         val currentQueueItemId = sharedPreferences.getString(CURRENT_QUEUE_ITEM_ID, null)
 
-        //   fixme
         val itemType = object : TypeToken<List<MediaItem>>() {}.type
-        //val mediaItems = Gson().fromJson<List<MediaItem>>(queueItemPairsJson, itemType)
-        //controller.addMediaItems(mediaItems)
 
-        //val currentItemIndex = mediaItems.indexOfFirst { i -> i.mediaId == currentQueueItemId }
+        val gson = GsonBuilder()
+            .registerTypeAdapter(CharSequence::class.java, CharSequenceTypeAdapter())
+            .create()
+        val mediaItems = gson.fromJson<List<MediaItem>>(queueItemPairsJson, itemType)
+        val mediaItemsWithCommands = mutableListOf<MediaItem>()
+        for (item in mediaItems) {
+            val metadata = item.mediaMetadata.buildUpon()
+                .setSupportedCommands(listOf()).build()
+            val newItem = item.buildUpon()
+                .setMediaMetadata(metadata)
+                .build()
+            mediaItemsWithCommands.add(newItem)
+        }
+
+        controller.setMediaItems(mediaItemsWithCommands)
+        playQueueViewModel.playQueue.postValue(mediaItemsWithCommands)
+        if (!controller.playWhenReady) {
+            controller.prepare()
+        }
+
+        val index = mediaItems.indexOfFirst { i -> i.mediaId == currentQueueItemId }
+        skipToQueueIndex(index)
+
+        delay(150L)
+
         val playbackPosition = sharedPreferences.getInt(PLAYBACK_POSITION, 0)
-        //controller.seekTo(currentItemIndex, playbackPosition.toLong())
+        seekTo(playbackPosition)
+        updatePlaybackDurationAndPosition()
     }
 
     /** Refresh the music library. Add new songs, remove deleted songs, and implement language changes. */
