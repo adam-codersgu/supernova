@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import android.util.Log
 import android.util.Size
 import android.view.Menu
 import android.view.ViewGroup
@@ -502,7 +503,7 @@ class MainActivity : AppCompatActivity() {
         if (queueId == null) return@launch
         playQueueViewModel.currentQueueItemId.postValue(queueId)
         sharedPreferences.edit().apply {
-            putString(CURRENT_QUEUE_ITEM_ID, queueId.toString()) //fixme remove toString
+            putInt(CURRENT_QUEUE_ITEM_ID, queueId)
             apply()
         }
     }
@@ -881,10 +882,14 @@ class MainActivity : AppCompatActivity() {
     /** Restore the play queue and playback state from the last save. */
     @OptIn(UnstableApi::class)
     private fun restoreMediaSession() = lifecycleScope.launch {
+        if (playQueueViewModel.playQueue.value != null) return@launch
+
         sharedPreferences.edit {
-            // remove("play_queue")
-            // remove("play_queue_new")
+            // remove("current_queue_item_id")
+            // remove("current_queue_item_id_new")
         }
+
+        Log.i("DEBUG", "Restoring the media session")
 
         val repeatMode = sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_OFF)
         controller.repeatMode = repeatMode
@@ -894,7 +899,7 @@ class MainActivity : AppCompatActivity() {
         controller.shuffleModeEnabled = shuffleMode
 
         val queueItemPairsJson = sharedPreferences.getString(PLAY_QUEUE_ITEMS, null) ?: return@launch
-        val currentQueueItemId = sharedPreferences.getString(CURRENT_QUEUE_ITEM_ID, null)
+        val currentQueueItemId = sharedPreferences.getInt(CURRENT_QUEUE_ITEM_ID, -1)
 
         val itemType = object : TypeToken<List<MediaItem>>() {}.type
 
@@ -918,7 +923,7 @@ class MainActivity : AppCompatActivity() {
             controller.prepare()
         }
 
-        val index = mediaItems.indexOfFirst { i -> i.mediaId == currentQueueItemId }
+        val index = mediaItems.indexOfFirst { i -> extractQueueId(i.mediaId) == currentQueueItemId }
         skipToQueueIndex(index, 0)
 
         delay(150L)
