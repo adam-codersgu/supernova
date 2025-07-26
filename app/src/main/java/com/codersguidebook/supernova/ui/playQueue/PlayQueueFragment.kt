@@ -81,7 +81,7 @@ class PlayQueueFragment : RecyclerViewFragment() {
         }
 
         playQueueViewModel.currentQueueItemId.observe(viewLifecycleOwner) { position ->
-            position?.let { adapter.changeCurrentlyPlayingQueueItemId(it.toInt()) }
+            position?.let { adapter.changeCurrentlyPlayingQueueItemId(it) }
         }
 
         itemTouchHelper.attachToRecyclerView(binding.root)

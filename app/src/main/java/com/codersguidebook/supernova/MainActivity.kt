@@ -83,7 +83,6 @@ import java.io.FileNotFoundException
 
 class MainActivity : AppCompatActivity() {
 
-    private var currentQueueItemId: String? = null
     private val playQueueViewModel: PlayQueueViewModel by viewModels()
     private var mediaStoreContentObserver: MediaStoreContentObserver? = null
     private var musicDatabase: MusicDatabase? = null
@@ -257,7 +256,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 super.onMediaItemTransition(mediaItem, reason)
-                savePlayQueueId(extractQueueId(mediaItem?.mediaId ?: return).toString())
+                savePlayQueueId(extractQueueId(mediaItem?.mediaId ?: return))
             }
 
             override fun onMediaMetadataChanged(metadata: MediaMetadata) {
@@ -498,12 +497,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Save the queueId of the currently playing queue item to the shared preferences file. */
-    private fun savePlayQueueId(queueId: String?) = lifecycleScope.launch(Dispatchers.IO) {
+    private fun savePlayQueueId(queueId: Int?) = lifecycleScope.launch(Dispatchers.IO) {
         // fixme - temp fix, need to clear queue ID when the play queue is empty - here or somewhere else
         if (queueId == null) return@launch
         playQueueViewModel.currentQueueItemId.postValue(queueId)
         sharedPreferences.edit().apply {
-            putString(CURRENT_QUEUE_ITEM_ID, queueId)
+            putString(CURRENT_QUEUE_ITEM_ID, queueId.toString()) //fixme remove toString
             apply()
         }
     }
@@ -534,7 +533,7 @@ class MainActivity : AppCompatActivity() {
         val startSongIndex = if (shuffle) (songs.indices).random()
         else startIndex
         skipToQueueIndex(startSongIndex, 0)
-        savePlayQueueId(extractQueueId(playQueue[startSongIndex].mediaId).toString())
+        savePlayQueueId(extractQueueId(playQueue[startSongIndex].mediaId))
 
         play()
 
@@ -559,16 +558,25 @@ class MainActivity : AppCompatActivity() {
     fun addSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false)
             = lifecycleScope.launch(Dispatchers.Default) {
         val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: mutableListOf()
-        var highestQueueItemId = playQueue.maxByOrNull { i -> i.mediaId }?.mediaId?.toInt() ?: -1
-        val mediaItems = songs.map { s -> s.getMediaItem(++highestQueueItemId) }
+        val maxQueueItemId = playQueue.maxByOrNull {
+            i -> extractQueueId(i.mediaId)
+        }?.mediaId
+        var queueItemId = if (maxQueueItemId != null) extractQueueId(maxQueueItemId)
+        else -1
+        val mediaItems = songs.map { s -> s.getMediaItem(++queueItemId) }
 
         if (addSongsAfterCurrentQueueItem) {
-            val index = playQueueViewModel.playQueue.value?.indexOfFirst { it.mediaId == currentQueueItemId }
+            val index = playQueueViewModel.playQueue.value?.indexOfFirst { extractQueueId(it.mediaId) ==
+                    playQueueViewModel.currentQueueItemId.value }
                 ?.plus(1) ?: 0
-            controller.addMediaItems(index, mediaItems)
+            withContext(Dispatchers.Main) {
+                controller.addMediaItems(controller.currentMediaItemIndex + 1, mediaItems)
+            }
             playQueue.addAll(index, mediaItems)
         } else {
-            controller.addMediaItems(mediaItems)
+            withContext(Dispatchers.Main) {
+                controller.addMediaItems(mediaItems)
+            }
             playQueue.addAll(mediaItems)
         }
 
@@ -617,8 +625,7 @@ class MainActivity : AppCompatActivity() {
      */
     fun skipToQueueIndex(targetIndex: Int, currentIndex: Int? = null) {
         val currentIndex2 = currentIndex ?: playQueueViewModel.playQueue.value?.indexOfFirst {
-            i -> extractQueueId(i.mediaId) ==
-                playQueueViewModel.currentQueueItemId.value?.toInt()
+            i -> extractQueueId(i.mediaId) == playQueueViewModel.currentQueueItemId.value
         } ?: return
         if (targetIndex > currentIndex2) {
             val times = targetIndex - currentIndex2
