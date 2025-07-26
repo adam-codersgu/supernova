@@ -39,6 +39,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.Player.REPEAT_MODE_ALL
 import androidx.media3.common.Player.REPEAT_MODE_OFF
 import androidx.media3.common.Player.REPEAT_MODE_ONE
+import androidx.media3.common.Timeline
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -258,6 +259,11 @@ class MainActivity : AppCompatActivity() {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 super.onMediaItemTransition(mediaItem, reason)
                 savePlayQueueId(extractQueueId(mediaItem?.mediaId ?: return))
+            }
+
+            override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+                Log.i("DEBUG", "Timeline changed for reason $reason")
+                super.onTimelineChanged(timeline, reason)
             }
 
             override fun onMediaMetadataChanged(metadata: MediaMetadata) {
@@ -485,7 +491,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun shouldSkipField(field: FieldAttributes): Boolean {
-                    return field.name == "supportedCommands"
+                    return listOf("subtitleConfigurations", "supportedCommands").contains(field.name)
                 }
             }
             val playQueueJson = GsonBuilder().setExclusionStrategies(strategy)
@@ -527,9 +533,10 @@ class MainActivity : AppCompatActivity() {
         if (controller.isPlaying) controller.pause()
 
         val playQueue = songs.mapIndexed { i, s -> s.getMediaItem(i) }.toList()
-        controller.setMediaItems(playQueue)
 
+        controller.setMediaItem(playQueue[0])
         if (!controller.playWhenReady) controller.prepare()
+        controller.addMediaItems(playQueue.subList(1, playQueue.size))
 
         val startSongIndex = if (shuffle) (songs.indices).random()
         else startIndex
@@ -575,6 +582,7 @@ class MainActivity : AppCompatActivity() {
             }
             playQueue.addAll(index, mediaItems)
         } else {
+            // FIXME - DEBUG THIS BY GOING INTO THE SERVICE ON ADDITEMS - MAYBE SEE IF YOU CAN INTERCEPT THINGS SOMEHWERE E.G. AT THE PLAYER LEVEL
             withContext(Dispatchers.Main) {
                 controller.addMediaItems(mediaItems)
             }
@@ -885,7 +893,7 @@ class MainActivity : AppCompatActivity() {
         if (playQueueViewModel.playQueue.value != null) return@launch
 
         sharedPreferences.edit {
-            // remove("current_queue_item_id")
+            // remove("play_queue")
             // remove("current_queue_item_id_new")
         }
 
@@ -907,18 +915,21 @@ class MainActivity : AppCompatActivity() {
             .registerTypeAdapter(CharSequence::class.java, CharSequenceTypeAdapter())
             .create()
         val mediaItems = gson.fromJson<List<MediaItem>>(queueItemPairsJson, itemType)
-        val mediaItemsWithCommands = mutableListOf<MediaItem>()
+        val playQueue = mutableListOf<MediaItem>()
         for (item in mediaItems) {
             val metadata = item.mediaMetadata.buildUpon()
                 .setSupportedCommands(listOf()).build()
             val newItem = item.buildUpon()
                 .setMediaMetadata(metadata)
                 .build()
-            mediaItemsWithCommands.add(newItem)
+            playQueue.add(newItem)
         }
 
-        controller.setMediaItems(mediaItemsWithCommands)
-        playQueueViewModel.playQueue.postValue(mediaItemsWithCommands)
+        controller.setMediaItem(playQueue[0])
+        if (!controller.playWhenReady) controller.prepare()
+        controller.addMediaItems(playQueue.subList(1, playQueue.size))
+
+        playQueueViewModel.playQueue.postValue(playQueue)
         if (!controller.playWhenReady) {
             controller.prepare()
         }

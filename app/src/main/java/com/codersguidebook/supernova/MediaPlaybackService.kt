@@ -7,11 +7,11 @@ import android.media.AudioManager
 import android.media.AudioManager.*
 import android.media.MediaPlayer.*
 import android.os.*
-import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat.*
 import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
@@ -28,10 +28,8 @@ import com.google.common.util.concurrent.ListenableFuture
 @UnstableApi
 class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
 
-    private var currentlyPlayingQueueItemId = -1L
     // private val handler = Handler(Looper.getMainLooper())
     //private var mediaPlayer: MediaPlayer? = null
-    private val playQueue: MutableList<QueueItem> = mutableListOf()
     private lateinit var audioFocusRequest: AudioFocusRequest
     // private lateinit var mediaSessionCompat: MediaSessionCompat
     private lateinit var player: Player
@@ -39,9 +37,7 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
 
     private val afChangeListener = OnAudioFocusChangeListener { focusChange ->
         when (focusChange) {
-            AUDIOFOCUS_LOSS, AUDIOFOCUS_LOSS_TRANSIENT -> {
-                player.pause()
-            }
+            AUDIOFOCUS_LOSS, AUDIOFOCUS_LOSS_TRANSIENT -> player.pause()
             AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> player.volume = 0.3f
             AUDIOFOCUS_GAIN -> player.volume = 1.0f
         }
@@ -50,8 +46,7 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
     private val playerListener = object : Player.Listener {
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
             super.onPlayWhenReadyChanged(playWhenReady, reason)
-            if (playWhenReady)
-                requestAudioFocus()
+            if (playWhenReady) requestAudioFocus()
         }
     }
 

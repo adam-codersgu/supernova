@@ -1,8 +1,10 @@
 package com.codersguidebook.supernova.entities
 
-
+import android.content.ContentUris
+import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
+import android.provider.MediaStore
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.room.ColumnInfo
@@ -50,6 +52,12 @@ data class Song(
         return MediaItem.Builder()
             .setMediaId(combineSongIdAndQueueId(this@Song.songId, queueId))
             .setMediaMetadata(getMetadata())
+            //.setUri(getContentUri())
             .build()
+    }
+
+    private fun getContentUri(): Uri {
+        return ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+            this@Song.songId)
     }
 }
