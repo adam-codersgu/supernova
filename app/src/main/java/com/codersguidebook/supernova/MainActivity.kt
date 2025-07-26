@@ -10,7 +10,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
-import android.util.Log
 import android.util.Size
 import android.view.Menu
 import android.view.ViewGroup
@@ -36,7 +35,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.common.Player.COMMAND_SEEK_TO_MEDIA_ITEM
 import androidx.media3.common.Player.REPEAT_MODE_ALL
 import androidx.media3.common.Player.REPEAT_MODE_OFF
 import androidx.media3.common.Player.REPEAT_MODE_ONE
@@ -519,22 +517,12 @@ class MainActivity : AppCompatActivity() {
 
         val playQueue = songs.mapIndexed { i, s -> s.getMediaItem(i) }.toList()
 
-        if (startSongIndex == 0) {
-            controller.setMediaItems(playQueue)
-        } else {
-            val batch = playQueue.subList(startSongIndex, playQueue.size)
-            controller.setMediaItems(batch)
-        }
+        controller.setMediaItems(playQueue, startSongIndex, TIME_UNSET)
 
         if (!controller.playWhenReady) {
             controller.prepare()
         }
         controller.play()
-
-        if (startSongIndex > 0) {
-            val batch = playQueue.subList(0, startSongIndex)
-            controller.addMediaItems(0, batch)
-        }
 
         saveAndPostPlayQueue(playQueue)
 
@@ -630,8 +618,6 @@ class MainActivity : AppCompatActivity() {
             }
             controller.play()
         }
-
-        // FIXME WHY CAN'T WE USE THIS controller.seekTo(queueItemId, TIME_UNSET)
     }
 
     /**
