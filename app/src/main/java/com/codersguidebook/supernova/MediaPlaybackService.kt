@@ -11,7 +11,6 @@ import android.support.v4.media.session.PlaybackStateCompat.*
 import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import androidx.media3.common.Timeline
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
@@ -29,10 +28,9 @@ import com.google.common.util.concurrent.ListenableFuture
 class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
 
     // private val handler = Handler(Looper.getMainLooper())
-    //private var mediaPlayer: MediaPlayer? = null
     private lateinit var audioFocusRequest: AudioFocusRequest
-    // private lateinit var mediaSessionCompat: MediaSessionCompat
     private lateinit var player: Player
+
     private var mediaSession: MediaSession? = null
 
     private val afChangeListener = OnAudioFocusChangeListener { focusChange ->
@@ -228,13 +226,6 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
             }
         }
 
-        override fun onPause() {
-            super.onPause()
-            mediaPlayer?.pause()
-            setMediaPlaybackState(STATE_PAUSED, getBundleWithSongDuration())
-            refreshNotification()
-        }
-
         override fun onFastForward() {
             super.onFastForward()
 
@@ -326,53 +317,6 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
             }
         }
 
-        override fun onSkipToQueueItem(id: Long) {
-            super.onSkipToQueueItem(id)
-            
-            if (playQueue.find { it.queueId == id} != null) {
-                val playbackState = mediaSessionCompat.controller.playbackState.state
-                currentlyPlayingQueueItemId = id
-                onPrepare()
-                if (playbackState == STATE_PLAYING || playbackState == STATE_SKIPPING_TO_NEXT) {
-                    onPlay()
-                }
-            }
-        }
-
-        override fun onSkipToPrevious() {
-            super.onSkipToPrevious()
-
-            if (playQueue.isNotEmpty()) {
-                if (mediaPlayer != null && mediaPlayer!!.currentPosition > 5000 ||
-                            currentlyPlayingQueueItemId == playQueue[0].queueId) onSeekTo(0L)
-                else {
-                    val indexOfCurrentQueueItem = playQueue.indexOfFirst {
-                        it.queueId == currentlyPlayingQueueItemId
-                    }
-                    currentlyPlayingQueueItemId = playQueue[indexOfCurrentQueueItem - 1].queueId
-                    onSkipToQueueItem(currentlyPlayingQueueItemId)
-                }
-            }
-        }
-
-        override fun onSkipToNext() {
-            super.onSkipToNext()
-
-            val repeatMode = mediaSession.controller.repeatMode
-            onSkipToQueueItem(when {
-                playQueue.isNotEmpty() &&
-                        playQueue[playQueue.size - 1].queueId != currentlyPlayingQueueItemId -> {
-                    val indexOfCurrentQueueItem = playQueue.indexOfFirst {
-                        it.queueId == currentlyPlayingQueueItemId
-                    }
-                    playQueue[indexOfCurrentQueueItem + 1].queueId
-                }
-                // We are at the end of the queue. Check whether we should start over from the beginning
-                repeatMode == REPEAT_MODE_ALL -> playQueue[0].queueId
-                else -> return
-            })
-        }
-
         override fun onStop() {
             super.onStop()
 
@@ -391,24 +335,6 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
             }
             setMediaPlaybackState(STATE_STOPPED)
             stopSelf()
-        }
-
-        override fun onSeekTo(pos: Long) {
-            super.onSeekTo(pos)
-
-            mediaPlayer?.apply {
-                if (pos > this.duration.toLong()) return@apply
-
-                val wasPlaying = this.isPlaying
-                if (wasPlaying) this.pause()
-
-                this.seekTo(pos.toInt())
-
-                if (wasPlaying) {
-                    this.start()
-                    setMediaPlaybackState(STATE_PLAYING, getBundleWithSongDuration())
-                } else setMediaPlaybackState(STATE_PAUSED, getBundleWithSongDuration())
-            }
         }
     } */
 
@@ -462,12 +388,12 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
         return Futures.immediateFuture(updatedMediaItems)
     }
 
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? =
-        mediaSession
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) = mediaSession
 
 
     /** Handles playback becoming 'noisy' i.e. headphones being unplugged. */
     private fun initNoisyReceiver() {
+        // todo - look at handling this directly with the player?
         val filter = IntentFilter(ACTION_AUDIO_BECOMING_NOISY)
         registerReceiver(noisyReceiver, filter)
     }
@@ -570,23 +496,6 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
             // SDK 34 and up
             startForeground(1, builder.build(), FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
         }
-    } */
-
-    /**
-     * Dispatch media playback state updates.
-     *
-     * @param state An Integer representing the current playback status.
-     * @param bundle An option bundle of extras to be packaged with the playback status update.
-     * Default = null.
-     */
-    /* private fun setMediaPlaybackState(state: Int, bundle: Bundle? = null) {
-        val playbackPosition = mediaPlayer?.currentPosition?.toLong() ?: 0L
-        val playbackSpeed = mediaPlayer?.playbackParams?.speed ?: 0f
-        val playbackStateBuilder = Builder()
-            .setState(state, playbackPosition, playbackSpeed)
-            .setActiveQueueItemId(currentlyPlayingQueueItemId)
-        bundle?.let { playbackStateBuilder.setExtras(it) }
-        mediaSessionCompat.setPlaybackState(playbackStateBuilder.build())
     } */
 
     /** Set the media session metadata to information about the currently playing song. */

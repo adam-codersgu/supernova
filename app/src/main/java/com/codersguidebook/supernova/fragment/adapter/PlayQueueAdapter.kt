@@ -18,10 +18,10 @@ import com.codersguidebook.supernova.dialogs.QueueOptions
 import com.codersguidebook.supernova.ui.playQueue.PlayQueueFragment
 import com.google.android.material.color.MaterialColors
 
-class PlayQueueAdapter(private val fragment: PlayQueueFragment
-, private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class PlayQueueAdapter(private val fragment: PlayQueueFragment,
+                       private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     var currentlyPlayingQueueIndex = -1
-    val playQueue = mutableListOf<Pair<Int, MediaItem>>()
+    val playQueue = mutableListOf<MediaItem>()
 
     inner class ViewHolderPlayQueue(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
@@ -39,8 +39,7 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
             btnSongMenu.setOnClickListener {
                 val isCurrentlyPlayingSelected = layoutPosition == currentlyPlayingQueueIndex
                 activity.openDialog(
-                    QueueOptions(playQueue[layoutPosition],
-                    isCurrentlyPlayingSelected)
+                    QueueOptions(playQueue[layoutPosition], layoutPosition, isCurrentlyPlayingSelected)
                 )
             }
         }
@@ -65,11 +64,17 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
             return@setOnTouchListener true
         }
 
-        holder.txtSongTitle.text = playQueue[position].second.mediaMetadata.title
+        holder.txtSongTitle.text = playQueue[position].mediaMetadata.title
             ?: activity.getString(R.string.default_title)
-        holder.txtSongArtist.text = playQueue[position].second.mediaMetadata.artist
-            ?: playQueue[position].second.mediaMetadata.subtitle
+        holder.txtSongArtist.text = playQueue[position].mediaMetadata.artist
+            ?: playQueue[position].mediaMetadata.subtitle
             ?: activity.getString(R.string.default_artist)
+
+        if (playQueue[position].mediaMetadata.title == null ||
+            (playQueue[position].mediaMetadata.artist == null &&
+                    playQueue[position].mediaMetadata.subtitle == null)) {
+            fragment.attemptToFetchMetadata(position, playQueue[position].mediaId)
+        }
 
         if (position == currentlyPlayingQueueIndex) {
             holder.txtSongTitle.setTextColor(accent)
@@ -95,11 +100,8 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
      *
      * @param newPlayQueue The new list of QueueItem objects that should be displayed.
      */
-    fun processNewPlayQueue(newPlayQueue: List<Pair<Int, MediaItem>>) {
-        if (newPlayQueue.map { it.first }
-            == playQueue.map { it.first }) {
-            return
-        }
+    fun processNewPlayQueue(newPlayQueue: List<MediaItem>) {
+        if (newPlayQueue == playQueue) return
 
         for ((index, queueItem) in newPlayQueue.withIndex()) {
             when {
@@ -107,17 +109,17 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
                     playQueue.add(queueItem)
                     notifyItemInserted(index)
                 }
-                playQueue.find { it.second.mediaId == queueItem.second.mediaId } == null -> {
+                playQueue.find { it.mediaId == queueItem.mediaId } == null -> {
                     playQueue.add(index, queueItem)
                     notifyItemInserted(index)
                 }
-                newPlayQueue.find { it.second.mediaId == playQueue[index].second.mediaId } == null -> {
+                newPlayQueue.find { it.mediaId == playQueue[index].mediaId } == null -> {
                     var numberOfItemsRemoved = 0
                     do {
                         playQueue.removeAt(index)
                         ++numberOfItemsRemoved
                     } while (index < playQueue.size &&
-                        newPlayQueue.find { it.second.mediaId == playQueue[index].second.mediaId } == null)
+                        newPlayQueue.find { it.mediaId == playQueue[index].mediaId } == null)
 
                     when {
                         numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
