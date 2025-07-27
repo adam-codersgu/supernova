@@ -61,7 +61,7 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NO_A
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_DELETED
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_UPDATED
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.APPLICATION_LANGUAGE
-import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_ID
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_INDEX
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.DEFAULT_PLAYLIST_LANGUAGE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_DURATION
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_POSITION
@@ -69,7 +69,6 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.codersguidebook.supernova.utils.*
-import com.codersguidebook.supernova.utils.MediaItemHelper.extractQueueId
 import com.google.android.material.navigation.NavigationView
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
@@ -258,7 +257,7 @@ class MainActivity : AppCompatActivity() {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 super.onMediaItemTransition(mediaItem, reason)
                 Log.i("DEBUG", "The current controller index is ${controller.currentMediaItemIndex}")
-                //saveAndPostPlayQueueIndex(extractQueueId(mediaItem?.mediaId ?: return))
+                saveAndPostPlayQueueIndex(controller.currentMediaItemIndex)
             }
 
             override fun onTimelineChanged(timeline: Timeline, reason: Int) {
@@ -289,6 +288,18 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     playQueueViewModel.playQueue.postValue(playQueue)
+
+                    val pendingSkipToIndex = playQueueViewModel.pendingSkipToInstruction.value
+                    if (pendingSkipToIndex != null) {
+                        skipToQueueIndex(pendingSkipToIndex)
+                        playQueueViewModel.pendingSkipToInstruction.postValue(null)
+                    }
+
+                    if (playQueueViewModel.pendingPlayInstruction.value == true) {
+                        play()
+                        playQueueViewModel.pendingPlayInstruction.postValue(null)
+                    }
+
                     savePlayQueue(playQueue.map { it.second })
                 }
 
@@ -413,6 +424,7 @@ class MainActivity : AppCompatActivity() {
      * @param newIndex The new index in the play queue that the item should occupy.
      */
     fun notifyQueueItemMoved(queueId: Int, newIndex: Int) {
+        // fixme - remove reliance on queue id
         val currentIndex = playQueueViewModel.playQueue.value?.indexOfFirst {
             i -> i.first  == queueId
         } ?: return
@@ -519,7 +531,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun shouldSkipField(field: FieldAttributes): Boolean {
-                    return listOf("subtitleConfigurations", "supportedCommands").contains(field.name)
+                    return listOf("subtitleConfigurations", "supportedCommands", "uri").contains(field.name)
                 }
             }
             val playQueueJson = GsonBuilder().setExclusionStrategies(strategy)
@@ -531,13 +543,11 @@ class MainActivity : AppCompatActivity() {
         } catch (_: ConcurrentModificationException) {}
     }
 
-    /** Save the queueId of the currently playing queue item to the shared preferences file. */
-    private fun savePlayQueueId(queueId: Int?) = lifecycleScope.launch(Dispatchers.IO) {
-        // fixme - temp fix, need to clear queue ID when the play queue is empty - here or somewhere else
-        if (queueId == null) return@launch
-        playQueueViewModel.currentQueueItemId.postValue(queueId)
+    /** Save the index of the currently playing queue item to the shared preferences file. */
+    private fun saveAndPostPlayQueueIndex(index: Int) = lifecycleScope.launch(Dispatchers.IO) {
+        playQueueViewModel.currentQueueItemIndex.postValue(index)
         sharedPreferences.edit().apply {
-            putInt(CURRENT_QUEUE_ITEM_ID, queueId)
+            putInt(CURRENT_QUEUE_ITEM_INDEX, index)
             apply()
         }
     }
@@ -566,11 +576,12 @@ class MainActivity : AppCompatActivity() {
         if (!controller.playWhenReady) controller.prepare()
         controller.addMediaItems(playQueue.subList(1, playQueue.size))
 
+        // fixme - shuffle functionality needs to be fixed
         val startSongIndex = if (shuffle) (songs.indices).random()
         else startIndex
-        skipToQueueIndex(startSongIndex, 0)
 
-        play()
+        playQueueViewModel.pendingSkipToInstruction.postValue(startSongIndex)
+        playQueueViewModel.pendingPlayInstruction.postValue(true)
 
         when {
             shuffle -> setShuffleMode(true)
@@ -643,7 +654,9 @@ class MainActivity : AppCompatActivity() {
      * @param targetIndex The index in the queue to skip to.
      */
     fun skipToQueueIndex(targetIndex: Int, currentIndex: Int? = null) {
-        val currentIndex2 = currentIndex ?: playQueueViewModel.playQueue.value?.indexOfFirst {
+        // FIXME - MAYBE SEEK PLAYBACK POSITION IF THE SONG REMEMBERS THAT POSITION?
+        controller.seekTo(targetIndex, 0L)
+        /* val currentIndex2 = currentIndex ?: playQueueViewModel.playQueue.value?.indexOfFirst {
             i -> i.first == playQueueViewModel.currentQueueItemId.value
         } ?: return
         if (targetIndex > currentIndex2) {
@@ -656,7 +669,7 @@ class MainActivity : AppCompatActivity() {
             repeat(times) {
                 controller.seekToPreviousMediaItem()
             }
-        }
+        } */
     }
 
     /**
@@ -913,7 +926,7 @@ class MainActivity : AppCompatActivity() {
         controller.shuffleModeEnabled = shuffleMode
 
         val queueItemPairsJson = sharedPreferences.getString(PLAY_QUEUE_ITEMS, null) ?: return@launch
-        val currentQueueItemId = sharedPreferences.getInt(CURRENT_QUEUE_ITEM_ID, -1)
+        val currentQueueItemId = sharedPreferences.getInt(CURRENT_QUEUE_ITEM_INDEX, -1)
 
         val itemType = object : TypeToken<List<MediaItem>>() {}.type
 

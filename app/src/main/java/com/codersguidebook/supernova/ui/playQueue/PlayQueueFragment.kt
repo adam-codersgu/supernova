@@ -78,8 +78,8 @@ class PlayQueueFragment : RecyclerViewFragment() {
             updateRecyclerView(it)
         }
 
-        playQueueViewModel.currentQueueItemId.observe(viewLifecycleOwner) { position ->
-            position?.let { adapter.changeCurrentlyPlayingQueueItemId(it) }
+        playQueueViewModel.currentQueueItemIndex.observe(viewLifecycleOwner) { position ->
+            position?.let { adapter.changeCurrentlyPlayingQueueItemIndex(it) }
         }
 
         itemTouchHelper.attachToRecyclerView(binding.root)
@@ -138,13 +138,9 @@ class PlayQueueFragment : RecyclerViewFragment() {
     override fun onResume() {
         super.onResume()
 
-        val currentlyPlayingQueueItemIndex = adapter.playQueue.indexOfFirst { queueItem ->
-            queueItem.first == adapter.currentlyPlayingQueueId
-        }
-
-        if (currentlyPlayingQueueItemIndex != -1) {
+        if (adapter.currentlyPlayingQueueIndex != -1) {
             (binding.root.layoutManager as LinearLayoutManager)
-                .scrollToPositionWithOffset(currentlyPlayingQueueItemIndex, 0)
+                .scrollToPositionWithOffset(adapter.currentlyPlayingQueueIndex, 0)
         }
     }
 

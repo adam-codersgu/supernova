@@ -20,7 +20,7 @@ import com.google.android.material.color.MaterialColors
 
 class PlayQueueAdapter(private val fragment: PlayQueueFragment
 , private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-    var currentlyPlayingQueueId = -1
+    var currentlyPlayingQueueIndex = -1
     val playQueue = mutableListOf<Pair<Int, MediaItem>>()
 
     inner class ViewHolderPlayQueue(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -37,7 +37,7 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
                 activity.play()
             }
             btnSongMenu.setOnClickListener {
-                val isCurrentlyPlayingSelected = playQueue[layoutPosition].first == currentlyPlayingQueueId
+                val isCurrentlyPlayingSelected = layoutPosition == currentlyPlayingQueueIndex
                 activity.openDialog(
                     QueueOptions(playQueue[layoutPosition],
                     isCurrentlyPlayingSelected)
@@ -68,9 +68,10 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
         holder.txtSongTitle.text = playQueue[position].second.mediaMetadata.title
             ?: activity.getString(R.string.default_title)
         holder.txtSongArtist.text = playQueue[position].second.mediaMetadata.artist
+            ?: playQueue[position].second.mediaMetadata.subtitle
             ?: activity.getString(R.string.default_artist)
 
-        if (playQueue[position].first == currentlyPlayingQueueId) {
+        if (position == currentlyPlayingQueueIndex) {
             holder.txtSongTitle.setTextColor(accent)
             holder.txtSongArtist.setTextColor(accent)
         } else {
@@ -79,20 +80,12 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
         }
     }
 
-    fun changeCurrentlyPlayingQueueItemId(newQueueId: Int) {
-        val oldCurrentlyPlayingIndex = playQueue.indexOfFirst {
-            it.first == currentlyPlayingQueueId
-        }
+    fun changeCurrentlyPlayingQueueItemIndex(newIndex: Int) {
+        val oldCurrentlyPlayingIndex = currentlyPlayingQueueIndex
+        currentlyPlayingQueueIndex = newIndex
 
-        currentlyPlayingQueueId = newQueueId
         if (oldCurrentlyPlayingIndex != -1) notifyItemChanged(oldCurrentlyPlayingIndex)
-
-        val newCurrentlyPlayingIndex = playQueue.indexOfFirst {
-            it.first == currentlyPlayingQueueId
-        }
-        if (newCurrentlyPlayingIndex != -1) {
-            notifyItemChanged(newCurrentlyPlayingIndex)
-        }
+        notifyItemChanged(currentlyPlayingQueueIndex)
     }
 
     /**
