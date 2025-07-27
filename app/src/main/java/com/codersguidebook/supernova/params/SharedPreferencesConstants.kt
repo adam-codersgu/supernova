@@ -17,6 +17,7 @@ class SharedPreferencesConstants {
         const val HOMEPAGE_PLAYLIST_QTY = "homepage_playlist_qty"
         const val MOST_PLAYED_PLAYLIST_TIMEFRAME = "most_played_timeframe"
         const val PLAY_QUEUE_ITEMS = "play_queue"
+        // fixme - erase and delete
         const val PLAYBACK_DURATION = "playback_duration"
         const val PLAYBACK_POSITION = "playback_position"
         const val REPEAT_MODE = "repeat_mode"

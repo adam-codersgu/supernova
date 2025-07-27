@@ -63,7 +63,6 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.APPLICATION_LANGUAGE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_INDEX
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.DEFAULT_PLAYLIST_LANGUAGE
-import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_DURATION
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_POSITION
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAY_QUEUE_ITEMS
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
@@ -228,6 +227,15 @@ class MainActivity : AppCompatActivity() {
         musicLibraryViewModel.setMostPlayedPlaylistTimeframe()
     }
 
+    override fun onStop() {
+        super.onStop()
+
+        sharedPreferences.edit().apply {
+            putLong(PLAYBACK_POSITION, controller.currentPosition)
+            apply()
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
 
@@ -238,12 +246,6 @@ class MainActivity : AppCompatActivity() {
         controller.stop()
         controllerFuture.let {
             MediaController.releaseFuture(it)
-        }
-
-        sharedPreferences.edit().apply {
-            putInt(PLAYBACK_POSITION, playQueueViewModel.playbackPosition.value ?: 0)
-            putInt(PLAYBACK_DURATION, playQueueViewModel.playbackDuration.value ?: 0)
-            apply()
         }
     }
 
@@ -256,6 +258,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 super.onMediaItemTransition(mediaItem, reason)
+
                 Log.i("DEBUG", "The current controller index is ${controller.currentMediaItemIndex}")
                 saveAndPostPlayQueueIndex(controller.currentMediaItemIndex)
             }
@@ -273,11 +276,10 @@ class MainActivity : AppCompatActivity() {
                     }
                     val firstPeriodId = timeline.getPeriod(0, Timeline.Period()).id.toString()
                     if (firstPeriodId == "-1") {
-                        Log.i("DEBUG", "The first period has an ID of -1. " +
-                                "Skipping update.")
+                        Log.i("DEBUG", "Skipping timeline update.")
                         return
                     }
-                    Log.i("DEBUG", "The first period ID is $firstPeriodId")
+                    Log.i("DEBUG", "Processing a timeline update.")
                     
                     val playQueue = mutableListOf<Pair<Int, MediaItem>>()
                     for (i in 0..<timeline.periodCount) {
@@ -292,7 +294,6 @@ class MainActivity : AppCompatActivity() {
                     val pendingSkipToIndex = playQueueViewModel.pendingSkipToInstruction.value
                     if (pendingSkipToIndex != null) {
                         skipToQueueIndex(pendingSkipToIndex)
-                        playQueueViewModel.pendingSkipToInstruction.postValue(null)
                     }
 
                     if (playQueueViewModel.pendingPlayInstruction.value == true) {
@@ -311,7 +312,8 @@ class MainActivity : AppCompatActivity() {
                 val newMediaId = metadata.extras?.getString(MEDIA_ID)
                 val prevMediaId = playQueueViewModel.currentlyPlayingSongMetadata.value?.extras?.getString(MEDIA_ID)
                 if (newMediaId != prevMediaId) {
-                    updatePlaybackDurationAndPosition()
+                    processPendingSeekToRequest()
+
                     lifecycleScope.launch(Dispatchers.IO) {
                         withContext(Dispatchers.IO) {
                             musicLibraryViewModel.getSongById(newMediaId?.toLong() ?: return@withContext null)
@@ -347,6 +349,15 @@ class MainActivity : AppCompatActivity() {
         })
 
         restoreMediaSession()
+    }
+
+    private fun processPendingSeekToRequest() {
+        val pendingSeekToPosition = playQueueViewModel.pendingSeekToInstruction.value
+        if (pendingSeekToPosition != null) {
+            Log.i("DEBUG", "Processing the pending seek to request: $pendingSeekToPosition")
+            seekTo(pendingSeekToPosition.toInt())
+            playQueueViewModel.pendingSeekToInstruction.postValue(null)
+        }
     }
 
     private fun updatePlaybackDurationAndPosition() {
@@ -531,7 +542,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun shouldSkipField(field: FieldAttributes): Boolean {
-                    return listOf("subtitleConfigurations", "supportedCommands", "uri").contains(field.name)
+                    return listOf("mediaUri", "subtitleConfigurations", "supportedCommands").contains(field.name)
                 }
             }
             val playQueueJson = GsonBuilder().setExclusionStrategies(strategy)
@@ -646,30 +657,26 @@ class MainActivity : AppCompatActivity() {
      *
      * @param position An Integer representing the desired playback position.
      */
-    fun seekTo(position: Int) = controller.seekTo(position.toLong())
+    fun seekTo(position: Int) {
+        controller.seekTo(position.toLong())
+        updatePlaybackDurationAndPosition()
+    }
 
     /**
      * Skip to a specific item in the play queue based on its index in the play queue.
      *
      * @param targetIndex The index in the queue to skip to.
      */
-    fun skipToQueueIndex(targetIndex: Int, currentIndex: Int? = null) {
-        // FIXME - MAYBE SEEK PLAYBACK POSITION IF THE SONG REMEMBERS THAT POSITION?
-        controller.seekTo(targetIndex, 0L)
-        /* val currentIndex2 = currentIndex ?: playQueueViewModel.playQueue.value?.indexOfFirst {
-            i -> i.first == playQueueViewModel.currentQueueItemId.value
-        } ?: return
-        if (targetIndex > currentIndex2) {
-            val times = targetIndex - currentIndex2
-            repeat(times) {
-                controller.seekToNextMediaItem()
-            }
-        } else {
-            val times = currentIndex2 - targetIndex
-            repeat(times) {
-                controller.seekToPreviousMediaItem()
-            }
-        } */
+    fun skipToQueueIndex(targetIndex: Int) {
+        // FIXME - NEED TO IMPLEMENT THE REMEMBER PLAYBACK PROGRESS FUNCTIONALITY
+        val position = if (targetIndex == 0) playQueueViewModel.pendingSeekToInstruction.value ?: 0L
+        else 0L
+        controller.seekTo(targetIndex, position)
+        if (position != 0L) {
+            Log.i("DEBUG", "Pending seek to $position processed.")
+            playQueueViewModel.pendingSeekToInstruction.postValue(null)
+        }
+        playQueueViewModel.pendingSkipToInstruction.postValue(null)
     }
 
     /**
@@ -926,7 +933,6 @@ class MainActivity : AppCompatActivity() {
         controller.shuffleModeEnabled = shuffleMode
 
         val queueItemPairsJson = sharedPreferences.getString(PLAY_QUEUE_ITEMS, null) ?: return@launch
-        val currentQueueItemId = sharedPreferences.getInt(CURRENT_QUEUE_ITEM_INDEX, -1)
 
         val itemType = object : TypeToken<List<MediaItem>>() {}.type
 
@@ -948,14 +954,14 @@ class MainActivity : AppCompatActivity() {
         if (!controller.playWhenReady) controller.prepare()
         controller.addMediaItems(playQueue.subList(1, playQueue.size))
 
-        // val index = mediaItems.indexOfFirst { i -> i.first == currentQueueItemId }
-        /* fixme skipToQueueIndex(index, 0)
-
-        delay(150L)
-
-        val playbackPosition = sharedPreferences.getInt(PLAYBACK_POSITION, 0)
-        seekTo(playbackPosition) */
-        updatePlaybackDurationAndPosition()
+        val currentQueueItemIndex = sharedPreferences.getInt(CURRENT_QUEUE_ITEM_INDEX, -1)
+        if (currentQueueItemIndex != -1) {
+            playQueueViewModel.pendingSkipToInstruction.postValue(currentQueueItemIndex)
+        }
+        val playbackPosition = sharedPreferences.getLong(PLAYBACK_POSITION, 0L)
+        if (playbackPosition != 0L) {
+            playQueueViewModel.pendingSeekToInstruction.postValue(playbackPosition)
+        }
     }
 
     /** Refresh the music library. Add new songs, remove deleted songs, and implement language changes. */

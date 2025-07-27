@@ -11,6 +11,7 @@ class PlayQueueViewModel : ViewModel() {
     var currentlyPlayingSongMetadata = MutableLiveData<MediaMetadata?>()
     var isPlaying = MutableLiveData(false)
     var pendingPlayInstruction = MutableLiveData<Boolean?>()
+    var pendingSeekToInstruction = MutableLiveData<Long?>()
     var pendingSkipToInstruction = MutableLiveData<Int?>()
     var playbackDuration = MutableLiveData<Int>()
     var playbackPosition = MutableLiveData<Int>()
