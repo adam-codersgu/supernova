@@ -78,7 +78,6 @@ import com.google.gson.FieldAttributes
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
@@ -258,11 +257,41 @@ class MainActivity : AppCompatActivity() {
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 super.onMediaItemTransition(mediaItem, reason)
-                savePlayQueueId(extractQueueId(mediaItem?.mediaId ?: return))
+                Log.i("DEBUG", "The current controller index is ${controller.currentMediaItemIndex}")
+                //saveAndPostPlayQueueIndex(extractQueueId(mediaItem?.mediaId ?: return))
             }
 
             override fun onTimelineChanged(timeline: Timeline, reason: Int) {
-                Log.i("DEBUG", "Timeline changed for reason $reason")
+                if (timeline.isEmpty) {
+                    Log.i("DEBUG", "The timeline is empty")
+                    playQueueViewModel.playQueue.postValue(null)
+                } else {
+                    if (timeline.periodCount != timeline.windowCount) {
+                        Log.e("DEBUG", "The period and window counts do not match." +
+                                "Period count: ${timeline.periodCount}" +
+                                "Window count: ${timeline.windowCount}")
+                        return
+                    }
+                    val firstPeriodId = timeline.getPeriod(0, Timeline.Period()).id.toString()
+                    if (firstPeriodId == "-1") {
+                        Log.i("DEBUG", "The first period has an ID of -1. " +
+                                "Skipping update.")
+                        return
+                    }
+                    Log.i("DEBUG", "The first period ID is $firstPeriodId")
+                    
+                    val playQueue = mutableListOf<Pair<Int, MediaItem>>()
+                    for (i in 0..<timeline.periodCount) {
+                        val queueId = timeline.getPeriod(i, Timeline.Period()).id.toString()
+                        val mediaItem = timeline.getWindow(i, Timeline.Window()).mediaItem
+                        val pair = Pair(queueId.toInt(), mediaItem)
+                        playQueue.add(pair)
+                    }
+
+                    playQueueViewModel.playQueue.postValue(playQueue)
+                    savePlayQueue(playQueue.map { it.second })
+                }
+
                 super.onTimelineChanged(timeline, reason)
             }
 
@@ -372,8 +401,8 @@ class MainActivity : AppCompatActivity() {
      */
     private fun findSongIdInPlayQueueToRemove(songId: Long) = lifecycleScope.launch(Dispatchers.Default) {
         val queueItemsToRemove = playQueueViewModel.playQueue.value?.filter {
-            it.mediaId == songId.toString()
-        }?.map { i -> i.mediaId } ?: return@launch
+            it.second.mediaId == songId.toString()
+        }?.map { i -> i.first } ?: return@launch
         removeQueueItemById(queueItemsToRemove)
     }
 
@@ -385,7 +414,7 @@ class MainActivity : AppCompatActivity() {
      */
     fun notifyQueueItemMoved(queueId: Int, newIndex: Int) {
         val currentIndex = playQueueViewModel.playQueue.value?.indexOfFirst {
-            i -> extractQueueId(i.mediaId)  == queueId
+            i -> i.first  == queueId
         } ?: return
 
         controller.moveMediaItem(currentIndex, newIndex)
@@ -482,8 +511,7 @@ class MainActivity : AppCompatActivity() {
      * Convert the list of MediaDescriptionCompat objects for each item in the play queue to JSON
      * and save it in the shared preferences file.
      */
-    private fun saveAndPostPlayQueue(playQueue: List<MediaItem>) = lifecycleScope.launch(Dispatchers.IO) {
-        playQueueViewModel.playQueue.postValue(playQueue)
+    private fun savePlayQueue(playQueue: List<MediaItem>) = lifecycleScope.launch(Dispatchers.IO) {
         try {
             val strategy = object : ExclusionStrategy {
                 override fun shouldSkipClass(clazz: Class<*>?): Boolean {
@@ -532,7 +560,7 @@ class MainActivity : AppCompatActivity() {
 
         if (controller.isPlaying) controller.pause()
 
-        val playQueue = songs.mapIndexed { i, s -> s.getMediaItem(i) }.toList()
+        val playQueue = songs.map { s -> s.getMediaItem() }.toList()
 
         controller.setMediaItem(playQueue[0])
         if (!controller.playWhenReady) controller.prepare()
@@ -541,11 +569,8 @@ class MainActivity : AppCompatActivity() {
         val startSongIndex = if (shuffle) (songs.indices).random()
         else startIndex
         skipToQueueIndex(startSongIndex, 0)
-        savePlayQueueId(extractQueueId(playQueue[startSongIndex].mediaId))
 
         play()
-
-        saveAndPostPlayQueue(playQueue)
 
         when {
             shuffle -> setShuffleMode(true)
@@ -565,31 +590,18 @@ class MainActivity : AppCompatActivity() {
      */
     fun addSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false)
             = lifecycleScope.launch(Dispatchers.Default) {
-        val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: mutableListOf()
-        val maxQueueItemId = playQueue.maxByOrNull {
-            i -> extractQueueId(i.mediaId)
-        }?.mediaId
-        var queueItemId = if (maxQueueItemId != null) extractQueueId(maxQueueItemId)
-        else -1
-        val mediaItems = songs.map { s -> s.getMediaItem(++queueItemId) }
+        val mediaItems = songs.map { s -> s.getMediaItem() }
 
         if (addSongsAfterCurrentQueueItem) {
-            val index = playQueueViewModel.playQueue.value?.indexOfFirst { extractQueueId(it.mediaId) ==
-                    playQueueViewModel.currentQueueItemId.value }
-                ?.plus(1) ?: 0
             withContext(Dispatchers.Main) {
                 controller.addMediaItems(controller.currentMediaItemIndex + 1, mediaItems)
             }
-            playQueue.addAll(index, mediaItems)
         } else {
             // FIXME - DEBUG THIS BY GOING INTO THE SERVICE ON ADDITEMS - MAYBE SEE IF YOU CAN INTERCEPT THINGS SOMEHWERE E.G. AT THE PLAYER LEVEL
             withContext(Dispatchers.Main) {
                 controller.addMediaItems(mediaItems)
             }
-            playQueue.addAll(mediaItems)
         }
-
-        saveAndPostPlayQueue(playQueue)
 
         launch(Dispatchers.Main) toast@ {
             val message = when {
@@ -606,17 +618,15 @@ class MainActivity : AppCompatActivity() {
      *
      * @param queueItemIds The IDs of the queue items to be removed.
      */
-    fun removeQueueItemById(queueItemIds: List<String>) {
+    fun removeQueueItemById(queueItemIds: List<Int>) {
         val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return
         if (playQueue.isNotEmpty()) {
             for (queueItemId in queueItemIds) {
-                val index = playQueue.indexOfFirst { i -> i.mediaId == queueItemId }
+                val index = playQueue.indexOfFirst { i -> i.first == queueItemId }
 
                 controller.removeMediaItem(index)
                 playQueue.removeAt(index)
             }
-
-            saveAndPostPlayQueue(playQueue)
         }
     }
 
@@ -634,7 +644,7 @@ class MainActivity : AppCompatActivity() {
      */
     fun skipToQueueIndex(targetIndex: Int, currentIndex: Int? = null) {
         val currentIndex2 = currentIndex ?: playQueueViewModel.playQueue.value?.indexOfFirst {
-            i -> extractQueueId(i.mediaId) == playQueueViewModel.currentQueueItemId.value
+            i -> i.first == playQueueViewModel.currentQueueItemId.value
         } ?: return
         if (targetIndex > currentIndex2) {
             val times = targetIndex - currentIndex2
@@ -823,7 +833,7 @@ class MainActivity : AppCompatActivity() {
             // All occurrences of the song need to be updated in the play queue
             val playQueue = playQueueViewModel.playQueue.value
             val affectedQueueItems = playQueue?.filter {
-                it.mediaId == song.songId.toString()
+                it.second.mediaId == song.songId.toString()
             }
             if (affectedQueueItems?.isEmpty() != false) continue
 
@@ -833,14 +843,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun replaceQueueItem(queueItem: MediaItem, song: Song) {
-        val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return
-        val queueItemQueueId = extractQueueId(queueItem.mediaId)
-        val index = playQueue.indexOfFirst{ i -> extractQueueId(i.mediaId) ==
-                queueItemQueueId }
-        val mediaItem = song.getMediaItem(queueItemQueueId)
-        playQueue[index] = mediaItem
-        playQueueViewModel.playQueue.value = playQueue
+    private fun replaceQueueItem(queueItem: Pair<Int, MediaItem>, song: Song) {
+        val playQueue = playQueueViewModel.playQueue.value ?: return
+        val index = playQueue.indexOfFirst{ i -> i.first == queueItem.first }
+        val mediaItem = song.getMediaItem()
         controller.replaceMediaItem(index, mediaItem)
     }
 
@@ -929,18 +935,13 @@ class MainActivity : AppCompatActivity() {
         if (!controller.playWhenReady) controller.prepare()
         controller.addMediaItems(playQueue.subList(1, playQueue.size))
 
-        playQueueViewModel.playQueue.postValue(playQueue)
-        if (!controller.playWhenReady) {
-            controller.prepare()
-        }
-
-        val index = mediaItems.indexOfFirst { i -> extractQueueId(i.mediaId) == currentQueueItemId }
-        skipToQueueIndex(index, 0)
+        // val index = mediaItems.indexOfFirst { i -> i.first == currentQueueItemId }
+        /* fixme skipToQueueIndex(index, 0)
 
         delay(150L)
 
         val playbackPosition = sharedPreferences.getInt(PLAYBACK_POSITION, 0)
-        seekTo(playbackPosition)
+        seekTo(playbackPosition) */
         updatePlaybackDurationAndPosition()
     }
 

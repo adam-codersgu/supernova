@@ -8,10 +8,7 @@ object MediaItemHelper {
 
     private const val DELIMITER = "-"
 
-    fun combineSongIdAndQueueId(songId: Long, queueId: Int): String {
-        return songId.toString() + DELIMITER + queueId.toString()
-    }
-
+    @Deprecated("Remove me")
     fun extractQueueId(mediaId: String): Int {
         val components = mediaId.split(DELIMITER)
         return components[1].toInt()

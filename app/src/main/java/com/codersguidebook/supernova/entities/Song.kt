@@ -1,10 +1,7 @@
 package com.codersguidebook.supernova.entities
 
-import android.content.ContentUris
-import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
-import android.provider.MediaStore
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.room.ColumnInfo
@@ -12,7 +9,6 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ALBUM_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MEDIA_ID
-import com.codersguidebook.supernova.utils.MediaItemHelper.combineSongIdAndQueueId
 import kotlinx.parcelize.Parcelize
 
 /** Data class for mapping a song's metadata to a database table called music_library. */
@@ -48,16 +44,10 @@ data class Song(
             .build()
     }
 
-    fun getMediaItem(queueId: Int): MediaItem {
+    fun getMediaItem(): MediaItem {
         return MediaItem.Builder()
-            .setMediaId(combineSongIdAndQueueId(this@Song.songId, queueId))
+            .setMediaId(this@Song.songId.toString())
             .setMediaMetadata(getMetadata())
-            //.setUri(getContentUri())
             .build()
-    }
-
-    private fun getContentUri(): Uri {
-        return ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-            this@Song.songId)
     }
 }

@@ -16,13 +16,12 @@ import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.QueueOptions
 import com.codersguidebook.supernova.ui.playQueue.PlayQueueFragment
-import com.codersguidebook.supernova.utils.MediaItemHelper.extractQueueId
 import com.google.android.material.color.MaterialColors
 
 class PlayQueueAdapter(private val fragment: PlayQueueFragment
 , private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     var currentlyPlayingQueueId = -1
-    val playQueue = mutableListOf<MediaItem>()
+    val playQueue = mutableListOf<Pair<Int, MediaItem>>()
 
     inner class ViewHolderPlayQueue(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
@@ -38,8 +37,7 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
                 activity.play()
             }
             btnSongMenu.setOnClickListener {
-                val isCurrentlyPlayingSelected =
-                    extractQueueId(playQueue[layoutPosition].mediaId) == currentlyPlayingQueueId
+                val isCurrentlyPlayingSelected = playQueue[layoutPosition].first == currentlyPlayingQueueId
                 activity.openDialog(
                     QueueOptions(playQueue[layoutPosition],
                     isCurrentlyPlayingSelected)
@@ -67,12 +65,12 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
             return@setOnTouchListener true
         }
 
-        holder.txtSongTitle.text = playQueue[position].mediaMetadata.title
+        holder.txtSongTitle.text = playQueue[position].second.mediaMetadata.title
             ?: activity.getString(R.string.default_title)
-        holder.txtSongArtist.text = playQueue[position].mediaMetadata.artist
+        holder.txtSongArtist.text = playQueue[position].second.mediaMetadata.artist
             ?: activity.getString(R.string.default_artist)
 
-        if (extractQueueId(playQueue[position].mediaId) == currentlyPlayingQueueId) {
+        if (playQueue[position].first == currentlyPlayingQueueId) {
             holder.txtSongTitle.setTextColor(accent)
             holder.txtSongArtist.setTextColor(accent)
         } else {
@@ -83,14 +81,14 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
 
     fun changeCurrentlyPlayingQueueItemId(newQueueId: Int) {
         val oldCurrentlyPlayingIndex = playQueue.indexOfFirst {
-            extractQueueId(it.mediaId) == currentlyPlayingQueueId
+            it.first == currentlyPlayingQueueId
         }
 
         currentlyPlayingQueueId = newQueueId
         if (oldCurrentlyPlayingIndex != -1) notifyItemChanged(oldCurrentlyPlayingIndex)
 
         val newCurrentlyPlayingIndex = playQueue.indexOfFirst {
-            extractQueueId(it.mediaId) == currentlyPlayingQueueId
+            it.first == currentlyPlayingQueueId
         }
         if (newCurrentlyPlayingIndex != -1) {
             notifyItemChanged(newCurrentlyPlayingIndex)
@@ -104,9 +102,9 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
      *
      * @param newPlayQueue The new list of QueueItem objects that should be displayed.
      */
-    fun processNewPlayQueue(newPlayQueue: List<MediaItem>) {
-        if (newPlayQueue.map { extractQueueId(it.mediaId) }
-            == playQueue.map { extractQueueId(it.mediaId) }) {
+    fun processNewPlayQueue(newPlayQueue: List<Pair<Int, MediaItem>>) {
+        if (newPlayQueue.map { it.first }
+            == playQueue.map { it.first }) {
             return
         }
 
@@ -116,17 +114,17 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment
                     playQueue.add(queueItem)
                     notifyItemInserted(index)
                 }
-                playQueue.find { it.mediaId == queueItem.mediaId } == null -> {
+                playQueue.find { it.second.mediaId == queueItem.second.mediaId } == null -> {
                     playQueue.add(index, queueItem)
                     notifyItemInserted(index)
                 }
-                newPlayQueue.find { it.mediaId == playQueue[index].mediaId } == null -> {
+                newPlayQueue.find { it.second.mediaId == playQueue[index].second.mediaId } == null -> {
                     var numberOfItemsRemoved = 0
                     do {
                         playQueue.removeAt(index)
                         ++numberOfItemsRemoved
                     } while (index < playQueue.size &&
-                        newPlayQueue.find { it.mediaId == playQueue[index].mediaId } == null)
+                        newPlayQueue.find { it.second.mediaId == playQueue[index].second.mediaId } == null)
 
                     when {
                         numberOfItemsRemoved == 1 -> notifyItemRemoved(index)

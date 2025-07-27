@@ -12,7 +12,7 @@ import com.codersguidebook.supernova.fragment.BaseDialogFragment
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 
-class QueueOptions(private val queueItem: MediaItem,
+class QueueOptions(private val queueItem: Pair<Int, MediaItem>,
                    private val currentlyPlaying: Boolean) : BaseDialogFragment() {
 
     override var _binding: ViewBinding? = null
@@ -23,18 +23,18 @@ class QueueOptions(private val queueItem: MediaItem,
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         _binding = QueueOptionsBinding.inflate(inflater)
 
-        binding.optionsTitle.text = queueItem.mediaMetadata.title
+        binding.optionsTitle.text = queueItem.second.mediaMetadata.title
 
         binding.artist.setOnClickListener{
             val action = ArtistsFragmentDirections
-                .actionSelectArtist(queueItem.mediaMetadata.artist.toString())
+                .actionSelectArtist(queueItem.second.mediaMetadata.artist.toString())
             mainActivity.findNavController(R.id.nav_host_fragment).navigate(action)
             dismiss()
         }
 
         binding.album.setOnClickListener{
             // TODO - constant
-            queueItem.mediaMetadata.extras?.getString("albumId")?.let {
+            queueItem.second.mediaMetadata.extras?.getString("albumId")?.let {
                 val action = AlbumsFragmentDirections.actionSelectAlbum(it)
                 mainActivity.findNavController(R.id.nav_host_fragment).navigate(action)
             }
@@ -43,7 +43,7 @@ class QueueOptions(private val queueItem: MediaItem,
 
         binding.addPlaylist.setOnClickListener{
             // TODO - constant
-            queueItem.mediaMetadata.extras?.getString("mediaId")?.let {
+            queueItem.second.mediaMetadata.extras?.getString("mediaId")?.let {
                 mainActivity.openAddToPlaylistDialogForSongById(it.toLong())
             }
             dismiss()
@@ -52,7 +52,7 @@ class QueueOptions(private val queueItem: MediaItem,
         if (currentlyPlaying) binding.removeSong.isGone = true
         else {
             binding.removeSong.setOnClickListener {
-                mainActivity.removeQueueItemById(listOf(queueItem.mediaId))
+                mainActivity.removeQueueItemById(listOf(queueItem.first))
                 dismiss()
             }
         }

@@ -24,7 +24,6 @@ import com.codersguidebook.supernova.dialogs.CreatePlaylist
 import com.codersguidebook.supernova.fragment.RecyclerViewFragment
 import com.codersguidebook.supernova.fragment.adapter.PlayQueueAdapter
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MEDIA_ID
-import com.codersguidebook.supernova.utils.MediaItemHelper.extractQueueId
 
 class PlayQueueFragment : RecyclerViewFragment() {
     private val playQueueViewModel: PlayQueueViewModel by activityViewModels()
@@ -33,7 +32,7 @@ class PlayQueueFragment : RecyclerViewFragment() {
     private val itemTouchHelper by lazy {
         val simpleItemTouchCallback = object : SimpleCallback(UP or DOWN, 0) {
             var to: Int? = null
-            var queueItem: MediaItem? = null
+            var queueItem: Pair<Int, MediaItem>? = null
 
             override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
                 super.onSelectedChanged(viewHolder, actionState)
@@ -47,8 +46,7 @@ class PlayQueueFragment : RecyclerViewFragment() {
                 viewHolder.itemView.alpha = 1.0f
 
                 if (to != null && queueItem != null) {
-                    mainActivity.notifyQueueItemMoved(
-                        extractQueueId(queueItem!!.mediaId), to!!)
+                    mainActivity.notifyQueueItemMoved(queueItem!!.first, to!!)
                     to = null
                     queueItem = null
                 }
@@ -95,7 +93,7 @@ class PlayQueueFragment : RecyclerViewFragment() {
         playQueueViewModel.playQueue.value?.let { updateRecyclerView(it) }
     }
 
-    private fun updateRecyclerView(playQueue: List<MediaItem>) {
+    private fun updateRecyclerView(playQueue: List<Pair<Int, MediaItem>>) {
         setIsUpdatingTrue()
 
         if (adapter.playQueue.isEmpty()) {
@@ -122,7 +120,7 @@ class PlayQueueFragment : RecyclerViewFragment() {
                         val songIds = mutableListOf<Long>()
                         for (queueItem in adapter.playQueue) {
                             songIds.add(
-                                queueItem.mediaMetadata.extras?.getString(MEDIA_ID)?.toLong()
+                                queueItem.second.mediaMetadata.extras?.getString(MEDIA_ID)?.toLong()
                                     ?: continue
                             )
                         }
@@ -141,7 +139,7 @@ class PlayQueueFragment : RecyclerViewFragment() {
         super.onResume()
 
         val currentlyPlayingQueueItemIndex = adapter.playQueue.indexOfFirst { queueItem ->
-            extractQueueId(queueItem.mediaId) == adapter.currentlyPlayingQueueId
+            queueItem.first == adapter.currentlyPlayingQueueId
         }
 
         if (currentlyPlayingQueueItemIndex != -1) {
