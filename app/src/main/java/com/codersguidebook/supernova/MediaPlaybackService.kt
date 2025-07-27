@@ -258,20 +258,6 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
             super.onCommand(command, extras, cb)
 
             when (command) {
-                MOVE_QUEUE_ITEM -> {
-                    extras?.let {
-                        val queueItemId = it.getLong("queueItemId", -1L)
-                        val newIndex = it.getInt("newIndex", -1)
-                        if (queueItemId == -1L || newIndex == -1 || newIndex >= playQueue.size) return@let
-
-                        val oldIndex = playQueue.indexOfFirst { queueItem -> queueItem.queueId == queueItemId }
-                        if (oldIndex == -1) return@let
-                        val queueItem = playQueue[oldIndex]
-                        playQueue.removeAt(oldIndex)
-                        playQueue.add(newIndex, queueItem)
-                        mediaSessionCompat.setQueue(playQueue)
-                    }
-                }
                 REMOVE_QUEUE_ITEM_BY_ID -> {
                     extras?.let {
                         val queueItemId = extras.getLong("queueItemId", -1L)
@@ -341,13 +327,6 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
     override fun onCreate() {
         super.onCreate()
 
-        /* mediaSessionCompat = MediaSessionCompat(baseContext, NOTIFICATION_CHANNEL_ID).apply {
-            setFlags(MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS)
-            setCallback(mediaSessionCallback)
-            setSessionToken(sessionToken)
-            val builder = Builder().setActions(PlaybackStateCompat.ACTION_PLAY)
-            setPlaybackState(builder.build())
-        } */
         player = ExoPlayer.Builder(this).build().also { it.addListener(playerListener) }
         mediaSession = MediaSession.Builder(this, player).setCallback(this).build()
         initNoisyReceiver()
@@ -390,7 +369,6 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) = mediaSession
 
-
     /** Handles playback becoming 'noisy' i.e. headphones being unplugged. */
     private fun initNoisyReceiver() {
         // todo - look at handling this directly with the player?
@@ -416,16 +394,6 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
         }
         stopSelf()
     }
-
-
-    /* override fun onDestroy() {
-        super.onDestroy()
-        mediaSessionCompat.controller.transportControls.stop()
-        handler.removeCallbacks(playbackPositionRunnable)
-        unregisterReceiver(noisyReceiver)
-        mediaSessionCompat.release()
-        NotificationManagerCompat.from(this).cancel(1)
-    } */
 
     /** Refresh the metadata displayed in the media player notification and handle user interactions. */
     /* private fun refreshNotification() {
@@ -498,24 +466,6 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
         }
     } */
 
-    /** Set the media session metadata to information about the currently playing song. */
-    /* private fun setCurrentMetadata() {
-        val currentQueueItem = getCurrentQueueItem() ?: return
-        val currentQueueItemDescription = currentQueueItem.description
-        val metadataBuilder= MediaMetadataCompat.Builder().apply {
-            putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, currentQueueItemDescription.mediaId)
-            putString(MediaMetadataCompat.METADATA_KEY_TITLE, currentQueueItemDescription.title.toString())
-            putString(MediaMetadataCompat.METADATA_KEY_ARTIST, currentQueueItemDescription.subtitle.toString())
-            val extras = currentQueueItemDescription.extras
-            val albumName = extras?.getString("album") ?: "Unknown album"
-            putString(MediaMetadataCompat.METADATA_KEY_ALBUM, albumName)
-            val albumId = extras?.getString("album_id")
-            putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, getArtworkByAlbumId(albumId))
-            putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, albumId)
-        }
-        mediaSessionCompat.setMetadata(metadataBuilder.build())
-    } */
-
     /**
      * Retrieve the album artwork stored by the app for a given album ID.
      * If no artwork is found then a default artwork image is returned instead.
@@ -535,22 +485,5 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
         }
         // If an error has occurred or the album ID is null, then return a default artwork image
         return BitmapFactory.decodeResource(applicationContext.resources, R.drawable.no_album_artwork)
-    }
-
-    override fun onError(mp: MediaPlayer?, what: Int, extra: Int): Boolean {
-        setMediaPlaybackState(STATE_ERROR)
-        mediaSessionCompat.controller.transportControls.stop()
-        stopForeground(STOP_FOREGROUND_REMOVE)
-
-        val message = when (extra) {
-            MEDIA_ERROR_EMPTY_PLAY_QUEUE -> {
-                getString(R.string.error_media_service_empty_queue)
-            }
-            MEDIA_ERROR_IO -> getString(R.string.error_media_service_player_state)
-            else -> getString(R.string.error_media_service_default)
-        }
-        Toast.makeText(application, message, Toast.LENGTH_LONG).show()
-
-        return true
     } */
 }
