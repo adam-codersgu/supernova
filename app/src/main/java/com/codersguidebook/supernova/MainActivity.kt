@@ -239,6 +239,10 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
 
+        sharedPreferences.edit {
+            remove(SHUFFLE_MODE)
+        }
+
         mediaStoreContentObserver?.let {
             this.contentResolver.unregisterContentObserver(it)
         }
@@ -262,6 +266,11 @@ class MainActivity : AppCompatActivity() {
                 saveAndPostPlayQueueIndex(controller.currentMediaItemIndex)
             }
 
+            override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+                super.onShuffleModeEnabledChanged(shuffleModeEnabled)
+                Log.i("DEBUG", "Shuffle mode enabled changed to $shuffleModeEnabled")
+            }
+
             override fun onTimelineChanged(timeline: Timeline, reason: Int) {
                 if (timeline.isEmpty) {
                     Log.i("DEBUG", "The timeline is empty")
@@ -279,6 +288,14 @@ class MainActivity : AppCompatActivity() {
                         return
                     }
                     Log.i("DEBUG", "Processing a timeline update.")
+
+                    val pendingShuffle = playQueueViewModel.pendingShuffleInstruction.value
+                    if (pendingShuffle != null) {
+                        Log.i("DEBUG", "Pending shuffle mode instruction received.\n" +
+                                "Ending timeline update.")
+                        setShuffleMode(pendingShuffle)
+                        playQueueViewModel.pendingShuffleInstruction.postValue(null)
+                    }
                     
                     val playQueue = mutableListOf<MediaItem>()
                     for (i in 0..<timeline.periodCount) {
@@ -498,7 +515,6 @@ class MainActivity : AppCompatActivity() {
             apply()
         }
 
-        // FIXME - NO WAY TO GET THE PLAY QUEUE AFTER THIS? MAY NEED TO SHUFFLE IT YOURSELF
         controller.shuffleModeEnabled = shuffle
     }
 
@@ -603,24 +619,23 @@ class MainActivity : AppCompatActivity() {
 
         if (controller.isPlaying) controller.pause()
 
+        if (shuffle) {
+            playQueueViewModel.pendingShuffleInstruction.postValue(true)
+        }
+
         val playQueue = songs.map { s -> s.getMediaItem() }.toList()
 
         controller.setMediaItem(playQueue[0])
         if (!controller.playWhenReady) controller.prepare()
         controller.addMediaItems(playQueue.subList(1, playQueue.size))
 
-        // fixme - shuffle functionality needs to be fixed
-        val startSongIndex = if (shuffle) (songs.indices).random()
-        else startIndex
-
-        playQueueViewModel.pendingSkipToInstruction.postValue(startSongIndex)
+        if (startIndex != 0 && !shuffle) {
+            playQueueViewModel.pendingSkipToInstruction.postValue(startIndex)
+        }
         playQueueViewModel.pendingPlayInstruction.postValue(true)
-        playQueueViewModel.pendingExpectedMetadata.postValue(
-            playQueue[startSongIndex].mediaMetadata.title.toString())
-
-        when {
-            shuffle -> setShuffleMode(true)
-            controller.shuffleModeEnabled -> setShuffleMode(false)
+        if (!shuffle) {
+            playQueueViewModel.pendingExpectedMetadata.postValue(
+                playQueue[startIndex].mediaMetadata.title.toString())
         }
     }
 
@@ -931,9 +946,13 @@ class MainActivity : AppCompatActivity() {
         val repeatMode = sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_OFF)
         controller.repeatMode = repeatMode
 
-        // FIXME - REMOVE THIS IF YOU HANDLE THE SHUFFLE BEHAVIOUR YOURSELF
-        val shuffleMode = sharedPreferences.getBoolean(SHUFFLE_MODE, false)
-        controller.shuffleModeEnabled = shuffleMode
+        // TODO - WE COULD EVENTUALLY INCORPORATE A FEATURE FOR RESTORING SHUFFLED PLAY QUEUES
+        //  THIS WOULD BE DONE BY SAVING THE UNSHUFFLED TIMELINE
+        //  SAVING THE SHUFFLE PREFERENCE
+        //  SAVING THE SHUFFLED ORDER OF ITEMS
+        //  SETTING THE CONTROLLER TO SHUFFLED (DOES THIS NEED TO BE DONE AFTER PLAY QUEUE RESTORE? - VERIFY)
+        //  RESTORING THE PLAY QUEUE ON RESTART
+        //  MANUALLY MOVING EACH ITEM TO ITS ORIGINAL SHUFFLED POSITION
 
         val queueItemPairsJson = sharedPreferences.getString(PLAY_QUEUE_ITEMS, null) ?: return@launch
 

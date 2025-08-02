@@ -13,6 +13,7 @@ class PlayQueueViewModel : ViewModel() {
     var pendingExpectedMetadata = MutableLiveData<String?>()
     var pendingPlayInstruction = MutableLiveData<Boolean?>()
     var pendingSeekToInstruction = MutableLiveData<Long?>()
+    var pendingShuffleInstruction = MutableLiveData<Boolean?>()
     var pendingSkipToInstruction = MutableLiveData<Int?>()
     var playbackDuration = MutableLiveData<Int>()
     var playbackPosition = MutableLiveData<Int>()
