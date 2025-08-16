@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.QueueOptions
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ORDER_ID
 import com.codersguidebook.supernova.ui.playQueue.PlayQueueFragment
 import com.google.android.material.color.MaterialColors
 
@@ -54,6 +55,8 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment,
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         holder as ViewHolderPlayQueue
 
+        val metadata = playQueue[position].mediaMetadata
+
         val accent = MaterialColors.getColor(activity, com.google.android.material.R.attr.colorAccent, Color.CYAN)
         val onSurface = MaterialColors.getColor(activity, com.google.android.material.R.attr.colorOnSurface, Color.LTGRAY)
         val onSurface60 = MaterialColors.compositeARGBWithAlpha(onSurface, 153)
@@ -64,16 +67,20 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment,
             return@setOnTouchListener true
         }
 
-        holder.txtSongTitle.text = playQueue[position].mediaMetadata.title
-            ?: activity.getString(R.string.default_title)
-        holder.txtSongArtist.text = playQueue[position].mediaMetadata.artist
-            ?: playQueue[position].mediaMetadata.subtitle
+        holder.txtSongTitle.text = metadata.title ?: activity.getString(R.string.default_title)
+        holder.txtSongArtist.text = metadata.artist
+            ?: metadata.subtitle
             ?: activity.getString(R.string.default_artist)
 
-        if (playQueue[position].mediaMetadata.title == null ||
-            (playQueue[position].mediaMetadata.artist == null &&
-                    playQueue[position].mediaMetadata.subtitle == null)) {
-            fragment.attemptToFetchMetadata(position, playQueue[position].mediaId)
+        if (metadata.title == null ||
+            (metadata.artist == null &&
+                    metadata.subtitle == null)) {
+            // FIXME - SEE IF THERE'S ANOTHER WAY TO GET THE ORDER ID WHEN NOT AVAILABLE
+            //  E.G. FROM THE SAVED PLAY QUEUE??
+            //  MAYBE EVEN MAINACTIVITY NEEDS TO HOLD A MASTER COPY OF THE PLAY QUEUE
+            //  THAT CAN STORE AS A REFERENCE POINT FOR MISSING DATA AND SAVING THE PLAY QUEUE STATE
+            fragment.attemptToFetchMetadata(position, playQueue[position].mediaId,
+                metadata.extras?.getInt(ORDER_ID) ?: 0)
         }
 
         if (position == currentlyPlayingQueueIndex) {

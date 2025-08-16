@@ -74,6 +74,7 @@ import com.codersguidebook.supernova.utils.*
 import com.google.android.material.navigation.NavigationView
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
@@ -254,6 +255,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // TODO - HAVE A RUNNABLE THAT WHENEVER WE ARE WITHIN 2%
     private fun initController() {
         controller.addListener(object : Player.Listener {
 
@@ -970,7 +972,7 @@ class MainActivity : AppCompatActivity() {
 fixme for shuffle mode
             // TODO COMMENT OUT AGAIN
         sharedPreferences.edit {
-            remove("play_queue")
+            // remove("play_queue")
             // remove("current_queue_item_id_new")
         }
 
@@ -991,20 +993,14 @@ fixme for shuffle mode
 
         val queueItemPairsJson = sharedPreferences.getString(PLAY_QUEUE_ITEMS, null) ?: return@launch
 
-        val itemType = object : TypeToken<List<MediaItem>>() {}.type
+        val itemType = object : TypeToken<List<SongWithOrderId>>() {}.type
 
-        val gson = GsonBuilder()
-            .registerTypeAdapter(CharSequence::class.java, CharSequenceTypeAdapter())
-            .create()
-        val mediaItems = gson.fromJson<List<MediaItem>>(queueItemPairsJson, itemType)
-        if (mediaItems.isEmpty()) return@launch
+        // FIXME RESUME - NEED TO USE THE QUEUE ID TO RESTORE ALSO, WHEN SHUFFLE PREFERENCE SET
+        val songs = Gson().fromJson<List<SongWithOrderId>>(queueItemPairsJson, itemType)
+        if (songs.isEmpty()) return@launch
         val playQueue = mutableListOf<MediaItem>()
-        for (item in mediaItems) {
-            val metadata = item.mediaMetadata.buildUpon()
-                .setSupportedCommands(listOf()).build()
-            val newItem = item.buildUpon()
-                .setMediaMetadata(metadata)
-                .build()
+        for (s in songs) {
+            val newItem = s.song?.getMediaItem(s.orderId ?: continue) ?: continue
             playQueue.add(newItem)
         }
 

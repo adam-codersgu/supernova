@@ -155,12 +155,12 @@ class PlayQueueFragment : RecyclerViewFragment() {
 
     fun startDragging(viewHolder: RecyclerView.ViewHolder) = itemTouchHelper.startDrag(viewHolder)
 
-    fun attemptToFetchMetadata(index: Int, songId: String) = lifecycleScope.launch(Dispatchers.Main) {
+    fun attemptToFetchMetadata(index: Int, songId: String, orderId: Int) = lifecycleScope.launch(Dispatchers.Main) {
         val song = withContext(Dispatchers.IO) {
             return@withContext mainActivity.getSongById(songId.toLong())
         }
         if (song != null) {
-            val mediaItem = song.getMediaItem()
+            val mediaItem = song.getMediaItem(orderId)
             adapter.playQueue[index] = mediaItem
             adapter.notifyItemChanged(index)
             Log.i("DEBUG", "Manually fetched the metadata in the play queue for " +
