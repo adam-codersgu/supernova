@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.QueueOptions
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ORDER_ID
 import com.codersguidebook.supernova.ui.playQueue.PlayQueueFragment
 import com.google.android.material.color.MaterialColors
 
@@ -71,17 +70,6 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment,
         holder.txtSongArtist.text = metadata.artist
             ?: metadata.subtitle
             ?: activity.getString(R.string.default_artist)
-
-        if (metadata.title == null ||
-            (metadata.artist == null &&
-                    metadata.subtitle == null)) {
-            // FIXME - SEE IF THERE'S ANOTHER WAY TO GET THE ORDER ID WHEN NOT AVAILABLE
-            //  E.G. FROM THE SAVED PLAY QUEUE??
-            //  MAYBE EVEN MAINACTIVITY NEEDS TO HOLD A MASTER COPY OF THE PLAY QUEUE
-            //  THAT CAN STORE AS A REFERENCE POINT FOR MISSING DATA AND SAVING THE PLAY QUEUE STATE
-            fragment.attemptToFetchMetadata(position, playQueue[position].mediaId,
-                metadata.extras?.getInt(ORDER_ID) ?: 0)
-        }
 
         if (position == currentlyPlayingQueueIndex) {
             holder.txtSongTitle.setTextColor(accent)

@@ -1,7 +1,6 @@
 package com.codersguidebook.supernova.ui.playQueue
 
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -11,7 +10,6 @@ import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG
@@ -25,9 +23,6 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.CreatePlaylist
 import com.codersguidebook.supernova.fragment.RecyclerViewFragment
 import com.codersguidebook.supernova.fragment.adapter.PlayQueueAdapter
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class PlayQueueFragment : RecyclerViewFragment() {
     private val playQueueViewModel: PlayQueueViewModel by activityViewModels()
@@ -154,17 +149,4 @@ class PlayQueueFragment : RecyclerViewFragment() {
     }
 
     fun startDragging(viewHolder: RecyclerView.ViewHolder) = itemTouchHelper.startDrag(viewHolder)
-
-    fun attemptToFetchMetadata(index: Int, songId: String, orderId: Int) = lifecycleScope.launch(Dispatchers.Main) {
-        val song = withContext(Dispatchers.IO) {
-            return@withContext mainActivity.getSongById(songId.toLong())
-        }
-        if (song != null) {
-            val mediaItem = song.getMediaItem(orderId)
-            adapter.playQueue[index] = mediaItem
-            adapter.notifyItemChanged(index)
-            Log.i("DEBUG", "Manually fetched the metadata in the play queue for " +
-                    "${mediaItem.mediaMetadata  .title}")
-        }
-    }
 }

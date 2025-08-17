@@ -16,4 +16,8 @@ class PlayQueueViewModel : ViewModel() {
     var pendingSkipToInstruction = MutableLiveData<Int?>()
     var playbackDuration = MutableLiveData<Int>()
     var playbackPosition = MutableLiveData<Int>()
+
+    fun getCurrentSongMediaId(): Long {
+        return playQueue.value!![currentQueueItemIndex.value!!].mediaId.toLong()
+    }
 }
