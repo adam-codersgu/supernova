@@ -27,7 +27,6 @@ import com.google.common.util.concurrent.ListenableFuture
 @UnstableApi
 class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
 
-    // private val handler = Handler(Looper.getMainLooper())
     private lateinit var audioFocusRequest: AudioFocusRequest
     private lateinit var player: Player
 
@@ -54,17 +53,7 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
         }
     }
 
-    /* private var playbackPositionRunnable = object : Runnable {
-        override fun run() {
-            try {
-                if (mediaPlayer?.isPlaying == true) setMediaPlaybackState(STATE_PLAYING)
-            } finally {
-                handler.postDelayed(this, 1000L)
-            }
-        }
-    }
-
-    private val mediaSessionCallback: MediaSessionCompat.Callback = object : MediaSessionCompat.Callback() {
+    /* private val mediaSessionCallback: MediaSessionCompat.Callback = object : MediaSessionCompat.Callback() {
         override fun onMediaButtonEvent(mediaButtonEvent: Intent?): Boolean {
             val keyEvent: KeyEvent? = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
                 // Pre-SDK 33
@@ -330,7 +319,6 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
         player = ExoPlayer.Builder(this).build().also { it.addListener(playerListener) }
         mediaSession = MediaSession.Builder(this, player).setCallback(this).build()
         initNoisyReceiver()
-        // playbackPositionRunnable.run()
     }
 
     private fun requestAudioFocus() {
