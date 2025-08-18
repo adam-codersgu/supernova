@@ -282,12 +282,6 @@ class MainActivity : AppCompatActivity() {
                 updatePlaybackDurationAndPosition()
             }
 
-            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                super.onMediaItemTransition(mediaItem, reason)
-
-                saveAndPostPlayQueueIndex(controller.currentMediaItemIndex)
-            }
-
             override fun onTimelineChanged(timeline: Timeline, reason: Int) {
                 if (timeline.isEmpty) {
                     Log.i("DEBUG", "The timeline is empty")
@@ -336,11 +330,11 @@ class MainActivity : AppCompatActivity() {
                     } else playQueueViewModel.pendingExpectedMetadata.postValue(null)
                 }
 
+                processPendingSeekToRequest()
+
                 val newMediaId = metadata.extras?.getString(MEDIA_ID)
                 val prevMediaId = playQueueViewModel.currentlyPlayingSongMetadata.value?.extras?.getString(MEDIA_ID)
                 if (newMediaId != prevMediaId) {
-                    processPendingSeekToRequest()
-
                     lifecycleScope.launch(Dispatchers.IO) {
                         withContext(Dispatchers.IO) {
                             getSongById(newMediaId?.toLong() ?: return@withContext null)
@@ -538,52 +532,63 @@ class MainActivity : AppCompatActivity() {
      * @param shuffle A Boolean indicating whether the play queue should be shuffled.
      */
     private fun setShuffleMode(shuffle: Boolean) {
-        if (shuffle) {
-            Log.i("DEBUG", "Shuffling the play queue")
-        } else {
-            Log.i("DEBUG", "Unshuffling the play queue")
-        }
+        val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return
 
-        // todo - test this - may need to pause playback and reseek to your song and playback position
-        val orderIdOfCurrentSong = playQueueViewModel.currentlyPlayingSongMetadata.value
-            ?.extras?.getInt(ORDER_ID) ?: return
-        val playQueue = playQueueViewModel.playQueue.value ?: return
-        val newPlayQueue = if (shuffle) {
+        if (shuffle) {
             for ((index, i) in playQueue.withIndex()) {
                 i.mediaMetadata.extras?.putInt(ORDER_ID, index)
             }
-            playQueue.shuffled()
-        } else {
-            playQueue.sortedBy {
-                i -> i.mediaMetadata.extras?.getInt(ORDER_ID)
-            }
         }
 
-        if (!shuffle) {
+        val currentQueueItemIndex = playQueueViewModel.currentQueueItemIndex.value ?: return
+        val currentQueueItem = playQueue[currentQueueItemIndex]
+
+        val newPlayQueue: MutableList<MediaItem>
+        if (shuffle) {
+            Log.i("DEBUG", "Shuffling the play queue")
+            controller.removeMediaItems(currentQueueItemIndex + 1, playQueue.size)
+            controller.removeMediaItems(0, currentQueueItemIndex)
+
+            playQueue.removeAt(currentQueueItemIndex)
+            newPlayQueue = playQueue.shuffled().toMutableList()
+
+            controller.addMediaItems(1, newPlayQueue)
+            newPlayQueue.add(0, currentQueueItem)
+        } else {
+            Log.i("DEBUG", "Unshuffling the play queue")
+
+            newPlayQueue = playQueue.sortedBy {
+                    i -> i.mediaMetadata.extras?.getInt(ORDER_ID)
+            }.toMutableList()
+
+            val newIndexOfCurrentlyPlaying = newPlayQueue.indexOfFirst { i ->
+                i.mediaMetadata.extras?.getInt(ORDER_ID) ==
+                    currentQueueItem.mediaMetadata.extras?.getInt(ORDER_ID)
+            }
+
+            val playbackPosition = controller.currentPosition
+            val isPlaying = controller.isPlaying
+
+            controller.setMediaItem(newPlayQueue[0])
+            if (!controller.playWhenReady) controller.prepare()
+            if (newPlayQueue.size > 1) {
+                controller.addMediaItems(newPlayQueue.subList(1, newPlayQueue.size))
+            }
+
+            playQueueViewModel.pendingSeekToInstruction.postValue(playbackPosition)
+            if (newPlayQueue.size > 1) {
+                playQueueViewModel.pendingSkipToInstruction.postValue(newIndexOfCurrentlyPlaying)
+                playQueueViewModel.pendingExpectedMetadata.postValue(
+                    newPlayQueue[newIndexOfCurrentlyPlaying].mediaMetadata.title.toString())
+            }
+            if (isPlaying) {
+                playQueueViewModel.pendingPlayInstruction.postValue(true)
+            }
+
             for (i in newPlayQueue) i.mediaMetadata.extras?.remove(ORDER_ID)
         }
 
         saveAndPostPlayQueue(newPlayQueue)
-
-        val currentQueueItemIndex = playQueueViewModel.currentQueueItemIndex.value ?: return
-        if (currentQueueItemIndex < newPlayQueue.size - 1) {
-            controller.removeMediaItems(currentQueueItemIndex + 1, newPlayQueue.size)
-        }
-        if (currentQueueItemIndex > 0) {
-            controller.removeMediaItems(0, currentQueueItemIndex)
-        }
-
-        val indexOfCurrentlyPlayingInNewQueue = newPlayQueue.indexOfLast {
-                i -> i.mediaMetadata.extras?.getInt(ORDER_ID) == orderIdOfCurrentSong
-        }
-        if (indexOfCurrentlyPlayingInNewQueue < newPlayQueue.size - 1) {
-            controller.addMediaItems(indexOfCurrentlyPlayingInNewQueue + 1,
-                newPlayQueue.subList(indexOfCurrentlyPlayingInNewQueue + 1, newPlayQueue.size))
-        }
-        if (currentQueueItemIndex > 0) {
-            controller.addMediaItems(0,
-                newPlayQueue.subList(0, indexOfCurrentlyPlayingInNewQueue))
-        }
 
         sharedPreferences.edit().apply {
             putBoolean(SHUFFLE_MODE, shuffle)
@@ -715,7 +720,9 @@ class MainActivity : AppCompatActivity() {
 
         controller.setMediaItem(playQueue[0])
         if (!controller.playWhenReady) controller.prepare()
-        controller.addMediaItems(playQueue.subList(1, playQueue.size))
+        if (playQueue.size > 1) {
+            controller.addMediaItems(playQueue.subList(1, playQueue.size))
+        }
 
         if (startIndex != 0 && !shuffle) {
             playQueueViewModel.pendingSkipToInstruction.postValue(startIndex)
@@ -1051,7 +1058,7 @@ class MainActivity : AppCompatActivity() {
     @OptIn(UnstableApi::class)
     private fun restoreMediaSession() = lifecycleScope.launch {
         if (playQueueViewModel.playQueue.value != null) return@launch
-//fixme for shuffle mode
+
         sharedPreferences.edit {
             // remove("play_queue")
             // remove("current_queue_item_id_new")
@@ -1062,21 +1069,10 @@ class MainActivity : AppCompatActivity() {
         val repeatMode = sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_OFF)
         controller.repeatMode = repeatMode
 
-        // TODO - WE COULD EVENTUALLY INCORPORATE A FEATURE FOR RESTORING SHUFFLED PLAY QUEUES
-        //  THIS WOULD BE DONE BY SAVING THE UNSHUFFLED TIMELINE
-        //  SAVING THE SHUFFLE PREFERENCE
-        //  SAVING THE SHUFFLED ORDER OF ITEMS
-        //  SETTING THE CONTROLLER TO SHUFFLED (DOES THIS NEED TO BE DONE AFTER PLAY QUEUE RESTORE? - VERIFY)
-        //  RESTORING THE PLAY QUEUE ON RESTART
-        //  MANUALLY MOVING EACH ITEM TO ITS ORIGINAL SHUFFLED POSITION
-
-        // TODO - RESUME - USE THE SONGWITHORDERID JSON
-
         val queueItemPairsJson = sharedPreferences.getString(PLAY_QUEUE_ITEMS, null) ?: return@launch
 
         val itemType = object : TypeToken<List<SongWithOrderId>>() {}.type
 
-        // FIXME RESUME - NEED TO USE THE QUEUE ID TO RESTORE ALSO, WHEN SHUFFLE PREFERENCE SET
         val songs = Gson().fromJson<List<SongWithOrderId>>(queueItemPairsJson, itemType)
         Log.i("DEBUG", "Retrieved the following JSON:\n$songs")
         if (songs.isEmpty()) return@launch
@@ -1089,7 +1085,9 @@ class MainActivity : AppCompatActivity() {
         playQueueViewModel.playQueue.postValue(playQueue)
         controller.setMediaItem(playQueue[0])
         if (!controller.playWhenReady) controller.prepare()
-        controller.addMediaItems(playQueue.subList(1, playQueue.size))
+        if (playQueue.size > 1) {
+            controller.addMediaItems(playQueue.subList(1, playQueue.size))
+        }
 
         val currentQueueItemIndex = sharedPreferences.getInt(CURRENT_QUEUE_ITEM_INDEX, -1)
         if (currentQueueItemIndex != -1) {
