@@ -48,7 +48,7 @@ data class Song(
             .build()
     }
 
-    fun getMediaItem(orderId: Int?): MediaItem {
+    fun getMediaItem(orderId: Int? = null): MediaItem {
         return MediaItem.Builder()
             .setMediaId(this@Song.songId.toString())
             .setMediaMetadata(getMetadata(orderId))
