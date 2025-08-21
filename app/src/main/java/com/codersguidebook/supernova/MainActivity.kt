@@ -274,7 +274,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // TODO - HAVE A RUNNABLE THAT WHENEVER WE ARE WITHIN 2%
     private fun initController() {
         controller.addListener(object : Player.Listener {
 
@@ -666,10 +665,10 @@ class MainActivity : AppCompatActivity() {
         } catch (_: ConcurrentModificationException) {}
     }
 
-    // fixme - don't want this to return null, throw an exception or log error instead
-    private fun buildSongFromMediaItem(mediaItem: MediaItem): Song? {
+    private fun buildSongFromMediaItem(mediaItem: MediaItem): Song {
         val metadata = mediaItem.mediaMetadata
-        val extras = metadata.extras ?: return null
+        val extras = metadata.extras
+            ?: throw RuntimeException("Extras null for ${mediaItem.mediaMetadata.title}")
         return Song(mediaItem.mediaId.toLong(), 0, metadata.title.toString(),
             metadata.artist.toString(), metadata.albumTitle.toString(),
             extras.getString(ALBUM_ID, "-1"), "0")
@@ -708,10 +707,10 @@ class MainActivity : AppCompatActivity() {
 
         if (controller.isPlaying) controller.pause()
 
-        // fixme for new shuffle methodology of using null order id when not shuffled
-        var playQueue = songs.mapIndexed { i, s -> s.getMediaItem(i) }.toList()
-        if (shuffle) {
-            playQueue = playQueue.shuffled()
+        val playQueue = if (shuffle) {
+            songs.mapIndexed { i, s -> s.getMediaItem(i) }.toList().shuffled()
+        } else {
+            songs.map { s -> s.getMediaItem() }.toList()
         }
         saveAndPostPlayQueue(playQueue)
 
