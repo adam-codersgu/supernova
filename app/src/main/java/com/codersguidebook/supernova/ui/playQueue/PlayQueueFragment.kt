@@ -48,8 +48,11 @@ class PlayQueueFragment : RecyclerViewFragment() {
                 viewHolder.itemView.alpha = 1.0f
 
                 if (from != null && to != null) {
+                    // TODO - BUG - IF FROM IS THE CURRENTLY PLAYING INDEX
+                    //  THEN SHOULD FOLLOW A SIMILAR APPROACH TO UNSHUFFLING THE PLAY QUEUE
+                    //  WHERE WE RELOAD THE QUEUE AND RESUME THE CURRENT SONG
                     mainActivity.notifyQueueItemMoved(from!!, to!!)
-                    // TODO - NEED TO FIX A BUG HERE - IF THE FROM/TO RANGE CROSSES
+                    // TODO - BUG - IF THE FROM/TO RANGE CROSSES
                     //  THE CURRENTLY PLAYING INDEX, THEN WE SHOULD MANUALLY UPDATE
                     //  THE ADAPTER AND AFFECTED ITEMS ALSO SO THAT WE DO NOT
                     //  INCORRECTLY UPDATE THE UI WHILE AWAITING THE SERVICE TIMELINE

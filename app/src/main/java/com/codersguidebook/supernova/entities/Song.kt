@@ -10,6 +10,7 @@ import androidx.room.PrimaryKey
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ALBUM_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MEDIA_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ORDER_ID
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMEMBER_PROGRESS
 import kotlinx.parcelize.Parcelize
 
 /** Data class for mapping a song's metadata to a database table called music_library. */
@@ -36,6 +37,7 @@ data class Song(
         val extras = Bundle().apply {
             putString(ALBUM_ID, this@Song.albumId)
             putString(MEDIA_ID, this@Song.songId.toString())
+            putBoolean(REMEMBER_PROGRESS, this@Song.rememberProgress)
             if (orderId != null) {
                 putInt(ORDER_ID, orderId)
             }

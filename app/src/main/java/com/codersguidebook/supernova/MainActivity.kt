@@ -61,6 +61,7 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MEDI
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NO_ACTION
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ORDER_ID
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMEMBER_PROGRESS
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_DELETED
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_UPDATED
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.APPLICATION_LANGUAGE
@@ -806,10 +807,14 @@ class MainActivity : AppCompatActivity() {
      *
      * @param targetIndex The index in the queue to skip to.
      */
-    fun skipToQueueIndex(targetIndex: Int) {
-        // FIXME - NEED TO IMPLEMENT THE REMEMBER PLAYBACK PROGRESS FUNCTIONALITY
-        val position = if (targetIndex == 0) playQueueViewModel.pendingSeekToInstruction.value ?: 0L
+    fun skipToQueueIndex(targetIndex: Int) = lifecycleScope.launch(Dispatchers.Main) {
+        var position = if (targetIndex == 0) playQueueViewModel.pendingSeekToInstruction.value ?: 0L
         else 0L
+        val item = playQueueViewModel.playQueue.value?.get(targetIndex)
+        if (item?.mediaMetadata?.extras?.getBoolean(REMEMBER_PROGRESS) == true) {
+            val song = getSongById(item.mediaId.toLong())
+            position = song?.playbackProgress ?: position
+        }
         controller.seekTo(targetIndex, position)
         if (position != 0L) {
             Log.i("DEBUG", "Pending seek to $position processed.")
