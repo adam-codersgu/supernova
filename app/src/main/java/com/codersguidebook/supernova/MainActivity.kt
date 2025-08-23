@@ -287,15 +287,8 @@ class MainActivity : AppCompatActivity() {
                     Log.i("DEBUG", "The timeline is empty")
                     saveAndPostPlayQueue(listOf())
                 } else {
-                    if (timeline.periodCount != timeline.windowCount) {
-                        Log.e("DEBUG", "The period and window counts do not match." +
-                                "Period count: ${timeline.periodCount}" +
-                                "Window count: ${timeline.windowCount}")
-                        return
-                    }
                     val firstPeriodId = timeline.getPeriod(0, Timeline.Period()).id.toString()
                     if (firstPeriodId == "-1") {
-                        Log.i("DEBUG", "Skipping timeline update.")
                         return
                     }
                     Log.i("DEBUG", "Processing a timeline update.")
@@ -484,13 +477,16 @@ class MainActivity : AppCompatActivity() {
     fun notifyQueueItemMoved(oldIndex: Int, newIndex: Int) {
         val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return
         val item = playQueue[oldIndex]
-        if (oldIndex > newIndex) {
-            playQueue.removeAt(oldIndex)
-            playQueue.add(newIndex, item)
-        } else {
-            playQueue.add(newIndex, item)
-            playQueue.removeAt(oldIndex)
+
+        Log.i("DEBUG", "Moving item from index $oldIndex to index $newIndex")
+
+        playQueue.removeAt(oldIndex)
+        playQueue.add(newIndex, item)
+
+        if (oldIndex == controller.currentMediaItemIndex) {
+            reloadPlayQueue(playQueue, newIndex)
         }
+
         saveAndPostPlayQueue(playQueue)
         controller.moveMediaItem(oldIndex, newIndex)
     }
@@ -562,29 +558,10 @@ class MainActivity : AppCompatActivity() {
                     i -> i.mediaMetadata.extras?.getInt(ORDER_ID)
             }.toMutableList()
 
-            val newIndexOfCurrentlyPlaying = newPlayQueue.indexOfFirst { i ->
-                i.mediaMetadata.extras?.getInt(ORDER_ID) ==
-                    currentQueueItem.mediaMetadata.extras?.getInt(ORDER_ID)
+            val newIndexOfCurrentlyPlaying = playQueue.indexOfFirst { i ->
+                i.mediaMetadata.extras?.getInt(ORDER_ID) == currentQueueItem.mediaMetadata.extras?.getInt(ORDER_ID)
             }
-
-            val playbackPosition = controller.currentPosition
-            val isPlaying = controller.isPlaying
-
-            controller.setMediaItem(newPlayQueue[0])
-            if (!controller.playWhenReady) controller.prepare()
-            if (newPlayQueue.size > 1) {
-                controller.addMediaItems(newPlayQueue.subList(1, newPlayQueue.size))
-            }
-
-            playQueueViewModel.pendingSeekToInstruction.postValue(playbackPosition)
-            if (newPlayQueue.size > 1) {
-                playQueueViewModel.pendingSkipToInstruction.postValue(newIndexOfCurrentlyPlaying)
-                playQueueViewModel.pendingExpectedMetadata.postValue(
-                    newPlayQueue[newIndexOfCurrentlyPlaying].mediaMetadata.title.toString())
-            }
-            if (isPlaying) {
-                playQueueViewModel.pendingPlayInstruction.postValue(true)
-            }
+            reloadPlayQueue(newPlayQueue, newIndexOfCurrentlyPlaying)
 
             for (i in newPlayQueue) i.mediaMetadata.extras?.remove(ORDER_ID)
         }
@@ -594,6 +571,27 @@ class MainActivity : AppCompatActivity() {
         sharedPreferences.edit().apply {
             putBoolean(SHUFFLE_MODE, shuffle)
             apply()
+        }
+    }
+
+    private fun reloadPlayQueue(playQueue: List<MediaItem>, newIndexOfCurrentlyPlaying: Int) {
+        val playbackPosition = controller.currentPosition
+        val isPlaying = controller.isPlaying
+
+        controller.setMediaItem(playQueue[0])
+        if (!controller.playWhenReady) controller.prepare()
+        if (playQueue.size > 1) {
+            controller.addMediaItems(playQueue.subList(1, playQueue.size))
+        }
+
+        playQueueViewModel.pendingSeekToInstruction.postValue(playbackPosition)
+        if (playQueue.size > 1) {
+            playQueueViewModel.pendingSkipToInstruction.postValue(newIndexOfCurrentlyPlaying)
+            playQueueViewModel.pendingExpectedMetadata.postValue(
+                playQueue[newIndexOfCurrentlyPlaying].mediaMetadata.title.toString())
+        }
+        if (isPlaying) {
+            playQueueViewModel.pendingPlayInstruction.postValue(true)
         }
     }
 
