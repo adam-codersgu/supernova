@@ -332,20 +332,21 @@ class MainActivity : AppCompatActivity() {
 
                 processPendingSeekToRequest()
 
-                val newMediaId = metadata.extras?.getString(MEDIA_ID)
-                val prevMediaId = playQueueViewModel.currentlyPlayingSongMetadata.value?.extras?.getString(MEDIA_ID)
-                if (newMediaId != prevMediaId) {
+                val mediaId = metadata.extras?.getString(MEDIA_ID)?.toLong()
+                    ?: playQueueViewModel.playQueue.value?.get(controller.currentMediaItemIndex)?.mediaId?.toLong()
+
+                if (metadata.extras == null || metadata.extras?.getBoolean(REMEMBER_PROGRESS) == true) {
                     lifecycleScope.launch(Dispatchers.IO) {
                         withContext(Dispatchers.IO) {
-                            getSongById(newMediaId?.toLong() ?: return@withContext null)
+                            getSongById(mediaId ?: return@withContext null)
                         }?.let { song ->
                             if (song.rememberProgress) seekTo(song.playbackProgress.toInt())
+                            playQueueViewModel.currentlyPlayingSongMetadata.postValue(song.getMetadata())
                         }
                     }
+                } else {
+                    playQueueViewModel.currentlyPlayingSongMetadata.postValue(metadata)
                 }
-
-                // todo - have a precaution in here if metadata is missing?
-                playQueueViewModel.currentlyPlayingSongMetadata.value = metadata
             }
 
             override fun onPlaybackStateChanged(playbackState: Int) {

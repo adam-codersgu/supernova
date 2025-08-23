@@ -33,7 +33,7 @@ data class Song(
         this.playbackProgress = 0L
     }
 
-    private fun getMetadata(orderId: Int?): MediaMetadata {
+    fun getMetadata(orderId: Int? = null): MediaMetadata {
         val extras = Bundle().apply {
             putString(ALBUM_ID, this@Song.albumId)
             putString(MEDIA_ID, this@Song.songId.toString())
