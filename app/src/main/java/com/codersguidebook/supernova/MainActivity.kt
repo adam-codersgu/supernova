@@ -57,7 +57,6 @@ import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.entities.SongWithOrderId
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ALBUM_ID
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MEDIA_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NO_ACTION
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ORDER_ID
@@ -233,8 +232,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        val currentMediaId = playQueueViewModel.currentlyPlayingSongMetadata.value
-            ?.extras?.getString(MEDIA_ID)?.toLong() ?: return
+        val currentMediaId = playQueueViewModel.getCurrentSongMediaId()
         musicLibraryViewModel.savePlaybackProgress(currentMediaId, controller.currentPosition.toInt())
     }
 
@@ -325,8 +323,7 @@ class MainActivity : AppCompatActivity() {
 
                 processPendingSeekToRequest()
 
-                val mediaId = metadata.extras?.getString(MEDIA_ID)?.toLong()
-                    ?: playQueueViewModel.playQueue.value?.get(controller.currentMediaItemIndex)?.mediaId?.toLong()
+                val mediaId = playQueueViewModel.playQueue.value?.get(controller.currentMediaItemIndex)?.mediaId?.toLong()
 
                 if (metadata.extras == null || metadata.extras?.getBoolean(REMEMBER_PROGRESS) == true) {
                     lifecycleScope.launch(Dispatchers.IO) {

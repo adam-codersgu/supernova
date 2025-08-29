@@ -36,7 +36,6 @@ import com.codersguidebook.supernova.databinding.FragmentCurrentlyPlayingBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.BaseFragment
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ALBUM_ID
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MEDIA_ID
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_ACTIVE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.ANIMATION_TYPE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CUSTOM_ANIMATION_IMAGE_IDS
@@ -247,10 +246,8 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
      * if playback has stopped and any loaded metadata should be cleared.
      */
     private fun updateCurrentlyDisplayedMetadata(metadata: MediaMetadata?) = lifecycleScope.launch(Dispatchers.Main) {
-        val currentMediaId = metadata?.extras?.getString(MEDIA_ID)
         currentSong = withContext(Dispatchers.IO) {
-            if (currentMediaId != null) musicLibraryViewModel.getSongById(currentMediaId.toLong())
-            else null
+            musicLibraryViewModel.getSongById(playQueueViewModel.getCurrentSongMediaId())
         }
 
         setFavouriteButtonStyle(currentSong?.isFavourite ?: false)
