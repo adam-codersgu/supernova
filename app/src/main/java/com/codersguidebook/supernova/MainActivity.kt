@@ -1062,11 +1062,6 @@ class MainActivity : AppCompatActivity() {
     private fun restoreMediaSession() = lifecycleScope.launch {
         if (playQueueViewModel.playQueue.value != null) return@launch
 
-        sharedPreferences.edit {
-            // remove("play_queue")
-            // remove("current_queue_item_id_new")
-        }
-
         Log.i("DEBUG", "Restoring the media session")
 
         val repeatMode = sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_OFF)

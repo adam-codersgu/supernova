@@ -9,6 +9,7 @@ import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.QueueOptionsBinding
 import com.codersguidebook.supernova.fragment.BaseDialogFragment
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ALBUM_ID
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 
@@ -34,8 +35,7 @@ class QueueOptions(private val queueItem: MediaItem,
         }
 
         binding.album.setOnClickListener{
-            // TODO - constant
-            queueItem.mediaMetadata.extras?.getString("albumId")?.let {
+            queueItem.mediaMetadata.extras?.getString(ALBUM_ID)?.let {
                 val action = AlbumsFragmentDirections.actionSelectAlbum(it)
                 mainActivity.findNavController(R.id.nav_host_fragment).navigate(action)
             }
@@ -43,10 +43,7 @@ class QueueOptions(private val queueItem: MediaItem,
         }
 
         binding.addPlaylist.setOnClickListener{
-            // TODO - constant
-            queueItem.mediaMetadata.extras?.getString("mediaId")?.let {
-                mainActivity.openAddToPlaylistDialogForSongById(it.toLong())
-            }
+            mainActivity.openAddToPlaylistDialogForSongById(queueItem.mediaId.toLong())
             dismiss()
         }
 
