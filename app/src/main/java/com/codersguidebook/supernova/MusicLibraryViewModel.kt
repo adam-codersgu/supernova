@@ -223,7 +223,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @return A Boolean indicating whether the song has been favourited (true) or unfavourited (false)
      * Null will be returned if no change occurred (e.g. due to an error)
      */
-    suspend fun toggleSongFavouriteStatus(song: Song): Boolean? {
+    suspend fun toggleSongFavouriteStatus(song: Song): Boolean {
         val favouritesPlaylist = getPlaylistById(defaultPlaylistHelper.favourites.first)
         if (favouritesPlaylist != null) {
             favouritesPlaylist.apply {
