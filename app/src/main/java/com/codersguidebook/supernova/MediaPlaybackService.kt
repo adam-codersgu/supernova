@@ -7,6 +7,7 @@ import android.media.AudioManager
 import android.media.AudioManager.*
 import android.media.MediaPlayer.*
 import android.os.*
+import android.provider.MediaStore
 import android.support.v4.media.session.PlaybackStateCompat.*
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -14,7 +15,6 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import com.codersguidebook.supernova.utils.MediaItemHelper.getContentUri
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 
@@ -75,7 +75,8 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
         mediaItems: MutableList<MediaItem>
     ): ListenableFuture<MutableList<MediaItem>> {
         val updatedMediaItems = mediaItems.map {
-            val uri = getContentUri(it.mediaId)
+            val uri = ContentUris.withAppendedId(
+                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, it.mediaId.toLong())
             it.buildUpon().setUri(uri).build()
         }.toMutableList()
         return Futures.immediateFuture(updatedMediaItems)
