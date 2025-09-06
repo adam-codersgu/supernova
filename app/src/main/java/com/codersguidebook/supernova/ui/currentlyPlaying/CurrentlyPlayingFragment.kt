@@ -172,7 +172,7 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
                         Toast.LENGTH_SHORT).show()
                 }
                 currentSong?.apply {
-                    this.isFavourite = isFavourite ?: false
+                    this.isFavourite = isFavourite
                     setFavouriteButtonStyle(this.isFavourite)
                 }
             }

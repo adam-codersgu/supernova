@@ -8,7 +8,6 @@ import android.media.AudioManager.*
 import android.media.MediaPlayer.*
 import android.os.*
 import android.support.v4.media.session.PlaybackStateCompat.*
-import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -47,90 +46,14 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
         }
     }
 
-    private val noisyReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            if (player.isPlaying) mediaSession!!.player.pause()
-        }
-    }
-
-    /* private val mediaSessionCallback: MediaSessionCompat.Callback = object : MediaSessionCompat.Callback() {
-        override fun onMediaButtonEvent(mediaButtonEvent: Intent?): Boolean {
-            val keyEvent: KeyEvent? = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                // Pre-SDK 33
-                @Suppress("DEPRECATION")
-                mediaButtonEvent?.getParcelableExtra(Intent.EXTRA_KEY_EVENT)
-            } else {
-                // SDK 33 and up
-                mediaButtonEvent?.getParcelableExtra(Intent.EXTRA_KEY_EVENT, KeyEvent::class.java)
-            }
-
-            keyEvent?.let { event ->
-                when (event.keyCode) {
-                    KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
-                        if (mediaPlayer?.isPlaying == true) onPause()
-                        else onPlay()
-                    }
-                    KeyEvent.KEYCODE_MEDIA_PLAY -> onPlay()
-                    KeyEvent.KEYCODE_MEDIA_PAUSE -> onPause()
-                    KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD -> onSkipToPrevious()
-                    KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD -> onSkipToNext()
-                }
-            }
-            return super.onMediaButtonEvent(mediaButtonEvent)
-        }
-
-        override fun onCommand(command: String?, extras: Bundle?, cb: ResultReceiver?) {
-            super.onCommand(command, extras, cb)
-
-            when (command) {
-                REMOVE_QUEUE_ITEM_BY_ID -> {
-                    extras?.let {
-                        val queueItemId = extras.getLong("queueItemId", -1L)
-                        when (queueItemId) {
-                            -1L -> return@let
-                            currentlyPlayingQueueItemId -> onSkipToNext()
-                        }
-                        playQueue.removeIf { it.queueId == queueItemId }
-                        setPlayQueue()
-                    }
-                }
-                UPDATE_QUEUE_ITEM -> {
-                    extras?.let {
-                        val mediaDescription = buildMediaDescriptionFromBundle(it)
-                        val queueItemId = it.getLong("queueItemId")
-                        updateMetadataForQueueItem(mediaDescription, queueItemId)
-                    }
-                }
-            }
-        }
-
-        override fun onStop() {
-            super.onStop()
-
-            playQueue.clear()
-            mediaSession.setQueue(playQueue)
-            currentlyPlayingQueueItemId = -1L
-            if (mediaPlayer != null) {
-                mediaPlayer?.stop()
-                mediaPlayer?.release()
-                mediaPlayer = null
-                stopForeground(STOP_FOREGROUND_REMOVE)
-                try {
-                    val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-                    audioManager.abandonAudioFocusRequest(audioFocusRequest)
-                } catch (_: UninitializedPropertyAccessException){ }
-            }
-            setMediaPlaybackState(STATE_STOPPED)
-            stopSelf()
-        }
-    } */
-
     override fun onCreate() {
         super.onCreate()
 
-        player = ExoPlayer.Builder(this).build().also { it.addListener(playerListener) }
+        player = ExoPlayer.Builder(this).build().also {
+            it.addListener(playerListener)
+            it.setHandleAudioBecomingNoisy(true)
+        }
         mediaSession = MediaSession.Builder(this, player).setCallback(this).build()
-        initNoisyReceiver()
     }
 
     private fun requestAudioFocus() {
@@ -143,16 +66,7 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
             build()
         }
         val audioManager = applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        /* val audioFocusRequestOutcome = */ audioManager.requestAudioFocus(audioFocusRequest)
-    }
-
-    override fun onMediaButtonEvent(
-        session: MediaSession,
-        controllerInfo: MediaSession.ControllerInfo,
-        intent: Intent
-    ): Boolean {
-        Log.i("DEBUG", "An intent received with action ${intent.action}")
-        return super.onMediaButtonEvent(session, controllerInfo, intent)
+        audioManager.requestAudioFocus(audioFocusRequest)
     }
 
     override fun onAddMediaItems(
@@ -169,13 +83,6 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) = mediaSession
 
-    /** Handles playback becoming 'noisy' i.e. headphones being unplugged. */
-    private fun initNoisyReceiver() {
-        // todo - look at handling this directly with the player?
-        val filter = IntentFilter(ACTION_AUDIO_BECOMING_NOISY)
-        registerReceiver(noisyReceiver, filter)
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         mediaSession?.run {
@@ -183,7 +90,6 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
             player.release()
             mediaSession = null
         }
-        unregisterReceiver(noisyReceiver)
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {

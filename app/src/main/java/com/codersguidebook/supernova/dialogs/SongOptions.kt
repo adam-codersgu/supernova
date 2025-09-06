@@ -1,7 +1,6 @@
 package com.codersguidebook.supernova.dialogs
 
 import android.app.Dialog
-import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
@@ -82,8 +81,7 @@ class SongOptions(private val song: Song) : BaseDialogFragment() {
         }
 
         binding.deleteSong.setOnClickListener {
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) mainActivity.deleteSongs(listOf(song))
-            else mainActivity.deleteSongById(song.songId)
+            mainActivity.deleteSongs(listOf(song))
             dismiss()
         }
 

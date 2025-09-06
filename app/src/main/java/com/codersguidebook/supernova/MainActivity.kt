@@ -891,7 +891,7 @@ class MainActivity : AppCompatActivity() {
      *
      * @param songId The media ID of the song to be deleted.
      */
-    fun deleteSongById(songId: Long) {
+    private fun deleteSongById(songId: Long) {
         musicLibraryViewModel.songIdToDelete = songId
         try {
             val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, songId)
