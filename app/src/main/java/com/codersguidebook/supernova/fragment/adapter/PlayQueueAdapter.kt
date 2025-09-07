@@ -56,7 +56,7 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment,
 
         val metadata = playQueue[position].mediaMetadata
 
-        val accent = MaterialColors.getColor(activity, com.google.android.material.R.attr.colorAccent, Color.CYAN)
+        val accent = MaterialColors.getColor(activity, com.google.android.material.R.attr.colorTertiary, Color.CYAN)
         val onSurface = MaterialColors.getColor(activity, com.google.android.material.R.attr.colorOnSurface, Color.LTGRAY)
         val onSurface60 = MaterialColors.compositeARGBWithAlpha(onSurface, 153)
 
