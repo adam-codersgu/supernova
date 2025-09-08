@@ -14,6 +14,7 @@ import com.codersguidebook.supernova.data.MusicRepository
 import com.codersguidebook.supernova.entities.Artist
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.exception.PlaylistNotFoundException
 import com.codersguidebook.supernova.params.SharedPreferencesConstants
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
@@ -222,29 +223,32 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @return A Boolean indicating whether the song has been favourited (true) or unfavourited (false)
      * Null will be returned if no change occurred (e.g. due to an error)
      */
-    suspend fun toggleSongFavouriteStatus(song: Song): Boolean? {
-        getPlaylistById(defaultPlaylistHelper.favourites.first)?.apply {
-            val songIdList = PlaylistHelper.extractSongIds(this.songs)
-            val matchingSong = songIdList.firstOrNull { it == song.songId }
+    suspend fun toggleSongFavouriteStatus(song: Song): Boolean {
+        val favouritesPlaylist = getPlaylistById(defaultPlaylistHelper.favourites.first)
+        if (favouritesPlaylist != null) {
+            favouritesPlaylist.apply {
+                val songIdList = PlaylistHelper.extractSongIds(this.songs)
+                val matchingSong = songIdList.firstOrNull { it == song.songId }
 
-            if (matchingSong == null) {
-                song.isFavourite = true
-                songIdList.add(song.songId)
-            } else {
-                song.isFavourite = false
-                songIdList.remove(matchingSong)
+                if (matchingSong == null) {
+                    song.isFavourite = true
+                    songIdList.add(song.songId)
+                } else {
+                    song.isFavourite = false
+                    songIdList.remove(matchingSong)
+                }
+
+                if (songIdList.isNotEmpty()) {
+                    val newSongListJSON = PlaylistHelper.serialiseSongIds(songIdList)
+                    this.songs = newSongListJSON
+                } else this.songs = null
+                updatePlaylists(listOf(this))
+                updateSongs(listOf(song))
+                return song.isFavourite
             }
-
-            if (songIdList.isNotEmpty()) {
-                val newSongListJSON = PlaylistHelper.serialiseSongIds(songIdList)
-                this.songs = newSongListJSON
-            } else this.songs = null
-            updatePlaylists(listOf(this))
-            updateSongs(listOf(song))
-            return song.isFavourite
+        } else {
+            throw PlaylistNotFoundException(defaultPlaylistHelper.favourites.second)
         }
-        // FIXME: It would perhaps be better to throw an exception if something goes wrong e.g. playlistNotFoundException
-        return null
     }
 
     /**

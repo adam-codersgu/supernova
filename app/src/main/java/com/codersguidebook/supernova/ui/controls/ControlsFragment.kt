@@ -1,13 +1,12 @@
 package com.codersguidebook.supernova.ui.controls
 
 import android.os.Bundle
-import android.support.v4.media.MediaMetadataCompat
-import android.support.v4.media.session.PlaybackStateCompat.STATE_PLAYING
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.MediaMetadata
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import androidx.viewbinding.ViewBinding
@@ -16,6 +15,7 @@ import com.codersguidebook.supernova.PlayQueueViewModel
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.PlayerControlsBinding
 import com.codersguidebook.supernova.fragment.BaseFragment
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ALBUM_ID
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -43,8 +43,8 @@ class ControlsFragment : BaseFragment() {
             updateCurrentlyDisplayedMetadata(it)
         }
 
-        playQueueViewModel.playbackState.observe(viewLifecycleOwner) { state ->
-            if (state == STATE_PLAYING) binding.btnPlay.setImageResource(R.drawable.ic_pause)
+        playQueueViewModel.isPlaying.observe(viewLifecycleOwner) { playing ->
+            if (playing) binding.btnPlay.setImageResource(R.drawable.ic_pause)
             else binding.btnPlay.setImageResource(R.drawable.ic_play)
         }
 
@@ -121,13 +121,13 @@ class ControlsFragment : BaseFragment() {
      * @param metadata MediaMetadataCompat object detailing the currently playing song's metadata, or null
      * if playback has stopped and any loaded metadata should be cleared.
      */
-    private fun updateCurrentlyDisplayedMetadata(metadata: MediaMetadataCompat?) {
-        binding.title.text = metadata?.getString(MediaMetadataCompat.METADATA_KEY_TITLE)
-        binding.artist.text = metadata?.getString(MediaMetadataCompat.METADATA_KEY_ARTIST)
-        binding.album.text = metadata?.getString(MediaMetadataCompat.METADATA_KEY_ALBUM)
+    private fun updateCurrentlyDisplayedMetadata(metadata: MediaMetadata?) {
+        binding.title.text = metadata?.title
+        binding.artist.text = metadata?.artist
+        binding.album.text = metadata?.albumTitle
 
         if (metadata != null) {
-            val albumId = metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI)
+            val albumId = metadata.extras?.getString(ALBUM_ID)
             ImageHandlingHelper.loadImageByAlbumId(mainActivity.application, albumId, binding.artwork)
         } else {
             Glide.with(mainActivity)

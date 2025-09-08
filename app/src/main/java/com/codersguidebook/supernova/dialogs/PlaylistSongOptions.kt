@@ -52,10 +52,10 @@ class PlaylistSongOptions(private val song: Song,
                 val isFavourite = withContext(Dispatchers.IO) {
                     musicLibraryViewModel.toggleSongFavouriteStatus(song)
                 }
-                if (isFavourite == true) {
+                if (isFavourite) {
                     Toast.makeText(mainActivity, getString(R.string.added_to_favourites),
                         Toast.LENGTH_SHORT).show()
-                } else if (isFavourite == false)  {
+                } else {
                     Toast.makeText(mainActivity, getString(R.string.removed_from_favourites),
                         Toast.LENGTH_SHORT).show()
                 }

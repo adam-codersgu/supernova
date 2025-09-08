@@ -120,8 +120,6 @@
     <string name="error_custom_animation_image_not_found">No se pudo encontrar ninguna de sus imágenes personalizadas.</string>
     <string name="error_generic_playback">Se ha producido un error de reproducción.</string>
     <string name="error_media_service_default">Se ha producido un error de reproducción. Si el archivo de la canción se ha movido o eliminado, espere a que se actualice la biblioteca.</string>
-    <string name="error_media_service_empty_queue">Se ha producido un error de reproducción. La cola de reproducción está vacía.</string>
-    <string name="error_media_service_player_state">Se ha producido un error de reproducción. El reproductor multimedia debe reiniciarse.</string>
     <string name="red">Rojo</string>
     <string name="show_animations">Mostrar animaciones</string>
     <string name="show_hide_animations">Mostrar/ocultar animaciones</string>

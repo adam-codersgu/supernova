@@ -1,9 +1,15 @@
 package com.codersguidebook.supernova.entities
 
+import android.os.Bundle
 import android.os.Parcelable
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ALBUM_ID
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ORDER_ID
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMEMBER_PROGRESS
 import kotlinx.parcelize.Parcelize
 
 /** Data class for mapping a song's metadata to a database table called music_library. */
@@ -25,4 +31,33 @@ data class Song(
     fun resetProgress() {
         this.playbackProgress = 0L
     }
+
+    fun getMetadata(orderId: Int? = null): MediaMetadata {
+        val extras = Bundle().apply {
+            putString(ALBUM_ID, this@Song.albumId)
+            putBoolean(REMEMBER_PROGRESS, this@Song.rememberProgress)
+            if (orderId != null) {
+                putInt(ORDER_ID, orderId)
+            }
+        }
+        return MediaMetadata.Builder()
+            .setAlbumTitle(this@Song.albumName)
+            .setArtist(this@Song.artist)
+            .setExtras(extras)
+            .setTitle(this@Song.title)
+            .build()
+    }
+
+    fun getMediaItem(orderId: Int? = null): MediaItem {
+        return MediaItem.Builder()
+            .setMediaId(this@Song.songId.toString())
+            .setMediaMetadata(getMetadata(orderId))
+            .build()
+    }
 }
+
+@Parcelize
+data class SongWithOrderId(
+    val orderId: Int?,
+    val song: Song?
+) : Parcelable

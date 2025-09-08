@@ -4,36 +4,45 @@ import android.app.*
 import android.content.*
 import android.database.Cursor
 import android.media.AudioManager
-import android.media.session.PlaybackState
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaMetadataCompat
-import android.support.v4.media.session.MediaControllerCompat
-import android.support.v4.media.session.MediaSessionCompat.QueueItem
-import android.support.v4.media.session.PlaybackStateCompat
-import android.support.v4.media.session.PlaybackStateCompat.*
+import android.util.Log
 import android.util.Size
 import android.view.Menu
+import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
 import android.widget.SearchView
 import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.edit
 import androidx.core.view.*
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.common.Player.REPEAT_MODE_ALL
+import androidx.media3.common.Player.REPEAT_MODE_OFF
+import androidx.media3.common.Player.REPEAT_MODE_ONE
+import androidx.media3.common.Timeline
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
@@ -46,44 +55,47 @@ import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.dialogs.CreatePlaylist
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.MOVE_QUEUE_ITEM
+import com.codersguidebook.supernova.entities.SongWithOrderId
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ALBUM_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NO_ACTION
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMOVE_QUEUE_ITEM_BY_ID
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_REPEAT_MODE
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SET_SHUFFLE_MODE
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ORDER_ID
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMEMBER_PROGRESS
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_DELETED
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_UPDATED
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.UPDATE_QUEUE_ITEM
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.APPLICATION_LANGUAGE
-import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_ID
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_INDEX
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.DEFAULT_PLAYLIST_LANGUAGE
-import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_DURATION
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_POSITION
-import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAY_QUEUE_ITEM_PAIRS
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAY_QUEUE_ITEMS
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.codersguidebook.supernova.utils.*
 import com.google.android.material.navigation.NavigationView
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.MoreExecutors
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.io.FileNotFoundException
 
 class MainActivity : AppCompatActivity() {
 
-    private var currentPlaybackPosition = 0
-    private var currentPlaybackDuration = 0
-    private var currentQueueItemId = -1L
-    private var playQueue = listOf<QueueItem>()
+    companion object {
+        private const val SONG_NEARLY_FINISHED_THRESHOLD = 0.98
+    }
+
+    private var handler = Handler(Looper.getMainLooper())
     private val playQueueViewModel: PlayQueueViewModel by viewModels()
-    private val mediaDescriptionManager = MediaDescriptionCompatManager()
     private var mediaStoreContentObserver: MediaStoreContentObserver? = null
     private var musicDatabase: MusicDatabase? = null
-    private lateinit var mediaBrowser: MediaBrowserCompat
+    private var songCompleted = false
+    private lateinit var controller: MediaController
+    private lateinit var controllerFuture: ListenableFuture<MediaController>
     private lateinit var musicLibraryViewModel: MusicLibraryViewModel
     private lateinit var searchView: SearchView
     private lateinit var sharedPreferences: SharedPreferences
@@ -100,91 +112,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val connectionCallbacks = object : MediaBrowserCompat.ConnectionCallback() {
-        override fun onConnected() {
-            super.onConnected()
-
-            mediaBrowser.sessionToken.also { token ->
-                val mediaControllerCompat = MediaControllerCompat(this@MainActivity, token)
-                MediaControllerCompat.setMediaController(this@MainActivity, mediaControllerCompat)
+    private var playbackPositionRunnable = object : Runnable {
+        override fun run() {
+            try {
+                if (controller.isPlaying) {
+                    updatePlaybackDurationAndPosition()
+                }
+            } finally {
+                handler.postDelayed(this, 500L)
             }
-
-            MediaControllerCompat.getMediaController(this@MainActivity)
-                .registerCallback(controllerCallback)
-
-            restoreMediaSession()
-        }
-    }
-
-    private val controllerCallback = object : MediaControllerCompat.Callback() {
-        override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
-            super.onPlaybackStateChanged(state)
-            refreshPlayQueue()
-            if (state?.activeQueueItemId != currentQueueItemId) {
-                playQueue.find { it.queueId == currentQueueItemId }?.let { queueItem ->
-                    val mediaId = queueItem.description.mediaId?.toLong() ?: return@let
-                    val position = if (currentPlaybackPosition > currentPlaybackDuration * 0.95) 0
-                    else currentPlaybackPosition
-                    musicLibraryViewModel.savePlaybackProgress(mediaId, position)
-                }
-
-                currentQueueItemId = state?.activeQueueItemId ?: -1
-                savePlayQueueId(currentQueueItemId)
-            }
-
-            playQueueViewModel.playbackState.value = state?.state ?: STATE_NONE
-            when (state?.state) {
-                STATE_PLAYING, STATE_PAUSED -> {
-                    currentPlaybackPosition = state.position.toInt()
-                    state.extras?.let {
-                        currentPlaybackDuration = it.getInt("duration", 0)
-                        playQueueViewModel.playbackDuration.value = currentPlaybackDuration
-                    }
-                    playQueueViewModel.playbackPosition.value = currentPlaybackPosition
-                }
-                STATE_STOPPED -> {
-                    currentPlaybackDuration = 0
-                    playQueueViewModel.playbackDuration.value = 0
-                    currentPlaybackPosition = 0
-                    playQueueViewModel.playbackPosition.value = 0
-                    playQueueViewModel.currentlyPlayingSongMetadata.value = null
-                }
-                // Called when playback of a song has completed.
-                // Need to increment the song_plays count for that Song object by 1.
-                STATE_SKIPPING_TO_NEXT -> {
-                    state.extras?.let {
-                        val finishedSongId = it.getLong("finishedSongId", -1L)
-                        if (finishedSongId == -1L) return@let
-                        musicLibraryViewModel.increaseSongPlaysBySongId(finishedSongId)
-                        musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(finishedSongId)
-                    }
-                }
-                STATE_ERROR -> refreshMusicLibrary()
-                else -> return
-            }
-        }
-
-        override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
-            super.onMetadataChanged(metadata)
-
-            val newMediaId = metadata?.description?.mediaId
-            val prevMediaId = playQueueViewModel.currentlyPlayingSongMetadata.value?.description?.mediaId
-            if (newMediaId != prevMediaId) {
-                playQueueViewModel.playbackPosition.value = 0
-                lifecycleScope.launch(Dispatchers.IO) {
-                    withContext(Dispatchers.IO) {
-                        musicLibraryViewModel.getSongById(newMediaId?.toLong() ?: return@withContext null)
-                    }?.let { song ->
-                        if (song.rememberProgress) seekTo(song.playbackProgress.toInt())
-                    }
-                }
-            }
-
-            playQueueViewModel.currentlyPlayingSongMetadata.value = metadata
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
 
@@ -213,10 +154,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         this.setTaskDescription(taskDescription)
-
-        mediaBrowser = MediaBrowserCompat(this, ComponentName(this, MediaPlaybackService::class.java),
-            connectionCallbacks, intent.extras)
-        mediaBrowser.connect()
 
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
@@ -265,15 +202,39 @@ class MainActivity : AppCompatActivity() {
                 true, it)
         }
 
-        if (storagePermissionHelper.hasReadPermission()) refreshMusicLibrary()
+        if (storagePermissionHelper.hasPermissions()) refreshMusicLibrary()
         else storagePermissionHelper.requestPermissions()
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.body) { v, windowInsets ->
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                leftMargin = insets.left
+                bottomMargin = insets.bottom
+                rightMargin = insets.right
+                topMargin = insets.top
+            }
+
+            WindowInsetsCompat.CONSUMED
+        }
+    }
+
+    @OptIn(UnstableApi::class)
+    override fun onStart() {
+        super.onStart()
+        val sessionToken = SessionToken(this, ComponentName(this, MediaPlaybackService::class.java))
+        controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
+        controllerFuture.apply {
+            addListener({
+                controller = get()
+                initController()
+            }, MoreExecutors.directExecutor())
+        }
     }
 
     override fun onPause() {
         super.onPause()
-        val currentMediaId = playQueueViewModel.currentlyPlayingSongMetadata.value
-            ?.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)?.toLong() ?: return
-        musicLibraryViewModel.savePlaybackProgress(currentMediaId, currentPlaybackPosition)
+        val currentMediaId = playQueueViewModel.getCurrentSongMediaId()
+        musicLibraryViewModel.savePlaybackProgress(currentMediaId, controller.currentPosition.toInt())
     }
 
     override fun onResume() {
@@ -286,23 +247,152 @@ class MainActivity : AppCompatActivity() {
         musicLibraryViewModel.setMostPlayedPlaylistTimeframe()
     }
 
+    override fun onStop() {
+        super.onStop()
+
+        sharedPreferences.edit().apply {
+            putLong(PLAYBACK_POSITION, controller.currentPosition)
+            apply()
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+
+        sharedPreferences.edit {
+            remove(SHUFFLE_MODE)
+        }
 
         mediaStoreContentObserver?.let {
             this.contentResolver.unregisterContentObserver(it)
         }
 
-        MediaControllerCompat.getMediaController(this)?.apply {
-            transportControls.stop()
-            unregisterCallback(controllerCallback)
+        controller.stop()
+        controllerFuture.let {
+            MediaController.releaseFuture(it)
         }
-        mediaBrowser.disconnect()
+    }
 
-        sharedPreferences.edit().apply {
-            putInt(PLAYBACK_POSITION, currentPlaybackPosition)
-            putInt(PLAYBACK_DURATION, currentPlaybackDuration)
-            apply()
+    private fun initController() {
+        controller.addListener(object : Player.Listener {
+
+            override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
+                if (newPosition.positionMs < oldPosition.positionMs) songCompleted = false
+                updatePlaybackDurationAndPosition()
+            }
+
+            override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+                if (timeline.isEmpty) {
+                    Log.i("DEBUG", "The timeline is empty")
+                    saveAndPostPlayQueue(listOf())
+                } else {
+                    val firstPeriodId = timeline.getPeriod(0, Timeline.Period()).id.toString()
+                    if (firstPeriodId == "-1") {
+                        return
+                    }
+                    Log.i("DEBUG", "Processing a timeline update.")
+
+                    val pendingSkipToIndex = playQueueViewModel.pendingSkipToInstruction.value
+                    if (pendingSkipToIndex != null) {
+                        skipToQueueIndex(pendingSkipToIndex)
+                    }
+
+                    if (playQueueViewModel.pendingPlayInstruction.value == true) {
+                        play()
+                        playQueueViewModel.pendingPlayInstruction.postValue(null)
+                    }
+
+                    saveAndPostPlayQueueIndex(controller.currentMediaItemIndex)
+                }
+
+                super.onTimelineChanged(timeline, reason)
+            }
+
+            override fun onMediaMetadataChanged(metadata: MediaMetadata) {
+                super.onMediaMetadataChanged(metadata)
+                Log.i("DEBUG", "Received the metadata for: ${metadata.title}")
+
+                songCompleted = false
+                val expectedSongName = playQueueViewModel.pendingExpectedMetadata.value
+                if (expectedSongName != null) {
+                    if (expectedSongName != metadata.title) {
+                        Log.i("DEBUG", "The metadata is not for $expectedSongName, " +
+                                "so therefore will not be processed.")
+                        return
+                    } else playQueueViewModel.pendingExpectedMetadata.postValue(null)
+                }
+
+                processPendingSeekToRequest()
+
+                val mediaId = playQueueViewModel.playQueue.value?.get(controller.currentMediaItemIndex)?.mediaId?.toLong()
+
+                if (metadata.extras == null || metadata.extras?.getBoolean(REMEMBER_PROGRESS) == true) {
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        withContext(Dispatchers.IO) {
+                            getSongById(mediaId ?: return@withContext null)
+                        }?.let { song ->
+                            if (song.rememberProgress) seekTo(song.playbackProgress.toInt())
+                            playQueueViewModel.currentlyPlayingSongMetadata.postValue(song.getMetadata())
+                        }
+                    }
+                } else {
+                    playQueueViewModel.currentlyPlayingSongMetadata.postValue(metadata)
+                }
+            }
+
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                if (playbackState == Player.STATE_READY) {
+                    playbackPositionRunnable.run()
+                    playQueueViewModel.isPlaying.value = controller.isPlaying
+                } else if (playbackState == Player.STATE_ENDED) {
+                    handler.removeCallbacks(playbackPositionRunnable)
+                    playQueueViewModel.playbackDuration.value = 0
+                    playQueueViewModel.playbackPosition.value = 0
+                    playQueueViewModel.currentlyPlayingSongMetadata.value = null
+                    playQueueViewModel.isPlaying.value = false
+                }
+            }
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                playQueueViewModel.isPlaying.value = controller.playWhenReady
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                super.onPlayerError(error)
+                Log.e("DEBUG", "Playback error: ${error.message}")
+                val message = getString(R.string.error_media_service_default)
+                Toast.makeText(application, message, Toast.LENGTH_LONG).show()
+                refreshMusicLibrary()
+            }
+        })
+
+        restoreMediaSession()
+    }
+
+    private fun processPendingSeekToRequest() {
+        val pendingSeekToPosition = playQueueViewModel.pendingSeekToInstruction.value
+        if (pendingSeekToPosition != null) {
+            Log.i("DEBUG", "Processing the pending seek to request: $pendingSeekToPosition")
+            seekTo(pendingSeekToPosition.toInt())
+            playQueueViewModel.pendingSeekToInstruction.postValue(null)
+        }
+    }
+
+    private fun updatePlaybackDurationAndPosition() {
+        val duration = controller.duration.toInt()
+        val position = controller.currentPosition.toInt()
+        playQueueViewModel.playbackDuration.value = duration
+        playQueueViewModel.playbackPosition.value = position
+
+        if (controller.isPlaying
+            && position >= (duration * SONG_NEARLY_FINISHED_THRESHOLD)
+            && !songCompleted) {
+            Log.i("DEBUG", "Incrementing the song plays for " +
+                    "${playQueueViewModel.currentlyPlayingSongMetadata.value!!.title}")
+            val mediaId = playQueueViewModel.getCurrentSongMediaId()
+            musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(mediaId)
+            musicLibraryViewModel.increaseSongPlaysBySongId(mediaId)
+            songCompleted = true
         }
     }
 
@@ -363,70 +453,70 @@ class MainActivity : AppCompatActivity() {
      * @param songId The ID of the Song to remove from the play queue.
      */
     private fun findSongIdInPlayQueueToRemove(songId: Long) = lifecycleScope.launch(Dispatchers.Default) {
-        val queueItemsToRemove = playQueue.filter { it.description.mediaId == songId.toString() }
-        for (item in queueItemsToRemove) removeQueueItemById(item.queueId)
+        var index: Int
+        do {
+            index = getLastIndexOfQueueItemByMediaId(songId.toString())
+            if (index != -1) removeQueueItemByIndex(index)
+        } while (index != -1)
     }
 
-    /** Fetch and save an up-to-date version of the play queue from the media controller. */
-    private fun refreshPlayQueue() {
-        val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
-        playQueue = mediaControllerCompat.queue
-        playQueueViewModel.playQueue.postValue(playQueue)
-        savePlayQueue()
+    private fun getLastIndexOfQueueItemByMediaId(mediaId: String): Int {
+        return playQueueViewModel.playQueue.value?.indexOfLast { mediaItem ->
+            mediaItem.mediaId == mediaId
+        } ?: -1
     }
 
     /**
-     * Notify the media browser service that a queue item has been moved.
+     * Notify the media service that a queue item has been moved.
      *
-     * @param queueId The queue ID of the item to be moved.
+     * @param oldIndex The original index in the play queue of the item that is being moved.
      * @param newIndex The new index in the play queue that the item should occupy.
      */
-    fun notifyQueueItemMoved(queueId: Long, newIndex: Int) {
-        val bundle = Bundle().apply {
-            putLong("queueItemId", queueId)
-            putInt("newIndex", newIndex)
+    fun notifyQueueItemMoved(oldIndex: Int, newIndex: Int) {
+        val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return
+        val item = playQueue[oldIndex]
+
+        Log.i("DEBUG", "Moving item from index $oldIndex to index $newIndex")
+
+        playQueue.removeAt(oldIndex)
+        playQueue.add(newIndex, item)
+
+        if (oldIndex == controller.currentMediaItemIndex) {
+            reloadPlayQueue(playQueue, newIndex)
         }
 
-        mediaController.sendCommand(MOVE_QUEUE_ITEM, bundle, null)
+        saveAndPostPlayQueue(playQueue)
+        controller.moveMediaItem(oldIndex, newIndex)
     }
 
     /** Respond to clicks on the play/pause button **/
     fun playPauseControl() {
-        when (mediaController.playbackState?.state) {
-            PlaybackState.STATE_PAUSED -> mediaController.transportControls.play()
-            PlaybackState.STATE_PLAYING -> mediaController.transportControls.pause()
-            else -> {
-                // Load and play the user's music library if the play queue is empty
-                if (playQueue.isEmpty()) {
-                    playNewPlayQueue(musicLibraryViewModel.allSongs.value ?: return)
-                }
-                else {
-                    // It's possible a queue has been built without ever pressing play.
-                    // In which case, commence playback
-                    mediaController.transportControls.prepare()
-                    mediaController.transportControls.play()
-                }
+        if (!playQueueViewModel.playQueue.value.isNullOrEmpty()) {
+            if (controller.isPlaying) {
+                controller.pause()
+            } else {
+                play()
             }
+        } else {
+            playNewPlayQueue(musicLibraryViewModel.allSongs.value ?: return)
         }
     }
 
     /**
      * Toggle the shuffle mode.
      *
-     * @return An Integer representing the active shuffle mode preference.
+     * @return A Boolean indicating whether the play queue is now shuffled
      */
-    fun toggleShuffleMode(): Int {
-        val newShuffleMode = if (sharedPreferences.getInt(SHUFFLE_MODE, SHUFFLE_MODE_NONE) == SHUFFLE_MODE_NONE) {
-            SHUFFLE_MODE_ALL
-        } else SHUFFLE_MODE_NONE
+    fun toggleShuffleMode(): Boolean {
+        val shouldShuffle = !sharedPreferences.getBoolean(SHUFFLE_MODE, false)
 
-        setShuffleMode(newShuffleMode)
+        setShuffleMode(shouldShuffle)
 
-        if (newShuffleMode == SHUFFLE_MODE_NONE) {
+        if (!shouldShuffle) {
             Toast.makeText(this, getString(R.string.play_queue_unshuffled), Toast.LENGTH_SHORT).show()
         } else Toast.makeText(this, getString(R.string.play_queue_shuffled), Toast.LENGTH_SHORT).show()
 
-        return newShuffleMode
+        return shouldShuffle
     }
 
     /**
@@ -434,19 +524,73 @@ class MainActivity : AppCompatActivity() {
      * N.B. This functionality may be called independently of toggleShuffleMode() e.g. when an
      * album is played on shuffle mode directly from the Album view.
      *
-     * @param shuffleMode An Integer representing the active shuffle mode preference.
+     * @param shuffle A Boolean indicating whether the play queue should be shuffled.
      */
-    private fun setShuffleMode(shuffleMode: Int) {
+    private fun setShuffleMode(shuffle: Boolean) {
+        val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return
+
+        if (shuffle) {
+            for ((index, i) in playQueue.withIndex()) {
+                i.mediaMetadata.extras?.putInt(ORDER_ID, index)
+            }
+        }
+
+        val currentQueueItemIndex = playQueueViewModel.currentQueueItemIndex.value ?: return
+        val currentQueueItem = playQueue[currentQueueItemIndex]
+
+        val newPlayQueue: MutableList<MediaItem>
+        if (shuffle) {
+            Log.i("DEBUG", "Shuffling the play queue")
+            controller.removeMediaItems(currentQueueItemIndex + 1, playQueue.size)
+            controller.removeMediaItems(0, currentQueueItemIndex)
+
+            playQueue.removeAt(currentQueueItemIndex)
+            newPlayQueue = playQueue.shuffled().toMutableList()
+
+            controller.addMediaItems(1, newPlayQueue)
+            newPlayQueue.add(0, currentQueueItem)
+        } else {
+            Log.i("DEBUG", "Unshuffling the play queue")
+
+            newPlayQueue = playQueue.sortedBy {
+                    i -> i.mediaMetadata.extras?.getInt(ORDER_ID)
+            }.toMutableList()
+
+            val newIndexOfCurrentlyPlaying = playQueue.indexOfFirst { i ->
+                i.mediaMetadata.extras?.getInt(ORDER_ID) == currentQueueItem.mediaMetadata.extras?.getInt(ORDER_ID)
+            }
+            reloadPlayQueue(newPlayQueue, newIndexOfCurrentlyPlaying)
+
+            for (i in newPlayQueue) i.mediaMetadata.extras?.remove(ORDER_ID)
+        }
+
+        saveAndPostPlayQueue(newPlayQueue)
+
         sharedPreferences.edit().apply {
-            putInt(SHUFFLE_MODE, shuffleMode)
+            putBoolean(SHUFFLE_MODE, shuffle)
             apply()
         }
+    }
 
-        val bundle = Bundle().apply {
-            putInt(SHUFFLE_MODE, shuffleMode)
+    private fun reloadPlayQueue(playQueue: List<MediaItem>, newIndexOfCurrentlyPlaying: Int) {
+        val playbackPosition = controller.currentPosition
+        val isPlaying = controller.isPlaying
+
+        controller.setMediaItem(playQueue[0])
+        if (!controller.playWhenReady) controller.prepare()
+        if (playQueue.size > 1) {
+            controller.addMediaItems(playQueue.subList(1, playQueue.size))
         }
 
-        mediaController.sendCommand(SET_SHUFFLE_MODE, bundle, null)
+        playQueueViewModel.pendingSeekToInstruction.postValue(playbackPosition)
+        if (playQueue.size > 1) {
+            playQueueViewModel.pendingSkipToInstruction.postValue(newIndexOfCurrentlyPlaying)
+            playQueueViewModel.pendingExpectedMetadata.postValue(
+                playQueue[newIndexOfCurrentlyPlaying].mediaMetadata.title.toString())
+        }
+        if (isPlaying) {
+            playQueueViewModel.pendingPlayInstruction.postValue(true)
+        }
     }
 
     /**
@@ -455,10 +599,10 @@ class MainActivity : AppCompatActivity() {
      * @return An Integer representing the active repeat mode preference.
      */
     fun toggleRepeatMode(): Int {
-        val newRepeatMode = when (sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_NONE)) {
-            REPEAT_MODE_NONE -> REPEAT_MODE_ALL
+        val newRepeatMode = when (sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_OFF)) {
+            REPEAT_MODE_OFF -> REPEAT_MODE_ALL
             REPEAT_MODE_ALL -> REPEAT_MODE_ONE
-            else -> REPEAT_MODE_NONE
+            else -> REPEAT_MODE_OFF
         }
 
         sharedPreferences.edit().apply {
@@ -466,13 +610,10 @@ class MainActivity : AppCompatActivity() {
             apply()
         }
 
-        val bundle = Bundle().apply {
-            putInt(REPEAT_MODE, newRepeatMode)
-        }
-        mediaController.sendCommand(SET_REPEAT_MODE, bundle, null)
+        controller.repeatMode = newRepeatMode
 
         when (newRepeatMode) {
-            REPEAT_MODE_NONE -> Toast.makeText(this, getString(R.string.repeat_mode_none), Toast.LENGTH_SHORT).show()
+            REPEAT_MODE_OFF -> Toast.makeText(this, getString(R.string.repeat_mode_none), Toast.LENGTH_SHORT).show()
             REPEAT_MODE_ALL -> Toast.makeText(this, getString(R.string.repeat_mode_all), Toast.LENGTH_SHORT).show()
             REPEAT_MODE_ONE -> Toast.makeText(this, getString(R.string.repeat_mode_one), Toast.LENGTH_SHORT).show()
         }
@@ -481,44 +622,67 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Skip back to the previous track in the play queue (or restart the current song if less that five seconds in). */
-    fun skipBack() = mediaController.transportControls.skipToPrevious()
+    fun skipBack() = controller.seekToPreviousMediaItem()
 
     /** Skip forward to the next song in the play queue. */
-    fun skipForward() = mediaController.transportControls.skipToNext()
+    fun skipForward() = controller.seekToNextMediaItem()
 
     /** Rewind the playback of the current song. */
-    fun fastRewind() = mediaController.transportControls.rewind()
+    fun fastRewind() = controller.seekBack()
 
     /** Fast forward the playback of the current song. */
-    fun fastForward() = mediaController.transportControls.fastForward()
+    fun fastForward() = controller.seekForward()
 
     /**
      * Convert the list of MediaDescriptionCompat objects for each item in the play queue to JSON
      * and save it in the shared preferences file.
      */
-    private fun savePlayQueue() = lifecycleScope.launch(Dispatchers.IO) {
+    private fun saveAndPostPlayQueue(playQueue: List<MediaItem>) = lifecycleScope.launch(Dispatchers.IO) {
+        Log.i("DEBUG", "Posting play queue: $playQueue")
+        playQueueViewModel.playQueue.postValue(playQueue)
         try {
-            // Pair mapping is <Long, Long> -> <QueueId, songId>
-            val queueItemPairs = mutableListOf<Pair<Long, Long>>()
-            for (item in playQueue) {
-                item.description.mediaId?.let {
-                    queueItemPairs.add(Pair(item.queueId, it.toLong()))
+            val shuffleModeOn = sharedPreferences.getBoolean(SHUFFLE_MODE, false)
+            val songsToSave = if (shuffleModeOn) {
+                playQueue.map { i ->
+                    val orderId = i.mediaMetadata.extras?.getInt(ORDER_ID)
+                    val song = buildSongFromMediaItem(i)
+                    SongWithOrderId(orderId, song)
+                }
+            } else {
+                playQueue.map { i ->
+                    SongWithOrderId(null, buildSongFromMediaItem(i))
                 }
             }
-            val playQueueJson = GsonBuilder().setPrettyPrinting().create().toJson(queueItemPairs)
+            val playQueueJson = GsonBuilder().setPrettyPrinting().create().toJson(songsToSave)
+            Log.i("DEBUG", "Storing the following JSON:\n$playQueueJson")
             sharedPreferences.edit().apply {
-                putString(PLAY_QUEUE_ITEM_PAIRS, playQueueJson)
+                putString(PLAY_QUEUE_ITEMS, playQueueJson)
                 apply()
             }
         } catch (_: ConcurrentModificationException) {}
     }
 
-    /** Save the queueId of the currently playing queue item to the shared preferences file. */
-    private fun savePlayQueueId(queueId: Long) = lifecycleScope.launch(Dispatchers.IO) {
-        playQueueViewModel.currentQueueItemId.postValue(queueId)
-        sharedPreferences.edit().apply {
-            putLong(CURRENT_QUEUE_ITEM_ID, queueId)
-            apply()
+    private fun buildSongFromMediaItem(mediaItem: MediaItem): Song {
+        val metadata = mediaItem.mediaMetadata
+        val extras = metadata.extras
+            ?: throw RuntimeException("Extras null for ${mediaItem.mediaMetadata.title}")
+        return Song(mediaItem.mediaId.toLong(), 0, metadata.title.toString(),
+            metadata.artist.toString(), metadata.albumTitle.toString(),
+            extras.getString(ALBUM_ID, "-1"), "0")
+    }
+
+    /** Save the index of the currently playing queue item to the shared preferences file. */
+    private fun saveAndPostPlayQueueIndex(index: Int) = lifecycleScope.launch(Dispatchers.IO) {
+        if (index != playQueueViewModel.currentQueueItemIndex.value) {
+            playQueueViewModel.currentQueueItemIndex.postValue(index)
+            sharedPreferences.edit().apply {
+                putInt(CURRENT_QUEUE_ITEM_INDEX, index)
+                apply()
+            }
+            withContext(Dispatchers.Main) {
+                Log.i("DEBUG",
+                    "The current controller index is ${controller.currentMediaItemIndex}")
+            }
         }
     }
 
@@ -531,35 +695,43 @@ class MainActivity : AppCompatActivity() {
      * N.B. If shuffle is true then the startIndex is ignored.
      * @param shuffle Indicates whether the play queue should be shuffled.
      */
-    fun playNewPlayQueue(songs: List<Song>, startIndex: Int = 0, shuffle: Boolean = false)
-            = lifecycleScope.launch(Dispatchers.Default) {
+    fun playNewPlayQueue(songs: List<Song>, startIndex: Int = 0, shuffle: Boolean = false) {
         if (songs.isEmpty() || startIndex >= songs.size) {
             Toast.makeText(this@MainActivity,
                 getString(R.string.error_generic_playback), Toast.LENGTH_LONG).show()
-            return@launch
-        }
-        mediaController.transportControls.stop()
-
-        val startSongIndex = if (shuffle) (songs.indices).random()
-        else startIndex
-
-        val startSongDesc = mediaDescriptionManager.buildDescription(songs[startSongIndex], startSongIndex.toLong())
-
-        val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
-        mediaControllerCompat.addQueueItem(startSongDesc)
-        skipToAndPlayQueueItem(startSongIndex.toLong())
-
-        for ((index, song) in songs.withIndex()) {
-            if (index == startSongIndex) continue
-            val songDesc = mediaDescriptionManager.buildDescription(song, index.toLong())
-            mediaControllerCompat.addQueueItem(songDesc, index)
+            return
         }
 
-        when {
-            shuffle -> setShuffleMode(SHUFFLE_MODE_ALL)
-            mediaControllerCompat.shuffleMode == SHUFFLE_MODE_ALL -> setShuffleMode(SHUFFLE_MODE_NONE)
+        if (controller.isPlaying) controller.pause()
+
+        val playQueue = if (shuffle) {
+            songs.mapIndexed { i, s -> s.getMediaItem(i) }.toList().shuffled()
+        } else {
+            songs.map { s -> s.getMediaItem() }.toList()
+        }
+        saveAndPostPlayQueue(playQueue)
+
+        sharedPreferences.edit {
+            putBoolean(SHUFFLE_MODE, shuffle)
+        }
+
+        controller.setMediaItem(playQueue[0])
+        if (!controller.playWhenReady) controller.prepare()
+        if (playQueue.size > 1) {
+            controller.addMediaItems(playQueue.subList(1, playQueue.size))
+        }
+
+        if (startIndex != 0 && !shuffle) {
+            playQueueViewModel.pendingSkipToInstruction.postValue(startIndex)
+        }
+        playQueueViewModel.pendingPlayInstruction.postValue(true)
+        if (!shuffle) {
+            playQueueViewModel.pendingExpectedMetadata.postValue(
+                playQueue[startIndex].mediaMetadata.title.toString())
         }
     }
+
+    fun play() = controller.play()
 
     /**
      * Add a list of songs to the play queue. The songs can be added to the end of the play queue
@@ -571,20 +743,29 @@ class MainActivity : AppCompatActivity() {
      */
     fun addSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false)
             = lifecycleScope.launch(Dispatchers.Default) {
-        val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
-        if (addSongsAfterCurrentQueueItem) {
-            val index = playQueue.indexOfFirst { it.queueId == currentQueueItemId } + 1
+        val shuffleModeOn = sharedPreferences.getBoolean(SHUFFLE_MODE, false)
+        val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return@launch
 
-            for (song in songs.asReversed()) {
-                val songDesc = mediaDescriptionManager.buildDescription(song)
-                mediaControllerCompat.addQueueItem(songDesc, index)
+        val mediaItems = if (shuffleModeOn) {
+            var lastUsedOrderId = playQueue.mapNotNull { i ->
+                i.mediaMetadata.extras?.getInt(ORDER_ID)
+            }.maxOf { id -> id }
+            songs.map { s -> s.getMediaItem(++lastUsedOrderId) }
+        } else songs.map { s -> s.getMediaItem() }
+
+        if (addSongsAfterCurrentQueueItem) {
+            withContext(Dispatchers.Main) {
+                controller.addMediaItems(controller.currentMediaItemIndex + 1, mediaItems)
+                playQueue.addAll(controller.currentMediaItemIndex + 1, mediaItems)
             }
         } else {
-            for (song in songs) {
-                val songDesc = mediaDescriptionManager.buildDescription(song)
-                mediaControllerCompat.addQueueItem(songDesc)
+            withContext(Dispatchers.Main) {
+                controller.addMediaItems(mediaItems)
             }
+            playQueue.addAll(mediaItems)
         }
+        saveAndPostPlayQueue(playQueue)
+
         launch(Dispatchers.Main) toast@ {
             val message = when {
                 songs.size == 1 -> getString(R.string.song_added_play_queue, songs[0].title)
@@ -596,18 +777,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Remove a given QueueItem from the play queue based on its ID.
+     * Remove a media item from the play queue based on its index in the play queue.
      *
-     * @param queueItemId The ID of the QueueItem to be removed.
+     * @param index The index of the queue items to be removed.
      */
-    fun removeQueueItemById(queueItemId: Long) {
-        if (playQueue.isNotEmpty()) {
-            val bundle = Bundle().apply {
-                putLong("queueItemId", queueItemId)
-            }
-
-            mediaController.sendCommand(REMOVE_QUEUE_ITEM_BY_ID, bundle, null)
-        }
+    fun removeQueueItemByIndex(index: Int) {
+        val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return
+        playQueue.removeAt(index)
+        saveAndPostPlayQueue(playQueue)
+        controller.removeMediaItem(index)
     }
 
     /**
@@ -615,16 +793,30 @@ class MainActivity : AppCompatActivity() {
      *
      * @param position An Integer representing the desired playback position.
      */
-    fun seekTo(position: Int) = mediaController.transportControls.seekTo(position.toLong())
+    fun seekTo(position: Int) {
+        controller.seekTo(position.toLong())
+        updatePlaybackDurationAndPosition()
+    }
 
     /**
-     * Skip to a specific item in the play queue based on its ID.
+     * Skip to a specific item in the play queue based on its index in the play queue.
      *
-     * @param queueItemId The ID of the target QueueItem object.
+     * @param targetIndex The index in the queue to skip to.
      */
-    fun skipToAndPlayQueueItem(queueItemId: Long) {
-        mediaController.transportControls.skipToQueueItem(queueItemId)
-        mediaController.transportControls.play()
+    fun skipToQueueIndex(targetIndex: Int) = lifecycleScope.launch(Dispatchers.Main) {
+        var position = if (targetIndex == 0) playQueueViewModel.pendingSeekToInstruction.value ?: 0L
+        else 0L
+        val item = playQueueViewModel.playQueue.value?.get(targetIndex)
+        if (item?.mediaMetadata?.extras?.getBoolean(REMEMBER_PROGRESS) == true) {
+            val song = getSongById(item.mediaId.toLong())
+            position = song?.playbackProgress ?: position
+        }
+        controller.seekTo(targetIndex, position)
+        if (position != 0L) {
+            Log.i("DEBUG", "Pending seek to $position processed.")
+            playQueueViewModel.pendingSeekToInstruction.postValue(null)
+        }
+        playQueueViewModel.pendingSkipToInstruction.postValue(null)
     }
 
     /**
@@ -638,7 +830,7 @@ class MainActivity : AppCompatActivity() {
         val songId = if (songIds.isNotEmpty()) songIds.random()
         else null
         val albumId = if (songId != null) withContext(Dispatchers.IO) {
-            musicLibraryViewModel.getSongById(songId)
+            getSongById(songId)
         }?.albumId else null
         ImageHandlingHelper.loadImageByAlbumId(application, albumId, view)
     }
@@ -700,7 +892,7 @@ class MainActivity : AppCompatActivity() {
      *
      * @param songId The media ID of the song to be deleted.
      */
-    fun deleteSongById(songId: Long) {
+    private fun deleteSongById(songId: Long) {
         musicLibraryViewModel.songIdToDelete = songId
         try {
             val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, songId)
@@ -739,7 +931,7 @@ class MainActivity : AppCompatActivity() {
      */
     fun openAddToPlaylistDialogForSongById(songId: Long) = lifecycleScope.launch(Dispatchers.Main) {
         val song = withContext(Dispatchers.IO) {
-            musicLibraryViewModel.getSongById(songId)
+            getSongById(songId)
         } ?: return@launch
         openAddToPlaylistDialog(listOf(song))
     }
@@ -799,14 +991,24 @@ class MainActivity : AppCompatActivity() {
 
         for (song in songs) {
             // All occurrences of the song need to be updated in the play queue
-            val affectedQueueItems = playQueue.filter { it.description.mediaId == song.songId.toString() }
-            if (affectedQueueItems.isEmpty()) continue
-
-            val mediaDescriptionBundle = mediaDescriptionManager.getDescriptionAsBundle(song)
-            for (queueItem in affectedQueueItems) {
-                mediaDescriptionBundle.putLong("queueItemId", queueItem.queueId)
-                mediaController.sendCommand(UPDATE_QUEUE_ITEM, mediaDescriptionBundle, null)
-            }
+            var index: Int
+            do {
+                index = getLastIndexOfQueueItemByMediaId(song.songId.toString())
+                if (index != -1) {
+                    val shuffleModeOn = sharedPreferences.getBoolean(SHUFFLE_MODE, false)
+                    val mediaItem = if (shuffleModeOn) {
+                        val orderId = playQueueViewModel.playQueue.value?.get(index)
+                            ?.mediaMetadata?.extras?.getInt(ORDER_ID) ?: continue
+                        song.getMediaItem(orderId)
+                    } else {
+                        song.getMediaItem()
+                    }
+                    controller.replaceMediaItem(index, mediaItem)
+                    val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: continue
+                    playQueue[index] = mediaItem
+                    saveAndPostPlayQueue(playQueue)
+                }
+            } while (index != -1)
         }
     }
 
@@ -842,10 +1044,10 @@ class MainActivity : AppCompatActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>,
                                             grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (!storagePermissionHelper.hasReadPermission()) {
+        if (!storagePermissionHelper.hasPermissions()) {
             Toast.makeText(this, getString(R.string.storage_permission_needed),
                 Toast.LENGTH_LONG).show()
-            if (!storagePermissionHelper.shouldShowRequestPermissionRationale()) {
+            if (!storagePermissionHelper.shouldShowPermissionRationale()) {
                 // Permission denied with checking "Do not ask again".
                 storagePermissionHelper.launchPermissionSettings()
             }
@@ -854,39 +1056,49 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Restore the play queue and playback state from the last save. */
+    @OptIn(UnstableApi::class)
     private fun restoreMediaSession() = lifecycleScope.launch {
-        val repeatMode = sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_NONE)
-        val repeatBundle = Bundle().apply {
-            putInt(REPEAT_MODE, repeatMode)
-        }
-        mediaController.sendCommand(SET_REPEAT_MODE, repeatBundle, null)
+        if (playQueueViewModel.playQueue.value != null) return@launch
 
-        val shuffleMode = sharedPreferences.getInt(SHUFFLE_MODE, SHUFFLE_MODE_NONE)
-        val shuffleBundle = Bundle().apply {
-            putInt(SHUFFLE_MODE, shuffleMode)
-        }
-        mediaController.sendCommand(SET_SHUFFLE_MODE, shuffleBundle, null)
+        Log.i("DEBUG", "Restoring the media session")
 
-        val queueItemPairsJson = sharedPreferences.getString(PLAY_QUEUE_ITEM_PAIRS, null) ?: return@launch
-        val currentQueueItemId = sharedPreferences.getLong(CURRENT_QUEUE_ITEM_ID, -1L)
+        val repeatMode = sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_OFF)
+        controller.repeatMode = repeatMode
 
-        val itemType = object : TypeToken<List<Pair<Long, Long>>>() {}.type
-        // Pair mapping is <Long, Long> -> <QueueId, songId>
-        val queueItemPairs = Gson().fromJson<List<Pair<Long, Long>>>(queueItemPairsJson, itemType)
+        val queueItemPairsJson = sharedPreferences.getString(PLAY_QUEUE_ITEMS, null) ?: return@launch
 
-        val mediaControllerCompat = MediaControllerCompat.getMediaController(this@MainActivity)
-        for (pair in queueItemPairs) {
-            musicLibraryViewModel.getSongById(pair.second)?.let { song ->
-                val queueId = pair.first
-                val songDesc = mediaDescriptionManager.buildDescription(song, queueId)
-                mediaControllerCompat.addQueueItem(songDesc)
-            }
+        val itemType = object : TypeToken<List<SongWithOrderId>>() {}.type
+
+        val songs = Gson().fromJson<List<SongWithOrderId>>(queueItemPairsJson, itemType)
+        Log.i("DEBUG", "Retrieved the following JSON:\n$songs")
+        if (songs.isEmpty()) return@launch
+        val playQueue = mutableListOf<MediaItem>()
+        for (s in songs) {
+            val newItem = s.song?.getMediaItem(s.orderId) ?: continue
+            playQueue.add(newItem)
         }
 
-        mediaControllerCompat.transportControls.skipToQueueItem(currentQueueItemId)
+        playQueueViewModel.playQueue.postValue(playQueue)
+        controller.setMediaItem(playQueue[0])
+        if (!controller.playWhenReady) controller.prepare()
+        if (playQueue.size > 1) {
+            controller.addMediaItems(playQueue.subList(1, playQueue.size))
+        }
 
-        val playbackPosition = sharedPreferences.getInt(PLAYBACK_POSITION, 0)
-        if (playbackPosition != 0) seekTo(playbackPosition)
+        val currentQueueItemIndex = sharedPreferences.getInt(CURRENT_QUEUE_ITEM_INDEX, -1)
+        if (currentQueueItemIndex != -1) {
+            playQueueViewModel.pendingSkipToInstruction.postValue(currentQueueItemIndex)
+            playQueueViewModel.pendingExpectedMetadata.postValue(
+                playQueue[currentQueueItemIndex].mediaMetadata.title.toString())
+        }
+        val playbackPosition = sharedPreferences.getLong(PLAYBACK_POSITION, 0L)
+        if (playbackPosition != 0L) {
+            playQueueViewModel.pendingSeekToInstruction.postValue(playbackPosition)
+        }
+    }
+
+    suspend fun getSongById(songId: Long): Song? {
+        return musicLibraryViewModel.getSongById(songId)
     }
 
     /** Refresh the music library. Add new songs, remove deleted songs, and implement language changes. */
@@ -900,7 +1112,7 @@ class MainActivity : AppCompatActivity() {
             while (cursor.moveToNext()) {
                 val songId = cursor.getLong(idColumn)
                 songIds.add(songId)
-                val existingSong = musicLibraryViewModel.getSongById(songId)
+                val existingSong = getSongById(songId)
                 if (existingSong == null) {
                     val song = createSongFromCursor(cursor)
                     songsToAddToMusicLibrary.add(song)
@@ -969,7 +1181,7 @@ class MainActivity : AppCompatActivity() {
         val selectionArgs = arrayOf(mediaId.toString())
         val cursor = getMediaStoreCursor(selection, selectionArgs)
 
-        val existingSong = musicLibraryViewModel.getSongById(mediaId)
+        val existingSong = getSongById(mediaId)
         when {
             existingSong == null && cursor?.count!! > 0 -> {
                 cursor.apply {
