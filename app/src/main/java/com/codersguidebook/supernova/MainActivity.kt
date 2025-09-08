@@ -332,17 +332,6 @@ class MainActivity : AppCompatActivity() {
                             getSongById(mediaId ?: return@withContext null)
                         }?.let { song ->
                             if (song.rememberProgress) seekTo(song.playbackProgress.toInt())
-
-                            withContext(Dispatchers.Main) {
-                                // FIXME - TIDY UP
-                                val artworkDirectory = ContextWrapper(applicationContext).getDir("albumArt", Context.MODE_PRIVATE)
-                                val imageFile = File(artworkDirectory, "${song.albumId}.jpg")
-                                val artworkUri = Uri.fromFile(imageFile)
-                                val metadata2 = song.getMetadata().buildUpon().setArtworkUri(artworkUri).build()
-                                val mediaItem = song.getMediaItem().buildUpon().setMediaMetadata(metadata2).build()
-                                controller.replaceMediaItem(controller.currentMediaItemIndex, mediaItem)
-                            }
-
                             playQueueViewModel.currentlyPlayingSongMetadata.postValue(song.getMetadata())
                         }
                     }
