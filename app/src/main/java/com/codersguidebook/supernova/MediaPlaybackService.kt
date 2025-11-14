@@ -1,16 +1,20 @@
 package com.codersguidebook.supernova
 
 import android.app.PendingIntent
-import android.content.*
+import android.content.ContentUris
+import android.content.Context
+import android.content.ContextWrapper
+import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
-import android.media.AudioManager.*
-import android.media.MediaPlayer.*
+import android.media.AudioManager.AUDIOFOCUS_GAIN
+import android.media.AudioManager.AUDIOFOCUS_LOSS
+import android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT
+import android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK
+import android.media.AudioManager.OnAudioFocusChangeListener
 import android.net.Uri
-import android.os.*
 import android.provider.MediaStore
-import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi

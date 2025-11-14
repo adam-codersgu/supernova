@@ -57,6 +57,7 @@
 
     <!-- Labels -->
     <string name="album">Album</string>
+    <string name="album_id">Album ID</string>
     <string name="album_title">Album title</string>
     <string name="album_year">Album year</string>
     <string name="all_songs">All songs</string>
