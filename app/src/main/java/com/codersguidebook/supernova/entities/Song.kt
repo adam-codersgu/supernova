@@ -21,7 +21,7 @@ data class Song(
     @ColumnInfo(name = "song_title") var title: String?,
     @ColumnInfo(name = "song_artist") var artist: String?,
     @ColumnInfo(name = "song_album_name") var albumName: String?,
-    @ColumnInfo(name = "song_album_id") val albumId: String,
+    @ColumnInfo(name = "song_album_id") var albumId: String,
     @ColumnInfo(name = "song_year") var year: String,
     @ColumnInfo(name = "song_favourite") var isFavourite: Boolean = false,
     @ColumnInfo(name = "remember_progress") var rememberProgress: Boolean = false,
