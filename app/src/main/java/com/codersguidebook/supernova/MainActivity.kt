@@ -80,8 +80,10 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 import java.io.FileNotFoundException
+import java.util.stream.Collectors
+import java.util.stream.IntStream
+import kotlin.streams.toList
 
 class MainActivity : AppCompatActivity() {
 
@@ -990,25 +992,29 @@ class MainActivity : AppCompatActivity() {
         musicLibraryViewModel.updateSongs(songs)
 
         for (song in songs) {
+            val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: break
             // All occurrences of the song need to be updated in the play queue
-            var index: Int
-            do {
-                index = getLastIndexOfQueueItemByMediaId(song.songId.toString())
-                if (index != -1) {
-                    val shuffleModeOn = sharedPreferences.getBoolean(SHUFFLE_MODE, false)
-                    val mediaItem = if (shuffleModeOn) {
-                        val orderId = playQueueViewModel.playQueue.value?.get(index)
-                            ?.mediaMetadata?.extras?.getInt(ORDER_ID) ?: continue
-                        song.getMediaItem(orderId)
-                    } else {
-                        song.getMediaItem()
-                    }
-                    controller.replaceMediaItem(index, mediaItem)
-                    val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: continue
-                    playQueue[index] = mediaItem
-                    saveAndPostPlayQueue(playQueue)
+            val matchingIndices = IntStream.range(0, playQueue.size)
+                .filter { i -> song.songId.toString().equals(playQueue[i]) }
+                .toList()
+
+            if (matchingIndices.isEmpty()) continue
+
+            val shuffleModeOn = sharedPreferences.getBoolean(SHUFFLE_MODE, false)
+
+            for (index in matchingIndices) {
+                val mediaItem = if (shuffleModeOn) {
+                    val orderId = playQueue[index].mediaMetadata.extras?.getInt(ORDER_ID)
+                        ?: continue
+                    song.getMediaItem(orderId)
+                } else {
+                    song.getMediaItem()
                 }
-            } while (index != -1)
+                controller.replaceMediaItem(index, mediaItem)
+
+                playQueue[index] = mediaItem
+            }
+            saveAndPostPlayQueue(playQueue)
         }
     }
 

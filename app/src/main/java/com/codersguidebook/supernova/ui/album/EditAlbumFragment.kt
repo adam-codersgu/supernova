@@ -3,6 +3,7 @@ package com.codersguidebook.supernova.ui.album
 import android.net.Uri
 import android.os.Bundle
 import android.text.SpannableStringBuilder
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
@@ -94,6 +95,7 @@ class EditAlbumFragment : BaseEditMusicFragment() {
                                     song.albumId = newAlbumId
                                 }
                                 mainActivity.updateSongs(songs)
+                                Log.i(null, "Songs saved")
                             }
 
                             val action = EditAlbumFragmentDirections.actionFinishEditAlbum(albumId!!)
