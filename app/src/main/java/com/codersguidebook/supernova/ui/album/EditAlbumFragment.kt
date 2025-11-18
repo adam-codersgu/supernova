@@ -1,6 +1,5 @@
 package com.codersguidebook.supernova.ui.album
 
-import android.app.ProgressDialog.show
 import android.net.Uri
 import android.os.Bundle
 import android.text.SpannableStringBuilder
