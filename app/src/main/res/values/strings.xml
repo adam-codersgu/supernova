@@ -57,6 +57,7 @@
 
     <!-- Labels -->
     <string name="album">Album</string>
+    <string name="album_id">Album ID</string>
     <string name="album_title">Album title</string>
     <string name="album_year">Album year</string>
     <string name="all_songs">All songs</string>
@@ -138,6 +139,7 @@
 
     <!-- Toast notifications -->
     <string name="added_to_favourites">Added to favourites</string>
+    <string name="album_id_cannot_be_empty">The album ID field cannot be empty</string>
     <string name="album_name_cannot_be_empty">The album name field cannot be empty</string>
     <string name="album_updated">Album updated!</string>
     <string name="album_year_cannot_be_empty">The album year field cannot be empty</string>

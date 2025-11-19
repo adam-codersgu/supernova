@@ -46,6 +46,7 @@
     <string name="save">Guardar</string>
     <string name="save_play_queue">Guardar cola de reproducción como lista de reproducción</string>
     <string name="album">Álbum</string>
+    <string name="album_id">Álbum ID</string>
     <string name="album_title">Título del álbum</string>
     <string name="album_year">Año del álbum</string>
     <string name="all_songs">Todas las canciones</string>
@@ -149,6 +150,7 @@
     <string name="default_album">Álbum desconocido</string>
     <string name="default_artist">Artista desconocido</string>
     <string name="default_title">Canción desconocida</string>
+    <string name="album_id_cannot_be_empty">El campo ID del álbum no puede estar vacío</string>
 
     <string name="no_songs_for_album">No se encontraron canciones para este álbum.</string>
     <string name="no_songs_for_artist">No se encontraron canciones para este artista.</string>

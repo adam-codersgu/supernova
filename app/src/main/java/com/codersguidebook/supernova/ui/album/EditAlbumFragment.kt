@@ -3,6 +3,7 @@ package com.codersguidebook.supernova.ui.album
 import android.net.Uri
 import android.os.Bundle
 import android.text.SpannableStringBuilder
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
@@ -51,6 +52,7 @@ class EditAlbumFragment : BaseEditMusicFragment() {
                 else return@observe
                 binding.editAlbumTitle.text = SpannableStringBuilder(songToUseForDisplay.albumName)
                 binding.editAlbumYear.text = SpannableStringBuilder(songToUseForDisplay.year)
+                binding.editAlbumId.text = SpannableStringBuilder(albumId)
             }
         }
 
@@ -70,27 +72,33 @@ class EditAlbumFragment : BaseEditMusicFragment() {
                 } else {
                     val newAlbumTitle = binding.editAlbumTitle.text.toString()
                     val newAlbumYear = binding.editAlbumYear.text.toString()
+                    val newAlbumId = binding.editAlbumId.text.toString()
 
                     when {
                         newAlbumTitle.isEmpty() -> Toast.makeText(mainActivity,
                             getString(R.string.album_name_cannot_be_empty), Toast.LENGTH_SHORT).show()
                         newAlbumYear.isEmpty() -> Toast.makeText(mainActivity,
                             getString(R.string.album_year_cannot_be_empty), Toast.LENGTH_SHORT).show()
+                        newAlbumId.isEmpty() -> Toast.makeText(mainActivity,
+                            getString(R.string.album_id_cannot_be_empty), Toast.LENGTH_SHORT).show()
                         else -> {
                             newArtwork?.let { albumArt ->
                                 ImageHandlingHelper.saveAlbumArtByResourceId(mainActivity.application,
                                     albumId!!, albumArt)
                             }
 
-                            if (newAlbumTitle != songs[0].title || newAlbumYear != songs[0].year) {
+                            if (newAlbumTitle != songs[0].title || newAlbumYear != songs[0].year
+                                || newAlbumId != albumId) {
                                 for (song in songs) {
                                     song.albumName = newAlbumTitle
                                     song.year = newAlbumYear
+                                    song.albumId = newAlbumId
                                 }
                                 mainActivity.updateSongs(songs)
+                                Log.i(null, "Songs saved")
                             }
 
-                            val action = EditAlbumFragmentDirections.actionFinishEditAlbum(albumId!!)
+                            val action = EditAlbumFragmentDirections.actionFinishEditAlbum(newAlbumId)
                             requireView().findNavController().navigate(action)
 
                             Toast.makeText(activity, getString(R.string.album_updated), Toast.LENGTH_SHORT).show()
