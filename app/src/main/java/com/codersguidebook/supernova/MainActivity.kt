@@ -783,8 +783,8 @@ class MainActivity : AppCompatActivity() {
      *
      * @param index The index of the queue items to be removed.
      */
-    fun removeQueueItemByIndex(index: Int) {
-        val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return
+    fun removeQueueItemByIndex(index: Int) = lifecycleScope.launch(Dispatchers.Main) {
+        val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return@launch
         playQueue.removeAt(index)
         saveAndPostPlayQueue(playQueue)
         controller.removeMediaItem(index)
