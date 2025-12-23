@@ -18,6 +18,10 @@ class PlayQueueViewModel : ViewModel() {
     var playbackPosition = MutableLiveData<Int>()
 
     fun getCurrentSongMediaId(): Long? {
-        return if (playQueue.value!!.isEmpty()) null else playQueue.value!![currentQueueItemIndex.value!!].mediaId.toLong()
+        return if (playQueue.value!!.isEmpty()) {
+            null
+        } else {
+            playQueue.value!![currentQueueItemIndex.value!!].mediaId.toLong()
+        }
     }
 }

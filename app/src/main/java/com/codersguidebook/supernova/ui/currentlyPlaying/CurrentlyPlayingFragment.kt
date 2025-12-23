@@ -251,8 +251,7 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
                 currentSong = musicLibraryViewModel.getSongById(mediaId)
             } else {
                 currentSong = null
-                Glide.with(mainActivity)
-                    .clear(binding.artwork)
+                clearArtwork()
             }
         }
 
@@ -266,9 +265,13 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
             val albumId = metadata.extras?.getString(ALBUM_ID)
             ImageHandlingHelper.loadImageByAlbumId(mainActivity.application, albumId, binding.artwork)
         } else {
-            Glide.with(mainActivity)
-                .clear(binding.artwork)
+            clearArtwork()
         }
+    }
+
+    private fun clearArtwork() = lifecycleScope.launch(Dispatchers.Main) {
+        Glide.with(mainActivity)
+            .clear(binding.artwork)
     }
 
     /**
