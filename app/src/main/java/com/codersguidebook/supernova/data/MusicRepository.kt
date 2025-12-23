@@ -12,7 +12,7 @@ import java.time.LocalDate
 class MusicRepository(private val musicDao: MusicDao, private val playlistDao: PlaylistDao,
     private val songPlaysDao: SongPlaysDao) {
 
-    val allSongs: LiveData<List<Song>> = musicDao.getSongsOrderByTitle()
+    val allSongs: LiveData<List<Song>> = musicDao.getSongsOrderByTitleLiveData()
     val allArtists: LiveData<List<Artist>> = musicDao.getArtists()
     val allPlaylists: LiveData<List<Playlist>> = playlistDao.getAllPlaylistsOrderByName()
 
@@ -38,6 +38,8 @@ class MusicRepository(private val musicDao: MusicDao, private val playlistDao: P
     }
 
     suspend fun getAllSongs(): List<Song> = musicDao.getSongs()
+
+    fun getAllSongsOrderByTitle(): List<Song> = musicDao.getSongsOrderByTitle()
 
     suspend fun saveSongs(songs: List<Song>) {
         for (song in songs) musicDao.insert(song)

@@ -78,10 +78,10 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.invoke
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
-import java.util.stream.Collectors
 import java.util.stream.IntStream
 import kotlin.streams.toList
 
@@ -326,7 +326,14 @@ class MainActivity : AppCompatActivity() {
 
                 processPendingSeekToRequest()
 
-                val mediaId = playQueueViewModel.playQueue.value?.get(controller.currentMediaItemIndex)?.mediaId?.toLong()
+                val mediaId: Long?
+                try {
+                     mediaId = playQueueViewModel.playQueue.value?.get(controller.currentMediaItemIndex)?.mediaId?.toLong()
+                } catch (e: IndexOutOfBoundsException) {
+                    Log.w("DEBUG", "IndexOutOfBounds. Will reset the metadata.")
+                    playQueueViewModel.currentlyPlayingSongMetadata.postValue(null)
+                    return
+                }
 
                 if (metadata.extras == null || metadata.extras?.getBoolean(REMEMBER_PROGRESS) == true) {
                     lifecycleScope.launch(Dispatchers.IO) {
@@ -350,6 +357,7 @@ class MainActivity : AppCompatActivity() {
                     Log.i("DEBUG", "Playback state is STATE_ENDED. Clearing the play queue.")
                     controller.clearMediaItems()
                     handler.removeCallbacks(playbackPositionRunnable)
+                    playQueueViewModel.playQueue.value = listOf()
                     playQueueViewModel.playbackDuration.value = 0
                     playQueueViewModel.playbackPosition.value = 0
                     playQueueViewModel.currentlyPlayingSongMetadata.value = null
@@ -502,7 +510,12 @@ class MainActivity : AppCompatActivity() {
                 play()
             }
         } else {
-            playNewPlayQueue(musicLibraryViewModel.allSongs.value ?: return)
+            lifecycleScope.launch(Dispatchers.Main) {
+                val songs = withContext(Dispatchers.IO) {
+                    musicLibraryViewModel.getAllSongsOrderByTitle()
+                }
+                playNewPlayQueue(songs)
+            }
         }
     }
 
