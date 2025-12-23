@@ -236,7 +236,7 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         val currentMediaId = playQueueViewModel.getCurrentSongMediaId()
-        musicLibraryViewModel.savePlaybackProgress(currentMediaId, controller.currentPosition.toInt())
+        musicLibraryViewModel.savePlaybackProgress(currentMediaId!!, controller.currentPosition.toInt())
     }
 
     override fun onResume() {
@@ -347,6 +347,8 @@ class MainActivity : AppCompatActivity() {
                     playbackPositionRunnable.run()
                     playQueueViewModel.isPlaying.value = controller.isPlaying
                 } else if (playbackState == Player.STATE_ENDED) {
+                    Log.i("DEBUG", "Playback state is STATE_ENDED. Clearing the play queue.")
+                    controller.clearMediaItems()
                     handler.removeCallbacks(playbackPositionRunnable)
                     playQueueViewModel.playbackDuration.value = 0
                     playQueueViewModel.playbackPosition.value = 0
@@ -392,7 +394,7 @@ class MainActivity : AppCompatActivity() {
             Log.i("DEBUG", "Incrementing the song plays for " +
                     "${playQueueViewModel.currentlyPlayingSongMetadata.value!!.title}")
             val mediaId = playQueueViewModel.getCurrentSongMediaId()
-            musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(mediaId)
+            musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(mediaId!!)
             musicLibraryViewModel.increaseSongPlaysBySongId(mediaId)
             songCompleted = true
         }

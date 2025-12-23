@@ -245,8 +245,15 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
      * if playback has stopped and any loaded metadata should be cleared.
      */
     private fun updateCurrentlyDisplayedMetadata(metadata: MediaMetadata?) = lifecycleScope.launch(Dispatchers.Main) {
-        currentSong = withContext(Dispatchers.IO) {
-            musicLibraryViewModel.getSongById(playQueueViewModel.getCurrentSongMediaId())
+        withContext(Dispatchers.IO) {
+            val mediaId = playQueueViewModel.getCurrentSongMediaId()
+            if (mediaId != null) {
+                currentSong = musicLibraryViewModel.getSongById(mediaId)
+            } else {
+                currentSong = null
+                Glide.with(mainActivity)
+                    .clear(binding.artwork)
+            }
         }
 
         setFavouriteButtonStyle(currentSong?.isFavourite ?: false)
