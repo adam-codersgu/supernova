@@ -245,8 +245,14 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
      * if playback has stopped and any loaded metadata should be cleared.
      */
     private fun updateCurrentlyDisplayedMetadata(metadata: MediaMetadata?) = lifecycleScope.launch(Dispatchers.Main) {
-        currentSong = withContext(Dispatchers.IO) {
-            musicLibraryViewModel.getSongById(playQueueViewModel.getCurrentSongMediaId())
+        withContext(Dispatchers.IO) {
+            val mediaId = playQueueViewModel.getCurrentSongMediaId()
+            if (mediaId != null) {
+                currentSong = musicLibraryViewModel.getSongById(mediaId)
+            } else {
+                currentSong = null
+                clearArtwork()
+            }
         }
 
         setFavouriteButtonStyle(currentSong?.isFavourite ?: false)
@@ -259,9 +265,13 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
             val albumId = metadata.extras?.getString(ALBUM_ID)
             ImageHandlingHelper.loadImageByAlbumId(mainActivity.application, albumId, binding.artwork)
         } else {
-            Glide.with(mainActivity)
-                .clear(binding.artwork)
+            clearArtwork()
         }
+    }
+
+    private fun clearArtwork() = lifecycleScope.launch(Dispatchers.Main) {
+        Glide.with(mainActivity)
+            .clear(binding.artwork)
     }
 
     /**

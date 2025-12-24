@@ -24,7 +24,10 @@ interface MusicDao {
     fun getArtists(): LiveData<List<Artist>>
 
     @Query("SELECT * from music_library ORDER BY song_title")
-    fun getSongsOrderByTitle(): LiveData<List<Song>>
+    fun getSongsOrderByTitle(): List<Song>
+
+    @Query("SELECT * from music_library ORDER BY song_title")
+    fun getSongsOrderByTitleLiveData(): LiveData<List<Song>>
 
     @Query("SELECT songId from music_library WHERE song_artist = :artistName")
     suspend fun getSongIdsByArtist(artistName: String): List<Long>
