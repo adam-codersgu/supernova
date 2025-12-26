@@ -51,11 +51,6 @@
             android:defaultValue="null"
             app:argType="string"
             app:nullable="true" />
-        <action
-            android:id="@+id/action_finish_edit_playlist"
-            app:destination="@id/nav_playlist"
-            app:popUpTo="@+id/mobile_navigation"
-            app:popUpToInclusive="true" />
     </fragment>
 
     <fragment
@@ -95,11 +90,6 @@
             android:name="artist"
             app:argType="string"
             app:nullable="true" />
-        <action
-            android:id="@+id/action_finish_edit_artist"
-            app:destination="@id/nav_artist"
-            app:popUpTo="@+id/mobile_navigation"
-            app:popUpToInclusive="true" />
     </fragment>
 
     <fragment
@@ -126,11 +116,6 @@
         <argument
             android:name="albumId"
             app:argType="string" />
-        <action
-            android:id="@+id/action_finish_edit_album"
-            app:destination="@id/nav_album"
-            app:popUpTo="@+id/mobile_navigation"
-            app:popUpToInclusive="true" />
     </fragment>
 
     <fragment

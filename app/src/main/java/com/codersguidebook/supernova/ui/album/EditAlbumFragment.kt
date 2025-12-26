@@ -98,8 +98,7 @@ class EditAlbumFragment : BaseEditMusicFragment() {
                                 Log.i(null, "Songs saved")
                             }
 
-                            val action = EditAlbumFragmentDirections.actionFinishEditAlbum(newAlbumId)
-                            requireView().findNavController().navigate(action)
+                            requireView().findNavController().popBackStack()
 
                             Toast.makeText(activity, getString(R.string.album_updated), Toast.LENGTH_SHORT).show()
                         }
