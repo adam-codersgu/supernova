@@ -94,6 +94,7 @@ class EditPlaylistFragment : BaseEditMusicFragment() {
                         }
 
                         musicLibraryViewModel.updatePlaylists(listOf(this))
+                        musicLibraryViewModel.navigationArgument = newPlaylistName
 
                         requireView().findNavController().popBackStack()
 

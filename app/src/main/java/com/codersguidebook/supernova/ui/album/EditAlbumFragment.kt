@@ -98,6 +98,7 @@ class EditAlbumFragment : BaseEditMusicFragment() {
                                 Log.i(null, "Songs saved")
                             }
 
+                            musicLibraryViewModel.navigationArgument = newAlbumId
                             requireView().findNavController().popBackStack()
 
                             Toast.makeText(activity, getString(R.string.album_updated), Toast.LENGTH_SHORT).show()

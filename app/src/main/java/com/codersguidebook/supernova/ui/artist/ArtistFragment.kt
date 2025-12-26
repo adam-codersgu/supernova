@@ -1,8 +1,12 @@
 package com.codersguidebook.supernova.ui.artist
 
-import android.os.Build
 import android.os.Bundle
-import android.view.*
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
@@ -26,14 +30,18 @@ class ArtistFragment : RecyclerViewFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        artistName = EditArtistFragmentArgs.fromBundle(arguments ?: Bundle()).artist
-            ?: getString(R.string.default_artist)
+        arguments?.let {
+            val safeArgs = ArtistFragmentArgs.fromBundle(it)
+            artistName = safeArgs.artist ?: getString(R.string.default_artist)
+        }
 
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        artistName = musicLibraryViewModel.getUpdatedNavigationArgument() ?: artistName
 
         musicLibraryViewModel.setActiveArtistName(artistName)
 
@@ -93,9 +101,6 @@ class ArtistFragment : RecyclerViewFragment() {
         (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
             override fun onPrepareMenu(menu: Menu) {
                 menu.setGroupVisible(R.id.menu_group_artist_actions, true)
-                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
-                    menu.findItem(R.id.artist_delete_artist).isVisible = false
-                }
             }
 
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) { }
@@ -116,10 +121,7 @@ class ArtistFragment : RecyclerViewFragment() {
                         findNavController().navigate(ArtistFragmentDirections.actionEditArtist(artistName))
                     }
                     R.id.artist_delete_artist -> {
-                        // Delete Artist feature only available from SDK 30 and up
-                        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
-                            mainActivity.deleteSongs(songs)
-                        }
+                        mainActivity.deleteSongs(songs)
                     }
                     else -> return false
                 }

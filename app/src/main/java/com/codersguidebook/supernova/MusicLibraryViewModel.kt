@@ -38,6 +38,7 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
     val allPlaylists: LiveData<List<Playlist>> = repository.allPlaylists
     var songIdToDelete: Long? = null
     private val defaultPlaylistHelper: DefaultPlaylistHelper = DefaultPlaylistHelper(application)
+    var navigationArgument: String? = null
 
     private val activeAlbumId = MutableLiveData<String>()
     val activeAlbumSongs: LiveData<List<Song>> = activeAlbumId.switchMap {
@@ -398,4 +399,12 @@ class MusicLibraryViewModel(application: Application) : AndroidViewModel(applica
      * @return A list of Playlist objects.
      */
     suspend fun getAllUserPlaylists(): List<Playlist> = repository.getAllUserPlaylists()
+
+    fun getUpdatedNavigationArgument(): String? {
+        val argument = navigationArgument
+        if (navigationArgument != null) {
+            navigationArgument = null
+        }
+        return argument
+    }
 }

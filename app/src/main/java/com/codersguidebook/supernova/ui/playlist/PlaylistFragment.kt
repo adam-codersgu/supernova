@@ -1,5 +1,6 @@
 package com.codersguidebook.supernova.ui.playlist
 
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -87,6 +88,8 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        playlistName = musicLibraryViewModel.getUpdatedNavigationArgument() ?: playlistName
+
         playlistName?.let { name ->
             musicLibraryViewModel.setActivePlaylistName(name)
 
@@ -128,7 +131,12 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
 
             if (adapter.songs.size > songs.size) {
                 val numberItemsToRemove = adapter.songs.size - songs.size
-                repeat(numberItemsToRemove) { adapter.songs.removeLast() }
+                repeat(numberItemsToRemove) { if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                    adapter.songs.removeLast()
+                } else {
+                    adapter.songs.removeAt(adapter.songs.size - 1)
+                }
+                }
                 adapter.notifyItemRangeRemoved(
                     adapter.getRecyclerViewIndex(songs.size), numberItemsToRemove)
             }
