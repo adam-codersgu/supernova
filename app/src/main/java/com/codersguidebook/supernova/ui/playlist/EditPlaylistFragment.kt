@@ -94,9 +94,9 @@ class EditPlaylistFragment : BaseEditMusicFragment() {
                         }
 
                         musicLibraryViewModel.updatePlaylists(listOf(this))
+                        musicLibraryViewModel.navigationArgument = newPlaylistName
 
-                        val action = EditPlaylistFragmentDirections.actionFinishEditPlaylist(newPlaylistName)
-                        requireView().findNavController().navigate(action)
+                        requireView().findNavController().popBackStack()
 
                         Toast.makeText(activity, getString(R.string.playlist_updated), Toast.LENGTH_SHORT).show()
                     }

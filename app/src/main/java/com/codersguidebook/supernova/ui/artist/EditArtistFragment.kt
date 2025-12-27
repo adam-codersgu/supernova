@@ -59,10 +59,10 @@ class EditArtistFragment : BaseEditMusicFragment() {
                     else -> {
                         for (song in songs) song.artist = newName
                         mainActivity.updateSongs(songs)
+                        musicLibraryViewModel.navigationArgument = newName
+                        requireView().findNavController().popBackStack()
                         Toast.makeText(activity, getString(R.string.artist_updated),
                             Toast.LENGTH_SHORT).show()
-                        val action = EditArtistFragmentDirections.actionFinishEditArtist(artistName)
-                        requireView().findNavController().navigate(action)
                     }
                 }
                 true
