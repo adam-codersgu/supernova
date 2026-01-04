@@ -20,12 +20,6 @@
             app:min="3"
             app:showSeekBarValue="true"
             android:max="30" />
-
-        <!-- TODO - TEMP -->
-        <Preference
-            app:title="Playlist settings"
-            app:fragment="com.codersguidebook.supernova.ui.settings.PlaylistSettingsFragment"
-        />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/most_played_timeframe">
