@@ -82,6 +82,7 @@
     <string name="english_code" translatable="false">en</string>
     <string name="favourites">Favourites</string>
     <string name="homepage_playlist_qty">Homepage playlist song quantity</string>
+    <string name="homepage_playlist_visible">Playlists visible on the homepage</string>
     <string name="language">Language</string>
     <string name="last_month">Last Month</string>
     <string name="last_week">Last Week</string>

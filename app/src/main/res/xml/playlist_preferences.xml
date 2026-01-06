@@ -1,16 +1,6 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory app:title="@string/language">
-
-        <ListPreference
-            app:defaultValue="@string/english_code"
-            app:entries="@array/language_entries"
-            app:entryValues="@array/language_values"
-            app:key="application_language"
-            app:useSimpleSummaryProvider="true" />
-    </PreferenceCategory>
-
     <PreferenceCategory app:title="@string/homepage_playlist_qty">
 
         <SeekBarPreference
@@ -32,61 +22,14 @@
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/playback_animations">
-
-        <SwitchPreferenceCompat
-            app:key="animation_active"
-            app:defaultValue="true"
-            app:title="@string/show_animations" />
-
-        <ListPreference
-            app:defaultValue="@string/red"
-            app:entries="@array/colour_entries"
-            app:entryValues="@array/colour_entries"
-            app:key="animation_colour"
-            app:title="@string/animation_colour"
-            app:useSimpleSummaryProvider="true" />
-
-        <ListPreference
-            app:defaultValue="@string/leaves"
-            app:entries="@array/drawable_entries"
-            app:entryValues="@array/drawable_entries"
-            app:key="animation_type"
-            app:title="@string/animation_images"
-            app:useSimpleSummaryProvider="true" />
-
-        <Preference
-            app:title="@string/manage_custom_images"
-            android:fragment="com.codersguidebook.supernova.ui.currentlyPlaying.CustomAnimationFragment" />
-
-        <ListPreference
-            app:defaultValue="@string/normal"
-            app:entries="@array/drawable_speeds"
-            app:entryValues="@array/drawable_speeds"
-            app:key="animation_speed"
-            app:title="@string/animation_speed"
-            app:useSimpleSummaryProvider="true" />
+    <PreferenceCategory app:title="@string/homepage_playlist_visible">
 
         <SeekBarPreference
-            app:key="animation_quantity"
-            app:defaultValue="6"
-            app:title="@string/number_animation_objects"
+            app:key="homepage_playlist_qty"
+            app:defaultValue="10"
+            app:title="@string/song_quantity"
+            app:min="3"
             app:showSeekBarValue="true"
-            app:min="1"
-            android:max="10" />
-
-        <SeekBarPreference
-            app:key="animation_spin"
-            app:defaultValue="20"
-            app:title="@string/spin_speed"
-            app:min="1"
-            android:max="180" />
-    </PreferenceCategory>
-
-    <PreferenceCategory app:title="@string/app_info">
-
-        <Preference
-            app:title="@string/about"
-            android:fragment="com.codersguidebook.supernova.ui.about.AboutFragment"/>
+            android:max="30" />
     </PreferenceCategory>
 </PreferenceScreen>
