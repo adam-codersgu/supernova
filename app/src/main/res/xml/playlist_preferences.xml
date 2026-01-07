@@ -24,12 +24,9 @@
 
     <PreferenceCategory app:title="@string/homepage_playlist_visible">
 
-        <SeekBarPreference
-            app:key="homepage_playlist_qty"
-            app:defaultValue="10"
-            app:title="@string/song_quantity"
-            app:min="3"
-            app:showSeekBarValue="true"
-            android:max="30" />
+        <CheckBoxPreference
+            app:key="homepage_favourites_visible"
+            android:defaultValue="true"
+            app:title="@string/favourites" />
     </PreferenceCategory>
 </PreferenceScreen>
