@@ -32,6 +32,13 @@ import kotlinx.coroutines.withContext
 
 class HomeFragment : BaseFragment() {
 
+    companion object {
+        const val FAVOURITES_VISIBLE = "homepage_favourites_visible"
+        const val MOST_PLAYED_VISIBLE = "homepage_most_played_visible"
+        const val RECENTLY_PLAYED_VISIBLE = "homepage_recently_played_visible"
+        const val SONG_OF_THE_DAY_VISIBLE = "homepage_song_of_the_day_visible"
+    }
+
     override var _binding: ViewBinding? = null
         get() = field as FragmentHomeBinding?
     override val binding: FragmentHomeBinding
@@ -68,48 +75,64 @@ class HomeFragment : BaseFragment() {
         mostPlayedAdapter.stateRestorationPolicy = PREVENT_WHEN_EMPTY
         recentlyPlayedAdapter.stateRestorationPolicy = PREVENT_WHEN_EMPTY
 
-        binding.songOfTheDayRecyclerView.layoutManager = WrapContentLinearLayoutManager(
-            mainActivity, LinearLayoutManager.HORIZONTAL, false)
-        binding.songOfTheDayRecyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
-        binding.songOfTheDayRecyclerView.adapter = songOfTheDayAdapter
+        if (sharedPreferences.getBoolean(SONG_OF_THE_DAY_VISIBLE, true)) {
+            binding.songOfTheDayRecyclerView.layoutManager = WrapContentLinearLayoutManager(
+                mainActivity, LinearLayoutManager.HORIZONTAL, false)
+            binding.songOfTheDayRecyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
+            binding.songOfTheDayRecyclerView.adapter = songOfTheDayAdapter
 
-        binding.favouritesRecyclerView.layoutManager = WrapContentLinearLayoutManager(
-            mainActivity, LinearLayoutManager.HORIZONTAL, false)
-        binding.favouritesRecyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
-        binding.favouritesRecyclerView.adapter = favouritesAdapter
+            binding.refreshSongOfTheDay.setOnClickListener {
+                musicLibraryViewModel.refreshSongOfTheDay(true)
+            }
 
-        binding.mostPlayedRecyclerView.layoutManager = WrapContentLinearLayoutManager(
-            mainActivity, LinearLayoutManager.HORIZONTAL, false)
-        binding.mostPlayedRecyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
-        binding.mostPlayedRecyclerView.adapter = mostPlayedAdapter
-
-        binding.recentlyPlayedRecyclerView.layoutManager = WrapContentLinearLayoutManager(
-            mainActivity, LinearLayoutManager.HORIZONTAL, false)
-        binding.recentlyPlayedRecyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
-        binding.recentlyPlayedRecyclerView.adapter = recentlyPlayedAdapter
-
-        binding.refreshSongOfTheDay.setOnClickListener {
-            musicLibraryViewModel.refreshSongOfTheDay(true)
+            binding.textViewSongOfTheDay.setOnClickListener {
+                val action = PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.song_day))
+                findNavController().navigate(action)
+            }
+        } else {
+            binding.homeSongOfTheDay.isGone = true
         }
 
-        binding.textViewSongOfTheDay.setOnClickListener {
-            val action = PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.song_day))
-            findNavController().navigate(action)
+        if (sharedPreferences.getBoolean(FAVOURITES_VISIBLE, true)) {
+            binding.favouritesRecyclerView.layoutManager = WrapContentLinearLayoutManager(
+                mainActivity, LinearLayoutManager.HORIZONTAL, false)
+            binding.favouritesRecyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
+            binding.favouritesRecyclerView.adapter = favouritesAdapter
+
+            binding.textViewFavourites.setOnClickListener {
+                val action = PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.favourites))
+                findNavController().navigate(action)
+            }
+        } else {
+            binding.homeFavourites.isGone = true
         }
 
-        binding.textViewMostPlayed.setOnClickListener {
-            val action = PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.most_played))
-            findNavController().navigate(action)
+        if (sharedPreferences.getBoolean(MOST_PLAYED_VISIBLE, true)) {
+            binding.mostPlayedRecyclerView.layoutManager = WrapContentLinearLayoutManager(
+                mainActivity, LinearLayoutManager.HORIZONTAL, false)
+            binding.mostPlayedRecyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
+            binding.mostPlayedRecyclerView.adapter = mostPlayedAdapter
+
+            binding.textViewMostPlayed.setOnClickListener {
+                val action = PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.most_played))
+                findNavController().navigate(action)
+            }
+        } else {
+            binding.homeMostPlayed.isGone = true
         }
 
-        binding.textViewFavourites.setOnClickListener {
-            val action = PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.favourites))
-            findNavController().navigate(action)
-        }
+        if (sharedPreferences.getBoolean(RECENTLY_PLAYED_VISIBLE, true)) {
+            binding.recentlyPlayedRecyclerView.layoutManager = WrapContentLinearLayoutManager(
+                mainActivity, LinearLayoutManager.HORIZONTAL, false)
+            binding.recentlyPlayedRecyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
+            binding.recentlyPlayedRecyclerView.adapter = recentlyPlayedAdapter
 
-        binding.textViewRecentlyPlayed.setOnClickListener {
-            val action = PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.recently_played))
-            findNavController().navigate(action)
+            binding.textViewRecentlyPlayed.setOnClickListener {
+                val action = PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.recently_played))
+                findNavController().navigate(action)
+            }
+        } else {
+            binding.homeRecentlyPlayed.isGone = true
         }
 
         musicLibraryViewModel.allPlaylists.observe(viewLifecycleOwner) { playlists ->
@@ -151,7 +174,7 @@ class HomeFragment : BaseFragment() {
         musicLibraryViewModel.allPlaylists.value?.let { extractPlaylists(it) }
     }
 
-    private suspend fun processMostPlayedPlaylist(playlist: Playlist)
+    private fun processMostPlayedPlaylist(playlist: Playlist)
             = lifecycleScope.launch(Dispatchers.Main) {
         val songs = getSongs(playlist)
 
@@ -168,7 +191,7 @@ class HomeFragment : BaseFragment() {
         }
     }
 
-    private suspend fun processPlaylist(playlist: Playlist, adapter: SongAdapter, layout: RelativeLayout)
+    private fun processPlaylist(playlist: Playlist, adapter: SongAdapter, layout: RelativeLayout)
         = lifecycleScope.launch(Dispatchers.Main) {
         val songs = getSongs(playlist)
 

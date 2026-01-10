@@ -25,8 +25,23 @@
     <PreferenceCategory app:title="@string/homepage_playlist_visible">
 
         <CheckBoxPreference
+            app:key="homepage_song_of_the_day_visible"
+            android:defaultValue="true"
+            app:title="@string/song_day" />
+
+        <CheckBoxPreference
             app:key="homepage_favourites_visible"
             android:defaultValue="true"
             app:title="@string/favourites" />
+
+        <CheckBoxPreference
+            app:key="homepage_most_played_visible"
+            android:defaultValue="true"
+            app:title="@string/most_played" />
+
+        <CheckBoxPreference
+            app:key="homepage_recently_played_visible"
+            android:defaultValue="true"
+            app:title="@string/recently_played" />
     </PreferenceCategory>
 </PreferenceScreen>
