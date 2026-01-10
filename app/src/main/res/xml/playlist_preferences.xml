@@ -1,0 +1,47 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory app:title="@string/homepage_playlist_qty">
+
+        <SeekBarPreference
+            app:key="homepage_playlist_qty"
+            app:defaultValue="10"
+            app:title="@string/song_quantity"
+            app:min="3"
+            app:showSeekBarValue="true"
+            android:max="30" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/most_played_timeframe">
+
+        <ListPreference
+            app:defaultValue="@string/all_time"
+            app:entries="@array/most_played_timeframes"
+            app:entryValues="@array/most_played_timeframes"
+            app:key="most_played_timeframe"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/homepage_playlist_visible">
+
+        <CheckBoxPreference
+            app:key="homepage_song_of_the_day_visible"
+            android:defaultValue="true"
+            app:title="@string/song_day" />
+
+        <CheckBoxPreference
+            app:key="homepage_favourites_visible"
+            android:defaultValue="true"
+            app:title="@string/favourites" />
+
+        <CheckBoxPreference
+            app:key="homepage_most_played_visible"
+            android:defaultValue="true"
+            app:title="@string/most_played" />
+
+        <CheckBoxPreference
+            app:key="homepage_recently_played_visible"
+            android:defaultValue="true"
+            app:title="@string/recently_played" />
+    </PreferenceCategory>
+</PreferenceScreen>

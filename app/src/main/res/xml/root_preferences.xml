@@ -11,25 +11,11 @@
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/homepage_playlist_qty">
+    <PreferenceCategory app:title="@string/homepage">
 
-        <SeekBarPreference
-            app:key="homepage_playlist_qty"
-            app:defaultValue="10"
-            app:title="@string/song_quantity"
-            app:min="3"
-            app:showSeekBarValue="true"
-            android:max="30" />
-    </PreferenceCategory>
-
-    <PreferenceCategory app:title="@string/most_played_timeframe">
-
-        <ListPreference
-            app:defaultValue="@string/all_time"
-            app:entries="@array/most_played_timeframes"
-            app:entryValues="@array/most_played_timeframes"
-            app:key="most_played_timeframe"
-            app:useSimpleSummaryProvider="true" />
+        <Preference
+            app:title="@string/playlist_settings"
+            app:fragment="com.codersguidebook.supernova.ui.settings.PlaylistSettingsFragment" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/playback_animations">

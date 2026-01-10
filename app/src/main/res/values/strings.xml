@@ -81,7 +81,9 @@
     <string name="english" translatable="false">English</string>
     <string name="english_code" translatable="false">en</string>
     <string name="favourites">Favourites</string>
+    <string name="homepage">Homepage</string>
     <string name="homepage_playlist_qty">Homepage playlist song quantity</string>
+    <string name="homepage_playlist_visible">Playlists visible on the homepage</string>
     <string name="language">Language</string>
     <string name="last_month">Last Month</string>
     <string name="last_week">Last Week</string>
@@ -101,6 +103,7 @@
     <string name="played_one_time">Played 1 time</string>
     <string name="playlist_information">Playlist information</string>
     <string name="playlist_name">Playlist name</string>
+    <string name="playlist_settings">Playlist settings</string>
     <string name="recently_played">Recently played</string>
     <string name="remember_progress">Remember playback progress?</string>
     <string name="search_hint">Search music</string>
