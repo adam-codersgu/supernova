@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.R
@@ -76,9 +77,7 @@ class HomeFragment : BaseFragment() {
         recentlyPlayedAdapter.stateRestorationPolicy = PREVENT_WHEN_EMPTY
 
         if (sharedPreferences.getBoolean(SONG_OF_THE_DAY_VISIBLE, true)) {
-            binding.songOfTheDayRecyclerView.layoutManager = WrapContentLinearLayoutManager(
-                mainActivity, LinearLayoutManager.HORIZONTAL, false)
-            binding.songOfTheDayRecyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
+            initRecyclerView(binding.songOfTheDayRecyclerView)
             binding.songOfTheDayRecyclerView.adapter = songOfTheDayAdapter
 
             binding.refreshSongOfTheDay.setOnClickListener {
@@ -91,12 +90,13 @@ class HomeFragment : BaseFragment() {
             }
         } else {
             binding.homeSongOfTheDay.isGone = true
+            binding.songOfTheDayRecyclerView.isGone = true
+            binding.refreshSongOfTheDay.isGone = true
+            binding.textViewSongOfTheDay.isGone = true
         }
 
         if (sharedPreferences.getBoolean(FAVOURITES_VISIBLE, true)) {
-            binding.favouritesRecyclerView.layoutManager = WrapContentLinearLayoutManager(
-                mainActivity, LinearLayoutManager.HORIZONTAL, false)
-            binding.favouritesRecyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
+            initRecyclerView(binding.favouritesRecyclerView)
             binding.favouritesRecyclerView.adapter = favouritesAdapter
 
             binding.textViewFavourites.setOnClickListener {
@@ -105,12 +105,12 @@ class HomeFragment : BaseFragment() {
             }
         } else {
             binding.homeFavourites.isGone = true
+            binding.favouritesRecyclerView.isGone = true
+            binding.textViewFavourites.isGone = true
         }
 
         if (sharedPreferences.getBoolean(MOST_PLAYED_VISIBLE, true)) {
-            binding.mostPlayedRecyclerView.layoutManager = WrapContentLinearLayoutManager(
-                mainActivity, LinearLayoutManager.HORIZONTAL, false)
-            binding.mostPlayedRecyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
+            initRecyclerView(binding.mostPlayedRecyclerView)
             binding.mostPlayedRecyclerView.adapter = mostPlayedAdapter
 
             binding.textViewMostPlayed.setOnClickListener {
@@ -119,12 +119,12 @@ class HomeFragment : BaseFragment() {
             }
         } else {
             binding.homeMostPlayed.isGone = true
+            binding.mostPlayedRecyclerView.isGone = true
+            binding.textViewMostPlayed.isGone = true
         }
 
         if (sharedPreferences.getBoolean(RECENTLY_PLAYED_VISIBLE, true)) {
-            binding.recentlyPlayedRecyclerView.layoutManager = WrapContentLinearLayoutManager(
-                mainActivity, LinearLayoutManager.HORIZONTAL, false)
-            binding.recentlyPlayedRecyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
+            initRecyclerView(binding.recentlyPlayedRecyclerView)
             binding.recentlyPlayedRecyclerView.adapter = recentlyPlayedAdapter
 
             binding.textViewRecentlyPlayed.setOnClickListener {
@@ -133,11 +133,19 @@ class HomeFragment : BaseFragment() {
             }
         } else {
             binding.homeRecentlyPlayed.isGone = true
+            binding.recentlyPlayedRecyclerView.isGone = true
+            binding.textViewRecentlyPlayed.isGone = true
         }
 
         musicLibraryViewModel.allPlaylists.observe(viewLifecycleOwner) { playlists ->
             extractPlaylists(playlists)
         }
+    }
+
+    private fun initRecyclerView(recyclerView: RecyclerView) {
+        recyclerView.layoutManager = WrapContentLinearLayoutManager(
+            mainActivity, LinearLayoutManager.HORIZONTAL, false)
+        recyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
     }
 
     private fun extractPlaylists(playlists: List<Playlist>) = lifecycleScope.launch(Dispatchers.Default) {
