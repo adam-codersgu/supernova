@@ -155,20 +155,28 @@ class HomeFragment : BaseFragment() {
         }
         isUpdating = true
 
-        playlists.find { it.name == getString(R.string.song_day) }?.let {
-            processPlaylist(it, songOfTheDayAdapter, binding.homeSongOfTheDay)
+        if (sharedPreferences.getBoolean(SONG_OF_THE_DAY_VISIBLE, true)) {
+            playlists.find { it.name == getString(R.string.song_day) }?.let {
+                processPlaylist(it, songOfTheDayAdapter, binding.homeSongOfTheDay)
+            }
         }
 
-        playlists.find { it.name == getString(R.string.favourites) }?.let {
-            processPlaylist(it, favouritesAdapter, binding.homeFavourites)
+        if (sharedPreferences.getBoolean(FAVOURITES_VISIBLE, true)) {
+            playlists.find { it.name == getString(R.string.favourites) }?.let {
+                processPlaylist(it, favouritesAdapter, binding.homeFavourites)
+            }
         }
 
-        playlists.find { it.name == getString(R.string.most_played) }?.let {
-            processMostPlayedPlaylist(it)
+        if (sharedPreferences.getBoolean(MOST_PLAYED_VISIBLE, true)) {
+            playlists.find { it.name == getString(R.string.most_played) }?.let {
+                processMostPlayedPlaylist(it)
+            }
         }
 
-        playlists.find { it.name == getString(R.string.recently_played) }?.let {
-            processPlaylist(it, recentlyPlayedAdapter, binding.homeRecentlyPlayed)
+        if (sharedPreferences.getBoolean(RECENTLY_PLAYED_VISIBLE, true)) {
+            playlists.find { it.name == getString(R.string.recently_played) }?.let {
+                processPlaylist(it, recentlyPlayedAdapter, binding.homeRecentlyPlayed)
+            }
         }
 
         isUpdating = false
