@@ -90,9 +90,6 @@ class HomeFragment : BaseFragment() {
             }
         } else {
             binding.homeSongOfTheDay.isGone = true
-            binding.songOfTheDayRecyclerView.isGone = true
-            binding.refreshSongOfTheDay.isGone = true
-            binding.textViewSongOfTheDay.isGone = true
         }
 
         if (sharedPreferences.getBoolean(FAVOURITES_VISIBLE, true)) {
@@ -103,10 +100,6 @@ class HomeFragment : BaseFragment() {
                 val action = PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.favourites))
                 findNavController().navigate(action)
             }
-        } else {
-            binding.homeFavourites.isGone = true
-            binding.favouritesRecyclerView.isGone = true
-            binding.textViewFavourites.isGone = true
         }
 
         if (sharedPreferences.getBoolean(MOST_PLAYED_VISIBLE, true)) {
@@ -117,10 +110,6 @@ class HomeFragment : BaseFragment() {
                 val action = PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.most_played))
                 findNavController().navigate(action)
             }
-        } else {
-            binding.homeMostPlayed.isGone = true
-            binding.mostPlayedRecyclerView.isGone = true
-            binding.textViewMostPlayed.isGone = true
         }
 
         if (sharedPreferences.getBoolean(RECENTLY_PLAYED_VISIBLE, true)) {
@@ -131,10 +120,6 @@ class HomeFragment : BaseFragment() {
                 val action = PlaylistsFragmentDirections.actionSelectPlaylist(getString(R.string.recently_played))
                 findNavController().navigate(action)
             }
-        } else {
-            binding.homeRecentlyPlayed.isGone = true
-            binding.recentlyPlayedRecyclerView.isGone = true
-            binding.textViewRecentlyPlayed.isGone = true
         }
 
         musicLibraryViewModel.allPlaylists.observe(viewLifecycleOwner) { playlists ->
