@@ -99,5 +99,15 @@
             android:background="?attr/selectableItemBackground"
             android:text="@string/remove_playlist"
             android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/deleteSong"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/removeSong"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackground"
+            android:text="@string/delete_song"
+            android:textSize="16sp" />
     </RelativeLayout>
 </androidx.cardview.widget.CardView>
