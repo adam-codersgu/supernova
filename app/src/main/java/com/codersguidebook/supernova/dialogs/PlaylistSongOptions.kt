@@ -97,6 +97,11 @@ class PlaylistSongOptions(private val song: Song,
             }
         }
 
+        binding.deleteSong.setOnClickListener {
+            mainActivity.deleteSongs(listOf(song))
+            dismiss()
+        }
+
         return super.onCreateDialog(savedInstanceState)
     }
 }
