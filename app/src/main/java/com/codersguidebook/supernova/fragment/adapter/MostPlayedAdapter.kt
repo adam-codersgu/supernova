@@ -12,6 +12,7 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.google.android.material.color.MaterialColors
+import kotlin.math.min
 
 class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activity) {
 
@@ -87,7 +88,7 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
         songIndicesToRefresh.sort()
 
         val rangeOfIndicesAffected = songIndicesToRefresh[songIndicesToRefresh.size - 1] + 1 - songIndicesToRefresh[0]
-        val numberOfItemsToChange = if (songIndicesToRefresh[0] < 3) 3
+        val numberOfItemsToChange = if (songIndicesToRefresh[0] < 3) min(3, rangeOfIndicesAffected)
         else rangeOfIndicesAffected
         notifyItemRangeChanged(songIndicesToRefresh[0], numberOfItemsToChange)
     }
