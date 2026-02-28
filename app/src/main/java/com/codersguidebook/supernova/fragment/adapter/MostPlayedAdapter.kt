@@ -12,7 +12,6 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.google.android.material.color.MaterialColors
-import kotlin.math.min
 
 class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activity) {
 
@@ -20,7 +19,7 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
 
     inner class ViewHolderMostPlayedSong(itemView: View) : ViewHolderSong(itemView) {
 
-        internal var mPlays = itemView.findViewById(R.id.plays) as TextView
+        internal var mPlays: TextView = itemView.findViewById(R.id.plays)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -87,10 +86,9 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
         }
         songIndicesToRefresh.sort()
 
-        val rangeOfIndicesAffected = songIndicesToRefresh[songIndicesToRefresh.size - 1] - songIndicesToRefresh[0]
-        val numberOfItemsToChange = if (songIndicesToRefresh[0] < 3 && rangeOfIndicesAffected < 3) {
-            min(3, songIndicesToRefresh.size - 1 - songIndicesToRefresh[0])
-        } else rangeOfIndicesAffected
+        val rangeOfIndicesAffected = songIndicesToRefresh[songIndicesToRefresh.size - 1] + 1 - songIndicesToRefresh[0]
+        val numberOfItemsToChange = if (songIndicesToRefresh[0] < 3) 3
+        else rangeOfIndicesAffected
         notifyItemRangeChanged(songIndicesToRefresh[0], numberOfItemsToChange)
     }
 
