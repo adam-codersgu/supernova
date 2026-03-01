@@ -1,5 +1,6 @@
 package com.codersguidebook.supernova.fragment.adapter
 
+import android.os.Build
 import android.view.View
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -15,10 +16,10 @@ abstract class SongAdapter(private val activity: MainActivity): Adapter() {
 
     open inner class ViewHolderSong(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
-        internal var mArtwork = itemView.findViewById(R.id.artwork) as ImageView?
-        internal var mTitle = itemView.findViewById(R.id.title) as TextView
-        internal var mSubtitle = itemView.findViewById(R.id.subtitle) as TextView
-        internal var mMenu = itemView.findViewById(R.id.menu) as ImageButton?
+        internal var mArtwork: ImageView? = itemView.findViewById(R.id.artwork)
+        internal var mTitle: TextView = itemView.findViewById(R.id.title)
+        internal var mSubtitle: TextView = itemView.findViewById(R.id.subtitle)
+        internal var mMenu: ImageButton? = itemView.findViewById(R.id.menu)
 
         init {
             itemView.rootView.isClickable = true
@@ -133,7 +134,13 @@ abstract class SongAdapter(private val activity: MainActivity): Adapter() {
 
         if (songs.size > newSongs.size) {
             val numberItemsToRemove = songs.size - newSongs.size
-            repeat(numberItemsToRemove) { songs.removeLast() }
+            repeat(numberItemsToRemove) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                    songs.removeLast()
+                } else {
+                    removeSong(songs.size - 1)
+                }
+            }
             notifyItemRangeRemoved(getRecyclerViewIndex(newSongs.size), numberItemsToRemove)
         }
     }
