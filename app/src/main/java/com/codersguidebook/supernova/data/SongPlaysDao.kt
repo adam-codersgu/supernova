@@ -28,8 +28,7 @@ interface SongPlaysDao {
     suspend fun getSongPlaysBySongIdsAndDay(songIds: List<Long>, day: Long):
             Map<@MapColumn(columnName = "songId") Long, @MapColumn(columnName = "sum(qtyOfPlays)") Int>
 
-    @Query("SELECT SUM(qtyOfPlays) FROM SongPlays WHERE songId IN (:songIds) " +
-            "GROUP BY songId")
+    @Query("SELECT SUM(qtyOfPlays) FROM SongPlays WHERE songId IN (:songIds)")
     suspend fun getSongPlaysWhereSongIdIn(songIds: List<Long>): Int
 
     @Query("DELETE FROM SongPlays WHERE songId = :songId")
