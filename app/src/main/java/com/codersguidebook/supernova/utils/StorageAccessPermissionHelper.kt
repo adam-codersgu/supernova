@@ -1,6 +1,5 @@
 package com.codersguidebook.supernova.utils
 
-import android.Manifest.permission.POST_NOTIFICATIONS
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.Manifest.permission.READ_MEDIA_AUDIO
 import android.Manifest.permission.READ_MEDIA_IMAGES
@@ -26,8 +25,7 @@ class StorageAccessPermissionHelper(private val activity: Activity) {
         } else {
             // SDK 33 and up
             checkSelfPermission(activity, READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED &&
-                    checkSelfPermission(activity, READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED &&
-                    checkSelfPermission(activity, POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+                    checkSelfPermission(activity, READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED
         }
     }
 
@@ -41,8 +39,7 @@ class StorageAccessPermissionHelper(private val activity: Activity) {
                 EXTERNAL_STORAGE_PERMISSION)
         } else {
             // SDK 33 and up
-            ActivityCompat.requestPermissions(activity, arrayOf(READ_MEDIA_AUDIO, READ_MEDIA_IMAGES,
-                POST_NOTIFICATIONS),
+            ActivityCompat.requestPermissions(activity, arrayOf(READ_MEDIA_AUDIO, READ_MEDIA_IMAGES),
                 EXTERNAL_STORAGE_PERMISSION)
         }
     }
@@ -55,8 +52,7 @@ class StorageAccessPermissionHelper(private val activity: Activity) {
         } else {
             // SDK 33 and up
             ActivityCompat.shouldShowRequestPermissionRationale(activity, READ_MEDIA_AUDIO) &&
-                    ActivityCompat.shouldShowRequestPermissionRationale(activity, READ_MEDIA_IMAGES) &&
-                    ActivityCompat.shouldShowRequestPermissionRationale(activity, POST_NOTIFICATIONS)
+                    ActivityCompat.shouldShowRequestPermissionRationale(activity, READ_MEDIA_IMAGES)
         }
     }
 
