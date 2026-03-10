@@ -1,7 +1,5 @@
 package com.codersguidebook.supernova
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.ContentUris
 import android.content.Context
@@ -16,6 +14,7 @@ import android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT
 import android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK
 import android.media.AudioManager.OnAudioFocusChangeListener
 import android.net.Uri
+import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -23,11 +22,14 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.CommandButton
+import androidx.media3.session.MediaNotification
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.MediaStyleNotificationHelper
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ALBUM_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
+import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import java.io.File
@@ -41,7 +43,6 @@ import java.io.File
 class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
 
     private lateinit var audioFocusRequest: AudioFocusRequest
-    private lateinit var notificationManager: NotificationManager
     private lateinit var player: Player
 
     private lateinit var artworkDirectory: File
@@ -65,8 +66,6 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
     override fun onCreate() {
         super.onCreate()
 
-        createChannelForNotification()
-
         artworkDirectory = ContextWrapper(applicationContext).getDir("albumArt", Context.MODE_PRIVATE)
 
         player = ExoPlayer.Builder(this).build().also {
@@ -80,6 +79,19 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
             ?.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
         val activityIntent = PendingIntent.getActivity(applicationContext, 0, intent, PendingIntent.FLAG_IMMUTABLE)
         mediaSession = MediaSession.Builder(this, player).setCallback(this).setSessionActivity(activityIntent).build()
+
+        /* setMediaNotificationProvider(object : MediaNotification.Provider{
+            override fun createNotification(
+                mediaSession: MediaSession,
+                customLayout: ImmutableList<CommandButton>,
+                actionFactory: MediaNotification.ActionFactory,
+                onNotificationChangedCallback: MediaNotification.Provider.Callback
+            ): MediaNotification {
+                return updateNotification(mediaSession)
+            }
+
+            override fun handleCustomCommand(session: MediaSession, action: String, extras: Bundle): Boolean { return false }
+        }) */
     }
 
     private fun requestAudioFocus() {
@@ -143,7 +155,17 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
         updateNotification(session)
     }
 
-    private fun updateNotification(session: MediaSession) {
+    private fun updateNotification(session: MediaSession): MediaNotification {
+
+        val notificationCompat = NotificationCompat.Builder(applicationContext, NOTIFICATION_CHANNEL_ID)
+            .setContentTitle("your Content title")
+            .setContentText("your content text")
+            .setStyle(MediaStyleNotificationHelper.MediaStyle(session))
+            .build()
+        return MediaNotification(1, notificationCompat)
+    }
+
+    /* private fun updateNotification(session: MediaSession) {
         val smallIcon = if (session.player.isPlaying) R.drawable.play
         else R.drawable.pause
 
@@ -155,19 +177,5 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
             .build()
         notificationManager.notify(1, notificationCompat)
         Log.i("DEBUG", "Notification manager notified")
-    }
-
-    /** Create a channel for displaying application notifications */
-    private fun createChannelForNotification() {
-        val notificationChannel = NotificationChannel(
-            NOTIFICATION_CHANNEL_ID, "Notifications",
-            NotificationManager.IMPORTANCE_DEFAULT
-        ).apply {
-            description = "All app notifications"
-            setSound(null, null)
-            setShowBadge(false)
-        }
-        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.createNotificationChannel(notificationChannel)
-    }
+    } */
 }
