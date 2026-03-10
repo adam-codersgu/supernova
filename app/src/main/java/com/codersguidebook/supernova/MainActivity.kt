@@ -139,8 +139,6 @@ class MainActivity : AppCompatActivity() {
         musicDatabase = MusicDatabase.getDatabase(this, lifecycleScope)
         musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
 
-        createChannelForMediaPlayerNotification()
-
         val taskDescription = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             // Pre-SDK 33
             @Suppress("DEPRECATION")
@@ -1039,20 +1037,6 @@ class MainActivity : AppCompatActivity() {
      * @param dialog The dialog fragment to load.
      */
     fun openDialog(dialog: DialogFragment) = dialog.show(supportFragmentManager, "")
-
-    /** Create a channel for displaying application notifications */
-    private fun createChannelForMediaPlayerNotification() {
-        val channel = NotificationChannel(
-            NOTIFICATION_CHANNEL_ID, "Notifications",
-            NotificationManager.IMPORTANCE_DEFAULT
-        ).apply {
-            description = "All app notifications"
-            setSound(null, null)
-            setShowBadge(false)
-        }
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.createNotificationChannel(channel)
-    }
 
     /** Hides the soft input keyboard, which can sometimes obstruct views. */
     fun hideKeyboard() {

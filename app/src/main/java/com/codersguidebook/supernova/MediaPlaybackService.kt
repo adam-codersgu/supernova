@@ -1,5 +1,7 @@
 package com.codersguidebook.supernova
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.ContentUris
 import android.content.Context
@@ -15,13 +17,17 @@ import android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK
 import android.media.AudioManager.OnAudioFocusChangeListener
 import android.net.Uri
 import android.provider.MediaStore
+import android.util.Log
+import androidx.core.app.NotificationCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import androidx.media3.session.MediaStyleNotificationHelper
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ALBUM_ID
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import java.io.File
@@ -35,6 +41,7 @@ import java.io.File
 class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
 
     private lateinit var audioFocusRequest: AudioFocusRequest
+    private lateinit var notificationManager: NotificationManager
     private lateinit var player: Player
 
     private lateinit var artworkDirectory: File
@@ -57,6 +64,8 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
 
     override fun onCreate() {
         super.onCreate()
+
+        createChannelForNotification()
 
         artworkDirectory = ContextWrapper(applicationContext).getDir("albumArt", Context.MODE_PRIVATE)
 
@@ -127,5 +136,38 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
             player.pause()
         }
         stopSelf()
+    }
+
+    override fun onUpdateNotification(session: MediaSession, startInForegroundRequired: Boolean) {
+        Log.i("DEBUG", "OnUpdateNotification called")
+        updateNotification(session)
+    }
+
+    private fun updateNotification(session: MediaSession) {
+        val smallIcon = if (session.player.isPlaying) R.drawable.play
+        else R.drawable.pause
+
+        val notificationCompat = NotificationCompat.Builder(applicationContext, NOTIFICATION_CHANNEL_ID)
+            .setSmallIcon(smallIcon)
+            .setContentTitle(session.player.mediaMetadata.title)
+            .setContentText(session.player.mediaMetadata.artist)
+            .setStyle(MediaStyleNotificationHelper.MediaStyle(session))
+            .build()
+        notificationManager.notify(1, notificationCompat)
+        Log.i("DEBUG", "Notification manager notified")
+    }
+
+    /** Create a channel for displaying application notifications */
+    private fun createChannelForNotification() {
+        val notificationChannel = NotificationChannel(
+            NOTIFICATION_CHANNEL_ID, "Notifications",
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply {
+            description = "All app notifications"
+            setSound(null, null)
+            setShowBadge(false)
+        }
+        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(notificationChannel)
     }
 }
