@@ -16,7 +16,6 @@ import android.media.AudioManager.OnAudioFocusChangeListener
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -80,7 +79,7 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
         val activityIntent = PendingIntent.getActivity(applicationContext, 0, intent, PendingIntent.FLAG_IMMUTABLE)
         mediaSession = MediaSession.Builder(this, player).setCallback(this).setSessionActivity(activityIntent).build()
 
-        /* setMediaNotificationProvider(object : MediaNotification.Provider{
+        setMediaNotificationProvider(object : MediaNotification.Provider{
             override fun createNotification(
                 mediaSession: MediaSession,
                 customLayout: ImmutableList<CommandButton>,
@@ -91,7 +90,7 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
             }
 
             override fun handleCustomCommand(session: MediaSession, action: String, extras: Bundle): Boolean { return false }
-        }) */
+        })
     }
 
     private fun requestAudioFocus() {
@@ -150,32 +149,14 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
         stopSelf()
     }
 
-    override fun onUpdateNotification(session: MediaSession, startInForegroundRequired: Boolean) {
-        Log.i("DEBUG", "OnUpdateNotification called")
-        updateNotification(session)
-    }
-
     private fun updateNotification(session: MediaSession): MediaNotification {
-
-        val notificationCompat = NotificationCompat.Builder(applicationContext, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle("your Content title")
-            .setContentText("your content text")
-            .setStyle(MediaStyleNotificationHelper.MediaStyle(session))
-            .build()
-        return MediaNotification(1, notificationCompat)
-    }
-
-    /* private fun updateNotification(session: MediaSession) {
         val smallIcon = if (session.player.isPlaying) R.drawable.play
         else R.drawable.pause
 
         val notificationCompat = NotificationCompat.Builder(applicationContext, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(smallIcon)
-            .setContentTitle(session.player.mediaMetadata.title)
-            .setContentText(session.player.mediaMetadata.artist)
             .setStyle(MediaStyleNotificationHelper.MediaStyle(session))
             .build()
-        notificationManager.notify(1, notificationCompat)
-        Log.i("DEBUG", "Notification manager notified")
-    } */
+        return MediaNotification(1, notificationCompat)
+    }
 }
