@@ -15,19 +15,14 @@ import android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK
 import android.media.AudioManager.OnAudioFocusChangeListener
 import android.net.Uri
 import android.provider.MediaStore
-import androidx.core.app.NotificationCompat
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.session.DefaultMediaNotificationProvider
-import androidx.media3.session.MediaNotification
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import androidx.media3.session.MediaStyleNotificationHelper
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ALBUM_ID
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import java.io.File
@@ -90,22 +85,6 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
             ?.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
         val activityIntent = PendingIntent.getActivity(applicationContext, 0, intent, PendingIntent.FLAG_IMMUTABLE)
         mediaSession = MediaSession.Builder(this, player).setCallback(this).setSessionActivity(activityIntent).build()
-
-        // TODO USE BUILDER, CREATE NOTIFICATION AND SETTER METHODS FOR FURTHER CUSTOMISATION???
-        setMediaNotificationProvider(object : DefaultMediaNotificationProvider(this) {
-            /* override fun createNotification(
-                mediaSession: MediaSession,
-                customLayout: ImmutableList<CommandButton>,
-                actionFactory: MediaNotification.ActionFactory,
-                onNotificationChangedCallback: MediaNotification.Provider.Callback
-            ): MediaNotification {
-                return updateNotification(mediaSession)
-            }
-
-            override fun handleCustomCommand(session: MediaSession, action: String, extras: Bundle): Boolean { return false }
-
-             */
-        })
     }
 
     private fun requestAudioFocus() {
@@ -162,61 +141,5 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
             player.pause()
         }
         stopSelf()
-    }
-
-    private fun updateNotification(session: MediaSession): MediaNotification {
-        val isPlaying = session.player.isPlaying
-        val smallIcon = if (isPlaying) R.drawable.play
-        else R.drawable.pause
-
-        val playOrPause = if (isPlaying) R.drawable.ic_pause
-        else R.drawable.ic_play
-        val playPauseIntent = if (isPlaying) {
-            Intent(applicationContext, MediaPlaybackService::class.java).setAction("ACTION_PAUSE")
-        } else Intent(applicationContext, MediaPlaybackService::class.java).setAction("ACTION_PLAY")
-        val nextIntent = Intent(applicationContext, MediaPlaybackService::class.java).setAction("ACTION_NEXT")
-        val prevIntent = Intent(applicationContext, MediaPlaybackService::class.java).setAction("ACTION_PREVIOUS")
-
-        val intent = packageManager
-            .getLaunchIntentForPackage(packageName)
-            ?.setPackage(null)
-            ?.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
-        val activityIntent = PendingIntent.getActivity(applicationContext, 0, intent, PendingIntent.FLAG_IMMUTABLE)
-
-        val notificationCompat = NotificationCompat.Builder(applicationContext, NOTIFICATION_CHANNEL_ID)
-            .setSmallIcon(smallIcon)
-            .addAction(
-                NotificationCompat.Action(R.drawable.ic_next, getString(R.string.play_next),
-                    PendingIntent.getService(applicationContext, 0, nextIntent, PendingIntent.FLAG_IMMUTABLE)
-                )
-            )
-            .addAction(
-                NotificationCompat.Action(R.drawable.ic_back, getString(R.string.play_prev),
-                    PendingIntent.getService(applicationContext, 0, prevIntent, PendingIntent.FLAG_IMMUTABLE)
-                )
-            )
-            .addAction(
-                NotificationCompat.Action(playOrPause, getString(R.string.play_pause),
-                    PendingIntent.getService(applicationContext, 0, playPauseIntent, PendingIntent.FLAG_IMMUTABLE)
-                )
-            )
-            .addAction(
-                NotificationCompat.Action(R.drawable.ic_next, getString(R.string.play_next),
-                    PendingIntent.getService(applicationContext, 0, nextIntent, PendingIntent.FLAG_IMMUTABLE)
-                )
-            )
-            .setContentIntent(activityIntent)
-            .setStyle(MediaStyleNotificationHelper.MediaStyle(session).setShowActionsInCompactView(0, 1, 2))
-
-        // Add the metadata for the currently playing track
-        /* setContentTitle(mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE))
-        setContentText(mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST))
-        setLargeIcon(mediaMetadata.getBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART)) */
-
-        // Make the transport controls visible on the lockscreen
-        /* setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-        priority = NotificationCompat.PRIORITY_DEFAULT */
-            .build()
-        return MediaNotification(1, notificationCompat)
     }
 }
