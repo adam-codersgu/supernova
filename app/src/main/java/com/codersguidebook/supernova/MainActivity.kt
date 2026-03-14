@@ -27,6 +27,7 @@ import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.view.*
 import androidx.fragment.app.DialogFragment
@@ -61,6 +62,8 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTI
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NO_ACTION
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ORDER_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMEMBER_PROGRESS
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SKIP_TO_NEXT
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SKIP_TO_PREV
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_DELETED
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_UPDATED
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.APPLICATION_LANGUAGE
@@ -122,6 +125,15 @@ class MainActivity : AppCompatActivity() {
                 }
             } finally {
                 handler.postDelayed(this, 500L)
+            }
+        }
+    }
+
+    private val skipTrackReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                SKIP_TO_NEXT -> skipForward()
+                SKIP_TO_PREV -> skipBack()
             }
         }
     }
@@ -231,6 +243,16 @@ class MainActivity : AppCompatActivity() {
                 initController()
             }, MoreExecutors.directExecutor())
         }
+        val filter = IntentFilter().apply {
+            addAction(SKIP_TO_NEXT)
+            addAction(SKIP_TO_PREV)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(skipTrackReceiver, filter, RECEIVER_NOT_EXPORTED)
+        } else {
+            ContextCompat.registerReceiver(this, skipTrackReceiver,
+                filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        }
     }
 
     override fun onPause() {
@@ -251,6 +273,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
+        unregisterReceiver(skipTrackReceiver)
 
         sharedPreferences.edit().apply {
             putLong(PLAYBACK_POSITION, controller.currentPosition)

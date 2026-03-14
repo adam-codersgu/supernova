@@ -23,6 +23,8 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ALBUM_ID
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SKIP_TO_NEXT
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SKIP_TO_PREV
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import java.io.File
@@ -77,6 +79,16 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
                 if (command == Player.COMMAND_SEEK_TO_NEXT) return true
                 return super.isCommandAvailable(command)
             }
+
+            override fun seekToNext() {
+                super.seekToNext()
+                sendBroadcastIntent(SKIP_TO_NEXT)
+            }
+
+            override fun seekToPrevious() {
+                super.seekToPrevious()
+                sendBroadcastIntent(SKIP_TO_PREV)
+            }
         }
 
         val intent = packageManager
@@ -85,6 +97,13 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
             ?.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
         val activityIntent = PendingIntent.getActivity(applicationContext, 0, intent, PendingIntent.FLAG_IMMUTABLE)
         mediaSession = MediaSession.Builder(this, player).setCallback(this).setSessionActivity(activityIntent).build()
+    }
+
+    private fun sendBroadcastIntent(intentKey: String) {
+        val intent = Intent(intentKey).apply {
+            setPackage(packageName)
+        }
+        sendBroadcast(intent)
     }
 
     private fun requestAudioFocus() {
