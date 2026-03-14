@@ -642,7 +642,9 @@ class MainActivity : AppCompatActivity() {
     fun skipBack() = controller.seekToPreviousMediaItem()
 
     /** Skip forward to the next song in the play queue. */
-    fun skipForward() = controller.seekToNextMediaItem()
+    fun skipForward() {
+
+    }
 
     /** Rewind the playback of the current song. */
     fun fastRewind() = controller.seekBack()
@@ -732,17 +734,13 @@ class MainActivity : AppCompatActivity() {
             putBoolean(SHUFFLE_MODE, shuffle)
         }
 
-        controller.setMediaItem(playQueue[0])
+        controller.setMediaItem(playQueue[startIndex])
         if (!controller.playWhenReady) controller.prepare()
-        if (playQueue.size > 1) {
-            controller.addMediaItems(playQueue.subList(1, playQueue.size))
-        }
 
-        if (startIndex != 0 && !shuffle) {
-            playQueueViewModel.pendingSkipToInstruction.postValue(startIndex)
-        }
+        // TODO - REMOVE? AND JUST PLAY IMMEDIATELY?
         playQueueViewModel.pendingPlayInstruction.postValue(true)
         if (!shuffle) {
+            // TODO - REMOVE? IF SAFE? ALWAYS JUST ONE METADATA
             playQueueViewModel.pendingExpectedMetadata.postValue(
                 playQueue[startIndex].mediaMetadata.title.toString())
         }
