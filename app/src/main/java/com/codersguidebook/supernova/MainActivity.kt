@@ -317,11 +317,6 @@ class MainActivity : AppCompatActivity() {
                     }
                     Log.i("DEBUG", "Processing a timeline update.")
 
-                    val pendingSkipToIndex = playQueueViewModel.pendingSkipToInstruction.value
-                    if (pendingSkipToIndex != null) {
-                        skipToQueueIndex(pendingSkipToIndex)
-                    }
-
                     if (playQueueViewModel.pendingPlayInstruction.value == true) {
                         play()
                         playQueueViewModel.pendingPlayInstruction.postValue(null)
@@ -616,18 +611,10 @@ class MainActivity : AppCompatActivity() {
         val playbackPosition = controller.currentPosition
         val isPlaying = controller.isPlaying
 
-        controller.setMediaItem(playQueue[0])
+        controller.setMediaItem(playQueue[newIndexOfCurrentlyPlaying])
         if (!controller.playWhenReady) controller.prepare()
-        if (playQueue.size > 1) {
-            controller.addMediaItems(playQueue.subList(1, playQueue.size))
-        }
 
         playQueueViewModel.pendingSeekToInstruction.postValue(playbackPosition)
-        if (playQueue.size > 1) {
-            playQueueViewModel.pendingSkipToInstruction.postValue(newIndexOfCurrentlyPlaying)
-            playQueueViewModel.pendingExpectedMetadata.postValue(
-                playQueue[newIndexOfCurrentlyPlaying].mediaMetadata.title.toString())
-        }
         if (isPlaying) {
             playQueueViewModel.pendingPlayInstruction.postValue(true)
         }
@@ -854,7 +841,6 @@ class MainActivity : AppCompatActivity() {
             Log.i("DEBUG", "Pending seek to $position processed.")
             playQueueViewModel.pendingSeekToInstruction.postValue(null)
         }
-        playQueueViewModel.pendingSkipToInstruction.postValue(null)
     }
 
     /**
@@ -1121,18 +1107,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         playQueueViewModel.playQueue.postValue(playQueue)
-        controller.setMediaItem(playQueue[0])
-        if (!controller.playWhenReady) controller.prepare()
-        if (playQueue.size > 1) {
-            controller.addMediaItems(playQueue.subList(1, playQueue.size))
-        }
 
         val currentQueueItemIndex = min(sharedPreferences.getInt(CURRENT_QUEUE_ITEM_INDEX, -1),
             playQueue.size - 1)
         if (currentQueueItemIndex != -1) {
-            playQueueViewModel.pendingSkipToInstruction.postValue(currentQueueItemIndex)
-            playQueueViewModel.pendingExpectedMetadata.postValue(
-                playQueue[currentQueueItemIndex].mediaMetadata.title.toString())
+            controller.setMediaItem(playQueue[currentQueueItemIndex])
+            if (!controller.playWhenReady) controller.prepare()
         }
         val playbackPosition = sharedPreferences.getLong(PLAYBACK_POSITION, 0L)
         if (playbackPosition != 0L) {
