@@ -82,6 +82,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
 import java.util.stream.IntStream
+import kotlin.math.min
 import kotlin.streams.toList
 
 class MainActivity : AppCompatActivity() {
@@ -1105,7 +1106,8 @@ class MainActivity : AppCompatActivity() {
             controller.addMediaItems(playQueue.subList(1, playQueue.size))
         }
 
-        val currentQueueItemIndex = sharedPreferences.getInt(CURRENT_QUEUE_ITEM_INDEX, -1)
+        val currentQueueItemIndex = min(sharedPreferences.getInt(CURRENT_QUEUE_ITEM_INDEX, -1),
+            playQueue.size - 1)
         if (currentQueueItemIndex != -1) {
             playQueueViewModel.pendingSkipToInstruction.postValue(currentQueueItemIndex)
             playQueueViewModel.pendingExpectedMetadata.postValue(
