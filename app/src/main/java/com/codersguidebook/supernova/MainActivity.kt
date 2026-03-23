@@ -653,6 +653,28 @@ class MainActivity : AppCompatActivity() {
 
     /** Skip forward to the next song in the play queue. */
     fun skipForward() {
+        // TODO - CAN WE DEFINE ANY SHARED CODE SOMEWHERE
+        if ((playQueueViewModel.playQueue.value?.size ?: return) <= 1) {
+            return
+        }
+
+        // TODO - DO WE NEED THIS PLAYBACK LOGIC?
+        val isPlaying = controller.isPlaying
+        if (isPlaying) controller.stop()
+
+        val newIndex = if (playQueueViewModel.currentQueueItemIndex.value
+            == (playQueueViewModel.playQueue.value?.size ?: return) - 1) {
+            if (controller.repeatMode == REPEAT_MODE_ALL) {
+                0
+            } else return
+        } else {
+            (playQueueViewModel.currentQueueItemIndex.value ?: return) + 1
+        }
+        controller.setMediaItem(playQueueViewModel.playQueue.value?.get(newIndex) ?: return)
+        controller.prepare()
+        if (isPlaying) {
+            controller.play()
+        }
 
     }
 
@@ -701,6 +723,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Save the index of the currently playing queue item to the shared preferences file. */
+    // FIXME - THIS INDEX PARAMETER WILL NO LONGER BE CORRECT
     private fun saveAndPostPlayQueueIndex(index: Int) = lifecycleScope.launch(Dispatchers.IO) {
         if (index != playQueueViewModel.currentQueueItemIndex.value) {
             playQueueViewModel.currentQueueItemIndex.postValue(index)
