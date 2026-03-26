@@ -649,12 +649,32 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Skip back to the previous track in the play queue (or restart the current song if less that five seconds in). */
-    fun skipBack() = controller.seekToPreviousMediaItem()
+    fun skipBack() {
+        if (controller.currentPosition >= 5000L) {
+            controller.seekTo(0)
+            return
+        }
+
+        if (!playQueueViewModel.playQueueContainsMoreThanOneSong()) {
+            return
+        }
+
+        // TODO - DO WE NEED THIS PLAYBACK LOGIC?
+        val isPlaying = controller.isPlaying
+        if (isPlaying) controller.stop()
+
+        val newIndex = if (playQueueViewModel.currentQueueItemIndex.value
+            == 0) {
+            return
+        } else {
+            (playQueueViewModel.currentQueueItemIndex.value ?: return) - 1
+        }
+        setItemAtIndexPrepareAndPlay(newIndex, isPlaying)
+    }
 
     /** Skip forward to the next song in the play queue. */
     fun skipForward() {
-        // TODO - CAN WE DEFINE ANY SHARED CODE SOMEWHERE
-        if ((playQueueViewModel.playQueue.value?.size ?: return) <= 1) {
+        if (!playQueueViewModel.playQueueContainsMoreThanOneSong()) {
             return
         }
 
@@ -670,12 +690,15 @@ class MainActivity : AppCompatActivity() {
         } else {
             (playQueueViewModel.currentQueueItemIndex.value ?: return) + 1
         }
-        controller.setMediaItem(playQueueViewModel.playQueue.value?.get(newIndex) ?: return)
+        setItemAtIndexPrepareAndPlay(newIndex, isPlaying)
+    }
+
+    private fun setItemAtIndexPrepareAndPlay(index: Int, play: Boolean = true) {
+        controller.setMediaItem(playQueueViewModel.playQueue.value?.get(index) ?: return)
         controller.prepare()
-        if (isPlaying) {
+        if (play) {
             controller.play()
         }
-
     }
 
     /** Rewind the playback of the current song. */

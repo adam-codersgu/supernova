@@ -23,4 +23,8 @@ class PlayQueueViewModel : ViewModel() {
             playQueue.value!![currentQueueItemIndex.value!!].mediaId.toLong()
         }
     }
+
+    fun playQueueContainsMoreThanOneSong(): Boolean {
+        return (playQueue.value?.size ?: return false) > 1
+    }
 }
