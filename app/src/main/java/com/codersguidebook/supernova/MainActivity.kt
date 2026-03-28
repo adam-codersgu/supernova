@@ -743,16 +743,13 @@ class MainActivity : AppCompatActivity() {
 
     /** Save the index of the currently playing queue item to the shared preferences file. */
     // FIXME - THIS INDEX PARAMETER WILL NO LONGER BE CORRECT
+    //  INSTEAD NEED TO SAVE QUEUE ITEM INDEX ON SKIP TO NEXT TRACK OR PREV TRACK
     private fun saveAndPostPlayQueueIndex(index: Int) = lifecycleScope.launch(Dispatchers.IO) {
         if (index != playQueueViewModel.currentQueueItemIndex.value) {
             playQueueViewModel.currentQueueItemIndex.postValue(index)
             sharedPreferences.edit().apply {
                 putInt(CURRENT_QUEUE_ITEM_INDEX, index)
                 apply()
-            }
-            withContext(Dispatchers.Main) {
-                Log.i("DEBUG",
-                    "The current controller index is ${controller.currentMediaItemIndex}")
             }
         }
     }
