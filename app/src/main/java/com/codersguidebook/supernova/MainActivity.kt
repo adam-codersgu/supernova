@@ -576,13 +576,9 @@ class MainActivity : AppCompatActivity() {
         val newPlayQueue: MutableList<MediaItem>
         if (shuffle) {
             Log.i("DEBUG", "Shuffling the play queue")
-            controller.removeMediaItems(currentQueueItemIndex + 1, playQueue.size)
-            controller.removeMediaItems(0, currentQueueItemIndex)
 
             playQueue.removeAt(currentQueueItemIndex)
             newPlayQueue = playQueue.shuffled().toMutableList()
-
-            controller.addMediaItems(1, newPlayQueue)
             newPlayQueue.add(0, currentQueueItem)
         } else {
             Log.i("DEBUG", "Unshuffling the play queue")
@@ -825,14 +821,8 @@ class MainActivity : AppCompatActivity() {
         } else songs.map { s -> s.getMediaItem() }
 
         if (addSongsAfterCurrentQueueItem) {
-            withContext(Dispatchers.Main) {
-                controller.addMediaItems(controller.currentMediaItemIndex + 1, mediaItems)
-                playQueue.addAll(controller.currentMediaItemIndex + 1, mediaItems)
-            }
+            playQueue.addAll(controller.currentMediaItemIndex + 1, mediaItems)
         } else {
-            withContext(Dispatchers.Main) {
-                controller.addMediaItems(mediaItems)
-            }
             playQueue.addAll(mediaItems)
         }
         saveAndPostPlayQueue(playQueue)
@@ -856,7 +846,6 @@ class MainActivity : AppCompatActivity() {
         val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return@launch
         playQueue.removeAt(index)
         saveAndPostPlayQueue(playQueue)
-        controller.removeMediaItem(index)
     }
 
     /**
