@@ -348,14 +348,22 @@ class MainActivity : AppCompatActivity() {
                     } else playQueueViewModel.pendingExpectedMetadata.postValue(null)
                 }
 
-                processPendingSeekToRequest()
+                lifecycleScope.launch(Dispatchers.IO) {
+                    if (metadata.extras?.getBoolean(REMEMBER_PROGRESS) == true) {
+                        controller.currentMediaItem?.mediaId?.let { id ->
+                            getSongById(id.toLong())?.let { song ->
+                                seekTo(song.playbackProgress)
+                            }
+                        }
+                    }
+                }
 
                 if (metadata.extras == null || metadata.extras?.getBoolean(REMEMBER_PROGRESS) == true) {
                     lifecycleScope.launch(Dispatchers.IO) {
                         withContext(Dispatchers.IO) {
                             getSongById(playQueueViewModel.getCurrentSongMediaId() ?: return@withContext null)
                         }?.let { song ->
-                            if (song.rememberProgress) seekTo(song.playbackProgress.toInt())
+                            if (song.rememberProgress) seekTo(song.playbackProgress)
                             playQueueViewModel.currentlyPlayingSongMetadata.postValue(song.getMetadata())
                         }
                     }
@@ -394,15 +402,6 @@ class MainActivity : AppCompatActivity() {
         })
 
         restoreMediaSession()
-    }
-
-    private fun processPendingSeekToRequest() {
-        val pendingSeekToPosition = playQueueViewModel.pendingSeekToInstruction.value
-        if (pendingSeekToPosition != null) {
-            Log.i("DEBUG", "Processing the pending seek to request: $pendingSeekToPosition")
-            seekTo(pendingSeekToPosition.toInt())
-            playQueueViewModel.pendingSeekToInstruction.postValue(null)
-        }
     }
 
     private fun updatePlaybackDurationAndPosition() {
@@ -630,7 +629,7 @@ class MainActivity : AppCompatActivity() {
     /** Skip back to the previous track in the play queue (or restart the current song if less that five seconds in). */
     fun skipBack() {
         if (controller.currentPosition >= 5000L) {
-            controller.seekTo(0)
+            seekTo(0)
             return
         }
 
@@ -831,10 +830,10 @@ class MainActivity : AppCompatActivity() {
     /**
      * Set the playback position for the currently playing song to a specific location.
      *
-     * @param position An Integer representing the desired playback position.
+     * @param position The desired playback position.
      */
-    fun seekTo(position: Int) {
-        controller.seekTo(position.toLong())
+    fun seekTo(position: Long) {
+        controller.seekTo(position)
         updatePlaybackDurationAndPosition()
     }
 
@@ -843,21 +842,10 @@ class MainActivity : AppCompatActivity() {
      *
      * @param targetIndex The index in the queue to skip to.
      */
-    // TODO - REVIEW THE LOGIC HERE
-    //  SEE IF YOU CAN REMOVE pendingSeekToInstruction
     fun skipToQueueIndex(targetIndex: Int) = lifecycleScope.launch(Dispatchers.Main) {
-        var position = if (targetIndex == 0) playQueueViewModel.pendingSeekToInstruction.value ?: 0L
-        else 0L
-        val item = playQueueViewModel.playQueue.value?.get(targetIndex)
-        if (item?.mediaMetadata?.extras?.getBoolean(REMEMBER_PROGRESS) == true) {
-            val song = getSongById(item.mediaId.toLong())
-            position = song?.playbackProgress ?: position
-        }
-        controller.seekTo(targetIndex, position)
-        if (position != 0L) {
-            Log.i("DEBUG", "Pending seek to $position processed.")
-            playQueueViewModel.pendingSeekToInstruction.postValue(null)
-        }
+        val item = playQueueViewModel.playQueue.value?.get(targetIndex) ?: return@launch
+        controller.setMediaItem(item)
+        saveCurrentlyPlayingItemPrepareAndPlay(targetIndex)
     }
 
     /**
@@ -1133,7 +1121,7 @@ class MainActivity : AppCompatActivity() {
         }
         val playbackPosition = sharedPreferences.getLong(PLAYBACK_POSITION, 0L)
         if (playbackPosition != 0L) {
-            playQueueViewModel.pendingSeekToInstruction.postValue(playbackPosition)
+            seekTo(playbackPosition)
         }
     }
 
