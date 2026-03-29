@@ -306,6 +306,14 @@ class MainActivity : AppCompatActivity() {
                 updatePlaybackDurationAndPosition()
             }
 
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                if (controller.repeatMode == REPEAT_MODE_ONE) {
+                    controller.seekTo(0)
+                } else {
+                    skipForward()
+                }
+            }
+
             override fun onTimelineChanged(timeline: Timeline, reason: Int) {
                 if (timeline.isEmpty) {
                     Log.i("DEBUG", "The timeline is empty")
@@ -321,8 +329,6 @@ class MainActivity : AppCompatActivity() {
                         play()
                         playQueueViewModel.pendingPlayInstruction.postValue(null)
                     }
-
-                    saveAndPostPlayQueueIndex(controller.currentMediaItemIndex)
                 }
 
                 super.onTimelineChanged(timeline, reason)
@@ -344,19 +350,10 @@ class MainActivity : AppCompatActivity() {
 
                 processPendingSeekToRequest()
 
-                val mediaId: Long?
-                try {
-                     mediaId = playQueueViewModel.playQueue.value?.get(controller.currentMediaItemIndex)?.mediaId?.toLong()
-                } catch (e: IndexOutOfBoundsException) {
-                    Log.w("DEBUG", "IndexOutOfBounds. Will reset the metadata.")
-                    playQueueViewModel.currentlyPlayingSongMetadata.postValue(null)
-                    return
-                }
-
                 if (metadata.extras == null || metadata.extras?.getBoolean(REMEMBER_PROGRESS) == true) {
                     lifecycleScope.launch(Dispatchers.IO) {
                         withContext(Dispatchers.IO) {
-                            getSongById(mediaId ?: return@withContext null)
+                            getSongById(playQueueViewModel.getCurrentSongMediaId() ?: return@withContext null)
                         }?.let { song ->
                             if (song.rememberProgress) seekTo(song.playbackProgress.toInt())
                             playQueueViewModel.currentlyPlayingSongMetadata.postValue(song.getMetadata())
@@ -511,12 +508,11 @@ class MainActivity : AppCompatActivity() {
         playQueue.removeAt(oldIndex)
         playQueue.add(newIndex, item)
 
-        if (oldIndex == controller.currentMediaItemIndex) {
-            reloadPlayQueue(playQueue, newIndex)
+        if (oldIndex == playQueueViewModel.currentQueueItemIndex.value) {
+            saveCurrentlyPlayingIndex(newIndex)
         }
 
         saveAndPostPlayQueue(playQueue)
-        controller.moveMediaItem(oldIndex, newIndex)
     }
 
     /** Respond to clicks on the play/pause button **/
@@ -590,7 +586,7 @@ class MainActivity : AppCompatActivity() {
             val newIndexOfCurrentlyPlaying = playQueue.indexOfFirst { i ->
                 i.mediaMetadata.extras?.getInt(ORDER_ID) == currentQueueItem.mediaMetadata.extras?.getInt(ORDER_ID)
             }
-            reloadPlayQueue(newPlayQueue, newIndexOfCurrentlyPlaying)
+            saveCurrentlyPlayingIndex(newIndexOfCurrentlyPlaying)
 
             for (i in newPlayQueue) i.mediaMetadata.extras?.remove(ORDER_ID)
         }
@@ -600,19 +596,6 @@ class MainActivity : AppCompatActivity() {
         sharedPreferences.edit().apply {
             putBoolean(SHUFFLE_MODE, shuffle)
             apply()
-        }
-    }
-
-    private fun reloadPlayQueue(playQueue: List<MediaItem>, newIndexOfCurrentlyPlaying: Int) {
-        val playbackPosition = controller.currentPosition
-        val isPlaying = controller.isPlaying
-
-        controller.setMediaItem(playQueue[newIndexOfCurrentlyPlaying])
-        if (!controller.playWhenReady) controller.prepare()
-
-        playQueueViewModel.pendingSeekToInstruction.postValue(playbackPosition)
-        if (isPlaying) {
-            playQueueViewModel.pendingPlayInstruction.postValue(true)
         }
     }
 
@@ -665,7 +648,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             (playQueueViewModel.currentQueueItemIndex.value ?: return) - 1
         }
-        setItemAtIndexPrepareAndPlay(newIndex, isPlaying)
+        saveCurrentlyPlayingItemPrepareAndPlay(newIndex, isPlaying)
     }
 
     /** Skip forward to the next song in the play queue. */
@@ -675,6 +658,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         // TODO - DO WE NEED THIS PLAYBACK LOGIC?
+        //  Could also move this declaration to an overrideable method parameter
+        //  Useful for the song playback complete behaviour
         val isPlaying = controller.isPlaying
         if (isPlaying) controller.stop()
 
@@ -686,14 +671,24 @@ class MainActivity : AppCompatActivity() {
         } else {
             (playQueueViewModel.currentQueueItemIndex.value ?: return) + 1
         }
-        setItemAtIndexPrepareAndPlay(newIndex, isPlaying)
+        saveCurrentlyPlayingItemPrepareAndPlay(newIndex, isPlaying)
     }
 
-    private fun setItemAtIndexPrepareAndPlay(index: Int, play: Boolean = true) {
+    private fun saveCurrentlyPlayingItemPrepareAndPlay(index: Int, play: Boolean = true) {
         controller.setMediaItem(playQueueViewModel.playQueue.value?.get(index) ?: return)
         controller.prepare()
         if (play) {
             controller.play()
+        }
+        saveCurrentlyPlayingIndex(index)
+    }
+
+    /** Save the index of the currently playing queue item to the shared preferences file. */
+    private fun saveCurrentlyPlayingIndex(index: Int) = lifecycleScope.launch(Dispatchers.IO) {
+        playQueueViewModel.currentQueueItemIndex.postValue(index)
+        sharedPreferences.edit().apply {
+            putInt(CURRENT_QUEUE_ITEM_INDEX, index)
+            apply()
         }
     }
 
@@ -739,19 +734,6 @@ class MainActivity : AppCompatActivity() {
         return Song(mediaItem.mediaId.toLong(), 0, metadata.title.toString(),
             metadata.artist.toString(), metadata.albumTitle.toString(),
             extras.getString(ALBUM_ID, "-1"), "0")
-    }
-
-    /** Save the index of the currently playing queue item to the shared preferences file. */
-    // FIXME - THIS INDEX PARAMETER WILL NO LONGER BE CORRECT
-    //  INSTEAD NEED TO SAVE QUEUE ITEM INDEX ON SKIP TO NEXT TRACK OR PREV TRACK
-    private fun saveAndPostPlayQueueIndex(index: Int) = lifecycleScope.launch(Dispatchers.IO) {
-        if (index != playQueueViewModel.currentQueueItemIndex.value) {
-            playQueueViewModel.currentQueueItemIndex.postValue(index)
-            sharedPreferences.edit().apply {
-                putInt(CURRENT_QUEUE_ITEM_INDEX, index)
-                apply()
-            }
-        }
     }
 
     /**
@@ -818,7 +800,8 @@ class MainActivity : AppCompatActivity() {
         } else songs.map { s -> s.getMediaItem() }
 
         if (addSongsAfterCurrentQueueItem) {
-            playQueue.addAll(controller.currentMediaItemIndex + 1, mediaItems)
+            playQueue.addAll((playQueueViewModel.currentQueueItemIndex.value
+                ?: return@launch) + 1, mediaItems)
         } else {
             playQueue.addAll(mediaItems)
         }
@@ -860,6 +843,8 @@ class MainActivity : AppCompatActivity() {
      *
      * @param targetIndex The index in the queue to skip to.
      */
+    // TODO - REVIEW THE LOGIC HERE
+    //  SEE IF YOU CAN REMOVE pendingSeekToInstruction
     fun skipToQueueIndex(targetIndex: Int) = lifecycleScope.launch(Dispatchers.Main) {
         var position = if (targetIndex == 0) playQueueViewModel.pendingSeekToInstruction.value ?: 0L
         else 0L
