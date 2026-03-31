@@ -316,19 +316,8 @@ class MainActivity : AppCompatActivity() {
 
             override fun onTimelineChanged(timeline: Timeline, reason: Int) {
                 if (timeline.isEmpty) {
-                    Log.i("DEBUG", "The timeline is empty")
+                    // TODO - CAN WE REMOVE THIS?
                     saveAndPostPlayQueue(listOf())
-                } else {
-                    val firstPeriodId = timeline.getPeriod(0, Timeline.Period()).id.toString()
-                    if (firstPeriodId == "-1") {
-                        return
-                    }
-                    Log.i("DEBUG", "Processing a timeline update.")
-
-                    if (playQueueViewModel.pendingPlayInstruction.value == true) {
-                        play()
-                        playQueueViewModel.pendingPlayInstruction.postValue(null)
-                    }
                 }
 
                 super.onTimelineChanged(timeline, reason)
@@ -766,9 +755,8 @@ class MainActivity : AppCompatActivity() {
 
         controller.setMediaItem(playQueue[startIndex])
         if (!controller.playWhenReady) controller.prepare()
+        controller.play()
 
-        // TODO - REMOVE? AND JUST PLAY IMMEDIATELY?
-        playQueueViewModel.pendingPlayInstruction.postValue(true)
         if (!shuffle) {
             // TODO - REMOVE? IF SAFE? ALWAYS JUST ONE METADATA
             playQueueViewModel.pendingExpectedMetadata.postValue(
