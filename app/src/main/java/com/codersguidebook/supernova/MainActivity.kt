@@ -328,14 +328,6 @@ class MainActivity : AppCompatActivity() {
                 Log.i("DEBUG", "Received the metadata for: ${metadata.title}")
 
                 songCompleted = false
-                val expectedSongName = playQueueViewModel.pendingExpectedMetadata.value
-                if (expectedSongName != null) {
-                    if (expectedSongName != metadata.title) {
-                        Log.i("DEBUG", "The metadata is not for $expectedSongName, " +
-                                "so therefore will not be processed.")
-                        return
-                    } else playQueueViewModel.pendingExpectedMetadata.postValue(null)
-                }
 
                 lifecycleScope.launch(Dispatchers.IO) {
                     if (metadata.extras?.getBoolean(REMEMBER_PROGRESS) == true) {
@@ -366,6 +358,7 @@ class MainActivity : AppCompatActivity() {
                     playbackPositionRunnable.run()
                     playQueueViewModel.isPlaying.value = controller.isPlaying
                 } else if (playbackState == Player.STATE_ENDED) {
+                    // FIXME - POTENTIAL HERE THAT THIS WILL PLAY AFTER A SONG IS COMPLETE?
                     Log.i("DEBUG", "Playback state is STATE_ENDED. Clearing the play queue.")
                     controller.clearMediaItems()
                     handler.removeCallbacks(playbackPositionRunnable)
@@ -756,12 +749,6 @@ class MainActivity : AppCompatActivity() {
         controller.setMediaItem(playQueue[startIndex])
         if (!controller.playWhenReady) controller.prepare()
         controller.play()
-
-        if (!shuffle) {
-            // TODO - REMOVE? IF SAFE? ALWAYS JUST ONE METADATA
-            playQueueViewModel.pendingExpectedMetadata.postValue(
-                playQueue[startIndex].mediaMetadata.title.toString())
-        }
     }
 
     fun play() = controller.play()
@@ -1107,6 +1094,7 @@ class MainActivity : AppCompatActivity() {
             controller.setMediaItem(playQueue[currentQueueItemIndex])
             if (!controller.playWhenReady) controller.prepare()
         }
+
         val playbackPosition = sharedPreferences.getLong(PLAYBACK_POSITION, 0L)
         if (playbackPosition != 0L) {
             seekTo(playbackPosition)

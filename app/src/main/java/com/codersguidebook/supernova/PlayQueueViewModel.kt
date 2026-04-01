@@ -10,8 +10,6 @@ class PlayQueueViewModel : ViewModel() {
     var currentQueueItemIndex = MutableLiveData<Int>()
     var currentlyPlayingSongMetadata = MutableLiveData<MediaMetadata?>()
     var isPlaying = MutableLiveData(false)
-    // TODO REVIEW THE USAGE OF ALL PENDING VARIABLES AND SEE IF YOU CAN REMOVE
-    var pendingExpectedMetadata = MutableLiveData<String?>()
     var playbackDuration = MutableLiveData<Int>()
     var playbackPosition = MutableLiveData<Int>()
 
