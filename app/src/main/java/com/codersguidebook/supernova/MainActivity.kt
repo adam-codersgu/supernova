@@ -667,13 +667,17 @@ class MainActivity : AppCompatActivity() {
     /** Fast forward the playback of the current song. */
     fun fastForward() = controller.seekForward()
 
+    private fun saveAndPostPlayQueue(playQueue: List<MediaItem>) {
+        Log.i("DEBUG", "Posting play queue: $playQueue")
+        playQueueViewModel.playQueue.postValue(playQueue)
+        savePlayQueue(playQueue)
+    }
+
     /**
      * Convert the list of MediaDescriptionCompat objects for each item in the play queue to JSON
      * and save it in the shared preferences file.
      */
-    private fun saveAndPostPlayQueue(playQueue: List<MediaItem>) = lifecycleScope.launch(Dispatchers.IO) {
-        Log.i("DEBUG", "Posting play queue: $playQueue")
-        playQueueViewModel.playQueue.postValue(playQueue)
+    private fun savePlayQueue(playQueue: List<MediaItem>) = lifecycleScope.launch(Dispatchers.IO) {
         try {
             val shuffleModeOn = sharedPreferences.getBoolean(SHUFFLE_MODE, false)
             val songsToSave = if (shuffleModeOn) {
@@ -721,20 +725,21 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        if (controller.isPlaying) controller.pause()
+        if (controller.isPlaying) controller.stop()
 
         val playQueue = if (shuffle) {
             songs.mapIndexed { i, s -> s.getMediaItem(i) }.toList().shuffled()
         } else {
             songs.map { s -> s.getMediaItem() }.toList()
         }
-        saveAndPostPlayQueue(playQueue)
+
+        playQueueViewModel.playQueue.value = playQueue
+        saveCurrentlyPlayingItemPrepareAndPlay(startIndex)
 
         sharedPreferences.edit {
             putBoolean(SHUFFLE_MODE, shuffle)
         }
-
-        saveCurrentlyPlayingItemPrepareAndPlay(startIndex)
+        savePlayQueue(playQueue)
     }
 
     fun play() = controller.play()
