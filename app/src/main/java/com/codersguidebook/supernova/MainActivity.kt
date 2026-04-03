@@ -40,7 +40,6 @@ import androidx.media3.common.Player
 import androidx.media3.common.Player.REPEAT_MODE_ALL
 import androidx.media3.common.Player.REPEAT_MODE_OFF
 import androidx.media3.common.Player.REPEAT_MODE_ONE
-import androidx.media3.common.Timeline
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -306,14 +305,6 @@ class MainActivity : AppCompatActivity() {
                 updatePlaybackDurationAndPosition()
             }
 
-            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                if (controller.repeatMode == REPEAT_MODE_ONE) {
-                    controller.seekTo(0)
-                } else {
-                    skipForward()
-                }
-            }
-
             override fun onMediaMetadataChanged(metadata: MediaMetadata) {
                 super.onMediaMetadataChanged(metadata)
                 Log.i("DEBUG", "Received the metadata for: ${metadata.title}")
@@ -349,15 +340,23 @@ class MainActivity : AppCompatActivity() {
                     playbackPositionRunnable.run()
                     playQueueViewModel.isPlaying.value = controller.isPlaying
                 } else if (playbackState == Player.STATE_ENDED) {
-                    // FIXME - POTENTIAL HERE THAT THIS WILL PLAY AFTER A SONG IS COMPLETE?
-                    Log.i("DEBUG", "Playback state is STATE_ENDED. Clearing the play queue.")
-                    controller.clearMediaItems()
-                    handler.removeCallbacks(playbackPositionRunnable)
-                    playQueueViewModel.playQueue.value = listOf()
-                    playQueueViewModel.playbackDuration.value = 0
-                    playQueueViewModel.playbackPosition.value = 0
-                    playQueueViewModel.currentlyPlayingSongMetadata.value = null
-                    playQueueViewModel.isPlaying.value = false
+                    Log.i("DEBUG", "Playback state is STATE_ENDED")
+                    val repeatMode = getRepeatMode()
+                    if (repeatMode == REPEAT_MODE_ONE) {
+                        controller.seekTo(0)
+                    } else if (playQueueViewModel.isUpcomingSongsInThePlayQueue()
+                        || repeatMode == REPEAT_MODE_ALL) {
+                        skipForward()
+                    } else {
+                        Log.i("DEBUG", "No further songs. Clearing the play queue.")
+                        controller.clearMediaItems()
+                        handler.removeCallbacks(playbackPositionRunnable)
+                        playQueueViewModel.playQueue.value = listOf()
+                        playQueueViewModel.playbackDuration.value = 0
+                        playQueueViewModel.playbackPosition.value = 0
+                        playQueueViewModel.currentlyPlayingSongMetadata.value = null
+                        playQueueViewModel.isPlaying.value = false
+                    }
                 }
             }
 
@@ -588,8 +587,6 @@ class MainActivity : AppCompatActivity() {
             apply()
         }
 
-        controller.repeatMode = newRepeatMode
-
         when (newRepeatMode) {
             REPEAT_MODE_OFF -> Toast.makeText(this, getString(R.string.repeat_mode_none), Toast.LENGTH_SHORT).show()
             REPEAT_MODE_ALL -> Toast.makeText(this, getString(R.string.repeat_mode_all), Toast.LENGTH_SHORT).show()
@@ -637,7 +634,7 @@ class MainActivity : AppCompatActivity() {
 
         val newIndex = if (playQueueViewModel.currentQueueItemIndex.value
             == (playQueueViewModel.playQueue.value?.size ?: return) - 1) {
-            if (controller.repeatMode == REPEAT_MODE_ALL) {
+            if (getRepeatMode() == REPEAT_MODE_ALL) {
                 0
             } else return
         } else {
@@ -1055,14 +1052,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Restore the play queue and playback state from the last save. */
+    // TODO CAN REMOVE OPTIN?
     @OptIn(UnstableApi::class)
     private fun restoreMediaSession() = lifecycleScope.launch {
         if (playQueueViewModel.playQueue.value != null) return@launch
 
         Log.i("DEBUG", "Restoring the media session")
-
-        val repeatMode = sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_OFF)
-        controller.repeatMode = repeatMode
 
         val queueItemPairsJson = sharedPreferences.getString(PLAY_QUEUE_ITEMS, null) ?: return@launch
 
@@ -1081,6 +1076,7 @@ class MainActivity : AppCompatActivity() {
 
         val currentQueueItemIndex = min(sharedPreferences.getInt(CURRENT_QUEUE_ITEM_INDEX, -1),
             playQueue.size - 1)
+        playQueueViewModel.currentQueueItemIndex.postValue(currentQueueItemIndex)
         if (currentQueueItemIndex != -1) {
             controller.setMediaItem(playQueue[currentQueueItemIndex])
             if (!controller.playWhenReady) controller.prepare()
@@ -1090,6 +1086,10 @@ class MainActivity : AppCompatActivity() {
         if (playbackPosition != 0L) {
             seekTo(playbackPosition)
         }
+    }
+
+    private fun getRepeatMode(): Int {
+        return sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_OFF)
     }
 
     suspend fun getSongById(songId: Long): Song? {

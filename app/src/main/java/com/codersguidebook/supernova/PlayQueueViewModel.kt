@@ -24,4 +24,15 @@ class PlayQueueViewModel : ViewModel() {
     fun playQueueContainsMoreThanOneSong(): Boolean {
         return (playQueue.value?.size ?: return false) > 1
     }
+
+    fun isUpcomingSongsInThePlayQueue(): Boolean {
+        val currentIndex = currentQueueItemIndex.value
+        val currentSize = playQueue.value?.size
+
+        return if (currentIndex == null || currentSize == null) {
+            false
+        } else {
+            currentIndex < (currentSize - 1)
+        }
+    }
 }
