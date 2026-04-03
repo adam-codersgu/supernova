@@ -10,10 +10,7 @@ class PlayQueueViewModel : ViewModel() {
     var currentQueueItemIndex = MutableLiveData<Int>()
     var currentlyPlayingSongMetadata = MutableLiveData<MediaMetadata?>()
     var isPlaying = MutableLiveData(false)
-    var pendingExpectedMetadata = MutableLiveData<String?>()
-    var pendingPlayInstruction = MutableLiveData<Boolean?>()
     var pendingSeekToInstruction = MutableLiveData<Long?>()
-    var pendingSkipToInstruction = MutableLiveData<Int?>()
     var playbackDuration = MutableLiveData<Int>()
     var playbackPosition = MutableLiveData<Int>()
 
@@ -22,6 +19,21 @@ class PlayQueueViewModel : ViewModel() {
             null
         } else {
             playQueue.value!![currentQueueItemIndex.value!!].mediaId.toLong()
+        }
+    }
+
+    fun playQueueContainsMoreThanOneSong(): Boolean {
+        return (playQueue.value?.size ?: return false) > 1
+    }
+
+    fun isUpcomingSongsInThePlayQueue(): Boolean {
+        val currentIndex = currentQueueItemIndex.value
+        val currentSize = playQueue.value?.size
+
+        return if (currentIndex == null || currentSize == null) {
+            false
+        } else {
+            currentIndex < (currentSize - 1)
         }
     }
 }

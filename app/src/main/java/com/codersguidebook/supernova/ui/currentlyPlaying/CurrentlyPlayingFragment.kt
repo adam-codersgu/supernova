@@ -206,7 +206,7 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
             override fun onStopTrackingTouch(seekBar: SeekBar) { }
             override fun onStartTrackingTouch(seekBar: SeekBar) { }
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) mainActivity.seekTo(progress)
+                if (fromUser) mainActivity.seekTo(progress.toLong())
             }
         })
     }

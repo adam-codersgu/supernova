@@ -11,6 +11,8 @@ class MediaServiceConstants {
         const val REMEMBER_PROGRESS = "rememberProgress"
         const val NO_ACTION = -1
         const val NOTIFICATION_CHANNEL_ID = "supernova"
+        const val SKIP_TO_NEXT = "skipToNext"
+        const val SKIP_TO_PREV = "skipToPrev"
         const val SONG_DELETED = 0
         const val SONG_UPDATED = 1
     }
