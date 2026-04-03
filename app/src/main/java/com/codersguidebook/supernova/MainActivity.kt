@@ -311,26 +311,23 @@ class MainActivity : AppCompatActivity() {
 
                 songCompleted = false
 
-                lifecycleScope.launch(Dispatchers.IO) {
-                    if (metadata.extras?.getBoolean(REMEMBER_PROGRESS) == true) {
-                        controller.currentMediaItem?.mediaId?.let { id ->
-                            getSongById(id.toLong())?.let { song ->
-                                seekTo(song.playbackProgress)
-                            }
-                        }
-                    }
-                }
-
                 if (metadata.extras == null || metadata.extras?.getBoolean(REMEMBER_PROGRESS) == true) {
                     lifecycleScope.launch(Dispatchers.IO) {
                         withContext(Dispatchers.IO) {
                             getSongById(playQueueViewModel.getCurrentSongMediaId() ?: return@withContext null)
                         }?.let { song ->
-                            if (song.rememberProgress) seekTo(song.playbackProgress)
+                            if (song.rememberProgress) {
+                                seekTo(song.playbackProgress)
+                            } else {
+                                withContext(Dispatchers.Main) {
+                                    processPendingSeekToRequest()
+                                }
+                            }
                             playQueueViewModel.currentlyPlayingSongMetadata.postValue(song.getMetadata())
                         }
                     }
                 } else {
+                    processPendingSeekToRequest()
                     playQueueViewModel.currentlyPlayingSongMetadata.postValue(metadata)
                 }
             }
@@ -374,6 +371,15 @@ class MainActivity : AppCompatActivity() {
         })
 
         restoreMediaSession()
+    }
+
+    private fun processPendingSeekToRequest() {
+        val pendingSeekToPosition = playQueueViewModel.pendingSeekToInstruction.value
+        if (pendingSeekToPosition != null) {
+            Log.i("DEBUG", "Processing the pending seek to request: $pendingSeekToPosition")
+            seekTo(pendingSeekToPosition)
+            playQueueViewModel.pendingSeekToInstruction.postValue(null)
+        }
     }
 
     private fun updatePlaybackDurationAndPosition() {
@@ -627,7 +633,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         // TODO - DO WE NEED THIS PLAYBACK LOGIC?
-        //  Could also move this declaration to an overrideable method parameter
+        //  Could also move the isPlaying declaration to an overrideable method parameter
+        //  Set to true by default
         //  Useful for the song playback complete behaviour
         val isPlaying = controller.isPlaying
         if (isPlaying) controller.stop()
@@ -1077,17 +1084,17 @@ class MainActivity : AppCompatActivity() {
 
         playQueueViewModel.playQueue.postValue(playQueue)
 
+        val playbackPosition = sharedPreferences.getLong(PLAYBACK_POSITION, 0L)
+        if (playbackPosition != 0L) {
+            playQueueViewModel.pendingSeekToInstruction.postValue(playbackPosition)
+        }
+
         val currentQueueItemIndex = min(sharedPreferences.getInt(CURRENT_QUEUE_ITEM_INDEX, -1),
             playQueue.size - 1)
         playQueueViewModel.currentQueueItemIndex.postValue(currentQueueItemIndex)
         if (currentQueueItemIndex != -1) {
             controller.setMediaItem(playQueue[currentQueueItemIndex])
             if (!controller.playWhenReady) controller.prepare()
-        }
-
-        val playbackPosition = sharedPreferences.getLong(PLAYBACK_POSITION, 0L)
-        if (playbackPosition != 0L) {
-            seekTo(playbackPosition)
         }
     }
 
