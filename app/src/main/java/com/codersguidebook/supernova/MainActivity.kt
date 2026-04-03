@@ -314,15 +314,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            override fun onTimelineChanged(timeline: Timeline, reason: Int) {
-                if (timeline.isEmpty) {
-                    // TODO - CAN WE REMOVE THIS?
-                    saveAndPostPlayQueue(listOf())
-                }
-
-                super.onTimelineChanged(timeline, reason)
-            }
-
             override fun onMediaMetadataChanged(metadata: MediaMetadata) {
                 super.onMediaMetadataChanged(metadata)
                 Log.i("DEBUG", "Received the metadata for: ${metadata.title}")
