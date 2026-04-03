@@ -734,9 +734,7 @@ class MainActivity : AppCompatActivity() {
             putBoolean(SHUFFLE_MODE, shuffle)
         }
 
-        controller.setMediaItem(playQueue[startIndex])
-        if (!controller.playWhenReady) controller.prepare()
-        controller.play()
+        saveCurrentlyPlayingItemPrepareAndPlay(startIndex)
     }
 
     fun play() = controller.play()
