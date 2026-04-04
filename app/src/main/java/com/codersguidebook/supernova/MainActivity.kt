@@ -613,17 +613,13 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // TODO - DO WE NEED THIS PLAYBACK LOGIC?
-        val isPlaying = controller.isPlaying
-        if (isPlaying) controller.stop()
-
         val newIndex = if (playQueueViewModel.currentQueueItemIndex.value
             == 0) {
             return
         } else {
             (playQueueViewModel.currentQueueItemIndex.value ?: return) - 1
         }
-        saveCurrentlyPlayingItemPrepareAndPlay(newIndex, isPlaying)
+        saveCurrentlyPlayingItemPrepareAndPlay(newIndex, controller.isPlaying)
     }
 
     /** Skip forward to the next song in the play queue. */
@@ -631,13 +627,6 @@ class MainActivity : AppCompatActivity() {
         if (!playQueueViewModel.playQueueContainsMoreThanOneSong()) {
             return
         }
-
-        // TODO - DO WE NEED THIS PLAYBACK LOGIC?
-        //  Could also move the isPlaying declaration to an overrideable method parameter
-        //  Set to true by default
-        //  Useful for the song playback complete behaviour
-        val isPlaying = controller.isPlaying
-        if (isPlaying) controller.stop()
 
         val newIndex = if (playQueueViewModel.currentQueueItemIndex.value
             == (playQueueViewModel.playQueue.value?.size ?: return) - 1) {
@@ -647,7 +636,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             (playQueueViewModel.currentQueueItemIndex.value ?: return) + 1
         }
-        saveCurrentlyPlayingItemPrepareAndPlay(newIndex, isPlaying)
+        saveCurrentlyPlayingItemPrepareAndPlay(newIndex, controller.isPlaying)
     }
 
     private fun saveCurrentlyPlayingItemPrepareAndPlay(index: Int, play: Boolean = true) {
@@ -675,8 +664,7 @@ class MainActivity : AppCompatActivity() {
     fun fastForward() = controller.seekForward()
 
     private fun saveAndPostPlayQueue(playQueue: List<MediaItem>) {
-        Log.i("DEBUG", "Posting play queue: $playQueue")
-        playQueueViewModel.playQueue.postValue(playQueue)
+        playQueueViewModel.playQueue.value = playQueue
         savePlayQueue(playQueue)
     }
 
@@ -740,13 +728,12 @@ class MainActivity : AppCompatActivity() {
             songs.map { s -> s.getMediaItem() }.toList()
         }
 
-        playQueueViewModel.playQueue.value = playQueue
+        saveAndPostPlayQueue(playQueue)
         saveCurrentlyPlayingItemPrepareAndPlay(startIndex)
 
         sharedPreferences.edit {
             putBoolean(SHUFFLE_MODE, shuffle)
         }
-        savePlayQueue(playQueue)
     }
 
     fun play() = controller.play()
