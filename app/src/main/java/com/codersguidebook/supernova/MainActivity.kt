@@ -764,9 +764,9 @@ class MainActivity : AppCompatActivity() {
         } else {
             playQueue.addAll(mediaItems)
         }
-        saveAndPostPlayQueue(playQueue)
 
         launch(Dispatchers.Main) toast@ {
+            saveAndPostPlayQueue(playQueue)
             val message = when {
                 songs.size == 1 -> getString(R.string.song_added_play_queue, songs[0].title)
                 songs.size > 1 -> getString(R.string.songs_added_play_queue)
