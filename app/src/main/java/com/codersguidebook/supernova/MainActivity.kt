@@ -547,12 +547,14 @@ class MainActivity : AppCompatActivity() {
         val currentQueueItem = playQueue[currentQueueItemIndex]
 
         val newPlayQueue: MutableList<MediaItem>
+        val newIndexOfCurrentlyPlaying: Int
         if (shuffle) {
             Log.i("DEBUG", "Shuffling the play queue")
 
             playQueue.removeAt(currentQueueItemIndex)
             newPlayQueue = playQueue.shuffled().toMutableList()
             newPlayQueue.add(0, currentQueueItem)
+            newIndexOfCurrentlyPlaying = 0
         } else {
             Log.i("DEBUG", "Unshuffling the play queue")
 
@@ -560,19 +562,18 @@ class MainActivity : AppCompatActivity() {
                     i -> i.mediaMetadata.extras?.getInt(ORDER_ID)
             }.toMutableList()
 
-            val newIndexOfCurrentlyPlaying = playQueue.indexOfFirst { i ->
+            newIndexOfCurrentlyPlaying = playQueue.indexOfFirst { i ->
                 i.mediaMetadata.extras?.getInt(ORDER_ID) == currentQueueItem.mediaMetadata.extras?.getInt(ORDER_ID)
             }
-            saveCurrentlyPlayingIndex(newIndexOfCurrentlyPlaying)
 
             for (i in newPlayQueue) i.mediaMetadata.extras?.remove(ORDER_ID)
         }
 
+        saveCurrentlyPlayingIndex(newIndexOfCurrentlyPlaying)
         saveAndPostPlayQueue(newPlayQueue)
 
-        sharedPreferences.edit().apply {
+        sharedPreferences.edit {
             putBoolean(SHUFFLE_MODE, shuffle)
-            apply()
         }
     }
 
