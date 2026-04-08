@@ -562,7 +562,7 @@ class MainActivity : AppCompatActivity() {
                     i -> i.mediaMetadata.extras?.getInt(ORDER_ID)
             }.toMutableList()
 
-            newIndexOfCurrentlyPlaying = playQueue.indexOfFirst { i ->
+            newIndexOfCurrentlyPlaying = newPlayQueue.indexOfFirst { i ->
                 i.mediaMetadata.extras?.getInt(ORDER_ID) == currentQueueItem.mediaMetadata.extras?.getInt(ORDER_ID)
             }
 
