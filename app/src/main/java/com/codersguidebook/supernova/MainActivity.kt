@@ -1050,8 +1050,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Restore the play queue and playback state from the last save. */
-    // TODO CAN REMOVE OPTIN?
-    @OptIn(UnstableApi::class)
     private fun restoreMediaSession() = lifecycleScope.launch {
         if (playQueueViewModel.playQueue.value != null) return@launch
 
