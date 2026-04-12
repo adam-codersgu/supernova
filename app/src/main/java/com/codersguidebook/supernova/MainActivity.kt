@@ -339,7 +339,9 @@ class MainActivity : AppCompatActivity() {
                 } else if (playbackState == Player.STATE_ENDED) {
                     Log.i("DEBUG", "Playback state is STATE_ENDED")
                     val repeatMode = getRepeatMode()
-                    if (repeatMode == REPEAT_MODE_ONE) {
+                    if (repeatMode == REPEAT_MODE_ONE
+                        || (!playQueueViewModel.playQueueContainsMoreThanOneSong()
+                                && repeatMode == REPEAT_MODE_ALL)) {
                         controller.seekTo(0)
                     } else if (playQueueViewModel.isUpcomingSongsInThePlayQueue()
                         || repeatMode == REPEAT_MODE_ALL) {
