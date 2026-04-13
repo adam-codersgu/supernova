@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.SongOptions
+import com.codersguidebook.supernova.fragment.BaseDialogFragment
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
 class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(activity) {
@@ -20,9 +21,9 @@ class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(ac
 
     inner class ViewHolderSongWithDisc(itemView: View) : ViewHolderSong(itemView) {
 
-        private var songLayout = itemView.findViewById<ConstraintLayout>(R.id.songPreviewLayout)
-        internal var mDisc = itemView.findViewById(R.id.discNumber) as TextView
-        internal var mTrack = itemView.findViewById(R.id.songTrack) as TextView
+        private var songLayout: ConstraintLayout = itemView.findViewById(R.id.songPreviewLayout)
+        internal var mDisc: TextView = itemView.findViewById(R.id.discNumber)
+        internal var mTrack: TextView = itemView.findViewById(R.id.songTrack)
 
         init {
             itemView.rootView.isClickable = false
@@ -36,13 +37,13 @@ class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(ac
             }
 
             songLayout.setOnLongClickListener {
-                activity.openDialog(SongOptions(songs[layoutPosition - 1]))
+                openDialog()
                 return@setOnLongClickListener true
             }
+        }
 
-            mMenu!!.setOnClickListener {
-                activity.openDialog(SongOptions(songs[layoutPosition - 1]))
-            }
+        override fun getOptionsDialog(): BaseDialogFragment {
+            return SongOptions(songs[layoutPosition - 1])
         }
     }
 

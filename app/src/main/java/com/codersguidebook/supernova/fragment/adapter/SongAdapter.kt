@@ -2,39 +2,27 @@ package com.codersguidebook.supernova.fragment.adapter
 
 import android.os.Build
 import android.view.View
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.TextView
-import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
-import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.SongOptions
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.fragment.BaseDialogFragment
+import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderWithMenu
 
 abstract class SongAdapter(private val activity: MainActivity): Adapter() {
     val songs = mutableListOf<Song>()
 
-    open inner class ViewHolderSong(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    open inner class ViewHolderSong(itemView: View) : ViewHolderWithMenu(itemView) {
 
-        internal var mArtwork: ImageView? = itemView.findViewById(R.id.artwork)
-        internal var mTitle: TextView = itemView.findViewById(R.id.title)
-        internal var mSubtitle: TextView = itemView.findViewById(R.id.subtitle)
-        internal var mMenu: ImageButton? = itemView.findViewById(R.id.menu)
+        override fun getActivity(): MainActivity {
+            return activity
+        }
 
-        init {
-            itemView.rootView.isClickable = true
-            itemView.rootView.setOnClickListener {
-                activity.playNewPlayQueue(songs, layoutPosition)
-            }
+        override fun rootViewAction() {
+            activity.playNewPlayQueue(songs, layoutPosition)
+        }
 
-            itemView.rootView.setOnLongClickListener {
-                activity.openDialog(SongOptions(songs[layoutPosition]))
-                return@setOnLongClickListener true
-            }
-
-            mMenu?.setOnClickListener {
-                activity.openDialog(SongOptions(songs[layoutPosition]))
-            }
+        override fun getOptionsDialog(): BaseDialogFragment {
+            return SongOptions(songs[layoutPosition])
         }
     }
 

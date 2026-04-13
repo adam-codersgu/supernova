@@ -4,17 +4,19 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.GridLayout
-import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
+import androidx.navigation.NavDirections
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.AlbumOptions
+import com.codersguidebook.supernova.fragment.BaseDialogFragment
+import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderWithMenu
 import com.codersguidebook.supernova.ui.artist.ArtistFragmentDirections
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
@@ -31,7 +33,7 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter(activity) {
     inner class ViewHolderHeader(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         internal var mArtwork = itemView.findViewById<View>(R.id.artwork) as ImageView
-        internal var mArtworkGrid = itemView.findViewById(R.id.imageGrid) as GridLayout
+        internal var mArtworkGrid: GridLayout = itemView.findViewById(R.id.imageGrid)
         internal var mArtwork1 = itemView.findViewById<View>(R.id.artwork1) as ImageView
         internal var mArtwork2 = itemView.findViewById<View>(R.id.artwork2) as ImageView
         internal var mArtwork3 = itemView.findViewById<View>(R.id.artwork3) as ImageView
@@ -53,28 +55,19 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter(activity) {
         }
     }
 
-    inner class ViewHolderAlbum(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class ViewHolderAlbum(itemView: View) : ViewHolderWithMenu(itemView) {
 
-        internal var mArtwork = itemView.findViewById<View>(R.id.artwork) as ImageView
-        internal var mTitle = itemView.findViewById<View>(R.id.title) as TextView
-        internal var mYear = itemView.findViewById<View>(R.id.subtitle) as TextView
-        private var mMenu = itemView.findViewById<ImageButton>(R.id.menu)
+        override fun getActivity(): MainActivity {
+            return activity
+        }
 
-        init {
-            itemView.rootView.isClickable = true
-            itemView.rootView.setOnClickListener {
-                val action = ArtistFragmentDirections.actionSelectAlbum(songs[layoutPosition - 2].albumId)
-                it.findNavController().navigate(action)
-            }
+        override fun rootViewAction() {
+            val action = ArtistFragmentDirections.actionSelectAlbum(songs[layoutPosition - 2].albumId)
+            itemView.rootView.findNavController().navigate(action)
+        }
 
-            itemView.rootView.setOnLongClickListener{
-                activity.openDialog(AlbumOptions(songs[layoutPosition - 2].albumId))
-                return@setOnLongClickListener true
-            }
-
-            mMenu.setOnClickListener {
-                activity.openDialog(AlbumOptions(songs[layoutPosition - 2].albumId))
-            }
+        override fun getOptionsDialog(): BaseDialogFragment {
+            return AlbumOptions(songs[layoutPosition - 2].albumId)
         }
     }
 
@@ -155,7 +148,7 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter(activity) {
                     current.albumId, holder.mArtwork)
 
                 holder.mTitle.text = current.albumName ?: activity.getString(R.string.default_album)
-                holder.mYear.text = current.year
+                holder.mSubtitle.text = current.year
             }
         }
     }

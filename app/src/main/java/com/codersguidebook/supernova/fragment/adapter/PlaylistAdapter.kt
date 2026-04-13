@@ -20,6 +20,7 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.PlaylistSongOptions
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.fragment.BaseDialogFragment
 import com.codersguidebook.supernova.ui.playlist.PlaylistFragment
 import com.codersguidebook.supernova.utils.DimensionsHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
@@ -34,34 +35,32 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
 
     inner class ViewHolderPlaylistHeader(itemView: View) : ViewHolderHeader(itemView) {
 
-        internal var mArtworkGrid = itemView.findViewById(R.id.imageGrid) as GridLayout
-        internal var mArtwork1 = itemView.findViewById(R.id.artwork1) as ImageView
-        internal var mArtwork2 = itemView.findViewById(R.id.artwork2) as ImageView
-        internal var mArtwork3 = itemView.findViewById(R.id.artwork3) as ImageView
-        internal var mArtwork4 = itemView.findViewById(R.id.artwork4) as ImageView
+        internal var mArtworkGrid: GridLayout = itemView.findViewById(R.id.imageGrid)
+        internal var mArtwork1: ImageView = itemView.findViewById(R.id.artwork1)
+        internal var mArtwork2: ImageView = itemView.findViewById(R.id.artwork2)
+        internal var mArtwork3: ImageView = itemView.findViewById(R.id.artwork3)
+        internal var mArtwork4: ImageView = itemView.findViewById(R.id.artwork4)
     }
 
     inner class ViewHolderSongWithHandle(itemView: View) : ViewHolderSong(itemView) {
 
-        internal var mPlays = itemView.findViewById(R.id.plays) as TextView
+        internal var mPlays: TextView = itemView.findViewById(R.id.plays)
 
         init {
-            itemView.rootView.setOnClickListener {
-                activity.playNewPlayQueue(songs, layoutPosition - 1)
-            }
-
             itemView.setOnLongClickListener {
-                if (!showHandles) playlist?.let {
-                    activity.openDialog(PlaylistSongOptions(songs[layoutPosition - 1], layoutPosition - 1, it))
+                if (!showHandles) {
+                    openDialog()
                 }
                 return@setOnLongClickListener true
             }
+        }
 
-            mMenu?.setOnClickListener {
-                playlist?.let {
-                    activity.openDialog(PlaylistSongOptions(songs[layoutPosition - 1], layoutPosition - 1, it))
-                }
-            }
+        override fun rootViewAction() {
+            activity.playNewPlayQueue(songs, layoutPosition - 1)
+        }
+
+        override fun getOptionsDialog(): BaseDialogFragment {
+            return PlaylistSongOptions(songs[layoutPosition - 1], layoutPosition - 1, playlist!!)
         }
     }
 
@@ -121,10 +120,10 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                 holder as ViewHolderSongWithHandle
                 val current = songs[position -1]
 
-                val params = holder.mArtwork!!.layoutParams as MarginLayoutParams
+                val params = holder.mArtwork.layoutParams as MarginLayoutParams
                 val onSurfaceColour = MaterialColors.getColor(activity, com.google.android.material.R.attr.colorOnSurface, Color.LTGRAY)
                 if (showHandles) {
-                    holder.mArtwork?.setColorFilter(MaterialColors
+                    holder.mArtwork.setColorFilter(MaterialColors
                         .compositeARGBWithAlpha(onSurfaceColour, 153))
                     params.width = activity.resources.getDimension(R.dimen.handle_width).toInt()
                     params.marginStart = DimensionsHelper.convertToDp(activity, 13f)
