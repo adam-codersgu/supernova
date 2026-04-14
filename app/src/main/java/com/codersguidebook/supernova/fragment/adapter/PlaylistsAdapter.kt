@@ -1,16 +1,17 @@
 package com.codersguidebook.supernova.fragment.adapter
 
+import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.PlaylistOptions
 import com.codersguidebook.supernova.entities.Playlist
+import com.codersguidebook.supernova.fragment.BaseDialogFragment
+import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolder
 import com.codersguidebook.supernova.ui.playlists.PlaylistsFragmentDirections
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
@@ -18,22 +19,19 @@ import com.codersguidebook.supernova.utils.PlaylistHelper
 class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     var playlists = mutableListOf<Playlist>()
 
-    inner class ViewHolderPlaylist(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class ViewHolderPlaylist(itemView: View) : ViewHolder(itemView) {
 
-        internal var mArtwork = itemView.findViewById<View>(R.id.artwork) as ImageView
-        internal var mPlaylistName = itemView.findViewById<View>(R.id.title) as TextView
-        internal var mSongCount = itemView.findViewById<View>(R.id.subtitle) as TextView
+        override fun getActivity(): MainActivity {
+            return activity
+        }
 
-        init {
-            itemView.isClickable = true
-            itemView.setOnClickListener {
-                val action = PlaylistsFragmentDirections.actionSelectPlaylist(playlists[layoutPosition].name)
-                it.findNavController().navigate(action)
-            }
-            itemView.setOnLongClickListener{
-                activity.openDialog(PlaylistOptions(playlists[layoutPosition]))
-                return@setOnLongClickListener true
-            }
+        override fun rootViewAction() {
+            val action = PlaylistsFragmentDirections.actionSelectPlaylist(playlists[layoutPosition].name)
+            itemView.rootView.findNavController().navigate(action)
+        }
+
+        override fun getOptionsDialog(): BaseDialogFragment {
+            return PlaylistOptions(playlists[layoutPosition])
         }
     }
 
@@ -45,7 +43,7 @@ class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter
         holder as ViewHolderPlaylist
         val playlist = playlists[position]
 
-        holder.mPlaylistName.text = playlist.name
+        holder.mTitle.text = playlist.name
 
         val playlistSongIds = PlaylistHelper.extractSongIds(playlist.songs)
         if (!ImageHandlingHelper.loadImageByPlaylist(activity.application, playlist, holder.mArtwork)) {
@@ -53,7 +51,7 @@ class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter
         }
 
         val songCountInt = playlistSongIds.size
-        holder.mSongCount.text = if (songCountInt == 1) activity.getString(R.string.displayed_song)
+        holder.mSubtitle.text = if (songCountInt == 1) activity.getString(R.string.displayed_song)
         else activity.getString(R.string.displayed_songs, songCountInt)
     }
 
@@ -145,7 +143,11 @@ class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter
 
         if (playlists.size > newPlaylists.size) {
             val numberItemsToRemove = playlists.size - newPlaylists.size
-            repeat(numberItemsToRemove) { playlists.removeLast() }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                repeat(numberItemsToRemove) { playlists.removeLast() }
+            } else {
+                repeat(numberItemsToRemove) { playlists.removeAt(playlists.size - 1) }
+            }
             notifyItemRangeRemoved(newPlaylists.size, numberItemsToRemove)
         }
     }
