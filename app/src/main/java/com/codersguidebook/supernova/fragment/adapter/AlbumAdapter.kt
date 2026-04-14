@@ -13,13 +13,15 @@ import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.SongOptions
 import com.codersguidebook.supernova.fragment.BaseDialogFragment
+import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderHeader
+import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderWithMenu
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
 class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(activity) {
 
     var displayDiscNumbers = false
 
-    inner class ViewHolderSongWithDisc(itemView: View) : ViewHolderSong(itemView) {
+    inner class ViewHolderSongWithDisc(itemView: View) : ViewHolderWithMenu(itemView) {
 
         private var songLayout: ConstraintLayout = itemView.findViewById(R.id.songPreviewLayout)
         internal var mDisc: TextView = itemView.findViewById(R.id.discNumber)
@@ -33,13 +35,21 @@ class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(ac
             songLayout.isClickable = true
 
             songLayout.setOnClickListener {
-                activity.playNewPlayQueue(songs, layoutPosition - 1)
+                rootViewAction()
             }
 
             songLayout.setOnLongClickListener {
                 openDialog()
                 return@setOnLongClickListener true
             }
+        }
+
+        override fun getActivity(): MainActivity {
+            return activity
+        }
+
+        override fun rootViewAction() {
+            activity.playNewPlayQueue(songs, layoutPosition - 1)
         }
 
         override fun getOptionsDialog(): BaseDialogFragment {
@@ -67,10 +77,10 @@ class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(ac
                     ImageHandlingHelper.loadImageByAlbumId(activity.application,
                         songs[0].albumId, holder.mArtwork)
                     holder.mTitle.text = songs[0].albumName ?: activity.getString(R.string.default_album)
-                    holder.mArtist.text = songs[0].artist ?: activity.getString(R.string.default_artist)
+                    holder.mSubtitle.text = songs[0].artist ?: activity.getString(R.string.default_artist)
                 }
                 val songCountInt = songs.size
-                holder.mSongCount.text = if (songCountInt == 1) activity.getString(R.string.displayed_song)
+                holder.mSubtitle2.text = if (songCountInt == 1) activity.getString(R.string.displayed_song)
                 else activity.getString(R.string.displayed_songs, songCountInt)
             }
 

@@ -21,6 +21,7 @@ import com.codersguidebook.supernova.dialogs.PlaylistSongOptions
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.BaseDialogFragment
+import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderHeader
 import com.codersguidebook.supernova.ui.playlist.PlaylistFragment
 import com.codersguidebook.supernova.utils.DimensionsHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
@@ -108,12 +109,12 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
 
                 if (songs.isNotEmpty()){
                     holder.mTitle.text = playlist?.name
-                    holder.mSongCount.text = if (songs.size == 1) {
+                    holder.mSubtitle2.text = if (songs.size == 1) {
                         activity.getString(R.string.displayed_song)
                     } else {
                         activity.getString(R.string.displayed_songs, songs.size)
                     }
-                    holder.mArtist.isGone = true
+                    holder.mSubtitle.isGone = true
                 }
             }
             SONG -> {
