@@ -13,7 +13,7 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.AlbumOptions
 import com.codersguidebook.supernova.fragment.BaseDialogFragment
 import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderHeaderArtworkGrid
-import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderWithMenu
+import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderArtworkWithMenu
 import com.codersguidebook.supernova.ui.artist.ArtistFragmentDirections
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
@@ -39,7 +39,7 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter(activity) {
         }
     }
 
-    inner class ViewHolderAlbum(itemView: View) : ViewHolderWithMenu(itemView) {
+    inner class ViewHolderAlbum(itemView: View) : ViewHolderArtworkWithMenu(itemView) {
 
         override fun getActivity(): MainActivity {
             return activity
@@ -47,7 +47,7 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter(activity) {
 
         override fun rootViewAction() {
             val action = ArtistFragmentDirections.actionSelectAlbum(songs[layoutPosition - 2].albumId)
-            itemView.rootView.findNavController().navigate(action)
+            itemView.findNavController().navigate(action)
         }
 
         override fun getOptionsDialog(): BaseDialogFragment {

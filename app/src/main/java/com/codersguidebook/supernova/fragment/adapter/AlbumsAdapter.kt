@@ -11,7 +11,7 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.AlbumOptions
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.BaseDialogFragment
-import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderWithMenu
+import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderArtworkWithMenu
 import com.codersguidebook.supernova.ui.albums.AlbumsFragmentDirections
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
@@ -22,7 +22,7 @@ class AlbumsAdapter(private val activity: MainActivity): SongAdapter(activity),
         return songs[position].albumName?.get(0)?.uppercase() ?: ""
     }
 
-    inner class ViewHolderAlbum(itemView: View) : ViewHolderWithMenu(itemView) {
+    inner class ViewHolderAlbum(itemView: View) : ViewHolderArtworkWithMenu(itemView) {
 
         override fun getActivity(): MainActivity {
             return activity

@@ -11,7 +11,7 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.PlaylistOptions
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.fragment.BaseDialogFragment
-import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolder
+import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderArtwork
 import com.codersguidebook.supernova.ui.playlists.PlaylistsFragmentDirections
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
@@ -19,7 +19,7 @@ import com.codersguidebook.supernova.utils.PlaylistHelper
 class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     var playlists = mutableListOf<Playlist>()
 
-    inner class ViewHolderPlaylist(itemView: View) : ViewHolder(itemView) {
+    inner class ViewHolderPlaylist(itemView: View) : ViewHolderArtwork(itemView) {
 
         override fun getActivity(): MainActivity {
             return activity

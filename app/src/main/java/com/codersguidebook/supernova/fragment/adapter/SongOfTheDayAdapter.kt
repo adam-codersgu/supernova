@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 
-class SongOfTheDayAdapter(private val activity: MainActivity): HomeAdapter(activity) {
+class SongOfTheDayAdapter(activity: MainActivity): HomeAdapter(activity) {
 
     companion object {
         const val NO_CONTENT = 1

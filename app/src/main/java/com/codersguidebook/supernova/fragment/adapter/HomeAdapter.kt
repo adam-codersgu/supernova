@@ -9,13 +9,13 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.SongOptions
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.BaseDialogFragment
-import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolder
+import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderArtwork
 import com.codersguidebook.supernova.utils.DimensionsHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
 open class HomeAdapter(private val activity: MainActivity): SongAdapter(activity) {
 
-    open inner class ViewHolderHome(itemView: View) : ViewHolder(itemView) {
+    open inner class ViewHolderHome(itemView: View) : ViewHolderArtwork(itemView) {
 
         override fun getActivity(): MainActivity {
             return activity

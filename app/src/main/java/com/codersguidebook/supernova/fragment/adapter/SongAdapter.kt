@@ -6,12 +6,12 @@ import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.dialogs.SongOptions
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.BaseDialogFragment
-import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderWithMenu
+import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderArtworkWithMenu
 
 abstract class SongAdapter(private val activity: MainActivity): Adapter() {
     val songs = mutableListOf<Song>()
 
-    open inner class ViewHolderSong(itemView: View) : ViewHolderWithMenu(itemView) {
+    open inner class ViewHolderSong(itemView: View) : ViewHolderArtworkWithMenu(itemView) {
 
         override fun getActivity(): MainActivity {
             return activity
