@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 
-class SongOfTheDayAdapter(activity: MainActivity): HomeAdapter(activity) {
+class SongOfTheDayAdapter(private val activity: MainActivity): HomeAdapter(activity) {
 
     companion object {
         const val NO_CONTENT = 1
@@ -36,12 +36,12 @@ class SongOfTheDayAdapter(activity: MainActivity): HomeAdapter(activity) {
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         if (holder is ViewHolderNoContent) return
-
-        super.onBindViewHolder(holder, position)
-
         holder as ViewHolderSong
 
         val song = songs[position]
+
+        setViewHolderValues(holder, song)
+
         holder.mSubtitle2.text = song.albumName
     }
 

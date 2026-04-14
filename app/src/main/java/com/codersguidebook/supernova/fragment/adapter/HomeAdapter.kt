@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.SongOptions
+import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.BaseDialogFragment
 import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolder
 import com.codersguidebook.supernova.utils.DimensionsHelper
@@ -38,13 +39,15 @@ open class HomeAdapter(private val activity: MainActivity): SongAdapter(activity
         holder as ViewHolderHome
         holder.itemView.rootView.layoutParams.width = DimensionsHelper.convertToDp(activity, 100f)
 
-        val current = songs[position]
+        setViewHolderValues(holder, songs[position])
+    }
 
-        ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId,
+    protected fun setViewHolderValues(holder: ViewHolderHome, song: Song) {
+        ImageHandlingHelper.loadImageByAlbumId(activity.application, song.albumId,
             holder.mArtwork
         )
 
-        holder.mTitle.text = current.title ?: activity.getString(R.string.default_title)
-        holder.mSubtitle.text = current.artist ?: activity.getString(R.string.default_artist)
+        holder.mTitle.text = song.title ?: activity.getString(R.string.default_title)
+        holder.mSubtitle.text = song.artist ?: activity.getString(R.string.default_artist)
     }
 }
