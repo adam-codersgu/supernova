@@ -18,7 +18,7 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
 
     private val songIdsAndPlays = hashMapOf<Long, Int>()
 
-    inner class ViewHolderMostPlayedSong(itemView: View) : ViewHolderSong(itemView) {
+    inner class ViewHolderMostPlayedSong(itemView: View) : ViewHolderHome(itemView) {
 
         internal var mPlays: TextView = itemView.findViewById(R.id.plays)
     }

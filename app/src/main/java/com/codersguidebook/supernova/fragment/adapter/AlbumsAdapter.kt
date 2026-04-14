@@ -30,7 +30,7 @@ class AlbumsAdapter(private val activity: MainActivity): SongAdapter(activity),
 
         override fun rootViewAction() {
             val action = AlbumsFragmentDirections.actionSelectAlbum(songs[layoutPosition].albumId)
-            itemView.rootView.findNavController().navigate(action)
+            itemView.findNavController().navigate(action)
         }
 
         override fun getOptionsDialog(): BaseDialogFragment {

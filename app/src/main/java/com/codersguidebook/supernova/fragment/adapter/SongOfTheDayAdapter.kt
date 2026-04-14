@@ -7,9 +7,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.utils.ImageHandlingHelper
 
-class SongOfTheDayAdapter(private val activity: MainActivity): SongAdapter(activity) {
+class SongOfTheDayAdapter(activity: MainActivity): HomeAdapter(activity) {
 
     companion object {
         const val NO_CONTENT = 1
@@ -18,9 +17,9 @@ class SongOfTheDayAdapter(private val activity: MainActivity): SongAdapter(activ
 
     inner class ViewHolderNoContent(itemView: View) : RecyclerView.ViewHolder(itemView)
 
-    inner class ViewHolderSong(itemView: View) : SongAdapter.ViewHolderSong(itemView) {
+    inner class ViewHolderSong(itemView: View) : ViewHolderHome(itemView) {
 
-        internal var mAlbum = itemView.findViewById<View>(R.id.subtitle2) as TextView
+        internal var mSubtitle2 = itemView.findViewById<View>(R.id.subtitle2) as TextView
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -37,14 +36,13 @@ class SongOfTheDayAdapter(private val activity: MainActivity): SongAdapter(activ
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         if (holder is ViewHolderNoContent) return
+
+        super.onBindViewHolder(holder, position)
+
         holder as ViewHolderSong
 
         val song = songs[position]
-
-        ImageHandlingHelper.loadImageByAlbumId(activity.application, song.albumId, holder.mArtwork!!)
-        holder.mTitle.text = song.title
-        holder.mSubtitle.text = song.artist
-        holder.mAlbum.text = song.albumName
+        holder.mSubtitle2.text = song.albumName
     }
 
     override fun getItemCount(): Int {

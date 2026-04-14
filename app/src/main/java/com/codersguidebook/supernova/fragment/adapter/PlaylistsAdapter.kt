@@ -27,7 +27,7 @@ class PlaylistsAdapter(private val activity: MainActivity): RecyclerView.Adapter
 
         override fun rootViewAction() {
             val action = PlaylistsFragmentDirections.actionSelectPlaylist(playlists[layoutPosition].name)
-            itemView.rootView.findNavController().navigate(action)
+            itemView.findNavController().navigate(action)
         }
 
         override fun getOptionsDialog(): BaseDialogFragment {
