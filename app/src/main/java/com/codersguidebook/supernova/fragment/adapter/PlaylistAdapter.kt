@@ -7,8 +7,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
-import android.widget.GridLayout
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.isGone
@@ -21,7 +19,7 @@ import com.codersguidebook.supernova.dialogs.PlaylistSongOptions
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.BaseDialogFragment
-import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderHeader
+import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderHeaderArtworkGrid
 import com.codersguidebook.supernova.ui.playlist.PlaylistFragment
 import com.codersguidebook.supernova.utils.DimensionsHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
@@ -33,15 +31,6 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
     var showHandles = false
     var playlist: Playlist? = null
     private val songIdsAndPlays = hashMapOf<Long, Int>()
-
-    inner class ViewHolderPlaylistHeader(itemView: View) : ViewHolderHeader(itemView) {
-
-        internal var mArtworkGrid: GridLayout = itemView.findViewById(R.id.imageGrid)
-        internal var mArtwork1: ImageView = itemView.findViewById(R.id.artwork1)
-        internal var mArtwork2: ImageView = itemView.findViewById(R.id.artwork2)
-        internal var mArtwork3: ImageView = itemView.findViewById(R.id.artwork3)
-        internal var mArtwork4: ImageView = itemView.findViewById(R.id.artwork4)
-    }
 
     inner class ViewHolderSongWithHandle(itemView: View) : ViewHolderSong(itemView) {
 
@@ -66,7 +55,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        return if (viewType == HEADER) ViewHolderPlaylistHeader(
+        return if (viewType == HEADER) ViewHolderHeaderArtworkGrid(
             LayoutInflater.from(parent.context).inflate(R.layout.header, parent, false)
         ) else ViewHolderSongWithHandle(
             LayoutInflater.from(parent.context).inflate(R.layout.playlist_song, parent, false)
@@ -77,7 +66,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder.itemViewType) {
             HEADER -> {
-                holder as ViewHolderPlaylistHeader
+                holder as ViewHolderHeaderArtworkGrid
 
                 holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.preview_background))
 
@@ -130,20 +119,21 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                     params.marginStart = DimensionsHelper.convertToDp(activity, 13f)
                     Glide.with(fragment)
                         .load(R.drawable.ic_drag_handle)
-                        .into(holder.mArtwork!!)
-                    holder.mArtwork?.setOnTouchListener { _, event ->
+                        .into(holder.mArtwork)
+                    holder.mArtwork.setOnTouchListener { _, event ->
                         if (event.actionMasked == MotionEvent.ACTION_DOWN) fragment.startDragging(holder)
                         return@setOnTouchListener true
                     }
                 } else {
                     params.width = activity.resources.getDimension(R.dimen.artwork_preview_width).toInt()
                     params.marginStart = 0
-                    holder.mArtwork?.clearColorFilter()
-                    holder.mArtwork?.setOnTouchListener { _, _ -> return@setOnTouchListener false }
+                    holder.mArtwork.clearColorFilter()
+                    holder.mArtwork.setOnTouchListener { _, _ -> return@setOnTouchListener false }
                     ImageHandlingHelper.loadImageByAlbumId(activity.application,
-                        current.albumId, holder.mArtwork!!)
+                        current.albumId, holder.mArtwork
+                    )
                 }
-                holder.mArtwork!!.layoutParams = params
+                holder.mArtwork.layoutParams = params
 
                 holder.mTitle.text = current.title ?: activity.getString(R.string.default_title)
                 holder.mSubtitle.text = current.artist ?: activity.getString(R.string.default_artist)
@@ -168,7 +158,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                     holder.mTitle.setTextColor(primaryText)
                     holder.mSubtitle.setTextColor(secondaryText)
                     holder.mPlays.setTextColor(secondaryText)
-                    holder.mMenu?.setColorFilter(secondaryText)
+                    holder.mMenu.setColorFilter(secondaryText)
                 }
             }
         }

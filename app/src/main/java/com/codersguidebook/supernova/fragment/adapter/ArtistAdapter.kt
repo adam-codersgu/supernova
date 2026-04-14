@@ -3,9 +3,6 @@ package com.codersguidebook.supernova.fragment.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.GridLayout
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
@@ -15,6 +12,7 @@ import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.AlbumOptions
 import com.codersguidebook.supernova.fragment.BaseDialogFragment
+import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderHeaderArtworkGrid
 import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderWithMenu
 import com.codersguidebook.supernova.ui.artist.ArtistFragmentDirections
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
@@ -27,19 +25,6 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter(activity) {
         const val HEADER = 1
         const val ALL_SONGS = 2
         const val ALBUM = 3
-    }
-
-    inner class ViewHolderHeader(itemView: View) : RecyclerView.ViewHolder(itemView) {
-
-        internal var mArtwork = itemView.findViewById<View>(R.id.artwork) as ImageView
-        internal var mArtworkGrid: GridLayout = itemView.findViewById(R.id.imageGrid)
-        internal var mArtwork1 = itemView.findViewById<View>(R.id.artwork1) as ImageView
-        internal var mArtwork2 = itemView.findViewById<View>(R.id.artwork2) as ImageView
-        internal var mArtwork3 = itemView.findViewById<View>(R.id.artwork3) as ImageView
-        internal var mArtwork4 = itemView.findViewById<View>(R.id.artwork4) as ImageView
-        internal var mArtist = itemView.findViewById<View>(R.id.title) as TextView
-        internal var mAlbumCount = itemView.findViewById<View>(R.id.subtitle) as TextView
-        internal var mArtistPlays = itemView.findViewById<View>(R.id.subtitle2) as TextView
     }
 
     inner class ViewHolderAllSongs(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -80,7 +65,7 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter(activity) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
-            HEADER -> ViewHolderHeader(
+            HEADER -> ViewHolderHeaderArtworkGrid(
                 LayoutInflater.from(parent.context).inflate(R.layout.header, parent, false)
             )
             ALL_SONGS -> ViewHolderAllSongs(
@@ -95,7 +80,7 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter(activity) {
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder.itemViewType) {
             HEADER -> {
-                holder as ViewHolderHeader
+                holder as ViewHolderHeaderArtworkGrid
 
                 holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.preview_background))
 
@@ -124,14 +109,14 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter(activity) {
                 }
 
                 if (songs.isNotEmpty()){
-                    holder.mArtist.text = songs[0].artist ?: activity.getString(R.string.default_artist)
-                    holder.mAlbumCount.text = if (songs.size == 1) {
+                    holder.mTitle.text = songs[0].artist ?: activity.getString(R.string.default_artist)
+                    holder.mSubtitle.text = if (songs.size == 1) {
                         activity.getString(R.string.one_album)
                     } else {
                         activity.getString(R.string.n_albums, songs.size)
                     }
 
-                    holder.mArtistPlays.text = if (plays == 1) {
+                    holder.mSubtitle2.text = if (plays == 1) {
                         activity.getString(R.string.played_one_time)
                     } else {
                         activity.getString(R.string.played_n_times, plays)

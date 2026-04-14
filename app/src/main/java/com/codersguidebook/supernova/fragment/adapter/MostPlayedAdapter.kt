@@ -32,7 +32,9 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
         holder as ViewHolderMostPlayedSong
         val current = songs[position]
 
-        ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId, holder.mArtwork!!)
+        ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId,
+            holder.mArtwork
+        )
 
         holder.mTitle.text = current.title ?: activity.getString(R.string.default_title)
         holder.mSubtitle.text = current.artist ?: activity.getString(R.string.default_artist)
