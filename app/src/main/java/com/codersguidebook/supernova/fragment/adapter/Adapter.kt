@@ -20,6 +20,7 @@ abstract class Adapter: Adapter<ViewHolder>() {
 
     fun processNewItems(newItems: List<Any>) {
         for ((index, item) in newItems.withIndex()) {
+            val recyclerViewIndex = getRecyclerViewIndex(index)
             when {
                 items.isEmpty() -> {
                     items.addAll(newItems)
@@ -27,30 +28,28 @@ abstract class Adapter: Adapter<ViewHolder>() {
                 }
                 index >= items.size -> {
                     items.add(item)
-                    notifyItemInserted(index)
+                    notifyItemInserted(recyclerViewIndex)
                 }
                 itemsNotEqual(item, index) -> {
                     if (itemDoesNotExist(item)) {
                         items.add(index, item)
-                        notifyItemInserted(index)
-                        continue
+                        notifyItemInserted(recyclerViewIndex)
                     } else {
-                        var numberOfItemsRemoved = 0
-                        do {
+                        val oldIndex = findItemIndex(item)
+                        if (oldIndex != -1) {
+                            items.removeAt(oldIndex)
+                            items.add(index, item)
+                            notifyItemMoved(recyclerViewIndex, getRecyclerViewIndex(index))
+                        } else {
                             items.removeAt(index)
-                            ++numberOfItemsRemoved
-                        } while (index < items.size && itemsNotEqual(item, index))
-
-                        when {
-                            numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
-                            numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index,
-                                numberOfItemsRemoved)
+                            items.add(index, item)
+                            notifyItemChanged(recyclerViewIndex, getRecyclerViewIndex(index))
                         }
                     }
                 }
                 itemShouldBeUpdated(item, index) -> {
                     items[index] = item
-                    notifyItemChanged(index)
+                    notifyItemChanged(recyclerViewIndex)
                 }
             }
         }
@@ -64,13 +63,18 @@ abstract class Adapter: Adapter<ViewHolder>() {
                     items.removeAt(items.size - 1)
                 }
             }
-            notifyItemRangeRemoved(newItems.size, numberItemsToRemove)
+
+            if (numberItemsToRemove == 1) {
+                notifyItemRemoved(getRecyclerViewIndex(newItems.size))
+            } else {
+                notifyItemRangeRemoved(getRecyclerViewIndex(newItems.size), numberItemsToRemove)
+            }
         }
     }
 
-    abstract fun itemsEqual(item: Any, index: Int): Boolean
-
-    abstract fun findItem(item: Any): Any?
+    private fun itemsEqual(item: Any, index: Int): Boolean {
+        return itemsEqual(item, items[index])
+    }
 
     open fun itemShouldBeUpdated(item: Any, index: Int): Boolean {
         return false
@@ -83,4 +87,10 @@ abstract class Adapter: Adapter<ViewHolder>() {
     private fun itemsNotEqual(item: Any, index: Int): Boolean {
         return !itemsEqual(item, index)
     }
+
+    abstract fun itemsEqual(item1: Any, item2: Any): Boolean
+
+    abstract fun findItem(item: Any): Any?
+
+    abstract fun findItemIndex(item: Any): Int
 }
