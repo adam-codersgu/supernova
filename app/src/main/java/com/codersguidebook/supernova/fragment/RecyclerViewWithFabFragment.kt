@@ -60,7 +60,7 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
             mainActivity.playNewPlayQueue(songs, shuffle = true)
         }
 
-        adapter.processNewSongs(songs)
+        adapter.processNewItems(songs)
 
         finishUpdate()
     }

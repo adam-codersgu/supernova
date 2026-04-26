@@ -94,7 +94,7 @@ class SearchFragment : BaseRecyclerViewFragment() {
 
                     lifecycleScope.launch(Dispatchers.Main) {
                         if (songs.isEmpty()) binding.noResults.isVisible = true
-                        adapter.processNewSongs(songs)
+                        adapter.processNewItems(songs)
                     }
                 }
             }

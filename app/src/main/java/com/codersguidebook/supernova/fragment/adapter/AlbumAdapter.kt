@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.SongOptions
+import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.BaseDialogFragment
 import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderHeader
 import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderWithMenu
@@ -48,12 +49,13 @@ class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(ac
             return activity
         }
 
+        @Suppress("UNCHECKED_CAST")
         override fun rootViewAction() {
-            activity.playNewPlayQueue(songs, layoutPosition - 1)
+            activity.playNewPlayQueue((items as List<Song>), layoutPosition - 1)
         }
 
         override fun getOptionsDialog(): BaseDialogFragment {
-            return SongOptions(songs[layoutPosition - 1])
+            return SongOptions((items[layoutPosition - 1] as Song))
         }
     }
 
@@ -113,8 +115,9 @@ class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(ac
         return false
     }
 
-    override fun removeSong(index: Int) {
+    fun removeItem(index: Int) {
         val discNumberShouldBeDisplayed = shouldDisplayDiscNumber(index)
+        // FIXME - OVERRIDE UPDATE ITEMS AND INCLUDE A CHECK AFTERWARDS TO RELOAD DISC NUMBERS?
         super.removeSong(index)
         if (discNumberShouldBeDisplayed) {
             notifyItemChanged(index)

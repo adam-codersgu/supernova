@@ -68,7 +68,7 @@ class ArtistFragment : RecyclerViewFragment() {
             adapter.songs.addAll(songsByAlbumByYear)
             adapter.notifyItemRangeInserted(0, adapter.getRecyclerViewIndex(songsByAlbumByYear.size))
         } else {
-            adapter.processNewSongs(songsByAlbumByYear)
+            adapter.processNewItems(songsByAlbumByYear)
         }
 
         if (songs.isNotEmpty()) {

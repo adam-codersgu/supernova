@@ -8,7 +8,6 @@ import com.codersguidebook.supernova.fragment.BaseDialogFragment
 import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderArtworkWithMenu
 
 abstract class SongAdapter(private val activity: MainActivity): Adapter() {
-    val songs = mutableListOf<Song>()
 
     open inner class ViewHolderSong(itemView: View) : ViewHolderArtworkWithMenu(itemView) {
 
@@ -16,16 +15,17 @@ abstract class SongAdapter(private val activity: MainActivity): Adapter() {
             return activity
         }
 
+        @Suppress("UNCHECKED_CAST")
         override fun rootViewAction() {
-            activity.playNewPlayQueue(songs, layoutPosition)
+            activity.playNewPlayQueue((items as List<Song>), layoutPosition)
         }
 
         override fun getOptionsDialog(): BaseDialogFragment {
-            return SongOptions(songs[layoutPosition])
+            return SongOptions((items[layoutPosition] as Song))
         }
     }
 
-    override fun getItemCount() = songs.size
+    override fun getItemCount() = items.size
 
     override fun itemsEqual(item1: Any, item2: Any): Boolean {
         return (item1 as Song).songId == (item2 as Song).songId

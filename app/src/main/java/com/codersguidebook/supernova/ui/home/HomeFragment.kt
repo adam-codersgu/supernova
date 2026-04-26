@@ -184,12 +184,8 @@ class HomeFragment : BaseFragment() {
 
         val songPlays = musicLibraryViewModel.getSongPlaysBySongIdsAndTimeframe(songs.map { it.songId })
 
-        if (mostPlayedAdapter.songs.isEmpty()) {
-            mostPlayedAdapter.addNewListOfSongs(songs, songPlays)
-        } else {
-            mostPlayedAdapter.processNewSongs(songs)
-            mostPlayedAdapter.refreshSongPlays(songPlays)
-        }
+        mostPlayedAdapter.processNewItems(songs)
+        mostPlayedAdapter.refreshSongPlays(songPlays)
     }
 
     private fun processPlaylist(playlist: Playlist, adapter: SongAdapter, layout: RelativeLayout)
@@ -207,7 +203,7 @@ class HomeFragment : BaseFragment() {
             }
             adapter.notifyItemRangeInserted(0, songs.size)
         } else {
-            adapter.processNewSongs(songs)
+            adapter.processNewItems(songs)
             if (songs.isNotEmpty()) {
                 when (playlist.name) {
                     getString(R.string.song_day) -> {
