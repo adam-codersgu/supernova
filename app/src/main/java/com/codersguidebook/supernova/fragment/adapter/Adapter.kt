@@ -76,10 +76,6 @@ abstract class Adapter: Adapter<ViewHolder>() {
         return itemsEqual(item, items[index])
     }
 
-    open fun itemShouldBeUpdated(item: Any, index: Int): Boolean {
-        return false
-    }
-
     private fun itemDoesNotExist(item: Any): Boolean {
         return findItem(item) == null
     }
@@ -88,9 +84,21 @@ abstract class Adapter: Adapter<ViewHolder>() {
         return !itemsEqual(item, index)
     }
 
+    private fun findItem(item: Any): Any? {
+        return items.find {
+            i -> itemsEqual(i, item)
+        }
+    }
+
+    private fun findItemIndex(item: Any): Int {
+        return items.indexOfFirst {
+            i -> itemsEqual(i, item)
+        }
+    }
+
     abstract fun itemsEqual(item1: Any, item2: Any): Boolean
 
-    abstract fun findItem(item: Any): Any?
-
-    abstract fun findItemIndex(item: Any): Int
+    open fun itemShouldBeUpdated(item: Any, index: Int): Boolean {
+        return false
+    }
 }

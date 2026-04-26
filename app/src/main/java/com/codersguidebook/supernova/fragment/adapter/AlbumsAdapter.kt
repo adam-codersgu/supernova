@@ -67,11 +67,6 @@ class AlbumsAdapter(private val activity: MainActivity): SongAdapter(activity),
             song.albumName?.uppercase()
         }.toMutableList()
 
-        if (songs.isEmpty()) {
-            songs.addAll(songsByAlbum)
-            notifyItemRangeInserted(0, songsByAlbum.size)
-        } else {
-            processNewSongs(songsByAlbum)
-        }
+        processNewItems(songsByAlbum)
     }
 }

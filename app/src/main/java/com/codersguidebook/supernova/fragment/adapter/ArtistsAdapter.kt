@@ -56,20 +56,8 @@ class ArtistsAdapter(private val activity: MainActivity): Adapter(),
 
     override fun getItemCount() = items.size
 
-    override fun itemsEqual(item: Any, index: Int): Boolean {
-        return (item as Artist).artistName == (items[index] as Artist).artistName
-    }
-
-    override fun findItem(item: Any): Any? {
-        return items.find {
-            (it as Artist).artistName == (item as Artist).artistName
-        }
-    }
-
-    override fun findItemIndex(item: Any): Int {
-        return items.indexOfFirst {
-            (it as Artist).artistName == (item as Artist).artistName
-        }
+    override fun itemsEqual(item1: Any, item2: Any): Boolean {
+        return (item1 as Artist).artistName == (item2 as Artist).artistName
     }
 
     override fun itemShouldBeUpdated(item: Any, index: Int): Boolean {

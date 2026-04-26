@@ -154,6 +154,8 @@ class SearchAdapter(private val activity: MainActivity): SongAdapter(activity) {
         notifyItemRangeRemoved(0, itemCount)
     }
 
+    // FIXME HAVE MULTIPLE INNER CLASSES EXTENDING ADAPTER FOR EACH SEARCH CATEGORY TYPE??
+
     /**
      * Handle updates to the content of the RecyclerView. The below method will determine what
      * changes are required when an element/elements is/are changed, inserted, or deleted.

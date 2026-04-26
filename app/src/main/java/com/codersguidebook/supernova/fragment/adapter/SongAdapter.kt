@@ -3,7 +3,6 @@ package com.codersguidebook.supernova.fragment.adapter
 import android.view.View
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.dialogs.SongOptions
-import com.codersguidebook.supernova.entities.Artist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.BaseDialogFragment
 import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderArtworkWithMenu
@@ -28,25 +27,8 @@ abstract class SongAdapter(private val activity: MainActivity): Adapter() {
 
     override fun getItemCount() = songs.size
 
-    open fun removeSong(index: Int) {
-        songs.removeAt(index)
-    }
-
-    override fun itemsEqual(item: Any, index: Int): Boolean {
-        return (item as Song).songId == (items[index] as Song).songId
-    }
-
-    override fun findItem(item: Any): Any? {
-        val what = (Any as Song).songId == (item as Song).songId
-        return items.find {
-            (it as Song).songId == (item as Song).songId
-        }
-    }
-
-    override fun findItemIndex(item: Any): Int {
-        return items.indexOfFirst {
-            (it as Song).songId == (item as Song).songId
-        }
+    override fun itemsEqual(item1: Any, item2: Any): Boolean {
+        return (item1 as Song).songId == (item2 as Song).songId
     }
 
     override fun itemShouldBeUpdated(item: Any, index: Int): Boolean {
