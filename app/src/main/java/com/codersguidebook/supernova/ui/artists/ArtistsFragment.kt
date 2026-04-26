@@ -35,12 +35,7 @@ class ArtistsFragment : RecyclerViewWithScrollFragment() {
             artist.artistName?.uppercase()
         }.toMutableList()
 
-        if (adapter.artists.isEmpty()) {
-            adapter.artists.addAll(sortedArtists)
-            adapter.notifyItemRangeInserted(0, sortedArtists.size)
-        } else {
-            adapter.processNewArtists(sortedArtists)
-        }
+        adapter.processNewItems(sortedArtists)
 
         finishUpdate()
     }
