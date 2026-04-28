@@ -19,7 +19,7 @@ class AlbumsAdapter(private val activity: MainActivity): SongAdapter(activity),
     RecyclerViewScrollbar.ValueLabelListener {
 
     override fun getValueLabelText(position: Int): String {
-        return songs[position].albumName?.get(0)?.uppercase() ?: ""
+        return (items[position] as Song).albumName?.get(0)?.uppercase() ?: ""
     }
 
     inner class ViewHolderAlbum(itemView: View) : ViewHolderArtworkWithMenu(itemView) {
@@ -29,12 +29,12 @@ class AlbumsAdapter(private val activity: MainActivity): SongAdapter(activity),
         }
 
         override fun rootViewAction() {
-            val action = AlbumsFragmentDirections.actionSelectAlbum(songs[layoutPosition].albumId)
+            val action = AlbumsFragmentDirections.actionSelectAlbum((items[layoutPosition] as Song).albumId)
             itemView.findNavController().navigate(action)
         }
 
         override fun getOptionsDialog(): BaseDialogFragment {
-            return AlbumOptions(songs[layoutPosition].albumId)
+            return AlbumOptions((items[layoutPosition] as Song).albumId)
         }
     }
 
@@ -46,7 +46,7 @@ class AlbumsAdapter(private val activity: MainActivity): SongAdapter(activity),
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         holder as ViewHolderAlbum
-        val current = songs[position]
+        val current = items[position] as Song
 
         ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId, holder.mArtwork)
 

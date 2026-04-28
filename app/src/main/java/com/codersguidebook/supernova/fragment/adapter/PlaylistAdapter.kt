@@ -45,12 +45,13 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
             }
         }
 
+        @Suppress("UNCHECKED_CAST")
         override fun rootViewAction() {
-            activity.playNewPlayQueue(songs, layoutPosition - 1)
+            activity.playNewPlayQueue((items as List<Song>), layoutPosition - 1)
         }
 
         override fun getOptionsDialog(): BaseDialogFragment {
-            return PlaylistSongOptions(songs[layoutPosition - 1], layoutPosition - 1, playlist!!)
+            return PlaylistSongOptions((items[layoutPosition - 1] as Song), layoutPosition - 1, playlist!!)
         }
     }
 
@@ -72,7 +73,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
 
                 if (!ImageHandlingHelper.loadImageByPlaylist(activity.application,
                         playlist ?: return, holder.mArtwork)) {
-                    val albumIds = songs.map { it.albumId }.distinct().shuffled()
+                    val albumIds = items.map { (it as Song).albumId }.distinct().shuffled()
 
                     when {
                         albumIds.size > 1 -> {
@@ -87,7 +88,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                             if (albumIds.size > 3)  ImageHandlingHelper.loadImageByAlbumId(activity.application,
                                 albumIds[3], holder.mArtwork4)
                         }
-                        songs.isNotEmpty() -> {
+                        items.isNotEmpty() -> {
                             holder.mArtwork.isVisible = true
                             holder.mArtworkGrid.isGone = true
                             ImageHandlingHelper.loadImageByAlbumId(activity.application,
@@ -96,19 +97,19 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                     }
                 }
 
-                if (songs.isNotEmpty()){
+                if (items.isNotEmpty()){
                     holder.mTitle.text = playlist?.name
-                    holder.mSubtitle2.text = if (songs.size == 1) {
+                    holder.mSubtitle2.text = if (items.size == 1) {
                         activity.getString(R.string.displayed_song)
                     } else {
-                        activity.getString(R.string.displayed_songs, songs.size)
+                        activity.getString(R.string.displayed_songs, items.size)
                     }
                     holder.mSubtitle.isGone = true
                 }
             }
             SONG -> {
                 holder as ViewHolderSongWithHandle
-                val current = songs[position -1]
+                val current = items[position - 1] as Song
 
                 val params = holder.mArtwork.layoutParams as MarginLayoutParams
                 val onSurfaceColour = MaterialColors.getColor(activity, com.google.android.material.R.attr.colorOnSurface, Color.LTGRAY)
@@ -166,50 +167,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
 
     internal fun manageHandles(applyHandles: Boolean){
         this.showHandles = applyHandles
-        notifyItemRangeChanged(1, songs.size)
-    }
-
-    /**
-     * Handle updates to the content of the RecyclerView. The below method will determine what
-     * changes are required when an element/elements is/are changed, inserted, or deleted.
-     * N.B. Playlist adapter uses a different update methodology to other areas of the app
-     * because only the Playlist adapter may potentially have to handle duplicate identical
-     * versions of the same song. For this reason, handling element moves is not feasible
-     * as each element could appear more than once with no distinguishing characteristics.
-     *
-     * @param index The index of the current iteration through the up-to-date content list.
-     * @param song The Song object that should be displayed at the index.
-     */
-    fun processLoopIteration(index: Int, song: Song) {
-        val recyclerViewIndex = getRecyclerViewIndex(index)
-        when {
-            index >= songs.size -> {
-                songs.add(song)
-                notifyItemInserted(recyclerViewIndex)
-            }
-            song.songId != songs[index].songId -> {
-                var numberOfItemsRemoved = 0
-                do {
-                    songs.removeAt(index)
-                    ++numberOfItemsRemoved
-                } while (index < songs.size &&
-                    song.songId != songs[index].songId)
-
-                notifyItemRangeRemoved(recyclerViewIndex, numberOfItemsRemoved)
-
-                // Update the colours of the top 3 most played songs, if appropriate
-                if (playlist?.name == activity.getString(R.string.most_played) && index < 3) {
-                    val maxItemCount = min(songs.size, 3)
-                    notifyItemRangeChanged(index, maxItemCount - index)
-                }
-
-                processLoopIteration(index, song)
-            }
-            song != songs[index] -> {
-                songs[index] = song
-                notifyItemChanged(recyclerViewIndex)
-            }
-        }
+        notifyItemRangeChanged(1, items.size)
     }
 
     fun refreshSongPlays(newSongPlays: Map<Long, Int>) {
@@ -224,7 +182,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
 
         val songIndicesToRefresh = mutableListOf<Int>()
         for (songId in songIdsToRefresh) {
-            songIndicesToRefresh.add(songs.indexOfFirst { it.songId == songId })
+            songIndicesToRefresh.add(items.indexOfFirst { (it as Song).songId == songId })
         }
         songIndicesToRefresh.sort()
 
@@ -240,5 +198,10 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
     private fun loadSongPlays(songPlays: Map<Long, Int>) {
         songIdsAndPlays.clear()
         songIdsAndPlays.putAll(songPlays)
+    }
+
+    override fun itemChangedCallback(index: Int) {
+        val maxItemCount = min(items.size, 3)
+        notifyItemRangeChanged(index, maxItemCount - index)
     }
 }

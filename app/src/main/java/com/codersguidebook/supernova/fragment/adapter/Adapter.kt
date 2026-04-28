@@ -41,6 +41,8 @@ abstract class Adapter: Adapter<ViewHolder>() {
                             items.removeAt(oldIndex)
                             items.add(index, item)
                             notifyItemMoved(recyclerViewIndex, getRecyclerViewIndex(index))
+                            itemChangedCallback(recyclerViewIndex)
+                            itemChangedCallback(getRecyclerViewIndex(index))
                         } else {
                             items.removeAt(index)
                             items.add(index, item)
@@ -58,7 +60,8 @@ abstract class Adapter: Adapter<ViewHolder>() {
         if (items.size > newItems.size) {
             val numberItemsToRemove = items.size - newItems.size
             repeat(numberItemsToRemove) {
-                removeItem(items.size - 1)
+                items.removeAt(items.size - 1)
+                itemChangedCallback(items.size - 1)
             }
 
             if (numberItemsToRemove == 1) {
@@ -95,12 +98,10 @@ abstract class Adapter: Adapter<ViewHolder>() {
 
     abstract fun itemsEqual(item1: Any, item2: Any): Boolean
 
+    open fun itemChangedCallback(index: Int) {}
+
     open fun itemShouldBeUpdated(item: Any, index: Int): Boolean {
         return false
-    }
-
-    open fun removeItem(index: Int) {
-        items.removeAt(index)
     }
 
     override fun getItemCount() = items.size

@@ -116,9 +116,8 @@ class AlbumAdapter(private val activity: MainActivity): SongWithHeaderAdapter(ac
         return false
     }
 
-    override fun removeItem(index: Int) {
+    override fun itemChangedCallback(index: Int) {
         val discNumberShouldBeDisplayed = shouldDisplayDiscNumber(index)
-        super.removeItem(index)
         if (discNumberShouldBeDisplayed) {
             notifyItemChanged(index)
         }
