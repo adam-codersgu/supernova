@@ -1,6 +1,5 @@
 package com.codersguidebook.supernova.fragment.adapter
 
-import android.os.Build
 import androidx.recyclerview.widget.RecyclerView.Adapter
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 
@@ -57,11 +56,7 @@ abstract class Adapter: Adapter<ViewHolder>() {
         if (items.size > newItems.size) {
             val numberItemsToRemove = items.size - newItems.size
             repeat(numberItemsToRemove) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-                    items.removeLast()
-                } else {
-                    items.removeAt(items.size - 1)
-                }
+                removeItem(items.size - 1)
             }
 
             if (numberItemsToRemove == 1) {
@@ -100,5 +95,9 @@ abstract class Adapter: Adapter<ViewHolder>() {
 
     open fun itemShouldBeUpdated(item: Any, index: Int): Boolean {
         return false
+    }
+
+    open fun removeItem(index: Int) {
+        items.removeAt(index)
     }
 }
