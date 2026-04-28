@@ -47,7 +47,7 @@
     </RelativeLayout>
 
     <ImageButton
-        android:id="@+id/buttonPlayQueueMenu"
+        android:id="@+id/menu"
         android:layout_width="25dp"
         android:layout_height="25dp"
         android:src="@drawable/ic_more"

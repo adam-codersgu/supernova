@@ -18,6 +18,8 @@ abstract class Adapter: Adapter<ViewHolder>() {
     open fun getRecyclerViewIndex(index: Int): Int = index
 
     fun processNewItems(newItems: List<Any>) {
+        if (items == newItems) return
+
         for ((index, item) in newItems.withIndex()) {
             val recyclerViewIndex = getRecyclerViewIndex(index)
             when {
@@ -100,4 +102,6 @@ abstract class Adapter: Adapter<ViewHolder>() {
     open fun removeItem(index: Int) {
         items.removeAt(index)
     }
+
+    override fun getItemCount() = items.size
 }

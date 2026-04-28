@@ -25,8 +25,6 @@ abstract class SongAdapter(private val activity: MainActivity): Adapter() {
         }
     }
 
-    override fun getItemCount() = items.size
-
     override fun itemsEqual(item1: Any, item2: Any): Boolean {
         return (item1 as Song).songId == (item2 as Song).songId
     }
