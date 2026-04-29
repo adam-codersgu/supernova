@@ -30,7 +30,7 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         holder as ViewHolderMostPlayedSong
-        val current = songs[position]
+        val current = items[position] as Song
 
         ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId,
             holder.mArtwork
@@ -59,18 +59,6 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
         }
     }
 
-    fun addNewListOfSongs(newSongs: List<Song>, songPlays: Map<Long, Int>) {
-        if (songs.isNotEmpty()) {
-            val songsQty = songs.size
-            songs.clear()
-            notifyItemRangeRemoved(0, songsQty)
-        }
-
-        songs.addAll(newSongs)
-        loadSongPlays(songPlays)
-        notifyItemRangeInserted(0, songs.size)
-    }
-
     fun refreshSongPlays(newSongPlays: Map<Long, Int>) {
         val songIdsToRefresh = mutableListOf<Long>()
         for ((songId, qtyOfPlays) in newSongPlays) {
@@ -85,7 +73,7 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
 
         val songIndicesToRefresh = mutableListOf<Int>()
         for (songId in songIdsToRefresh) {
-            songIndicesToRefresh.add(songs.indexOfFirst { it.songId == songId })
+            songIndicesToRefresh.add(items.indexOfFirst { (it as Song).songId == songId })
         }
         songIndicesToRefresh.sort()
 

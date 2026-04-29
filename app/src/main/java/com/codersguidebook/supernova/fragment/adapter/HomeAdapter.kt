@@ -21,12 +21,13 @@ open class HomeAdapter(private val activity: MainActivity): SongAdapter(activity
             return activity
         }
 
+        @Suppress("UNCHECKED_CAST")
         override fun rootViewAction() {
-            activity.playNewPlayQueue(songs, layoutPosition)
+            activity.playNewPlayQueue((items as List<Song>), layoutPosition)
         }
 
         override fun getOptionsDialog(): BaseDialogFragment {
-            return SongOptions(songs[layoutPosition])
+            return SongOptions((items[layoutPosition] as Song))
         }
     }
 
@@ -39,7 +40,7 @@ open class HomeAdapter(private val activity: MainActivity): SongAdapter(activity
         holder as ViewHolderHome
         holder.itemView.rootView.layoutParams.width = DimensionsHelper.convertToDp(activity, 100f)
 
-        setViewHolderValues(holder, songs[position])
+        setViewHolderValues(holder, (items[position] as Song))
     }
 
     protected fun setViewHolderValues(holder: ViewHolderHome, song: Song) {
