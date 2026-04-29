@@ -54,8 +54,6 @@ class ArtistsAdapter(private val activity: MainActivity): Adapter(),
         else activity.getString(R.string.displayed_songs, songCountInt)
     }
 
-    override fun getItemCount() = items.size
-
     override fun itemsEqual(item1: Any, item2: Any): Boolean {
         return (item1 as Artist).artistName == (item2 as Artist).artistName
     }

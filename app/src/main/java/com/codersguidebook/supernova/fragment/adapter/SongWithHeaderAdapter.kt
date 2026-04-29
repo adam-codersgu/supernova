@@ -27,7 +27,7 @@ abstract class SongWithHeaderAdapter(activity: MainActivity): SongAdapter(activi
         )
     }
 
-    override fun getItemCount() = songs.size + 1
+    override fun getItemCount() = items.size + 1
 
     override fun getRecyclerViewIndex(index: Int): Int = index + 1
 }

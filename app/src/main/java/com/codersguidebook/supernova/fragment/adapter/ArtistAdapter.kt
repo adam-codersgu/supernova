@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.AlbumOptions
+import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.BaseDialogFragment
 import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderHeaderArtworkGrid
 import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderArtworkWithMenu
@@ -31,9 +32,9 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter(activity) {
         init {
             itemView.isClickable = true
             itemView.setOnClickListener {
-                if (songs.isEmpty()) return@setOnClickListener
+                if (items.isEmpty()) return@setOnClickListener
                 val action = ArtistFragmentDirections.actionSelectArtistSongs(
-                    songs[0].artist ?: activity.getString(R.string.default_artist))
+                    (items[0] as Song).artist ?: activity.getString(R.string.default_artist))
                 it.findNavController().navigate(action)
             }
         }
@@ -46,12 +47,12 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter(activity) {
         }
 
         override fun rootViewAction() {
-            val action = ArtistFragmentDirections.actionSelectAlbum(songs[layoutPosition - 2].albumId)
+            val action = ArtistFragmentDirections.actionSelectAlbum((items[layoutPosition - 2] as Song).albumId)
             itemView.findNavController().navigate(action)
         }
 
         override fun getOptionsDialog(): BaseDialogFragment {
-            return AlbumOptions(songs[layoutPosition - 2].albumId)
+            return AlbumOptions((items[layoutPosition - 2] as Song).albumId)
         }
     }
 
@@ -84,7 +85,7 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter(activity) {
 
                 holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.preview_background))
 
-                val albumIds = songs.map { it.albumId }
+                val albumIds = items.map { (it as Song).albumId }
 
                 when {
                     albumIds.size == 1 -> {
@@ -108,12 +109,12 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter(activity) {
                     }
                 }
 
-                if (songs.isNotEmpty()){
-                    holder.mTitle.text = songs[0].artist ?: activity.getString(R.string.default_artist)
-                    holder.mSubtitle.text = if (songs.size == 1) {
+                if (items.isNotEmpty()){
+                    holder.mTitle.text = (items[0] as Song).artist ?: activity.getString(R.string.default_artist)
+                    holder.mSubtitle.text = if (items.size == 1) {
                         activity.getString(R.string.one_album)
                     } else {
-                        activity.getString(R.string.n_albums, songs.size)
+                        activity.getString(R.string.n_albums, items.size)
                     }
 
                     holder.mSubtitle2.text = if (plays == 1) {
@@ -126,7 +127,7 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter(activity) {
             ALBUM -> {
                 holder as ViewHolderAlbum
 
-                val current = songs[position -2]
+                val current = items[position -2] as Song
 
                 ImageHandlingHelper.loadImageByAlbumId(activity.application,
                     current.albumId, holder.mArtwork)
@@ -137,7 +138,7 @@ class ArtistAdapter(private val activity: MainActivity): SongAdapter(activity) {
         }
     }
 
-    override fun getItemCount() = songs.size + 2
+    override fun getItemCount() = items.size + 2
 
     override fun getRecyclerViewIndex(index: Int): Int = index + 2
 }

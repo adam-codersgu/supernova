@@ -64,12 +64,7 @@ class ArtistFragment : RecyclerViewFragment() {
             song.year
         }.toMutableList()
 
-        if (adapter.songs.isEmpty()) {
-            adapter.songs.addAll(songsByAlbumByYear)
-            adapter.notifyItemRangeInserted(0, adapter.getRecyclerViewIndex(songsByAlbumByYear.size))
-        } else {
-            adapter.processNewItems(songsByAlbumByYear)
-        }
+        adapter.processNewItems(songsByAlbumByYear)
 
         if (songs.isNotEmpty()) {
             lifecycleScope.launch(Dispatchers.IO) {

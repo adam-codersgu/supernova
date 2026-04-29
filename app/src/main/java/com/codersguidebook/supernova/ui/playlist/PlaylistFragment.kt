@@ -1,6 +1,5 @@
 package com.codersguidebook.supernova.ui.playlist
 
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -48,7 +47,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
 
                     viewHolder.itemView.alpha = 1.0f
                     playlist?.let {
-                        val songIds = adapter.songs.map { song -> song.songId }
+                        val songIds = adapter.items.map { song -> (song as Song).songId }
                         musicLibraryViewModel.savePlaylistWithSongIds(it, songIds)
                     }
                 }
@@ -59,9 +58,9 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
                     val from = viewHolder.layoutPosition
                     val to = target.layoutPosition
                     if (from != to && from != 0 && to != 0) {
-                        val song = adapter.songs[from - 1]
-                        adapter.songs.removeAt(from - 1)
-                        adapter.songs.add(to - 1, song)
+                        val song = adapter.items[from - 1]
+                        adapter.items.removeAt(from - 1)
+                        adapter.items.add(to - 1, song)
                         adapter.notifyItemMoved(from, to)
                     }
 
@@ -121,26 +120,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
             loadSongPlays(songs)
         }
 
-        if (adapter.songs.isEmpty()) {
-            adapter.songs.addAll(songs)
-            adapter.notifyItemRangeInserted(0, songs.size)
-        } else {
-            for ((index, song) in songs.withIndex()) {
-                (adapter as PlaylistAdapter).processLoopIteration(index, song)
-            }
-
-            if (adapter.songs.size > songs.size) {
-                val numberItemsToRemove = adapter.songs.size - songs.size
-                repeat(numberItemsToRemove) { if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-                    adapter.songs.removeLast()
-                } else {
-                    adapter.songs.removeAt(adapter.songs.size - 1)
-                }
-                }
-                adapter.notifyItemRangeRemoved(
-                    adapter.getRecyclerViewIndex(songs.size), numberItemsToRemove)
-            }
-        }
+        adapter.processNewItems(songs)
 
         finishUpdate()
     }
