@@ -107,12 +107,7 @@ class SearchFragment : BaseRecyclerViewFragment() {
 
                     lifecycleScope.launch(Dispatchers.Main) {
                         if (songsByAlbum.isEmpty()) binding.noResults.isVisible = true
-                        if (adapter.albums.isEmpty()) {
-                            adapter.albums.addAll(songsByAlbum)
-                            adapter.notifyItemRangeInserted(0, songsByAlbum.size)
-                        } else {
-                            adapter.processNewAlbums(songsByAlbum)
-                        }
+                        adapter.processNewItems(songsByAlbum)
                     }
                 }
             }
@@ -122,12 +117,7 @@ class SearchFragment : BaseRecyclerViewFragment() {
 
                     lifecycleScope.launch(Dispatchers.Main) {
                         if (artists.isEmpty()) binding.noResults.isVisible = true
-                        if (adapter.artists.isEmpty()) {
-                            adapter.artists.addAll(artists)
-                            adapter.notifyItemRangeInserted(0, artists.size)
-                        } else {
-                            adapter.processNewArtists(artists)
-                        }
+                        adapter.processNewItems(artists)
                     }
                 }
             }
@@ -137,12 +127,7 @@ class SearchFragment : BaseRecyclerViewFragment() {
 
                     lifecycleScope.launch(Dispatchers.Main) {
                         if (playlists.isEmpty()) binding.noResults.isVisible = true
-                        if (adapter.playlists.isEmpty()) {
-                            adapter.playlists.addAll(playlists)
-                            adapter.notifyItemRangeInserted(0, playlists.size)
-                        } else {
-                            adapter.processNewPlaylists(playlists)
-                        }
+                        adapter.processNewItems(playlists)
                     }
                 }
             }
