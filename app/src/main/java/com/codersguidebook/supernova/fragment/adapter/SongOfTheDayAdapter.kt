@@ -7,6 +7,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
+import com.codersguidebook.supernova.entities.Song
+import kotlin.math.max
 
 class SongOfTheDayAdapter(activity: MainActivity): HomeAdapter(activity) {
 
@@ -23,7 +25,7 @@ class SongOfTheDayAdapter(activity: MainActivity): HomeAdapter(activity) {
     }
 
     override fun getItemViewType(position: Int): Int {
-        return if (position == 0 && songs.isEmpty()) NO_CONTENT
+        return if (position == 0 && items.isEmpty()) NO_CONTENT
         else SONG
     }
 
@@ -38,7 +40,7 @@ class SongOfTheDayAdapter(activity: MainActivity): HomeAdapter(activity) {
         if (holder is ViewHolderNoContent) return
         holder as ViewHolderSong
 
-        val song = songs[position]
+        val song = items[position] as Song
 
         setViewHolderValues(holder, song)
 
@@ -46,7 +48,6 @@ class SongOfTheDayAdapter(activity: MainActivity): HomeAdapter(activity) {
     }
 
     override fun getItemCount(): Int {
-        return if (songs.isEmpty()) 1
-        else songs.size
+        return max(1, items.size)
     }
 }
