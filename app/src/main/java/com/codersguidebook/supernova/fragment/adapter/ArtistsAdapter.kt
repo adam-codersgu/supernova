@@ -49,9 +49,9 @@ class ArtistsAdapter(private val activity: MainActivity): Adapter(),
 
         holder.mTitle.text = current.artistName ?: activity.getString(R.string.default_artist)
 
-        val songCountInt = current.songCount
-        holder.mSubtitle.text = if (songCountInt == 1) activity.getString(R.string.displayed_song)
-        else activity.getString(R.string.displayed_songs, songCountInt)
+        val songCount = current.songCount
+        holder.mSubtitle.text = if (songCount == 1) activity.getString(R.string.displayed_song)
+        else activity.getString(R.string.displayed_songs, songCount)
     }
 
     override fun itemsEqual(item1: Any, item2: Any): Boolean {

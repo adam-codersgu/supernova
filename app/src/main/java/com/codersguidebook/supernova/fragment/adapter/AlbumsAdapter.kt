@@ -53,20 +53,4 @@ class AlbumsAdapter(private val activity: MainActivity): SongAdapter(activity),
         holder.mTitle.text = current.albumName ?: activity.getString(R.string.default_album)
         holder.mSubtitle.text = current.artist ?: activity.getString(R.string.default_artist)
     }
-
-    /**
-     * Extract the list of unique of albums from a list of songs and display the album
-     * metadata in the RecyclerView
-     *
-     * @param songList The list of Song objects that album details should be extracted from.
-     */
-    fun processAlbumsBySongs(songList: List<Song>) {
-        val songsByAlbum = songList.distinctBy { song ->
-            song.albumId
-        }.sortedBy { song ->
-            song.albumName?.uppercase()
-        }.toMutableList()
-
-        processNewItems(songsByAlbum)
-    }
 }
