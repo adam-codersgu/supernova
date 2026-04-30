@@ -27,10 +27,11 @@ import com.google.android.material.color.MaterialColors
 import kotlin.math.min
 
 class PlaylistAdapter(private val fragment: PlaylistFragment,
-                      private val activity: MainActivity): SongWithHeaderAdapter(activity) {
+                      private val activity: MainActivity): SongWithHeaderAdapter(activity),
+    SongWithPlaysAdapter {
+
     var showHandles = false
     var playlist: Playlist? = null
-    private val songIdsAndPlays = hashMapOf<Long, Int>()
 
     inner class ViewHolderSongWithHandle(itemView: View) : ViewHolderSong(itemView) {
 
@@ -170,38 +171,18 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
         notifyItemRangeChanged(1, items.size)
     }
 
-    fun refreshSongPlays(newSongPlays: Map<Long, Int>) {
-        val songIdsToRefresh = mutableListOf<Long>()
-        for ((songId, qtyOfPlays) in newSongPlays) {
-            if (qtyOfPlays != songIdsAndPlays[songId]) {
-                songIdsToRefresh.add(songId)
-            }
-        }
+    override fun itemChangedCallback(index: Int) {
+        val maxItemCount = min(items.size, 3)
+        notifyItemRangeChanged(index, maxItemCount - index)
+    }
 
-        if (songIdsToRefresh.isEmpty()) return
-
-        val songIndicesToRefresh = mutableListOf<Int>()
-        for (songId in songIdsToRefresh) {
-            songIndicesToRefresh.add(items.indexOfFirst { (it as Song).songId == songId })
-        }
-        songIndicesToRefresh.sort()
-
-        loadSongPlays(newSongPlays)
-
+    @Suppress("UNCHECKED_CAST")
+    override fun refreshSongPlays(newSongPlays: Map<Long, Int>) {
+        val songIndicesToRefresh = getSongIndicesToRefresh(newSongPlays, (items as List<Song>))
         val rangeOfIndicesAffected = songIndicesToRefresh[songIndicesToRefresh.size - 1] - songIndicesToRefresh[0]
         val numberOfItemsToChange = if (songIndicesToRefresh[0] < 3 && rangeOfIndicesAffected < 3) {
             min(3, songIndicesToRefresh.size - 1 - songIndicesToRefresh[0])
         } else rangeOfIndicesAffected
         notifyItemRangeChanged(songIndicesToRefresh[0], numberOfItemsToChange)
-    }
-
-    private fun loadSongPlays(songPlays: Map<Long, Int>) {
-        songIdsAndPlays.clear()
-        songIdsAndPlays.putAll(songPlays)
-    }
-
-    override fun itemChangedCallback(index: Int) {
-        val maxItemCount = min(items.size, 3)
-        notifyItemRangeChanged(index, maxItemCount - index)
     }
 }
