@@ -47,7 +47,5 @@ class SongOfTheDayAdapter(activity: MainActivity): HomeAdapter(activity) {
         holder.mSubtitle2.text = song.albumName
     }
 
-    override fun getItemCount(): Int {
-        return max(1, items.size)
-    }
+    override fun getItemCount() = max(1, items.size)
 }
