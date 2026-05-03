@@ -86,16 +86,14 @@ class SearchFragment : BaseRecyclerViewFragment() {
     }
 
     override fun requestNewData() {
+        setIsUpdatingTrue()
+
         binding.noResults.isGone = true
         when (adapter.itemType) {
             TRACK -> {
                 lifecycleScope.launch(Dispatchers.IO) {
                     val songs = musicDatabase!!.musicDao().getSongsLikeSearch(query).take(10)
-
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        if (songs.isEmpty()) binding.noResults.isVisible = true
-                        adapter.processNewItems(songs)
-                    }
+                    processNewItems(songs)
                 }
             }
             ALBUM -> {
@@ -104,34 +102,28 @@ class SearchFragment : BaseRecyclerViewFragment() {
                     val songsByAlbum = songs.distinctBy { song ->
                         song.albumId
                     }.take(10)
-
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        if (songsByAlbum.isEmpty()) binding.noResults.isVisible = true
-                        adapter.processNewItems(songsByAlbum)
-                    }
+                    processNewItems(songsByAlbum)
                 }
             }
             ARTIST -> {
                 lifecycleScope.launch(Dispatchers.IO) {
                     val artists = musicDatabase!!.musicDao().getArtistsLikeSearch(query)
-
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        if (artists.isEmpty()) binding.noResults.isVisible = true
-                        adapter.processNewItems(artists)
-                    }
+                    processNewItems(artists)
                 }
             }
             PLAYLIST -> {
                 lifecycleScope.launch(Dispatchers.IO) {
                     val playlists = musicDatabase!!.playlistDao().getPlaylistsLikeSearch(query)
-
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        if (playlists.isEmpty()) binding.noResults.isVisible = true
-                        adapter.processNewItems(playlists)
-                    }
+                    processNewItems(playlists)
                 }
             }
         }
+    }
+
+    private fun processNewItems(items: List<Any>) = lifecycleScope.launch(Dispatchers.Main) {
+        if (items.isEmpty()) binding.noResults.isVisible = true
+        adapter.processNewItems(items)
+        finishUpdate()
     }
 
     override fun setupMenu() {
