@@ -17,6 +17,8 @@ import kotlin.math.min
 class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activity),
     SongWithPlaysAdapter {
 
+    private val songIdsAndPlays = hashMapOf<Long, Int>()
+
     inner class ViewHolderMostPlayedSong(itemView: View) : ViewHolderHome(itemView) {
 
         internal var mPlays: TextView = itemView.findViewById(R.id.plays)
@@ -60,7 +62,7 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
 
     @Suppress("UNCHECKED_CAST")
     override fun refreshSongPlays(newSongPlays: Map<Long, Int>) {
-        val songIndicesToRefresh = getSongIndicesToRefresh(newSongPlays, (items as List<Song>))
+        val songIndicesToRefresh = getSongIndicesToRefresh(songIdsAndPlays, newSongPlays, (items as List<Song>))
         val rangeOfIndicesAffected = songIndicesToRefresh[songIndicesToRefresh.size - 1] + 1 - songIndicesToRefresh[0]
         val numberOfItemsToChange = if (songIndicesToRefresh[0] < 3) min(3, rangeOfIndicesAffected)
         else rangeOfIndicesAffected
