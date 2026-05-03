@@ -40,12 +40,11 @@ abstract class Adapter: Adapter<ViewHolder>() {
                         if (oldIndex != -1) {
                             items.removeAt(oldIndex)
                             items.add(index, item)
-                            notifyItemMoved(recyclerViewIndex, getRecyclerViewIndex(index))
+                            notifyItemMoved(getRecyclerViewIndex(oldIndex), recyclerViewIndex)
                             itemChangedCallback(recyclerViewIndex)
-                            itemChangedCallback(getRecyclerViewIndex(index))
+                            itemChangedCallback(getRecyclerViewIndex(oldIndex))
                         } else {
-                            items.removeAt(index)
-                            items.add(index, item)
+                            items[index] = item
                             notifyItemChanged(recyclerViewIndex, getRecyclerViewIndex(index))
                         }
                     }

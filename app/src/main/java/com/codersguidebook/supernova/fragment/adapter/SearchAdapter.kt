@@ -137,9 +137,17 @@ class SearchAdapter(private val activity: MainActivity): SongAdapter(activity) {
 
     override fun itemsEqual(item1: Any, item2: Any): Boolean {
         return when (itemType) {
-            TRACK, ALBUM -> (item1 as Song).songId == (item2 as Song).songId
-            ARTIST -> (item1 as Playlist).playlistId == (item2 as Playlist).playlistId
+            TRACK, ALBUM -> super.itemsEqual(item1, item2)
+            ARTIST -> (item1 as Artist).artistName == (item2 as Artist).artistName
             else -> (item1 as Playlist).playlistId == (item2 as Playlist).playlistId
+        }
+    }
+
+    override fun itemShouldBeUpdated(item: Any, index: Int): Boolean {
+        return when (itemType) {
+            TRACK, ALBUM -> super.itemShouldBeUpdated(item, index)
+            ARTIST -> (item as Artist) != (items[index] as Artist)
+            else -> (item as Playlist) != (items[index] as Playlist)
         }
     }
 }
