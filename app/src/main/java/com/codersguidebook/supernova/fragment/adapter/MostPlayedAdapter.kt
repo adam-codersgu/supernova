@@ -63,6 +63,7 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
     @Suppress("UNCHECKED_CAST")
     override fun refreshSongPlays(newSongPlays: Map<Long, Int>) {
         val songIndicesToRefresh = getSongIndicesToRefresh(songIdsAndPlays, newSongPlays, (items as List<Song>))
+        if (songIndicesToRefresh.isEmpty()) return
         val rangeOfIndicesAffected = songIndicesToRefresh[songIndicesToRefresh.size - 1] + 1 - songIndicesToRefresh[0]
         val numberOfItemsToChange = if (songIndicesToRefresh[0] < 3) min(3, rangeOfIndicesAffected)
         else rangeOfIndicesAffected
