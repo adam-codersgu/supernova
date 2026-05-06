@@ -86,16 +86,14 @@ class SearchFragment : BaseRecyclerViewFragment() {
     }
 
     override fun requestNewData() {
+        setIsUpdatingTrue()
+
         binding.noResults.isGone = true
         when (adapter.itemType) {
             TRACK -> {
                 lifecycleScope.launch(Dispatchers.IO) {
                     val songs = musicDatabase!!.musicDao().getSongsLikeSearch(query).take(10)
-
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        if (songs.isEmpty()) binding.noResults.isVisible = true
-                        adapter.processNewSongs(songs)
-                    }
+                    processNewItems(songs)
                 }
             }
             ALBUM -> {
@@ -104,49 +102,28 @@ class SearchFragment : BaseRecyclerViewFragment() {
                     val songsByAlbum = songs.distinctBy { song ->
                         song.albumId
                     }.take(10)
-
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        if (songsByAlbum.isEmpty()) binding.noResults.isVisible = true
-                        if (adapter.albums.isEmpty()) {
-                            adapter.albums.addAll(songsByAlbum)
-                            adapter.notifyItemRangeInserted(0, songsByAlbum.size)
-                        } else {
-                            adapter.processNewAlbums(songsByAlbum)
-                        }
-                    }
+                    processNewItems(songsByAlbum)
                 }
             }
             ARTIST -> {
                 lifecycleScope.launch(Dispatchers.IO) {
                     val artists = musicDatabase!!.musicDao().getArtistsLikeSearch(query)
-
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        if (artists.isEmpty()) binding.noResults.isVisible = true
-                        if (adapter.artists.isEmpty()) {
-                            adapter.artists.addAll(artists)
-                            adapter.notifyItemRangeInserted(0, artists.size)
-                        } else {
-                            adapter.processNewArtists(artists)
-                        }
-                    }
+                    processNewItems(artists)
                 }
             }
             PLAYLIST -> {
                 lifecycleScope.launch(Dispatchers.IO) {
                     val playlists = musicDatabase!!.playlistDao().getPlaylistsLikeSearch(query)
-
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        if (playlists.isEmpty()) binding.noResults.isVisible = true
-                        if (adapter.playlists.isEmpty()) {
-                            adapter.playlists.addAll(playlists)
-                            adapter.notifyItemRangeInserted(0, playlists.size)
-                        } else {
-                            adapter.processNewPlaylists(playlists)
-                        }
-                    }
+                    processNewItems(playlists)
                 }
             }
         }
+    }
+
+    private fun processNewItems(items: List<Any>) = lifecycleScope.launch(Dispatchers.Main) {
+        if (items.isEmpty()) binding.noResults.isVisible = true
+        adapter.processNewItems(items)
+        finishUpdate()
     }
 
     override fun setupMenu() {

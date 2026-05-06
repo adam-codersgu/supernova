@@ -46,12 +46,7 @@ class PlaylistsFragment : RecyclerViewFragment() {
             }
         }
 
-        if (adapter.playlists.isEmpty()) {
-            adapter.playlists.addAll(playlistsToDisplay)
-            adapter.notifyItemRangeInserted(0, playlistsToDisplay.size)
-        } else {
-            adapter.processNewPlaylists(playlistsToDisplay)
-        }
+        adapter.processNewItems(playlistsToDisplay)
 
         finishUpdate()
     }

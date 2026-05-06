@@ -71,9 +71,9 @@ class PlayQueueFragment : RecyclerViewFragment() {
                 val temporaryFrom = viewHolder.layoutPosition
                 to = target.layoutPosition
                 if (temporaryFrom != to) {
-                    val queueItem = adapter.playQueue[temporaryFrom]
-                    adapter.playQueue.removeAt(temporaryFrom)
-                    adapter.playQueue.add(to!!, queueItem)
+                    val queueItem = adapter.items[temporaryFrom]
+                    adapter.items.removeAt(temporaryFrom)
+                    adapter.items.add(to!!, queueItem)
                     adapter.notifyItemMoved(temporaryFrom, to!!)
                 }
 
@@ -111,12 +111,7 @@ class PlayQueueFragment : RecyclerViewFragment() {
     private fun updateRecyclerView(playQueue: List<MediaItem>) {
         setIsUpdatingTrue()
 
-        if (adapter.playQueue.isEmpty()) {
-            adapter.playQueue.addAll(playQueue)
-            adapter.notifyItemRangeInserted(0, playQueue.size)
-        } else {
-            adapter.processNewPlayQueue(playQueue)
-        }
+        adapter.processNewItems(playQueue)
 
         finishUpdate()
     }
@@ -129,11 +124,12 @@ class PlayQueueFragment : RecyclerViewFragment() {
 
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) { }
 
+            @Suppress("UNCHECKED_CAST")
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
                 return when (menuItem.itemId) {
                     R.id.savePlayQueue -> {
                         val songIds = mutableListOf<Long>()
-                        for (queueItem in adapter.playQueue) {
+                        for (queueItem in (adapter.items as List<MediaItem>)) {
                             songIds.add(queueItem.mediaId.toLong())
                         }
                         if (songIds.isNotEmpty()) mainActivity.openDialog(CreatePlaylist(songIds))

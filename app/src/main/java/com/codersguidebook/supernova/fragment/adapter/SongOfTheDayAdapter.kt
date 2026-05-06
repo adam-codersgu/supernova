@@ -7,9 +7,10 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
-import com.codersguidebook.supernova.utils.ImageHandlingHelper
+import com.codersguidebook.supernova.entities.Song
+import kotlin.math.max
 
-class SongOfTheDayAdapter(private val activity: MainActivity): SongAdapter(activity) {
+class SongOfTheDayAdapter(activity: MainActivity): HomeAdapter(activity) {
 
     companion object {
         const val NO_CONTENT = 1
@@ -18,13 +19,13 @@ class SongOfTheDayAdapter(private val activity: MainActivity): SongAdapter(activ
 
     inner class ViewHolderNoContent(itemView: View) : RecyclerView.ViewHolder(itemView)
 
-    inner class ViewHolderSong(itemView: View) : SongAdapter.ViewHolderSong(itemView) {
+    inner class ViewHolderSong(itemView: View) : ViewHolderHome(itemView) {
 
-        internal var mAlbum = itemView.findViewById<View>(R.id.subtitle2) as TextView
+        internal var mSubtitle2 = itemView.findViewById<View>(R.id.subtitle2) as TextView
     }
 
     override fun getItemViewType(position: Int): Int {
-        return if (position == 0 && songs.isEmpty()) NO_CONTENT
+        return if (position == 0 && items.isEmpty()) NO_CONTENT
         else SONG
     }
 
@@ -39,16 +40,12 @@ class SongOfTheDayAdapter(private val activity: MainActivity): SongAdapter(activ
         if (holder is ViewHolderNoContent) return
         holder as ViewHolderSong
 
-        val song = songs[position]
+        val song = items[position] as Song
 
-        ImageHandlingHelper.loadImageByAlbumId(activity.application, song.albumId, holder.mArtwork!!)
-        holder.mTitle.text = song.title
-        holder.mSubtitle.text = song.artist
-        holder.mAlbum.text = song.albumName
+        setViewHolderValues(holder, song)
+
+        holder.mSubtitle2.text = song.albumName
     }
 
-    override fun getItemCount(): Int {
-        return if (songs.isEmpty()) 1
-        else songs.size
-    }
+    override fun getItemCount() = max(1, items.size)
 }

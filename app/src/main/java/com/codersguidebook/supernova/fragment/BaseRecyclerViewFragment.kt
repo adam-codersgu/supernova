@@ -7,8 +7,8 @@ import androidx.recyclerview.widget.RecyclerView
 abstract class BaseRecyclerViewFragment: BaseFragment() {
 
     abstract val adapter: RecyclerView.Adapter<RecyclerView.ViewHolder>
-    var isUpdating = false
-    var unhandledRequestReceived = false
+    private var isUpdating = false
+    private var unhandledRequestReceived = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

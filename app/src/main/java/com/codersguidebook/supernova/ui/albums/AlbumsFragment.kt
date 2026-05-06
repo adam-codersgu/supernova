@@ -31,7 +31,12 @@ class AlbumsFragment : RecyclerViewWithScrollFragment() {
     private fun updateRecyclerView(songs: List<Song>) {
         setIsUpdatingTrue()
 
-        adapter.processAlbumsBySongs(songs)
+        val songsByAlbum = songs.distinctBy { song ->
+            song.albumId
+        }.sortedBy { song ->
+            song.albumName?.uppercase()
+        }
+        adapter.processNewItems(songsByAlbum)
 
         finishUpdate()
     }

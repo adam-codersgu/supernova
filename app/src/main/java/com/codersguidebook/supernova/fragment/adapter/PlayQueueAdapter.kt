@@ -2,46 +2,41 @@ package com.codersguidebook.supernova.fragment.adapter
 
 import android.annotation.SuppressLint
 import android.graphics.Color
-import android.os.Build
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import android.widget.ImageView
-import android.widget.TextView
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.QueueOptions
+import com.codersguidebook.supernova.fragment.BaseDialogFragment
+import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderWithMenu
 import com.codersguidebook.supernova.ui.playQueue.PlayQueueFragment
 import com.google.android.material.color.MaterialColors
 
 class PlayQueueAdapter(private val fragment: PlayQueueFragment,
-                       private val activity: MainActivity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+                       private val activity: MainActivity): Adapter() {
     var currentlyPlayingQueueIndex = -1
-    val playQueue = mutableListOf<MediaItem>()
 
-    inner class ViewHolderPlayQueue(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class ViewHolderPlayQueue(itemView: View) : ViewHolderWithMenu(itemView) {
 
-        internal var txtSongTitle = itemView.findViewById<View>(R.id.title) as TextView
-        internal var txtSongArtist = itemView.findViewById<View>(R.id.subtitle) as TextView
         internal var handle = itemView.findViewById<ImageView>(R.id.handleView)
-        private var btnSongMenu = itemView.findViewById<ImageButton>(R.id.buttonPlayQueueMenu)
 
-        init {
-            itemView.isClickable = true
-            itemView.setOnClickListener {
-                activity.skipToQueueIndex(layoutPosition)
-                activity.play()
-            }
-            btnSongMenu.setOnClickListener {
-                val isCurrentlyPlayingSelected = layoutPosition == currentlyPlayingQueueIndex
-                activity.openDialog(
-                    QueueOptions(playQueue[layoutPosition], layoutPosition, isCurrentlyPlayingSelected)
-                )
-            }
+        override fun getActivity(): MainActivity {
+            return activity
+        }
+
+        override fun rootViewAction() {
+            activity.skipToQueueIndex(layoutPosition)
+            activity.play()
+        }
+
+        override fun getOptionsDialog(): BaseDialogFragment {
+            val isCurrentlyPlayingSelected = layoutPosition == currentlyPlayingQueueIndex
+            return QueueOptions((items[layoutPosition] as MediaItem), layoutPosition, isCurrentlyPlayingSelected)
         }
     }
 
@@ -54,7 +49,7 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment,
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         holder as ViewHolderPlayQueue
 
-        val metadata = playQueue[position].mediaMetadata
+        val metadata = (items[position] as MediaItem).mediaMetadata
 
         val accent = MaterialColors.getColor(activity, com.google.android.material.R.attr.colorSecondary, Color.CYAN)
         val onSurface = MaterialColors.getColor(activity, com.google.android.material.R.attr.colorOnSurface, Color.LTGRAY)
@@ -66,17 +61,17 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment,
             return@setOnTouchListener true
         }
 
-        holder.txtSongTitle.text = metadata.title ?: activity.getString(R.string.default_title)
-        holder.txtSongArtist.text = metadata.artist
+        holder.mTitle.text = metadata.title ?: activity.getString(R.string.default_title)
+        holder.mSubtitle.text = metadata.artist
             ?: metadata.subtitle
             ?: activity.getString(R.string.default_artist)
 
         if (position == currentlyPlayingQueueIndex) {
-            holder.txtSongTitle.setTextColor(accent)
-            holder.txtSongArtist.setTextColor(accent)
+            holder.mTitle.setTextColor(accent)
+            holder.mSubtitle.setTextColor(accent)
         } else {
-            holder.txtSongTitle.setTextColor(onSurface60)
-            holder.txtSongArtist.setTextColor(onSurface60)
+            holder.mTitle.setTextColor(onSurface60)
+            holder.mSubtitle.setTextColor(onSurface60)
         }
     }
 
@@ -88,55 +83,7 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment,
         notifyItemChanged(currentlyPlayingQueueIndex)
     }
 
-    /**
-     * Handle updates to the content of the RecyclerView. The below method will determine what
-     * changes are required when an element/elements is/are changed, inserted, or deleted.
-     * This enhanced process loop iteration method assumes each queue item can only appear once.
-     *
-     * @param newPlayQueue The new list of QueueItem objects that should be displayed.
-     */
-    fun processNewPlayQueue(newPlayQueue: List<MediaItem>) {
-        if (newPlayQueue == playQueue) return
-
-        for ((index, queueItem) in newPlayQueue.withIndex()) {
-            when {
-                index >= playQueue.size -> {
-                    playQueue.add(queueItem)
-                    notifyItemInserted(index)
-                }
-                playQueue.find { it.mediaId == queueItem.mediaId } == null -> {
-                    playQueue.add(index, queueItem)
-                    notifyItemInserted(index)
-                }
-                newPlayQueue.find { it.mediaId == playQueue[index].mediaId } == null -> {
-                    var numberOfItemsRemoved = 0
-                    do {
-                        playQueue.removeAt(index)
-                        ++numberOfItemsRemoved
-                    } while (index < playQueue.size &&
-                        newPlayQueue.find { it.mediaId == playQueue[index].mediaId } == null)
-
-                    when {
-                        numberOfItemsRemoved == 1 -> notifyItemRemoved(index)
-                        numberOfItemsRemoved > 1 -> notifyItemRangeRemoved(index,
-                            numberOfItemsRemoved)
-                    }
-                }
-            }
-        }
-
-        if (playQueue.size > newPlayQueue.size) {
-            val numberItemsToRemove = playQueue.size - newPlayQueue.size
-            repeat(numberItemsToRemove) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-                    playQueue.removeLast()
-                } else {
-                    playQueue.removeAt(playQueue.size - 1)
-                }
-            }
-            notifyItemRangeRemoved(newPlayQueue.size, numberItemsToRemove)
-        }
+    override fun itemsEqual(item1: Any, item2: Any): Boolean {
+        return (item1 as MediaItem).mediaId == (item2 as MediaItem).mediaId
     }
-
-    override fun getItemCount() = playQueue.size
 }

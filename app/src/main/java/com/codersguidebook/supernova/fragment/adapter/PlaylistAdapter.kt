@@ -7,8 +7,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
-import android.widget.GridLayout
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.isGone
@@ -20,6 +18,8 @@ import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.PlaylistSongOptions
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.fragment.BaseDialogFragment
+import com.codersguidebook.supernova.fragment.adapter.viewholder.ViewHolderHeaderArtworkGrid
 import com.codersguidebook.supernova.ui.playlist.PlaylistFragment
 import com.codersguidebook.supernova.utils.DimensionsHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
@@ -27,46 +27,38 @@ import com.google.android.material.color.MaterialColors
 import kotlin.math.min
 
 class PlaylistAdapter(private val fragment: PlaylistFragment,
-                      private val activity: MainActivity): SongWithHeaderAdapter(activity) {
-    var showHandles = false
+                      private val activity: MainActivity): SongWithHeaderAdapter(activity),
+    SongWithPlaysAdapter {
+
     var playlist: Playlist? = null
+    var showHandles = false
     private val songIdsAndPlays = hashMapOf<Long, Int>()
-
-    inner class ViewHolderPlaylistHeader(itemView: View) : ViewHolderHeader(itemView) {
-
-        internal var mArtworkGrid = itemView.findViewById(R.id.imageGrid) as GridLayout
-        internal var mArtwork1 = itemView.findViewById(R.id.artwork1) as ImageView
-        internal var mArtwork2 = itemView.findViewById(R.id.artwork2) as ImageView
-        internal var mArtwork3 = itemView.findViewById(R.id.artwork3) as ImageView
-        internal var mArtwork4 = itemView.findViewById(R.id.artwork4) as ImageView
-    }
 
     inner class ViewHolderSongWithHandle(itemView: View) : ViewHolderSong(itemView) {
 
-        internal var mPlays = itemView.findViewById(R.id.plays) as TextView
+        internal var mPlays: TextView = itemView.findViewById(R.id.plays)
 
         init {
-            itemView.rootView.setOnClickListener {
-                activity.playNewPlayQueue(songs, layoutPosition - 1)
-            }
-
             itemView.setOnLongClickListener {
-                if (!showHandles) playlist?.let {
-                    activity.openDialog(PlaylistSongOptions(songs[layoutPosition - 1], layoutPosition - 1, it))
+                if (!showHandles) {
+                    openDialog()
                 }
                 return@setOnLongClickListener true
             }
+        }
 
-            mMenu?.setOnClickListener {
-                playlist?.let {
-                    activity.openDialog(PlaylistSongOptions(songs[layoutPosition - 1], layoutPosition - 1, it))
-                }
-            }
+        @Suppress("UNCHECKED_CAST")
+        override fun rootViewAction() {
+            activity.playNewPlayQueue((items as List<Song>), layoutPosition - 1)
+        }
+
+        override fun getOptionsDialog(): BaseDialogFragment {
+            return PlaylistSongOptions((items[layoutPosition - 1] as Song), layoutPosition - 1, playlist!!)
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        return if (viewType == HEADER) ViewHolderPlaylistHeader(
+        return if (viewType == HEADER) ViewHolderHeaderArtworkGrid(
             LayoutInflater.from(parent.context).inflate(R.layout.header, parent, false)
         ) else ViewHolderSongWithHandle(
             LayoutInflater.from(parent.context).inflate(R.layout.playlist_song, parent, false)
@@ -77,13 +69,13 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder.itemViewType) {
             HEADER -> {
-                holder as ViewHolderPlaylistHeader
+                holder as ViewHolderHeaderArtworkGrid
 
                 holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.preview_background))
 
                 if (!ImageHandlingHelper.loadImageByPlaylist(activity.application,
                         playlist ?: return, holder.mArtwork)) {
-                    val albumIds = songs.map { it.albumId }.distinct().shuffled()
+                    val albumIds = items.map { (it as Song).albumId }.distinct().shuffled()
 
                     when {
                         albumIds.size > 1 -> {
@@ -98,7 +90,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                             if (albumIds.size > 3)  ImageHandlingHelper.loadImageByAlbumId(activity.application,
                                 albumIds[3], holder.mArtwork4)
                         }
-                        songs.isNotEmpty() -> {
+                        items.isNotEmpty() -> {
                             holder.mArtwork.isVisible = true
                             holder.mArtworkGrid.isGone = true
                             ImageHandlingHelper.loadImageByAlbumId(activity.application,
@@ -107,43 +99,44 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                     }
                 }
 
-                if (songs.isNotEmpty()){
+                if (items.isNotEmpty()){
                     holder.mTitle.text = playlist?.name
-                    holder.mSongCount.text = if (songs.size == 1) {
+                    holder.mSubtitle2.text = if (items.size == 1) {
                         activity.getString(R.string.displayed_song)
                     } else {
-                        activity.getString(R.string.displayed_songs, songs.size)
+                        activity.getString(R.string.displayed_songs, items.size)
                     }
-                    holder.mArtist.isGone = true
+                    holder.mSubtitle.isGone = true
                 }
             }
             SONG -> {
                 holder as ViewHolderSongWithHandle
-                val current = songs[position -1]
+                val current = items[position - 1] as Song
 
-                val params = holder.mArtwork!!.layoutParams as MarginLayoutParams
+                val params = holder.mArtwork.layoutParams as MarginLayoutParams
                 val onSurfaceColour = MaterialColors.getColor(activity, com.google.android.material.R.attr.colorOnSurface, Color.LTGRAY)
                 if (showHandles) {
-                    holder.mArtwork?.setColorFilter(MaterialColors
+                    holder.mArtwork.setColorFilter(MaterialColors
                         .compositeARGBWithAlpha(onSurfaceColour, 153))
                     params.width = activity.resources.getDimension(R.dimen.handle_width).toInt()
                     params.marginStart = DimensionsHelper.convertToDp(activity, 13f)
                     Glide.with(fragment)
                         .load(R.drawable.ic_drag_handle)
-                        .into(holder.mArtwork!!)
-                    holder.mArtwork?.setOnTouchListener { _, event ->
+                        .into(holder.mArtwork)
+                    holder.mArtwork.setOnTouchListener { _, event ->
                         if (event.actionMasked == MotionEvent.ACTION_DOWN) fragment.startDragging(holder)
                         return@setOnTouchListener true
                     }
                 } else {
                     params.width = activity.resources.getDimension(R.dimen.artwork_preview_width).toInt()
                     params.marginStart = 0
-                    holder.mArtwork?.clearColorFilter()
-                    holder.mArtwork?.setOnTouchListener { _, _ -> return@setOnTouchListener false }
+                    holder.mArtwork.clearColorFilter()
+                    holder.mArtwork.setOnTouchListener { _, _ -> return@setOnTouchListener false }
                     ImageHandlingHelper.loadImageByAlbumId(activity.application,
-                        current.albumId, holder.mArtwork!!)
+                        current.albumId, holder.mArtwork
+                    )
                 }
-                holder.mArtwork!!.layoutParams = params
+                holder.mArtwork.layoutParams = params
 
                 holder.mTitle.text = current.title ?: activity.getString(R.string.default_title)
                 holder.mSubtitle.text = current.artist ?: activity.getString(R.string.default_artist)
@@ -168,7 +161,7 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
                     holder.mTitle.setTextColor(primaryText)
                     holder.mSubtitle.setTextColor(secondaryText)
                     holder.mPlays.setTextColor(secondaryText)
-                    holder.mMenu?.setColorFilter(secondaryText)
+                    holder.mMenu.setColorFilter(secondaryText)
                 }
             }
         }
@@ -176,79 +169,22 @@ class PlaylistAdapter(private val fragment: PlaylistFragment,
 
     internal fun manageHandles(applyHandles: Boolean){
         this.showHandles = applyHandles
-        notifyItemRangeChanged(1, songs.size)
+        notifyItemRangeChanged(1, items.size)
     }
 
-    /**
-     * Handle updates to the content of the RecyclerView. The below method will determine what
-     * changes are required when an element/elements is/are changed, inserted, or deleted.
-     * N.B. Playlist adapter uses a different update methodology to other areas of the app
-     * because only the Playlist adapter may potentially have to handle duplicate identical
-     * versions of the same song. For this reason, handling element moves is not feasible
-     * as each element could appear more than once with no distinguishing characteristics.
-     *
-     * @param index The index of the current iteration through the up-to-date content list.
-     * @param song The Song object that should be displayed at the index.
-     */
-    fun processLoopIteration(index: Int, song: Song) {
-        val recyclerViewIndex = getRecyclerViewIndex(index)
-        when {
-            index >= songs.size -> {
-                songs.add(song)
-                notifyItemInserted(recyclerViewIndex)
-            }
-            song.songId != songs[index].songId -> {
-                var numberOfItemsRemoved = 0
-                do {
-                    songs.removeAt(index)
-                    ++numberOfItemsRemoved
-                } while (index < songs.size &&
-                    song.songId != songs[index].songId)
-
-                notifyItemRangeRemoved(recyclerViewIndex, numberOfItemsRemoved)
-
-                // Update the colours of the top 3 most played songs, if appropriate
-                if (playlist?.name == activity.getString(R.string.most_played) && index < 3) {
-                    val maxItemCount = min(songs.size, 3)
-                    notifyItemRangeChanged(index, maxItemCount - index)
-                }
-
-                processLoopIteration(index, song)
-            }
-            song != songs[index] -> {
-                songs[index] = song
-                notifyItemChanged(recyclerViewIndex)
-            }
-        }
+    override fun itemChangedCallback(index: Int) {
+        val maxItemCount = min(items.size, 3)
+        notifyItemRangeChanged(index, maxItemCount - index)
     }
 
-    fun refreshSongPlays(newSongPlays: Map<Long, Int>) {
-        val songIdsToRefresh = mutableListOf<Long>()
-        for ((songId, qtyOfPlays) in newSongPlays) {
-            if (qtyOfPlays != songIdsAndPlays[songId]) {
-                songIdsToRefresh.add(songId)
-            }
-        }
-
-        if (songIdsToRefresh.isEmpty()) return
-
-        val songIndicesToRefresh = mutableListOf<Int>()
-        for (songId in songIdsToRefresh) {
-            songIndicesToRefresh.add(songs.indexOfFirst { it.songId == songId })
-        }
-        songIndicesToRefresh.sort()
-
-        loadSongPlays(newSongPlays)
-
+    @Suppress("UNCHECKED_CAST")
+    override fun refreshSongPlays(newSongPlays: Map<Long, Int>) {
+        val songIndicesToRefresh = getSongIndicesToRefresh(songIdsAndPlays, newSongPlays, (items as List<Song>))
+        if (songIndicesToRefresh.isEmpty()) return
         val rangeOfIndicesAffected = songIndicesToRefresh[songIndicesToRefresh.size - 1] - songIndicesToRefresh[0]
         val numberOfItemsToChange = if (songIndicesToRefresh[0] < 3 && rangeOfIndicesAffected < 3) {
             min(3, songIndicesToRefresh.size - 1 - songIndicesToRefresh[0])
         } else rangeOfIndicesAffected
         notifyItemRangeChanged(songIndicesToRefresh[0], numberOfItemsToChange)
-    }
-
-    private fun loadSongPlays(songPlays: Map<Long, Int>) {
-        songIdsAndPlays.clear()
-        songIdsAndPlays.putAll(songPlays)
     }
 }

@@ -14,11 +14,12 @@ import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.google.android.material.color.MaterialColors
 import kotlin.math.min
 
-class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activity) {
+class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activity),
+    SongWithPlaysAdapter {
 
     private val songIdsAndPlays = hashMapOf<Long, Int>()
 
-    inner class ViewHolderMostPlayedSong(itemView: View) : ViewHolderSong(itemView) {
+    inner class ViewHolderMostPlayedSong(itemView: View) : ViewHolderHome(itemView) {
 
         internal var mPlays: TextView = itemView.findViewById(R.id.plays)
     }
@@ -30,9 +31,11 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         holder as ViewHolderMostPlayedSong
-        val current = songs[position]
+        val current = items[position] as Song
 
-        ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId, holder.mArtwork!!)
+        ImageHandlingHelper.loadImageByAlbumId(activity.application, current.albumId,
+            holder.mArtwork
+        )
 
         holder.mTitle.text = current.title ?: activity.getString(R.string.default_title)
         holder.mSubtitle.text = current.artist ?: activity.getString(R.string.default_artist)
@@ -57,44 +60,13 @@ class MostPlayedAdapter(private val activity: MainActivity) : HomeAdapter(activi
         }
     }
 
-    fun addNewListOfSongs(newSongs: List<Song>, songPlays: Map<Long, Int>) {
-        if (songs.isNotEmpty()) {
-            val songsQty = songs.size
-            songs.clear()
-            notifyItemRangeRemoved(0, songsQty)
-        }
-
-        songs.addAll(newSongs)
-        loadSongPlays(songPlays)
-        notifyItemRangeInserted(0, songs.size)
-    }
-
-    fun refreshSongPlays(newSongPlays: Map<Long, Int>) {
-        val songIdsToRefresh = mutableListOf<Long>()
-        for ((songId, qtyOfPlays) in newSongPlays) {
-            if (qtyOfPlays != songIdsAndPlays[songId]) {
-                songIdsToRefresh.add(songId)
-            }
-        }
-
-        loadSongPlays(newSongPlays)
-
-        if (songIdsToRefresh.isEmpty()) return
-
-        val songIndicesToRefresh = mutableListOf<Int>()
-        for (songId in songIdsToRefresh) {
-            songIndicesToRefresh.add(songs.indexOfFirst { it.songId == songId })
-        }
-        songIndicesToRefresh.sort()
-
+    @Suppress("UNCHECKED_CAST")
+    override fun refreshSongPlays(newSongPlays: Map<Long, Int>) {
+        val songIndicesToRefresh = getSongIndicesToRefresh(songIdsAndPlays, newSongPlays, (items as List<Song>))
+        if (songIndicesToRefresh.isEmpty()) return
         val rangeOfIndicesAffected = songIndicesToRefresh[songIndicesToRefresh.size - 1] + 1 - songIndicesToRefresh[0]
         val numberOfItemsToChange = if (songIndicesToRefresh[0] < 3) min(3, rangeOfIndicesAffected)
         else rangeOfIndicesAffected
         notifyItemRangeChanged(songIndicesToRefresh[0], numberOfItemsToChange)
-    }
-
-    private fun loadSongPlays(songPlays: Map<Long, Int>) {
-        songIdsAndPlays.clear()
-        songIdsAndPlays.putAll(songPlays)
     }
 }

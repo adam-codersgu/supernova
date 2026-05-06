@@ -184,12 +184,8 @@ class HomeFragment : BaseFragment() {
 
         val songPlays = musicLibraryViewModel.getSongPlaysBySongIdsAndTimeframe(songs.map { it.songId })
 
-        if (mostPlayedAdapter.songs.isEmpty()) {
-            mostPlayedAdapter.addNewListOfSongs(songs, songPlays)
-        } else {
-            mostPlayedAdapter.processNewSongs(songs)
-            mostPlayedAdapter.refreshSongPlays(songPlays)
-        }
+        mostPlayedAdapter.processNewItems(songs)
+        mostPlayedAdapter.refreshSongPlays(songPlays)
     }
 
     private fun processPlaylist(playlist: Playlist, adapter: SongAdapter, layout: RelativeLayout)
@@ -200,22 +196,18 @@ class HomeFragment : BaseFragment() {
             layout.isGone = true
         } else layout.isVisible = true
 
-        if (adapter.songs.isEmpty()) {
-            adapter.songs.addAll(songs)
-            if (songs.isNotEmpty() && playlist.name == getString(R.string.song_day)) {
-                adapter.notifyItemRemoved(0)
-            }
-            adapter.notifyItemRangeInserted(0, songs.size)
-        } else {
-            adapter.processNewSongs(songs)
-            if (songs.isNotEmpty()) {
-                when (playlist.name) {
-                    getString(R.string.song_day) -> {
-                        binding.songOfTheDayRecyclerView.scrollToPosition(0)
-                    }
-                    getString(R.string.recently_played) -> {
-                        binding.recentlyPlayedRecyclerView.scrollToPosition(0)
-                    }
+        if (adapter.items.isEmpty() && songs.isNotEmpty() && playlist.name == getString(R.string.song_day)) {
+            adapter.notifyItemRemoved(0)
+        }
+
+        adapter.processNewItems(songs)
+        if (songs.isNotEmpty()) {
+            when (playlist.name) {
+                getString(R.string.song_day) -> {
+                    binding.songOfTheDayRecyclerView.scrollToPosition(0)
+                }
+                getString(R.string.recently_played) -> {
+                    binding.recentlyPlayedRecyclerView.scrollToPosition(0)
                 }
             }
         }
