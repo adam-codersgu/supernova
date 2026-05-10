@@ -351,7 +351,7 @@ class MainActivity : AppCompatActivity() {
                         Log.i("DEBUG", "No further songs. Clearing the play queue.")
                         controller.clearMediaItems()
                         handler.removeCallbacks(playbackPositionRunnable)
-                        playQueueViewModel.playQueue.value?.clear()
+                        playQueueViewModel.playQueue.value = listOf()
                         playQueueViewModel.playbackDuration.value = 0
                         playQueueViewModel.playbackPosition.value = 0
                         playQueueViewModel.currentlyPlayingSongMetadata.value = null
@@ -651,7 +651,7 @@ class MainActivity : AppCompatActivity() {
     fun fastForward() = controller.seekForward()
 
     private fun saveAndPostPlayQueue(playQueue: List<MediaItem>) = lifecycleScope.launch(Dispatchers.Main) {
-        playQueueViewModel.playQueue.value = playQueue.toMutableList()
+        playQueueViewModel.playQueue.value = playQueue
         savePlayQueue(playQueue)
     }
 
