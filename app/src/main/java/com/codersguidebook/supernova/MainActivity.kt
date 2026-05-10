@@ -458,11 +458,24 @@ class MainActivity : AppCompatActivity() {
      *
      * @param songId The ID of the Song to remove from the play queue.
      */
-    private fun findSongIdInPlayQueueToRemove(songId: Long) = lifecycleScope.launch(Dispatchers.Default) {
+    private fun findSongIdInPlayQueueToRemove(songId: Long) {
         var index: Int
         do {
             index = getLastIndexOfQueueItemByMediaId(songId.toString())
-            if (index != -1) removeQueueItemByIndex(index)
+            try {
+                if (index != -1) removeQueueItemByIndex(index)
+            } catch (e: IndexOutOfBoundsException) {
+                Log.w("MainActivity", "IndexOutOfBoundsException at index $index")
+                index = getLastIndexOfQueueItemByMediaId(songId.toString())
+                try {
+                    if (index != -1) removeQueueItemByIndex(index)
+                } catch (e: IndexOutOfBoundsException) {
+                    Log.e("MainActivity", "Second IndexOutOfBoundsException at index $index. " +
+                            "Aborting song ID $songId")
+                    break
+                }
+                Log.i("MainActivity", "Processed on second attempt for $songId")
+            }
         } while (index != -1)
     }
 
@@ -666,7 +679,7 @@ class MainActivity : AppCompatActivity() {
     /** Fast forward the playback of the current song. */
     fun fastForward() = controller.seekForward()
 
-    private fun saveAndPostPlayQueue(playQueue: List<MediaItem>) {
+    private fun saveAndPostPlayQueue(playQueue: List<MediaItem>) = lifecycleScope.launch(Dispatchers.Main) {
         playQueueViewModel.playQueue.value = playQueue
         savePlayQueue(playQueue)
     }
@@ -690,7 +703,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             val playQueueJson = GsonBuilder().setPrettyPrinting().create().toJson(songsToSave)
-            Log.i("DEBUG", "Storing the following JSON:\n$playQueueJson")
+            // Log.i("DEBUG", "Storing the following JSON:\n$playQueueJson")
             sharedPreferences.edit().apply {
                 putString(PLAY_QUEUE_ITEMS, playQueueJson)
                 apply()
@@ -784,8 +797,8 @@ class MainActivity : AppCompatActivity() {
      *
      * @param index The index of the queue items to be removed.
      */
-    fun removeQueueItemByIndex(index: Int) = lifecycleScope.launch(Dispatchers.Main) {
-        val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return@launch
+    fun removeQueueItemByIndex(index: Int) {
+        val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return
         playQueue.removeAt(index)
         saveAndPostPlayQueue(playQueue)
     }
