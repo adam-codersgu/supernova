@@ -90,6 +90,7 @@ import kotlin.streams.toList
 class MainActivity : AppCompatActivity() {
 
     companion object {
+        private const val LOG_TAG = "MainActivity"
         private const val SONG_NEARLY_FINISHED_THRESHOLD = 0.98
     }
 
@@ -350,7 +351,7 @@ class MainActivity : AppCompatActivity() {
                         Log.i("DEBUG", "No further songs. Clearing the play queue.")
                         controller.clearMediaItems()
                         handler.removeCallbacks(playbackPositionRunnable)
-                        playQueueViewModel.playQueue.value = listOf()
+                        playQueueViewModel.playQueue.value?.clear()
                         playQueueViewModel.playbackDuration.value = 0
                         playQueueViewModel.playbackPosition.value = 0
                         playQueueViewModel.currentlyPlayingSongMetadata.value = null
@@ -445,44 +446,14 @@ class MainActivity : AppCompatActivity() {
      * @param uri The content URI associated with the change.
      */
     fun handleChangeToContentUri(uri: Uri) = lifecycleScope.launch(Dispatchers.IO) {
-        val songIdString = uri.toString().removePrefix(
+        val songId = uri.toString().removePrefix(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + "/")
         try {
-            val songId = songIdString.toLong()
-            if (handleFileUpdateByMediaId(songId) == SONG_DELETED) findSongIdInPlayQueueToRemove(songId)
-        } catch (_: NumberFormatException) { refreshMusicLibrary() }
-    }
-
-    /**
-     * Search for and remove all instances of a given song from the play queue based on its ID.
-     *
-     * @param songId The ID of the Song to remove from the play queue.
-     */
-    private fun findSongIdInPlayQueueToRemove(songId: Long) {
-        var index: Int
-        do {
-            index = getLastIndexOfQueueItemByMediaId(songId.toString())
-            try {
-                if (index != -1) removeQueueItemByIndex(index)
-            } catch (e: IndexOutOfBoundsException) {
-                Log.w("MainActivity", "IndexOutOfBoundsException at index $index")
-                index = getLastIndexOfQueueItemByMediaId(songId.toString())
-                try {
-                    if (index != -1) removeQueueItemByIndex(index)
-                } catch (e: IndexOutOfBoundsException) {
-                    Log.e("MainActivity", "Second IndexOutOfBoundsException at index $index. " +
-                            "Aborting song ID $songId")
-                    break
-                }
-                Log.i("MainActivity", "Processed on second attempt for $songId")
+            Log.i(LOG_TAG, "Change to content URI for media ID $songId")
+            if (handleFileUpdateByMediaId(songId.toLong()) == SONG_DELETED) {
+                playQueueViewModel.removeAllOccurrencesOfSong(songId)
             }
-        } while (index != -1)
-    }
-
-    private fun getLastIndexOfQueueItemByMediaId(mediaId: String): Int {
-        return playQueueViewModel.playQueue.value?.indexOfLast { mediaItem ->
-            mediaItem.mediaId == mediaId
-        } ?: -1
+        } catch (_: NumberFormatException) { refreshMusicLibrary() }
     }
 
     /**
@@ -680,7 +651,7 @@ class MainActivity : AppCompatActivity() {
     fun fastForward() = controller.seekForward()
 
     private fun saveAndPostPlayQueue(playQueue: List<MediaItem>) = lifecycleScope.launch(Dispatchers.Main) {
-        playQueueViewModel.playQueue.value = playQueue
+        playQueueViewModel.playQueue.value = playQueue.toMutableList()
         savePlayQueue(playQueue)
     }
 
@@ -1135,7 +1106,7 @@ class MainActivity : AppCompatActivity() {
             songsToBeDeleted.let {
                 for (song in songsToBeDeleted) {
                     musicLibraryViewModel.deleteSong(song)
-                    findSongIdInPlayQueueToRemove(song.songId)
+                    playQueueViewModel.removeAllOccurrencesOfSong(song.songId.toString())
                 }
             }
             musicLibraryViewModel.refreshSongOfTheDay()

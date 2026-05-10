@@ -100,13 +100,6 @@ class PlayQueueFragment : RecyclerViewFragment() {
         itemTouchHelper.attachToRecyclerView(binding.root)
     }
 
-    // FIXME - This value should be updated in the view model when items are removed
-    //  from the play queue prior to the currently playing index
-    fun updateCurrentlyPlayingIndex() {
-        val index = playQueueViewModel.currentQueueItemIndex.value ?: return
-        adapter.changeCurrentlyPlayingQueueItemIndex(index)
-    }
-
     override fun initialiseAdapter() {
         adapter = PlayQueueAdapter(this, mainActivity)
     }

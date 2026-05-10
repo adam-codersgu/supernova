@@ -17,7 +17,7 @@ abstract class Adapter: Adapter<ViewHolder>() {
      */
     open fun getRecyclerViewIndex(index: Int): Int = index
 
-    open fun processNewItems(newItems: List<Any>) {
+    fun processNewItems(newItems: List<Any>) {
         if (items == newItems) return
 
         for ((index, item) in newItems.withIndex()) {
