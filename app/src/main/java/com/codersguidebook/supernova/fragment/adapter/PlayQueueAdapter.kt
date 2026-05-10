@@ -83,6 +83,11 @@ class PlayQueueAdapter(private val fragment: PlayQueueFragment,
         notifyItemChanged(currentlyPlayingQueueIndex)
     }
 
+    override fun processNewItems(newItems: List<Any>) {
+        super.processNewItems(newItems)
+        fragment.updateCurrentlyPlayingIndex()
+    }
+
     override fun itemsEqual(item1: Any, item2: Any): Boolean {
         return (item1 as MediaItem).mediaId == (item2 as MediaItem).mediaId
     }
