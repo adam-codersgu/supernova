@@ -90,6 +90,7 @@ import kotlin.streams.toList
 class MainActivity : AppCompatActivity() {
 
     companion object {
+        private const val LOG_TAG = "MainActivity"
         private const val SONG_NEARLY_FINISHED_THRESHOLD = 0.98
     }
 
@@ -445,31 +446,14 @@ class MainActivity : AppCompatActivity() {
      * @param uri The content URI associated with the change.
      */
     fun handleChangeToContentUri(uri: Uri) = lifecycleScope.launch(Dispatchers.IO) {
-        val songIdString = uri.toString().removePrefix(
+        val songId = uri.toString().removePrefix(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + "/")
         try {
-            val songId = songIdString.toLong()
-            if (handleFileUpdateByMediaId(songId) == SONG_DELETED) findSongIdInPlayQueueToRemove(songId)
+            Log.i(LOG_TAG, "Change to content URI for media ID $songId")
+            if (handleFileUpdateByMediaId(songId.toLong()) == SONG_DELETED) {
+                playQueueViewModel.removeAllOccurrencesOfSong(songId)
+            }
         } catch (_: NumberFormatException) { refreshMusicLibrary() }
-    }
-
-    /**
-     * Search for and remove all instances of a given song from the play queue based on its ID.
-     *
-     * @param songId The ID of the Song to remove from the play queue.
-     */
-    private fun findSongIdInPlayQueueToRemove(songId: Long) = lifecycleScope.launch(Dispatchers.Default) {
-        var index: Int
-        do {
-            index = getLastIndexOfQueueItemByMediaId(songId.toString())
-            if (index != -1) removeQueueItemByIndex(index)
-        } while (index != -1)
-    }
-
-    private fun getLastIndexOfQueueItemByMediaId(mediaId: String): Int {
-        return playQueueViewModel.playQueue.value?.indexOfLast { mediaItem ->
-            mediaItem.mediaId == mediaId
-        } ?: -1
     }
 
     /**
@@ -666,7 +650,7 @@ class MainActivity : AppCompatActivity() {
     /** Fast forward the playback of the current song. */
     fun fastForward() = controller.seekForward()
 
-    private fun saveAndPostPlayQueue(playQueue: List<MediaItem>) {
+    private fun saveAndPostPlayQueue(playQueue: List<MediaItem>) = lifecycleScope.launch(Dispatchers.Main) {
         playQueueViewModel.playQueue.value = playQueue
         savePlayQueue(playQueue)
     }
@@ -690,7 +674,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             val playQueueJson = GsonBuilder().setPrettyPrinting().create().toJson(songsToSave)
-            Log.i("DEBUG", "Storing the following JSON:\n$playQueueJson")
+            // Log.i("DEBUG", "Storing the following JSON:\n$playQueueJson")
             sharedPreferences.edit().apply {
                 putString(PLAY_QUEUE_ITEMS, playQueueJson)
                 apply()
@@ -784,8 +768,8 @@ class MainActivity : AppCompatActivity() {
      *
      * @param index The index of the queue items to be removed.
      */
-    fun removeQueueItemByIndex(index: Int) = lifecycleScope.launch(Dispatchers.Main) {
-        val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return@launch
+    fun removeQueueItemByIndex(index: Int) {
+        val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return
         playQueue.removeAt(index)
         saveAndPostPlayQueue(playQueue)
     }
@@ -1122,7 +1106,7 @@ class MainActivity : AppCompatActivity() {
             songsToBeDeleted.let {
                 for (song in songsToBeDeleted) {
                     musicLibraryViewModel.deleteSong(song)
-                    findSongIdInPlayQueueToRemove(song.songId)
+                    playQueueViewModel.removeAllOccurrencesOfSong(song.songId.toString())
                 }
             }
             musicLibraryViewModel.refreshSongOfTheDay()
