@@ -650,7 +650,7 @@ class MainActivity : AppCompatActivity() {
     /** Fast forward the playback of the current song. */
     fun fastForward() = controller.seekForward()
 
-    private fun saveAndPostPlayQueue(playQueue: List<MediaItem>) = lifecycleScope.launch(Dispatchers.Main) {
+    private fun saveAndPostPlayQueue(playQueue: List<MediaItem>) {
         playQueueViewModel.playQueue.value = playQueue
         savePlayQueue(playQueue)
     }
