@@ -770,8 +770,13 @@ class MainActivity : AppCompatActivity() {
      */
     fun removeQueueItemByIndex(index: Int) {
         val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return
+        val currentIndex = playQueueViewModel.currentQueueItemIndex.value ?: return
         playQueue.removeAt(index)
         saveAndPostPlayQueue(playQueue)
+
+        if (index < currentIndex) {
+            saveCurrentlyPlayingIndex(currentIndex - 1)
+        }
     }
 
     /**
