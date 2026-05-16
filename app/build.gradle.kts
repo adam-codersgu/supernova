@@ -34,12 +34,10 @@ android {
             )
         }
     }
-    testOptions {
-        unitTests.all {
+    testOptions.unitTests {
+        all {
             it.useJUnitPlatform()
         }
-    }
-    testOptions.unitTests {
         isReturnDefaultValues = true
         isIncludeAndroidResources = true
     }
