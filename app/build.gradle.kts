@@ -22,6 +22,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            enableUnitTestCoverage = true
+            enableAndroidTestCoverage = true
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -30,16 +34,21 @@ android {
             )
         }
     }
+    testOptions {
+        unitTests.all {
+            it.useJUnitPlatform()
+        }
+    }
     testOptions.unitTests {
         isReturnDefaultValues = true
         isIncludeAndroidResources = true
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
     buildFeatures {
         viewBinding = true
@@ -56,12 +65,9 @@ dependencies {
     implementation("androidx.navigation:navigation-ui-ktx:2.9.8")
     testImplementation("io.kotest:kotest-runner-junit5:5.6.2")
     testImplementation("io.kotest:kotest-assertions-core:5.6.2")
-    testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
     testImplementation("org.mockito:mockito-core:5.8.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:3.2.0")
-    testImplementation("org.robolectric:robolectric:4.11.1")
-    androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
 
     val media3 = "1.10.1"
@@ -92,4 +98,6 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.11.0")
 
     implementation("com.codersguidebook:recyclerview-fastscroller-with-value-label:1.0")
+
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
 }
