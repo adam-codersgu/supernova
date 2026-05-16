@@ -80,7 +80,7 @@ abstract class MusicDatabase : RoomDatabase() {
                 // the builder needs a context, the Database class and a name for your database
                 database = Room.databaseBuilder(context, MusicDatabase::class.java, "music_database")
                     // destroy the earlier database if the version is incremented
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration(false)
                     .addCallback(MusicDatabaseCallback(context, scope))
                     .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .build()
