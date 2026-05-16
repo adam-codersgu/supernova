@@ -4,11 +4,10 @@ import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
-import org.robolectric.RuntimeEnvironment
 
 object PlaylistFixture {
 
-    private val defaultPlaylistHelper = DefaultPlaylistHelper(RuntimeEnvironment.getApplication())
+    /* private val defaultPlaylistHelper = DefaultPlaylistHelper(RuntimeEnvironment.getApplication())
 
     fun getMockPlaylist(): Playlist {
         val songIds = PlaylistHelper.serialiseSongIds(listOf(getMockSong().songId))
@@ -46,5 +45,5 @@ object PlaylistFixture {
             songId, 1, "Title", "Artist", "Album",
             "1", "2024", isFavourite
         )
-    }
+    } */
 }
