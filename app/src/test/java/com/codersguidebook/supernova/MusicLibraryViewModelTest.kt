@@ -7,15 +7,18 @@ import androidx.preference.PreferenceManager
 import com.codersguidebook.supernova.data.MusicRepository
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.exception.PlaylistNotFoundException
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockFavouritesPlaylist
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSong
 import com.codersguidebook.supernova.testutils.InstantTaskExecutorExtension
 import com.codersguidebook.supernova.testutils.ReflectionUtils
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -126,33 +129,31 @@ class MusicLibraryViewModelTest {
 
         @Test
         fun failure_playlist_not_found() = runTest {
+            initDefaultPlaylistHelper()
             val songToFavourite = getMockSong(2L, false)
 
-            runCatching { musicLibraryViewModel.toggleSongFavouriteStatus(songToFavourite) }
+            assertThrows(PlaylistNotFoundException::class.java) {
+                runBlocking {
+                    musicLibraryViewModel.toggleSongFavouriteStatus(songToFavourite)
+                }
+            }
 
             verify(repository, never()).updateSongs(any())
             verify(repository, never()).updatePlaylists(any())
         }
     }
 
-    private suspend fun repositoryShouldReturnFavouritesPlaylistById() {
+    private fun initDefaultPlaylistHelper() {
         `when`(this.defaultPlaylistHelper.favourites).doReturn(Pair(1, "Favourites"))
+    }
+
+    private suspend fun repositoryShouldReturnFavouritesPlaylistById() {
+        initDefaultPlaylistHelper()
         val mockPlaylist = getMockFavouritesPlaylist()
         `when`(repository.getPlaylistById(this.defaultPlaylistHelper.favourites.first)).doReturn(mockPlaylist)
     }
 
-    /* @Test
-    fun toggleSongFavouriteStatus_error_favourites_playlist_not_found() = runTest {
-        Mockito.`when`(mockRepository.getPlaylistById(defaultPlaylistHelper.favourites.first)).doReturn(null)
-        val songToFavourite = getMockSong(2L, false)
-
-        val isFavourited = musicLibraryViewModel.toggleSongFavouriteStatus(songToFavourite)
-
-        assertNull(isFavourited)
-        assertFalse(songToFavourite.isFavourite)
-    }
-
-    @Test
+    /*@Test
     fun getPlaylistByName_playlist_exists() = runTest {
         val mockPlaylist = whenGetPlaylistByNameReturnPlaylistA()
 
