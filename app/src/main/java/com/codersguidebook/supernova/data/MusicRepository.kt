@@ -9,8 +9,11 @@ import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.entities.SongPlays
 import java.time.LocalDate
 
-class MusicRepository(private val musicDao: MusicDao, private val playlistDao: PlaylistDao,
-    private val songPlaysDao: SongPlaysDao) {
+class MusicRepository(musicDatabase: MusicDatabase) {
+
+    private val musicDao: MusicDao = musicDatabase.musicDao()
+    private val playlistDao: PlaylistDao = musicDatabase.playlistDao()
+    private val songPlaysDao: SongPlaysDao = musicDatabase.songPlaysDao()
 
     val allSongs: LiveData<List<Song>> = musicDao.getSongsOrderByTitleLiveData()
     val allArtists: LiveData<List<Artist>> = musicDao.getArtists()

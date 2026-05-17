@@ -11,6 +11,8 @@ import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.entities.SongPlays
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -71,17 +73,14 @@ abstract class MusicDatabase : RoomDatabase() {
         @Volatile
         private var database: MusicDatabase? = null
 
-        fun getDatabase(
-            context: Context,
-            scope: CoroutineScope
-        ): MusicDatabase {
+        fun getDatabase(context: Context): MusicDatabase {
 
             database ?: kotlin.run {
                 // the builder needs a context, the Database class and a name for your database
                 database = Room.databaseBuilder(context, MusicDatabase::class.java, "music_database")
                     // destroy the earlier database if the version is incremented
                     .fallbackToDestructiveMigration(false)
-                    .addCallback(MusicDatabaseCallback(context, scope))
+                    .addCallback(MusicDatabaseCallback(context))
                     .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .build()
             }
@@ -91,9 +90,10 @@ abstract class MusicDatabase : RoomDatabase() {
     }
 
     private class MusicDatabaseCallback(
-        private val context: Context,
-        private val scope: CoroutineScope
+        private val context: Context
     ) : Callback() {
+
+        private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
         override fun onCreate(db: SupportSQLiteDatabase) {
             super.onOpen(db)
