@@ -64,8 +64,10 @@ dependencies {
     testImplementation("io.kotest:kotest-runner-junit5:5.6.2")
     testImplementation("io.kotest:kotest-assertions-core:5.6.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
-    testImplementation("org.mockito:mockito-core:5.8.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:3.2.0")
+    val mockito = "5.11.0"
+    testImplementation("org.mockito:mockito-core:$mockito")
+    testImplementation("org.mockito:mockito-junit-jupiter:$mockito")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
 
     val media3 = "1.10.1"
