@@ -3,87 +3,145 @@ package com.codersguidebook.supernova
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.lifecycle.MutableLiveData
+import androidx.preference.PreferenceManager
 import com.codersguidebook.supernova.data.MusicRepository
 import com.codersguidebook.supernova.entities.Playlist
-/* import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockFavouritesPlaylist
-import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockPlaylist
+import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockFavouritesPlaylist
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSong
-import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSongOfTheDayPlaylist */
-import com.codersguidebook.supernova.params.SharedPreferencesConstants
+import com.codersguidebook.supernova.testutils.InstantTaskExecutorExtension
 import com.codersguidebook.supernova.testutils.ReflectionUtils
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
-import io.kotest.inspectors.forAll
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.mockito.Mockito
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.Mock
+import org.mockito.MockedStatic
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.mockStatic
 import org.mockito.Mockito.never
+import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
+import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
+import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.doReturn
-import java.lang.Thread.sleep
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 import java.text.SimpleDateFormat
 import java.util.Date
 
-//@Suppress("UNCHECKED_CAST")
-//@RunWith(RobolectricTestRunner::class)
-//@Config(application = Application::class)
+@ExtendWith(MockitoExtension::class, InstantTaskExecutorExtension::class)
 class MusicLibraryViewModelTest {
 
-    /* private val today = SimpleDateFormat.getDateInstance().format(Date())
+    @Mock
+    lateinit var application: Application
 
-    private val mockRepository = mock(MusicRepository::class.java)
-    private val mockSharedPreferences = mock(SharedPreferences::class.java)
+    @Mock
+    lateinit var defaultPlaylistHelper: DefaultPlaylistHelper
+
+    @Mock
+    lateinit var repository: MusicRepository
+
+    @Mock
+    lateinit var sharedPreferences: SharedPreferences
+
+    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
+    private lateinit var staticMockPreferenceManager: MockedStatic<PreferenceManager>
+
+
+
+    private val today = SimpleDateFormat.getDateInstance().format(Date())
+
     private val mockEditor = mock(SharedPreferences.Editor::class.java)
 
-    private lateinit var defaultPlaylistHelper: DefaultPlaylistHelper
-    private lateinit var musicLibraryViewModel: MusicLibraryViewModel
-
-    @Before
+    /* @BeforeEach
     fun setup() {
-        MockitoAnnotations.openMocks(this)
-        defaultPlaylistHelper = DefaultPlaylistHelper(RuntimeEnvironment.getApplication())
-        musicLibraryViewModel = MusicLibraryViewModel(RuntimeEnvironment.getApplication())
-        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "repository", mockRepository)
         Mockito.`when`(mockSharedPreferences.edit()).doReturn(mockEditor)
         ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "sharedPreferences", mockSharedPreferences)
+    } */
+
+    @BeforeEach
+    fun setUp() {
+        MockitoAnnotations.openMocks(this)
+
+        staticMockPreferenceManager = mockStatic(PreferenceManager::class.java)
+        staticMockPreferenceManager.`when`<SharedPreferences> {
+            PreferenceManager.getDefaultSharedPreferences(application)
+        }.thenReturn(sharedPreferences)
+
+        val mostPlayedSongsLiveData = MutableLiveData<List<Long>>()
+        `when`(repository.mostPlayedSongsById).thenReturn(mostPlayedSongsLiveData)
+
+        musicLibraryViewModel = MusicLibraryViewModel(application, repository, defaultPlaylistHelper)
     }
 
-    @Test
-    fun toggleSongFavouriteStatus_success_add_favourite_song() = runTest {
-        repositoryShouldReturnFavouritesPlaylistById()
-        val songToFavourite = getMockSong(2L, false)
-
-        val isFavourited = musicLibraryViewModel.toggleSongFavouriteStatus(songToFavourite)
-
-        assertTrue(isFavourited)
-        assertTrue(songToFavourite.isFavourite)
+    @AfterEach
+    fun tearDown() {
+        staticMockPreferenceManager.close()
     }
 
-    @Test
-    fun toggleSongFavouriteStatus_success_remove_favourite_song() = runTest {
-        repositoryShouldReturnFavouritesPlaylistById()
-        val songToFavourite = getMockSong(1L, true)
+    @Nested
+    @DisplayName("When the song is already a favourite")
+    inner class ToggleSongFavouriteStatus {
+        @Test
+        fun success_add_favourite_song() = runTest {
+            repositoryShouldReturnFavouritesPlaylistById()
+            val songToFavourite = getMockSong(99L, false)
 
-        val isFavourited = musicLibraryViewModel.toggleSongFavouriteStatus(songToFavourite)
+            val isFavourite = musicLibraryViewModel.toggleSongFavouriteStatus(songToFavourite)
 
-        assertFalse(isFavourited)
-        assertFalse(songToFavourite.isFavourite)
+            assertTrue(isFavourite)
+            assertTrue(songToFavourite.isFavourite)
+
+            val playlistCaptor = argumentCaptor<List<Playlist>>()
+            verify(repository).updatePlaylists(playlistCaptor.capture())
+            val updatedIds = PlaylistHelper.extractSongIds(playlistCaptor.firstValue.first().songs)
+            assertTrue(updatedIds.size > 1)
+            assertTrue(updatedIds.contains(99L))
+        }
+
+        @Test
+        fun success_remove_favourite_song() = runTest {
+            repositoryShouldReturnFavouritesPlaylistById()
+            val songToFavourite = getMockSong(1L, true)
+
+            val isFavourite = musicLibraryViewModel.toggleSongFavouriteStatus(songToFavourite)
+
+            assertFalse(isFavourite)
+            assertFalse(songToFavourite.isFavourite)
+
+            val playlistCaptor = argumentCaptor<List<Playlist>>()
+            verify(repository).updatePlaylists(playlistCaptor.capture())
+            val updatedIds = PlaylistHelper.extractSongIds(playlistCaptor.firstValue.first().songs)
+            assertTrue(updatedIds.isEmpty())
+        }
+
+        @Test
+        fun failure_playlist_not_found() = runTest {
+            val songToFavourite = getMockSong(2L, false)
+
+            runCatching { musicLibraryViewModel.toggleSongFavouriteStatus(songToFavourite) }
+
+            verify(repository, never()).updateSongs(any())
+            verify(repository, never()).updatePlaylists(any())
+        }
     }
 
     private suspend fun repositoryShouldReturnFavouritesPlaylistById() {
+        `when`(this.defaultPlaylistHelper.favourites).doReturn(Pair(1, "Favourites"))
         val mockPlaylist = getMockFavouritesPlaylist()
-        Mockito.`when`(mockRepository.getPlaylistById(defaultPlaylistHelper.favourites.first)).doReturn(mockPlaylist)
+        `when`(repository.getPlaylistById(this.defaultPlaylistHelper.favourites.first)).doReturn(mockPlaylist)
     }
 
-    @Test
+    /* @Test
     fun toggleSongFavouriteStatus_error_favourites_playlist_not_found() = runTest {
         Mockito.`when`(mockRepository.getPlaylistById(defaultPlaylistHelper.favourites.first)).doReturn(null)
         val songToFavourite = getMockSong(2L, false)
