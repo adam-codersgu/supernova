@@ -11,12 +11,12 @@ import com.codersguidebook.supernova.exception.PlaylistNotFoundException
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockFavouritesPlaylist
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSong
 import com.codersguidebook.supernova.testutils.InstantTaskExecutorExtension
-import com.codersguidebook.supernova.testutils.ReflectionUtils
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -37,7 +37,6 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.verify
-import org.mockito.kotlin.whenever
 import java.text.SimpleDateFormat
 import java.util.Date
 
@@ -97,34 +96,42 @@ class MusicLibraryViewModelTest {
         @Test
         fun success_add_favourite_song() = runTest {
             repositoryShouldReturnFavouritesPlaylistById()
-            val songToFavourite = getMockSong(99L, false)
+            val song = getMockSong(99L, false)
 
-            val isFavourite = musicLibraryViewModel.toggleSongFavouriteStatus(songToFavourite)
+            val isFavourite = musicLibraryViewModel.toggleSongFavouriteStatus(song)
 
             assertTrue(isFavourite)
-            assertTrue(songToFavourite.isFavourite)
+            assertTrue(song.isFavourite)
 
             val playlistCaptor = argumentCaptor<List<Playlist>>()
             verify(repository).updatePlaylists(playlistCaptor.capture())
             val updatedIds = PlaylistHelper.extractSongIds(playlistCaptor.firstValue.first().songs)
             assertTrue(updatedIds.size > 1)
             assertTrue(updatedIds.contains(99L))
+
+            val songCaptor = argumentCaptor<List<Song>>()
+            verify(repository).updateSongs(songCaptor.capture())
+            assertEquals(song.songId, songCaptor.firstValue.first().songId)
         }
 
         @Test
         fun success_remove_favourite_song() = runTest {
             repositoryShouldReturnFavouritesPlaylistById()
-            val songToFavourite = getMockSong(1L, true)
+            val song = getMockSong(1L, true)
 
-            val isFavourite = musicLibraryViewModel.toggleSongFavouriteStatus(songToFavourite)
+            val isFavourite = musicLibraryViewModel.toggleSongFavouriteStatus(song)
 
             assertFalse(isFavourite)
-            assertFalse(songToFavourite.isFavourite)
+            assertFalse(song.isFavourite)
 
             val playlistCaptor = argumentCaptor<List<Playlist>>()
             verify(repository).updatePlaylists(playlistCaptor.capture())
             val updatedIds = PlaylistHelper.extractSongIds(playlistCaptor.firstValue.first().songs)
             assertTrue(updatedIds.isEmpty())
+
+            val songCaptor = argumentCaptor<List<Song>>()
+            verify(repository).updateSongs(songCaptor.capture())
+            assertEquals(song.songId, songCaptor.firstValue.first().songId)
         }
 
         @Test
