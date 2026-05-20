@@ -9,6 +9,7 @@ import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.exception.PlaylistNotFoundException
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockFavouritesPlaylist
+import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockPlaylist
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSong
 import com.codersguidebook.supernova.testutils.InstantTaskExecutorExtension
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
@@ -18,6 +19,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -91,7 +93,7 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("When the song is already a favourite")
+    @DisplayName("Toggle the song favourite status")
     inner class ToggleSongFavouriteStatus {
         @Test
         fun success_add_favourite_song() = runTest {
@@ -150,40 +152,31 @@ class MusicLibraryViewModelTest {
         }
     }
 
-    private fun initDefaultPlaylistHelper() {
-        `when`(this.defaultPlaylistHelper.favourites).doReturn(Pair(1, "Favourites"))
+    @Nested
+    @DisplayName("Find a playlist by name")
+    inner class GetPlaylistByName {
+
+        private val playlistA = "Playlist A"
+        private val playlistB = "Playlist B"
+
+        @Test
+        fun getPlaylistByName_playlist_exists() = runTest {
+            val mockPlaylist = mockGetPlaylistResponse(playlistA)
+
+            val playlist = musicLibraryViewModel.getPlaylistByName(playlistA)
+
+            assertEquals(mockPlaylist.toString(), playlist.toString())
+        }
+
+        @Test
+        fun getPlaylistByName_playlist_does_not_exist() = runTest {
+            val playlist = musicLibraryViewModel.getPlaylistByName(playlistB)
+
+            assertNull(playlist)
+        }
     }
 
-    private suspend fun repositoryShouldReturnFavouritesPlaylistById() {
-        initDefaultPlaylistHelper()
-        val mockPlaylist = getMockFavouritesPlaylist()
-        `when`(repository.getPlaylistById(this.defaultPlaylistHelper.favourites.first)).doReturn(mockPlaylist)
-    }
-
-    /*@Test
-    fun getPlaylistByName_playlist_exists() = runTest {
-        val mockPlaylist = whenGetPlaylistByNameReturnPlaylistA()
-
-        val playlist = musicLibraryViewModel.getPlaylistByName("Playlist A")
-
-        assertEquals(mockPlaylist.toString(), playlist.toString())
-    }
-
-    @Test
-    fun getPlaylistByName_playlist_does_not_exist() = runTest {
-        whenGetPlaylistByNameReturnPlaylistA()
-
-        val playlist = musicLibraryViewModel.getPlaylistByName("Playlist B")
-
-        assertNull(playlist)
-    }
-
-    private suspend fun whenGetPlaylistByNameReturnPlaylistA(): Playlist {
-        val mockPlaylist = getMockPlaylist()
-        Mockito.`when`(mockRepository.getPlaylistByName("Playlist A")).doReturn(mockPlaylist)
-        return mockPlaylist
-    }
-
+    /*
     @Test
     fun setActiveAlbumId_success() {
         // Given no album ID is set
@@ -354,4 +347,20 @@ class MusicLibraryViewModelTest {
             !it.isDefault
         }
     } */
+
+    private fun initDefaultPlaylistHelper() {
+        `when`(this.defaultPlaylistHelper.favourites).doReturn(Pair(1, "Favourites"))
+    }
+
+    private suspend fun mockGetPlaylistResponse(playlistName: String): Playlist {
+        val mockPlaylist = getMockPlaylist()
+        `when`(repository.getPlaylistByName(playlistName)).doReturn(mockPlaylist)
+        return mockPlaylist
+    }
+
+    private suspend fun repositoryShouldReturnFavouritesPlaylistById() {
+        initDefaultPlaylistHelper()
+        val mockPlaylist = getMockFavouritesPlaylist()
+        `when`(repository.getPlaylistById(this.defaultPlaylistHelper.favourites.first)).doReturn(mockPlaylist)
+    }
 }
