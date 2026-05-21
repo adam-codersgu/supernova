@@ -12,9 +12,12 @@ import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockFavouritesPl
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockPlaylist
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSong
 import com.codersguidebook.supernova.testutils.InstantTaskExecutorExtension
+import com.codersguidebook.supernova.testutils.ReflectionUtils
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -92,6 +95,7 @@ class MusicLibraryViewModelTest {
         staticMockPreferenceManager.close()
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Nested
     @DisplayName("Toggle the song favourite status")
     inner class ToggleSongFavouriteStatus {
@@ -101,6 +105,7 @@ class MusicLibraryViewModelTest {
             val song = getMockSong(99L, false)
 
             val isFavourite = musicLibraryViewModel.toggleSongFavouriteStatus(song)
+            advanceUntilIdle()
 
             assertTrue(isFavourite)
             assertTrue(song.isFavourite)
@@ -122,6 +127,7 @@ class MusicLibraryViewModelTest {
             val song = getMockSong(1L, true)
 
             val isFavourite = musicLibraryViewModel.toggleSongFavouriteStatus(song)
+            advanceUntilIdle()
 
             assertFalse(isFavourite)
             assertFalse(song.isFavourite)
@@ -176,38 +182,37 @@ class MusicLibraryViewModelTest {
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
+    @Nested
+    @DisplayName("Set the ID of the album being viewed")
+    inner class SetActiveAlbumId {
+        @Test
+        fun setActiveAlbumId_success() {
+            val activeAlbumIdField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeAlbumId")
+            val activeAlbumId = activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<String>
+            assertNull(activeAlbumId.value)
+
+            val expectedActiveAlbumId = "3"
+            musicLibraryViewModel.setActiveAlbumId(expectedActiveAlbumId)
+
+            assertEquals(expectedActiveAlbumId, activeAlbumId.value)
+        }
+
+        @Test
+        fun setActiveAlbumId_empty_string_success() {
+            val activeAlbumIdField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeAlbumId")
+            val activeAlbumId = activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<String>
+            activeAlbumId.value = "2"
+
+            assertEquals("2", activeAlbumId.value)
+
+            musicLibraryViewModel.setActiveAlbumId("")
+
+            assertEquals("", activeAlbumId.value)
+        }
+    }
+
     /*
-    @Test
-    fun setActiveAlbumId_success() {
-        // Given no album ID is set
-        val activeAlbumIdField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeAlbumId")
-        val activeAlbumId = activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<String>
-        assertNull(activeAlbumId.value)
-        
-        // When setActiveAlbumId is called with a valid String
-        val expectedActiveAlbumId = "3"
-        musicLibraryViewModel.setActiveAlbumId(expectedActiveAlbumId)
-
-        // Then the supplied String will be assigned to the activeAlbumId field
-        assertEquals(expectedActiveAlbumId, activeAlbumId.value)
-    }
-
-    @Test
-    fun setActiveAlbumId_empty_string_success() {
-        // Given the album ID is set to 2
-        val activeAlbumIdField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeAlbumId")
-        val activeAlbumId = activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<String>
-        activeAlbumId.value = "2"
-
-        assertEquals("2", activeAlbumId.value)
-
-        // When setActiveAlbumId is called with an empty String
-        musicLibraryViewModel.setActiveAlbumId("")
-
-        // Then the supplied String will be assigned to the activeAlbumId field
-        assertEquals("", activeAlbumId.value)
-    }
-
     @Test
     fun setActiveArtistName_success() {
         // Given no artist name is set
