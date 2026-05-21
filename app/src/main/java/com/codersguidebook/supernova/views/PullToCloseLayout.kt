@@ -27,7 +27,7 @@ class PullToCloseLayout(context: Context, attrs: AttributeSet?) : FrameLayout(co
     override fun computeScroll() {
         super.computeScroll()
         if (dragHelper.continueSettling(true)) {
-            ViewCompat.postInvalidateOnAnimation(this)
+            this.postInvalidateOnAnimation()
         }
     }
 
