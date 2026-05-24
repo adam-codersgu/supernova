@@ -279,34 +279,56 @@ class MusicLibraryViewModelTest {
             Mockito.verify(repository).updatePlaylists(listOf(mockPlaylist))
             Mockito.verify(editor, never()).putString(any(), any())
         }
+
+        @Test
+        fun refreshSongOfTheDay_30SongsLimitReached_success() = runTest {
+            stubEditor()
+            `when`(defaultPlaylistHelper.songOfTheDay).doReturn(Pair(3, "Song of the day"))
+            val mockPlaylist = getMockSongOfTheDayPlaylist(30)
+            `when`(repository.getPlaylistById(defaultPlaylistHelper.songOfTheDay.first)).doReturn(mockPlaylist)
+            `when`(repository.getRandomSong()).doReturn(getMockSong(31L))
+            `when`(sharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null))
+                .doReturn(null)
+            assertMaxLengthSongOfTheDayPlaylistElements(mockPlaylist, 1L, 30L)
+
+            refreshSongOfTheDay()
+
+            assertMaxLengthSongOfTheDayPlaylistElements(mockPlaylist, 31L, 29L)
+            Mockito.verify(repository).updatePlaylists(listOf(mockPlaylist))
+            Mockito.verify(editor).putString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, today)
+        }
+
+        private fun assertMaxLengthSongOfTheDayPlaylistElements(playlist: Playlist,
+                                                                expectedIdOfFirstElement: Long,
+                                                                expectedIdOfLastElement: Long) {
+            val extractedSongs = PlaylistHelper.extractSongIds(playlist.songs)
+            assertEquals(30, extractedSongs.size)
+            assertEquals(expectedIdOfFirstElement, extractedSongs[0])
+            assertEquals(expectedIdOfLastElement, extractedSongs[extractedSongs.size - 1])
+        }
+
+        private suspend fun mockSongOfTheDayPlaylist(dateLastUpdated: String?) : Playlist{
+            `when`(defaultPlaylistHelper.songOfTheDay).doReturn(Pair(3, "Song of the day"))
+            val mockPlaylist = getMockSongOfTheDayPlaylist()
+            `when`(repository.getPlaylistById(defaultPlaylistHelper.songOfTheDay.first)).doReturn(mockPlaylist)
+            `when`(sharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null))
+                .doReturn(dateLastUpdated)
+            return mockPlaylist
+        }
+
+        private suspend fun mockSongOfTheDayPlaylistWithSong(dateLastUpdated: String?) : Playlist{
+            `when`(repository.getRandomSong()).doReturn(getMockSong(2L))
+            return mockSongOfTheDayPlaylist(dateLastUpdated)
+        }
+
+        private fun refreshSongOfTheDay(forceUpdate: Boolean = false) {
+            musicLibraryViewModel.refreshSongOfTheDay(forceUpdate)
+            // FIXME - Need to use a better solution for pausing the thread - also other tests already written that could benefit e.g. favourites tests?
+            sleep(100)
+        }
     }
 
     /*
-    @Test
-    fun refreshSongOfTheDay_30SongsLimitReached_success() = runTest {
-        val mockPlaylist = getMockSongOfTheDayPlaylist(30)
-        Mockito.`when`(mockRepository.getPlaylistById(defaultPlaylistHelper.songOfTheDay.first)).doReturn(mockPlaylist)
-        Mockito.`when`(mockRepository.getRandomSong()).doReturn(getMockSong(31L))
-        Mockito.`when`(mockSharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null))
-            .doReturn(null)
-        assertMaxLengthSongOfTheDayPlaylistElements(mockPlaylist, 1L, 30L)
-
-        refreshSongOfTheDay()
-
-        assertMaxLengthSongOfTheDayPlaylistElements(mockPlaylist, 31L, 29L)
-        Mockito.verify(mockRepository).updatePlaylists(listOf(mockPlaylist))
-        Mockito.verify(mockEditor).putString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, today)
-    }
-
-    private fun assertMaxLengthSongOfTheDayPlaylistElements(playlist: Playlist,
-                                                            expectedIdOfFirstElement: Long,
-                                                            expectedIdOfLastElement: Long) {
-        val extractedSongs = PlaylistHelper.extractSongIds(playlist.songs)
-        assertEquals(30, extractedSongs.size)
-        assertEquals(expectedIdOfFirstElement, extractedSongs[0])
-        assertEquals(expectedIdOfLastElement, extractedSongs[extractedSongs.size - 1])
-    }
-
     @Test
     fun getAllSongs_success() = runTest {
         val song = getMockSong()
@@ -342,26 +364,6 @@ class MusicLibraryViewModelTest {
         val mockPlaylist = getMockPlaylist()
         `when`(repository.getPlaylistByName(playlistName)).doReturn(mockPlaylist)
         return mockPlaylist
-    }
-
-    private suspend fun mockSongOfTheDayPlaylist(dateLastUpdated: String?) : Playlist{
-        `when`(this.defaultPlaylistHelper.songOfTheDay).doReturn(Pair(3, "Song of the day"))
-        val mockPlaylist = getMockSongOfTheDayPlaylist()
-        `when`(repository.getPlaylistById(this.defaultPlaylistHelper.songOfTheDay.first)).doReturn(mockPlaylist)
-        `when`(sharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null))
-            .doReturn(dateLastUpdated)
-        return mockPlaylist
-    }
-
-    private suspend fun mockSongOfTheDayPlaylistWithSong(dateLastUpdated: String?) : Playlist{
-        `when`(repository.getRandomSong()).doReturn(getMockSong(2L))
-        return mockSongOfTheDayPlaylist(dateLastUpdated)
-    }
-
-    private fun refreshSongOfTheDay(forceUpdate: Boolean = false) {
-        musicLibraryViewModel.refreshSongOfTheDay(forceUpdate)
-        // FIXME - Need to use a better solution for pausing the thread - also other tests already written that could benefit e.g. favourites tests?
-        sleep(100)
     }
 
     private suspend fun repositoryShouldReturnFavouritesPlaylistById() {
