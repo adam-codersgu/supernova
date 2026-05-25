@@ -328,16 +328,21 @@ class MusicLibraryViewModelTest {
         }
     }
 
-    /*
-    @Test
-    fun getAllSongs_success() = runTest {
-        val song = getMockSong()
-        Mockito.`when`(mockRepository.getAllSongs()).doReturn(listOf(song))
+    @Nested
+    @DisplayName("Get all songs")
+    inner class GetAllSongs {
+        @Test
+        fun getAllSongs_success() = runTest {
+            val song = getMockSong()
+            `when`(repository.getAllSongs()).doReturn(listOf(song))
 
-        val songs = musicLibraryViewModel.getAllSongs()
-        assertEquals(1, songs.size)
+            val songs = musicLibraryViewModel.getAllSongs()
+            assertEquals(1, songs.size)
+            assertEquals(song.songId, songs[0].songId)
+        }
     }
 
+    /*
     @Test
     fun getAllPlaylists_success() = runTest {
         val userPlaylist = getMockPlaylist()
