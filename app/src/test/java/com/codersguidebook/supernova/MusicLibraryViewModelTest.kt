@@ -153,6 +153,12 @@ class MusicLibraryViewModelTest {
             verify(repository, never()).updateSongs(any())
             verify(repository, never()).updatePlaylists(any())
         }
+
+        private suspend fun repositoryShouldReturnFavouritesPlaylistById() {
+            `when`(defaultPlaylistHelper.favourites).doReturn(Pair(1, "Favourites"))
+            val mockPlaylist = getMockFavouritesPlaylist()
+            `when`(repository.getPlaylistById(defaultPlaylistHelper.favourites.first)).doReturn(mockPlaylist)
+        }
     }
 
     @Nested
@@ -342,17 +348,21 @@ class MusicLibraryViewModelTest {
         }
     }
 
-    /*
-    @Test
-    fun getAllPlaylists_success() = runTest {
-        val userPlaylist = getMockPlaylist()
-        val defaultPlaylist = getMockFavouritesPlaylist()
-        Mockito.`when`(mockRepository.getAllPlaylists()).doReturn(listOf(userPlaylist, defaultPlaylist))
+    @Nested
+    @DisplayName("Get all playlists")
+    inner class GetAllPlaylists {
+        @Test
+        fun getAllPlaylists_success() = runTest {
+            val userPlaylist = getMockPlaylist()
+            val defaultPlaylist = getMockFavouritesPlaylist()
+            `when`(repository.getAllPlaylists()).doReturn(listOf(userPlaylist, defaultPlaylist))
 
-        val playlists = musicLibraryViewModel.getAllPlaylists()
-        assertEquals(2, playlists.size)
+            val playlists = musicLibraryViewModel.getAllPlaylists()
+            assertEquals(2, playlists.size)
+        }
     }
 
+    /*
     @Test
     fun getAllUserPlaylists_success() = runTest {
         val userPlaylist = getMockPlaylist()
@@ -369,12 +379,6 @@ class MusicLibraryViewModelTest {
         val mockPlaylist = getMockPlaylist()
         `when`(repository.getPlaylistByName(playlistName)).doReturn(mockPlaylist)
         return mockPlaylist
-    }
-
-    private suspend fun repositoryShouldReturnFavouritesPlaylistById() {
-        `when`(this.defaultPlaylistHelper.favourites).doReturn(Pair(1, "Favourites"))
-        val mockPlaylist = getMockFavouritesPlaylist()
-        `when`(repository.getPlaylistById(this.defaultPlaylistHelper.favourites.first)).doReturn(mockPlaylist)
     }
 
     private fun stubEditor() {
