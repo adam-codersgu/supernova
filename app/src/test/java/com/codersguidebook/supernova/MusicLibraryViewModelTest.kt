@@ -17,6 +17,7 @@ import com.codersguidebook.supernova.testutils.InstantTaskExecutorExtension
 import com.codersguidebook.supernova.testutils.ReflectionUtils
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
+import io.kotest.inspectors.forAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
@@ -362,18 +363,21 @@ class MusicLibraryViewModelTest {
         }
     }
 
-    /*
-    @Test
-    fun getAllUserPlaylists_success() = runTest {
-        val userPlaylist = getMockPlaylist()
-        Mockito.`when`(mockRepository.getAllUserPlaylists()).doReturn(listOf(userPlaylist))
+    @Nested
+    @DisplayName("Get all user playlists")
+    inner class GetAllUserPlaylists {
+        @Test
+        fun getAllUserPlaylists_success() = runTest {
+            val userPlaylist = getMockPlaylist()
+            `when`(repository.getAllUserPlaylists()).doReturn(listOf(userPlaylist))
 
-        val playlists = musicLibraryViewModel.getAllUserPlaylists()
-        assertEquals(1, playlists.size)
-        playlists.forAll {
-            !it.isDefault
+            val playlists = musicLibraryViewModel.getAllUserPlaylists()
+            assertEquals(1, playlists.size)
+            playlists.forAll {
+                !it.isDefault
+            }
         }
-    } */
+    }
 
     private suspend fun mockGetPlaylistResponse(playlistName: String): Playlist {
         val mockPlaylist = getMockPlaylist()
