@@ -2,13 +2,9 @@ package com.codersguidebook.supernova.fixture
 
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
-import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
-import org.robolectric.RuntimeEnvironment
 
 object PlaylistFixture {
-
-    private val defaultPlaylistHelper = DefaultPlaylistHelper(RuntimeEnvironment.getApplication())
 
     fun getMockPlaylist(): Playlist {
         val songIds = PlaylistHelper.serialiseSongIds(listOf(getMockSong().songId))
@@ -17,10 +13,7 @@ object PlaylistFixture {
 
     fun getMockFavouritesPlaylist(): Playlist {
         val songIds = PlaylistHelper.serialiseSongIds(listOf(getMockSong(true).songId))
-        return Playlist(
-            defaultPlaylistHelper.favourites.first,
-            defaultPlaylistHelper.favourites.second, songIds, true
-        )
+        return Playlist(1, "Favourites", songIds, true)
     }
 
     fun getMockSongOfTheDayPlaylist(songQty: Int = 1): Playlist {
@@ -28,12 +21,7 @@ object PlaylistFixture {
         for (i in 1..songQty) {
             songIds.add(i.toLong())
         }
-        return Playlist(
-            defaultPlaylistHelper.songOfTheDay.first,
-            defaultPlaylistHelper.songOfTheDay.second,
-            PlaylistHelper.serialiseSongIds(songIds),
-            true
-        )
+        return Playlist(3, "Song of the day", PlaylistHelper.serialiseSongIds(songIds), true)
     }
 
     // TODO: Delegate the below song data setup methods to another fixture class

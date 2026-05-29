@@ -25,19 +25,25 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 
-class MusicLibraryViewModel(application: Application) : AndroidViewModel(application) {
+class MusicLibraryViewModel(application: Application,
+                            private val repository: MusicRepository,
+                            private val defaultPlaylistHelper: DefaultPlaylistHelper
+) : AndroidViewModel(application) {
 
-    private val database = MusicDatabase.getDatabase(application, viewModelScope)
-    private val musicDao = database.musicDao()
-    private val playlistDao = database.playlistDao()
-    private val songPlaysDao = database.songPlaysDao()
-    private val repository = MusicRepository(musicDao, playlistDao, songPlaysDao)
+    @Suppress("UNUSED")
+    constructor(application: Application) : this(
+        application,
+        MusicRepository(
+            MusicDatabase.getDatabase(application)
+        ),
+        DefaultPlaylistHelper(application)
+    )
+
     private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(application)
     val allSongs: LiveData<List<Song>> = repository.allSongs
     val allArtists: LiveData<List<Artist>> = repository.allArtists
     val allPlaylists: LiveData<List<Playlist>> = repository.allPlaylists
     var songIdToDelete: Long? = null
-    private val defaultPlaylistHelper: DefaultPlaylistHelper = DefaultPlaylistHelper(application)
     var navigationArgument: String? = null
 
     private val activeAlbumId = MutableLiveData<String>()

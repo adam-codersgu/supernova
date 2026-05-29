@@ -148,7 +148,7 @@ class MainActivity : AppCompatActivity() {
 
         storagePermissionHelper = StorageAccessPermissionHelper(this)
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        musicDatabase = MusicDatabase.getDatabase(this, lifecycleScope)
+        musicDatabase = MusicDatabase.getDatabase(this)
         musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
 
         createChannelForMediaPlayerNotification()

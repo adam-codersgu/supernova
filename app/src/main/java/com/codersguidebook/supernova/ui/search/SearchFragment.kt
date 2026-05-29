@@ -49,7 +49,7 @@ class SearchFragment : BaseRecyclerViewFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        musicDatabase = MusicDatabase.getDatabase(mainActivity, lifecycleScope)
+        musicDatabase = MusicDatabase.getDatabase(mainActivity)
 
         onBackPressedCallback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {

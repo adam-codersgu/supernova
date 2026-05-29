@@ -7,7 +7,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.widget.FrameLayout
-import androidx.core.view.ViewCompat
 import androidx.customview.widget.ViewDragHelper
 import androidx.customview.widget.ViewDragHelper.Callback
 import kotlin.math.abs
@@ -27,7 +26,7 @@ class PullToCloseLayout(context: Context, attrs: AttributeSet?) : FrameLayout(co
     override fun computeScroll() {
         super.computeScroll()
         if (dragHelper.continueSettling(true)) {
-            ViewCompat.postInvalidateOnAnimation(this)
+            this.postInvalidateOnAnimation()
         }
     }
 
