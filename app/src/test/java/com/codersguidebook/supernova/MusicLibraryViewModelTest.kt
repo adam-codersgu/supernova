@@ -350,6 +350,27 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
+    @DisplayName("Get all songs ordered by title")
+    inner class GetAllSongsOrderBySongTitle {
+        @Test
+        fun getAllSongsOrderBySongTitle_success() = runTest {
+            val song1 = getMockSong(1L)
+            song1.title = "First title"
+            val song2 = getMockSong(2L)
+            song2.title = "Second title"
+            val song3 = getMockSong(3L)
+            song3.title = "Third title"
+            `when`(repository.getAllSongsOrderByTitle()).doReturn(listOf(song1, song2, song3))
+
+            val songs = musicLibraryViewModel.getAllSongsOrderByTitle()
+            assertEquals(3, songs.size)
+            assertEquals(song1.title, songs[0].title)
+            assertEquals(song2.title, songs[1].title)
+            assertEquals(song3.title, songs[2].title)
+        }
+    }
+
+    @Nested
     @DisplayName("Get all playlists")
     inner class GetAllPlaylists {
         @Test
