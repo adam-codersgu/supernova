@@ -400,6 +400,23 @@ class MusicLibraryViewModelTest {
         }
     }
 
+    @Nested
+    @DisplayName("Get updated navigation argument")
+    inner class GetUpdatedNavigationArgument {
+
+        private val navigationArgument = "arg1"
+
+        @Test
+        fun getUpdatedNavigationArgument_success() {
+            musicLibraryViewModel.navigationArgument = navigationArgument
+
+            val argument = musicLibraryViewModel.getUpdatedNavigationArgument()
+
+            assertEquals(navigationArgument, argument)
+            assertEquals(null, musicLibraryViewModel.navigationArgument)
+        }
+    }
+
     private suspend fun mockGetPlaylistResponse(playlistName: String): Playlist {
         val mockPlaylist = getMockPlaylist()
         `when`(repository.getPlaylistByName(playlistName)).doReturn(mockPlaylist)
