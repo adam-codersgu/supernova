@@ -247,6 +247,57 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
+    @DisplayName("Extract playlist songs")
+    inner class ExtractPlaylistSongs {
+        @Test
+        fun extractPlaylistSongs() = runTest {
+            `when`(repository.getSongById(1L)).thenReturn(getMockSong(1L))
+            `when`(repository.getSongById(2L)).thenReturn(getMockSong(2L))
+            `when`(repository.getSongById(3L)).thenReturn(getMockSong(3L))
+
+            val json = "[1,2,3]"
+
+            val songs = musicLibraryViewModel.extractPlaylistSongs(json)
+
+            assertEquals(3, songs.size)
+            assertEquals(1L, songs[0].songId)
+            assertEquals(2L, songs[1].songId)
+            assertEquals(3L, songs[2].songId)
+        }
+
+        @Test
+        fun extractPlaylistSongs_ignoreNullSongs() = runTest {
+            `when`(repository.getSongById(1L)).thenReturn(getMockSong(1L))
+            `when`(repository.getSongById(2L)).thenReturn(null)
+            `when`(repository.getSongById(3L)).thenReturn(getMockSong(3L))
+
+            val json = "[1,2,3]"
+
+            val songs = musicLibraryViewModel.extractPlaylistSongs(json)
+
+            assertEquals(2, songs.size)
+            assertEquals(1L, songs[0].songId)
+            assertEquals(3L, songs[1].songId)
+        }
+
+        @Test
+        fun extractPlaylistSongs_emptyList() = runTest {
+            val json = "[]"
+
+            val songs = musicLibraryViewModel.extractPlaylistSongs(json)
+
+            assertEquals(0, songs.size)
+        }
+
+        @Test
+        fun extractPlaylistSongs_null() = runTest {
+            val songs = musicLibraryViewModel.extractPlaylistSongs(null)
+
+            assertEquals(0, songs.size)
+        }
+    }
+
+    @Nested
     @DisplayName("Refresh the song of the day")
     inner class RefreshSongOfTheDay {
         @Test
