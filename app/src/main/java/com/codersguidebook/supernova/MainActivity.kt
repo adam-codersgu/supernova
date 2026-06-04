@@ -665,12 +665,12 @@ class MainActivity : AppCompatActivity() {
             val songsToSave = if (shuffleModeOn) {
                 playQueue.map { i ->
                     val orderId = i.mediaMetadata.extras?.getInt(ORDER_ID)
-                    val song = buildSongFromMediaItem(i)
+                    val song = SongHelper.buildFromMediaItem(i)
                     SongWithOrderId(orderId, song)
                 }
             } else {
                 playQueue.map { i ->
-                    SongWithOrderId(null, buildSongFromMediaItem(i))
+                    SongWithOrderId(null, SongHelper.buildFromMediaItem(i))
                 }
             }
             val playQueueJson = GsonBuilder().setPrettyPrinting().create().toJson(songsToSave)
@@ -680,15 +680,6 @@ class MainActivity : AppCompatActivity() {
                 apply()
             }
         } catch (_: ConcurrentModificationException) {}
-    }
-
-    private fun buildSongFromMediaItem(mediaItem: MediaItem): Song {
-        val metadata = mediaItem.mediaMetadata
-        val extras = metadata.extras
-            ?: throw RuntimeException("Extras null for ${mediaItem.mediaMetadata.title}")
-        return Song(mediaItem.mediaId.toLong(), 0, metadata.title.toString(),
-            metadata.artist.toString(), metadata.albumTitle.toString(),
-            extras.getString(ALBUM_ID, "-1"), "0")
     }
 
     /**
