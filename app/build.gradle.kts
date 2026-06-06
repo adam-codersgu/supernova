@@ -66,6 +66,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     testImplementation("org.mockito.kotlin:mockito-kotlin:3.2.0")
     testImplementation("org.jetbrains.kotlin:kotlin-reflect:2.2.21")
+    testImplementation("io.mockk:mockk:1.14.11")
     val mockito = "5.11.0"
     testImplementation("org.mockito:mockito-core:$mockito")
     testImplementation("org.mockito:mockito-junit-jupiter:$mockito")
