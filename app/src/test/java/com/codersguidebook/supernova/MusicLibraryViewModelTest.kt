@@ -19,6 +19,11 @@ import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
 import io.kotest.inspectors.forAll
+import io.mockk.Runs
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
@@ -32,7 +37,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.ArgumentMatchers
 import org.mockito.Mock
 import org.mockito.MockedStatic
 import org.mockito.Mockito
@@ -304,26 +308,44 @@ class MusicLibraryViewModelTest {
     @DisplayName("Delete redundant artwork by song")
     inner class DeleteRedundantArtworkBySong {
 
+        private val song = getMockSong()
+
         @Test
-        fun deleteRedundantArtworkBySong_songsExist() = runTest {
-            val song = getMockSong()
+        fun deleteRedundantArtworkBySong_songDoesNotExist() = runTest {
+            `when`(repository.getSongsByAlbumIdOrderByTrack(song.albumId)).thenReturn(listOf())
+
+            mockkObject(ImageHandlingHelper)
+
+            every { ImageHandlingHelper.deleteAlbumArtByResourceId(application, song.albumId) } just Runs
+
+            val method = ReflectionUtils.setMethodVisible(musicLibraryViewModel, "deleteRedundantArtworkBySong")
+            method.callSuspend(musicLibraryViewModel, song)
+
+            Mockito.verify(repository).getSongsByAlbumIdOrderByTrack(song.albumId)
+
+            io.mockk.verify { ImageHandlingHelper.deleteAlbumArtByResourceId(application, song.albumId) }
+
+            unmockkObject(ImageHandlingHelper::class)
+        }
+
+        @Test
+        fun deleteRedundantArtworkBySong_songExists() = runTest {
             `when`(repository.getSongsByAlbumIdOrderByTrack(song.albumId)).thenReturn(listOf(song))
 
-            mockStatic(ImageHandlingHelper::class.java).use { mockedHelper ->
-                val method = ReflectionUtils.setMethodVisible(musicLibraryViewModel, "deleteRedundantArtworkBySong")
-                method.callSuspend(musicLibraryViewModel, song)
+            mockkObject(ImageHandlingHelper)
 
-                Mockito.verify(repository).getSongsByAlbumIdOrderByTrack(song.albumId)
+            every { ImageHandlingHelper.deleteAlbumArtByResourceId(application, song.albumId) } just Runs
 
-                /* fixme mockedHelper.verify(
-                    { ImageHandlingHelper.deleteAlbumArtByResourceId(ArgumentMatchers.any(), ArgumentMatchers.any()) },
-                    never()
-                ) */
-            }
+            val method = ReflectionUtils.setMethodVisible(musicLibraryViewModel, "deleteRedundantArtworkBySong")
+            method.callSuspend(musicLibraryViewModel, song)
+
+            Mockito.verify(repository).getSongsByAlbumIdOrderByTrack(song.albumId)
+
+            io.mockk.verify(exactly = 0) { ImageHandlingHelper.deleteAlbumArtByResourceId(application, song.albumId) }
+
+            unmockkObject(ImageHandlingHelper::class)
         }
     }
-
-        // todo next deleteRedundantArtworkBySong(Song, Continuation)
 
     // todo do deleteSong next
 
