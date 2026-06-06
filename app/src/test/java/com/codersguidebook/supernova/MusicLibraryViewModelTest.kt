@@ -16,6 +16,7 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants
 import com.codersguidebook.supernova.testutils.InstantTaskExecutorExtension
 import com.codersguidebook.supernova.testutils.ReflectionUtils
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
+import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
 import io.kotest.inspectors.forAll
 import kotlinx.coroutines.runBlocking
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.ArgumentMatchers
 import org.mockito.Mock
 import org.mockito.MockedStatic
 import org.mockito.Mockito
@@ -46,6 +48,7 @@ import org.mockito.kotlin.verify
 import java.lang.Thread.sleep
 import java.text.SimpleDateFormat
 import java.util.Date
+import kotlin.reflect.full.callSuspend
 
 @ExtendWith(MockitoExtension::class, InstantTaskExecutorExtension::class)
 class MusicLibraryViewModelTest {
@@ -296,6 +299,33 @@ class MusicLibraryViewModelTest {
             assertEquals(0, songs.size)
         }
     }
+
+    @Nested
+    @DisplayName("Delete redundant artwork by song")
+    inner class DeleteRedundantArtworkBySong {
+
+        @Test
+        fun deleteRedundantArtworkBySong_songsExist() = runTest {
+            val song = getMockSong()
+            `when`(repository.getSongsByAlbumIdOrderByTrack(song.albumId)).thenReturn(listOf(song))
+
+            mockStatic(ImageHandlingHelper::class.java).use { mockedHelper ->
+                val method = ReflectionUtils.setMethodVisible(musicLibraryViewModel, "deleteRedundantArtworkBySong")
+                method.callSuspend(musicLibraryViewModel, song)
+
+                Mockito.verify(repository).getSongsByAlbumIdOrderByTrack(song.albumId)
+
+                /* fixme mockedHelper.verify(
+                    { ImageHandlingHelper.deleteAlbumArtByResourceId(ArgumentMatchers.any(), ArgumentMatchers.any()) },
+                    never()
+                ) */
+            }
+        }
+    }
+
+        // todo next deleteRedundantArtworkBySong(Song, Continuation)
+
+    // todo do deleteSong next
 
     @Nested
     @DisplayName("Refresh the song of the day")
