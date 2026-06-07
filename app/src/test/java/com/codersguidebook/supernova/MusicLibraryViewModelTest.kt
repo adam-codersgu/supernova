@@ -26,6 +26,7 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.just
 import io.mockk.mockkObject
+import io.mockk.slot
 import io.mockk.unmockkObject
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -39,13 +40,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.Mockito
-import org.mockito.Mockito.never
-import org.mockito.Mockito.`when`
-import org.mockito.kotlin.any
-import org.mockito.kotlin.argumentCaptor
-import org.mockito.kotlin.doReturn
-import org.mockito.kotlin.verify
 import java.lang.Thread.sleep
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -94,15 +88,15 @@ class MusicLibraryViewModelTest {
             assertTrue(isFavourite)
             assertTrue(song.isFavourite)
 
-            val playlistCaptor = argumentCaptor<List<Playlist>>()
-            verify(repository).updatePlaylists(playlistCaptor.capture())
-            val updatedIds = PlaylistHelper.extractSongIds(playlistCaptor.firstValue.first().songs)
+            val playlistSlot = slot<List<Playlist>>()
+            coVerify { repository.updatePlaylists(capture(playlistSlot)) }
+            val updatedIds = PlaylistHelper.extractSongIds(playlistSlot.captured.first().songs)
             assertTrue(updatedIds.size > 1)
             assertTrue(updatedIds.contains(99L))
 
-            val songCaptor = argumentCaptor<List<Song>>()
-            verify(repository).updateSongs(songCaptor.capture())
-            assertEquals(song.songId, songCaptor.firstValue.first().songId)
+            val songSlot = slot<List<Song>>()
+            coVerify { repository.updateSongs(capture(songSlot)) }
+            assertEquals(song.songId, songSlot.captured.first().songId)
         }
 
         @Test
@@ -118,19 +112,19 @@ class MusicLibraryViewModelTest {
             assertFalse(isFavourite)
             assertFalse(song.isFavourite)
 
-            val playlistCaptor = argumentCaptor<List<Playlist>>()
-            verify(repository).updatePlaylists(playlistCaptor.capture())
-            val updatedIds = PlaylistHelper.extractSongIds(playlistCaptor.firstValue.first().songs)
+            val playlistSlot = slot<List<Playlist>>()
+            coVerify { repository.updatePlaylists(capture(playlistSlot)) }
+            val updatedIds = PlaylistHelper.extractSongIds(playlistSlot.captured.first().songs)
             assertTrue(updatedIds.isEmpty())
 
-            val songCaptor = argumentCaptor<List<Song>>()
-            verify(repository).updateSongs(songCaptor.capture())
-            assertEquals(song.songId, songCaptor.firstValue.first().songId)
+            val songSlot = slot<List<Song>>()
+            coVerify { repository.updateSongs(capture(songSlot)) }
+            assertEquals(song.songId, songSlot.captured.first().songId)
         }
 
         @Test
         fun failure_playlist_not_found() = runTest {
-            `when`(defaultPlaylistHelper.favourites).doReturn(Pair(1, "Favourites"))
+            every { defaultPlaylistHelper.favourites } returns Pair(1, "Favourites")
             val songToFavourite = getMockSong(2L, false)
 
             assertThrows(PlaylistNotFoundException::class.java) {
@@ -139,14 +133,14 @@ class MusicLibraryViewModelTest {
                 }
             }
 
-            verify(repository, never()).updateSongs(any())
-            verify(repository, never()).updatePlaylists(any())
+            coVerify(exactly = 0) { repository.updateSongs(any()) }
+            coVerify(exactly = 0) { repository.updatePlaylists(any()) }
         }
 
-        private suspend fun repositoryShouldReturnFavouritesPlaylistById() {
-            `when`(defaultPlaylistHelper.favourites).doReturn(Pair(1, "Favourites"))
+        private fun repositoryShouldReturnFavouritesPlaylistById() {
+            every { defaultPlaylistHelper.favourites } returns Pair(1, "Favourites")
             val mockPlaylist = getMockFavouritesPlaylist()
-            `when`(repository.getPlaylistById(defaultPlaylistHelper.favourites.first)).doReturn(mockPlaylist)
+            coEvery { repository.getPlaylistById(defaultPlaylistHelper.favourites.first) } returns mockPlaylist
         }
     }
 
