@@ -22,7 +22,7 @@ abstract class BaseFragment: Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
         mainActivity = activity as MainActivity
-        musicLibraryViewModel = ViewModelProvider(mainActivity)[MusicLibraryViewModel::class.java]
+        musicLibraryViewModel = ViewModelProvider(mainActivity, MusicLibraryViewModel.Factory)[MusicLibraryViewModel::class.java]
         return binding.root
     }
 

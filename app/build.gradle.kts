@@ -64,9 +64,11 @@ dependencies {
     testImplementation("io.kotest:kotest-runner-junit5:5.6.2")
     testImplementation("io.kotest:kotest-assertions-core:5.6.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+    // TODO REMOVE MOCKITO
     testImplementation("org.mockito.kotlin:mockito-kotlin:3.2.0")
     testImplementation("org.jetbrains.kotlin:kotlin-reflect:2.2.21")
     testImplementation("io.mockk:mockk:1.14.11")
+    // TODO REMOVE MOCKITO
     val mockito = "5.11.0"
     testImplementation("org.mockito:mockito-core:$mockito")
     testImplementation("org.mockito:mockito-junit-jupiter:$mockito")

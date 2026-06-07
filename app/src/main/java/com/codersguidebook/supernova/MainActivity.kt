@@ -56,7 +56,6 @@ import com.codersguidebook.supernova.dialogs.CreatePlaylist
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.entities.SongWithOrderId
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ALBUM_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NO_ACTION
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ORDER_ID
@@ -149,7 +148,7 @@ class MainActivity : AppCompatActivity() {
         storagePermissionHelper = StorageAccessPermissionHelper(this)
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         musicDatabase = MusicDatabase.getDatabase(this)
-        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
+        musicLibraryViewModel = ViewModelProvider(this, MusicLibraryViewModel.Factory)[MusicLibraryViewModel::class.java]
 
         createChannelForMediaPlayerNotification()
 
