@@ -3,7 +3,6 @@ package com.codersguidebook.supernova
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.lifecycle.MutableLiveData
-import androidx.preference.PreferenceManager
 import com.codersguidebook.supernova.data.MusicRepository
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
@@ -30,7 +29,6 @@ import io.mockk.mockkObject
 import io.mockk.unmockkObject
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -41,14 +39,9 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.Mock
-import org.mockito.MockedStatic
 import org.mockito.Mockito
-import org.mockito.Mockito.mockStatic
 import org.mockito.Mockito.never
 import org.mockito.Mockito.`when`
-import org.mockito.MockitoAnnotations
-import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.doReturn
@@ -61,7 +54,7 @@ import kotlin.reflect.full.callSuspend
 @ExtendWith(MockKExtension::class, InstantTaskExecutorExtension::class)
 class MusicLibraryViewModelTest {
 
-    @MockK
+    @MockK(relaxed = true)
     lateinit var application: Application
 
     @MockK
@@ -70,35 +63,19 @@ class MusicLibraryViewModelTest {
     @MockK
     lateinit var editor: SharedPreferences.Editor
 
-    @MockK
+    @MockK(relaxed = true)
     lateinit var repository: MusicRepository
 
-    @MockK
+    @MockK(relaxed = true)
     lateinit var sharedPreferences: SharedPreferences
 
     private lateinit var musicLibraryViewModel: MusicLibraryViewModel
-    private lateinit var staticMockPreferenceManager: MockedStatic<PreferenceManager>
 
     private val today = SimpleDateFormat.getDateInstance().format(Date())
 
     @BeforeEach
     fun setUp() {
-        MockitoAnnotations.openMocks(this)
-
-        staticMockPreferenceManager = mockStatic(PreferenceManager::class.java)
-        staticMockPreferenceManager.`when`<SharedPreferences> {
-            PreferenceManager.getDefaultSharedPreferences(application)
-        }.thenReturn(sharedPreferences)
-
-        val mostPlayedSongsLiveData = MutableLiveData<List<Long>>()
-        `when`(repository.mostPlayedSongsById).thenReturn(mostPlayedSongsLiveData)
-
         musicLibraryViewModel = MusicLibraryViewModel(application, repository, defaultPlaylistHelper)
-    }
-
-    @AfterEach
-    fun tearDown() {
-        staticMockPreferenceManager.close()
     }
 
     @Nested
@@ -319,7 +296,6 @@ class MusicLibraryViewModelTest {
             `when`(repository.getSongsByAlbumIdOrderByTrack(song.albumId)).thenReturn(listOf())
 
             mockkObject(ImageHandlingHelper)
-
             every { ImageHandlingHelper.deleteAlbumArtByResourceId(application, song.albumId) } just Runs
 
             val method = ReflectionUtils.setMethodVisible(musicLibraryViewModel, "deleteRedundantArtworkBySong")
@@ -337,7 +313,6 @@ class MusicLibraryViewModelTest {
             `when`(repository.getSongsByAlbumIdOrderByTrack(song.albumId)).thenReturn(listOf(song))
 
             mockkObject(ImageHandlingHelper)
-
             every { ImageHandlingHelper.deleteAlbumArtByResourceId(application, song.albumId) } just Runs
 
             val method = ReflectionUtils.setMethodVisible(musicLibraryViewModel, "deleteRedundantArtworkBySong")
@@ -359,13 +334,17 @@ class MusicLibraryViewModelTest {
 
         @Test
         fun deleteSong_songNotInPlaylist() = runTest {
+            mockkObject(ImageHandlingHelper)
+            every { ImageHandlingHelper.deleteAlbumArtByResourceId(application, songToDelete.albumId) } just Runs
+
             val mockPlaylist = getMockPlaylist(listOf(getMockSong(2L)))
-            coEvery { repository.getAllPlaylists() } returns listOf(mockPlaylist)
+            coEvery { repository.getAllPlaylists() } answers { listOf(mockPlaylist) }
 
             musicLibraryViewModel.deleteSong(songToDelete)
 
             coVerify(exactly = 0) { repository.updatePlaylists(any()) }
             coVerify { repository.deleteSong(songToDelete) }
+            unmockkObject(ImageHandlingHelper::class)
         }
 
         /* TODO test cases
@@ -374,8 +353,6 @@ class MusicLibraryViewModelTest {
             - SONG APPEARS IN ONE PLAYLIST BUT NOT ANOTHER
          */
     }
-
-    // todo do deleteSong next
 
     @Nested
     @DisplayName("Refresh the song of the day")

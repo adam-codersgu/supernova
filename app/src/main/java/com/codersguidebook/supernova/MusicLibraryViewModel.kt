@@ -46,12 +46,6 @@ class MusicLibraryViewModel(application: Application,
                 MusicLibraryViewModel(context, repository, playlistHelper)
             }
         }
-
-        /*
-        private val viewModel: MusicLibraryViewModel by viewModels {
-        MusicLibraryViewModel.Factory
-    }
-         */
     }
 
     private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(application)
