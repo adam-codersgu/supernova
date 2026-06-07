@@ -20,7 +20,11 @@ import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
 import io.kotest.inspectors.forAll
 import io.mockk.Runs
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
+import io.mockk.impl.annotations.MockK
+import io.mockk.junit5.MockKExtension
 import io.mockk.just
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
@@ -54,22 +58,22 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import kotlin.reflect.full.callSuspend
 
-@ExtendWith(MockitoExtension::class, InstantTaskExecutorExtension::class)
+@ExtendWith(MockKExtension::class, InstantTaskExecutorExtension::class)
 class MusicLibraryViewModelTest {
 
-    @Mock
+    @MockK
     lateinit var application: Application
 
-    @Mock
+    @MockK
     lateinit var defaultPlaylistHelper: DefaultPlaylistHelper
 
-    @Mock
+    @MockK
     lateinit var editor: SharedPreferences.Editor
 
-    @Mock
+    @MockK
     lateinit var repository: MusicRepository
 
-    @Mock
+    @MockK
     lateinit var sharedPreferences: SharedPreferences
 
     private lateinit var musicLibraryViewModel: MusicLibraryViewModel
@@ -345,6 +349,30 @@ class MusicLibraryViewModelTest {
 
             unmockkObject(ImageHandlingHelper::class)
         }
+    }
+
+    @Nested
+    @DisplayName("Delete a song")
+    inner class DeleteSong {
+
+        private val songToDelete = getMockSong()
+
+        @Test
+        fun deleteSong_songNotInPlaylist() = runTest {
+            val mockPlaylist = getMockPlaylist(listOf(getMockSong(2L)))
+            coEvery { repository.getAllPlaylists() } returns listOf(mockPlaylist)
+
+            musicLibraryViewModel.deleteSong(songToDelete)
+
+            coVerify(exactly = 0) { repository.updatePlaylists(any()) }
+            coVerify { repository.deleteSong(songToDelete) }
+        }
+
+        /* TODO test cases
+            - SONG APPEARS IN PLAYLIST MULTIPLE TIMES
+            - SONG APPEARS IN MULTIPLE PLAYLISTS
+            - SONG APPEARS IN ONE PLAYLIST BUT NOT ANOTHER
+         */
     }
 
     // todo do deleteSong next
