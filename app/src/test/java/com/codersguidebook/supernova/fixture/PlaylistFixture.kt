@@ -6,8 +6,8 @@ import com.codersguidebook.supernova.utils.PlaylistHelper
 
 object PlaylistFixture {
 
-    fun getMockPlaylist(): Playlist {
-        val songIds = PlaylistHelper.serialiseSongIds(listOf(getMockSong().songId))
+    fun getMockPlaylist(songs: List<Song> = listOf(getMockSong())): Playlist {
+        val songIds = PlaylistHelper.serialiseSongIds(songs.map { it.songId })
         return Playlist(1, "Playlist A", songIds, false)
     }
 
