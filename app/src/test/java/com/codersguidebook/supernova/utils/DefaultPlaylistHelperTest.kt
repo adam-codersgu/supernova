@@ -3,14 +3,17 @@ package com.codersguidebook.supernova.utils
 import android.content.Context
 import com.codersguidebook.supernova.R
 import io.mockk.every
-import io.mockk.impl.annotations.MockK
+import io.mockk.impl.annotations.RelaxedMockK
+import io.mockk.junit5.MockKExtension
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 
+@ExtendWith(MockKExtension::class)
 class DefaultPlaylistHelperTest {
 
-    @MockK
+    @RelaxedMockK
     lateinit var mockContext: Context
 
     @BeforeEach

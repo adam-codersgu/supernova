@@ -22,7 +22,7 @@ import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
-import io.mockk.impl.annotations.MockK
+import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.just
 import io.mockk.mockkObject
@@ -49,19 +49,19 @@ import kotlin.reflect.full.callSuspend
 @ExtendWith(MockKExtension::class, InstantTaskExecutorExtension::class)
 class MusicLibraryViewModelTest {
 
-    @MockK(relaxed = true)
+    @RelaxedMockK
     lateinit var application: Application
 
-    @MockK
+    @RelaxedMockK
     lateinit var defaultPlaylistHelper: DefaultPlaylistHelper
 
-    @MockK
+    @RelaxedMockK
     lateinit var editor: SharedPreferences.Editor
 
-    @MockK(relaxed = true)
+    @RelaxedMockK
     lateinit var repository: MusicRepository
 
-    @MockK(relaxed = true)
+    @RelaxedMockK
     lateinit var sharedPreferences: SharedPreferences
 
     private lateinit var musicLibraryViewModel: MusicLibraryViewModel
@@ -125,8 +125,8 @@ class MusicLibraryViewModelTest {
 
         @Test
         fun failure_playlist_not_found() = runTest {
-            every { defaultPlaylistHelper.favourites } returns Pair(1, "Favourites")
             val songToFavourite = getMockSong(2L, false)
+            coEvery { repository.getPlaylistById(any()) } returns null
 
             assertThrows(PlaylistNotFoundException::class.java) {
                 runBlocking {
@@ -424,7 +424,7 @@ class MusicLibraryViewModelTest {
             return mockPlaylist
         }
 
-        private suspend fun mockSongOfTheDayPlaylistWithSong(dateLastUpdated: String?) : Playlist{
+        private fun mockSongOfTheDayPlaylistWithSong(dateLastUpdated: String?) : Playlist{
             coEvery { repository.getRandomSong() } returns getMockSong(2L)
             return mockSongOfTheDayPlaylist(dateLastUpdated)
         }
