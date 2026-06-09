@@ -386,8 +386,8 @@ class MusicLibraryViewModelTest {
 
             assertEquals(1, PlaylistHelper.extractSongIds(mockPlaylist.songs).size)
             assertEquals(2L, PlaylistHelper.extractSongIds(mockPlaylist.songs)[0])
-            Mockito.verify(repository).updatePlaylists(listOf(mockPlaylist))
-            Mockito.verify(editor, never()).putString(any(), any())
+            coVerify { repository.updatePlaylists(listOf(mockPlaylist)) }
+            verify(exactly = 0) { editor.putString(any(), any()) }
         }
 
         @Test
@@ -397,15 +397,14 @@ class MusicLibraryViewModelTest {
             val mockPlaylist = getMockSongOfTheDayPlaylist(30)
             coEvery { repository.getPlaylistById(defaultPlaylistHelper.songOfTheDay.first) } returns mockPlaylist
             coEvery { repository.getRandomSong() } returns getMockSong(31L)
-            `when`(sharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null))
-                .doReturn(null)
+            every { sharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null) } returns null
             assertMaxLengthSongOfTheDayPlaylistElements(mockPlaylist, 1L, 30L)
 
             refreshSongOfTheDay()
 
             assertMaxLengthSongOfTheDayPlaylistElements(mockPlaylist, 31L, 29L)
-            Mockito.verify(repository).updatePlaylists(listOf(mockPlaylist))
-            Mockito.verify(editor).putString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, today)
+            verify { repository.updatePlaylists(listOf(mockPlaylist)) }
+            verify { editor.putString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, today) }
         }
 
         private fun assertMaxLengthSongOfTheDayPlaylistElements(playlist: Playlist,
@@ -417,12 +416,11 @@ class MusicLibraryViewModelTest {
             assertEquals(expectedIdOfLastElement, extractedSongs[extractedSongs.size - 1])
         }
 
-        private suspend fun mockSongOfTheDayPlaylist(dateLastUpdated: String?) : Playlist{
+        private fun mockSongOfTheDayPlaylist(dateLastUpdated: String?) : Playlist{
             every { defaultPlaylistHelper.songOfTheDay } returns Pair(3, "Song of the day")
             val mockPlaylist = getMockSongOfTheDayPlaylist()
             coEvery { repository.getPlaylistById(defaultPlaylistHelper.songOfTheDay.first) } returns mockPlaylist
-            `when`(sharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null))
-                .doReturn(dateLastUpdated)
+            every { sharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null) } returns dateLastUpdated
             return mockPlaylist
         }
 
@@ -520,7 +518,7 @@ class MusicLibraryViewModelTest {
         }
     }
 
-    private suspend fun mockGetPlaylistResponse(playlistName: String): Playlist {
+    private fun mockGetPlaylistResponse(playlistName: String): Playlist {
         val mockPlaylist = getMockPlaylist()
         coEvery { repository.getPlaylistByName(playlistName) } returns mockPlaylist
         return mockPlaylist
