@@ -28,6 +28,7 @@ import io.mockk.just
 import io.mockk.mockkObject
 import io.mockk.slot
 import io.mockk.unmockkObject
+import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -233,9 +234,9 @@ class MusicLibraryViewModelTest {
     inner class ExtractPlaylistSongs {
         @Test
         fun extractPlaylistSongs() = runTest {
-            `when`(repository.getSongById(1L)).thenReturn(getMockSong(1L))
-            `when`(repository.getSongById(2L)).thenReturn(getMockSong(2L))
-            `when`(repository.getSongById(3L)).thenReturn(getMockSong(3L))
+            coEvery { repository.getSongById(1L) } returns getMockSong(1L)
+            coEvery { repository.getSongById(2L) } returns getMockSong(2L)
+            coEvery { repository.getSongById(3L) } returns getMockSong(3L)
 
             val json = "[1,2,3]"
 
@@ -249,9 +250,9 @@ class MusicLibraryViewModelTest {
 
         @Test
         fun extractPlaylistSongs_ignoreNullSongs() = runTest {
-            `when`(repository.getSongById(1L)).thenReturn(getMockSong(1L))
-            `when`(repository.getSongById(2L)).thenReturn(null)
-            `when`(repository.getSongById(3L)).thenReturn(getMockSong(3L))
+            coEvery { repository.getSongById(1L) } returns getMockSong(1L)
+            coEvery { repository.getSongById(2L) } returns null
+            coEvery { repository.getSongById(3L) } returns getMockSong(3L)
 
             val json = "[1,2,3]"
 
@@ -287,7 +288,7 @@ class MusicLibraryViewModelTest {
 
         @Test
         fun deleteRedundantArtworkBySong_songDoesNotExist() = runTest {
-            `when`(repository.getSongsByAlbumIdOrderByTrack(song.albumId)).thenReturn(listOf())
+            coEvery { repository.getSongsByAlbumIdOrderByTrack(song.albumId) } returns listOf()
 
             mockkObject(ImageHandlingHelper)
             every { ImageHandlingHelper.deleteAlbumArtByResourceId(application, song.albumId) } just Runs
@@ -295,16 +296,16 @@ class MusicLibraryViewModelTest {
             val method = ReflectionUtils.setMethodVisible(musicLibraryViewModel, "deleteRedundantArtworkBySong")
             method.callSuspend(musicLibraryViewModel, song)
 
-            Mockito.verify(repository).getSongsByAlbumIdOrderByTrack(song.albumId)
+            coVerify { repository.getSongsByAlbumIdOrderByTrack(song.albumId) }
 
-            io.mockk.verify { ImageHandlingHelper.deleteAlbumArtByResourceId(application, song.albumId) }
+            verify { ImageHandlingHelper.deleteAlbumArtByResourceId(application, song.albumId) }
 
             unmockkObject(ImageHandlingHelper::class)
         }
 
         @Test
         fun deleteRedundantArtworkBySong_songExists() = runTest {
-            `when`(repository.getSongsByAlbumIdOrderByTrack(song.albumId)).thenReturn(listOf(song))
+            coEvery { repository.getSongsByAlbumIdOrderByTrack(song.albumId) } returns listOf(song)
 
             mockkObject(ImageHandlingHelper)
             every { ImageHandlingHelper.deleteAlbumArtByResourceId(application, song.albumId) } just Runs
@@ -312,9 +313,9 @@ class MusicLibraryViewModelTest {
             val method = ReflectionUtils.setMethodVisible(musicLibraryViewModel, "deleteRedundantArtworkBySong")
             method.callSuspend(musicLibraryViewModel, song)
 
-            Mockito.verify(repository).getSongsByAlbumIdOrderByTrack(song.albumId)
+            coVerify { repository.getSongsByAlbumIdOrderByTrack(song.albumId) }
 
-            io.mockk.verify(exactly = 0) { ImageHandlingHelper.deleteAlbumArtByResourceId(application, song.albumId) }
+            verify(exactly = 0) { ImageHandlingHelper.deleteAlbumArtByResourceId(application, song.albumId) }
 
             unmockkObject(ImageHandlingHelper::class)
         }
@@ -361,8 +362,8 @@ class MusicLibraryViewModelTest {
             assertEquals(2, PlaylistHelper.extractSongIds(mockPlaylist.songs).size)
             assertEquals(2L, PlaylistHelper.extractSongIds(mockPlaylist.songs)[0])
             assertEquals(1L, PlaylistHelper.extractSongIds(mockPlaylist.songs)[1])
-            Mockito.verify(repository).updatePlaylists(listOf(mockPlaylist))
-            Mockito.verify(editor).putString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, today)
+            coVerify { repository.updatePlaylists(listOf(mockPlaylist)) }
+            verify { editor.putString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, today) }
         }
 
         @Test
@@ -373,8 +374,8 @@ class MusicLibraryViewModelTest {
 
             assertEquals(1, PlaylistHelper.extractSongIds(mockPlaylist.songs).size)
             assertEquals(1L, PlaylistHelper.extractSongIds(mockPlaylist.songs)[0])
-            Mockito.verify(repository, never()).updatePlaylists(any())
-            Mockito.verify(editor, never()).putString(any(), any())
+            coVerify(exactly = 0) { repository.updatePlaylists(any()) }
+            verify(exactly = 0) { editor.putString(any(), any()) }
         }
 
         @Test
@@ -392,10 +393,10 @@ class MusicLibraryViewModelTest {
         @Test
         fun refreshSongOfTheDay_30SongsLimitReached_success() = runTest {
             stubEditor()
-            `when`(defaultPlaylistHelper.songOfTheDay).doReturn(Pair(3, "Song of the day"))
+            every { defaultPlaylistHelper.songOfTheDay } returns Pair(3, "Song of the day")
             val mockPlaylist = getMockSongOfTheDayPlaylist(30)
-            `when`(repository.getPlaylistById(defaultPlaylistHelper.songOfTheDay.first)).doReturn(mockPlaylist)
-            `when`(repository.getRandomSong()).doReturn(getMockSong(31L))
+            coEvery { repository.getPlaylistById(defaultPlaylistHelper.songOfTheDay.first) } returns mockPlaylist
+            coEvery { repository.getRandomSong() } returns getMockSong(31L)
             `when`(sharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null))
                 .doReturn(null)
             assertMaxLengthSongOfTheDayPlaylistElements(mockPlaylist, 1L, 30L)
@@ -417,16 +418,16 @@ class MusicLibraryViewModelTest {
         }
 
         private suspend fun mockSongOfTheDayPlaylist(dateLastUpdated: String?) : Playlist{
-            `when`(defaultPlaylistHelper.songOfTheDay).doReturn(Pair(3, "Song of the day"))
+            every { defaultPlaylistHelper.songOfTheDay } returns Pair(3, "Song of the day")
             val mockPlaylist = getMockSongOfTheDayPlaylist()
-            `when`(repository.getPlaylistById(defaultPlaylistHelper.songOfTheDay.first)).doReturn(mockPlaylist)
+            coEvery { repository.getPlaylistById(defaultPlaylistHelper.songOfTheDay.first) } returns mockPlaylist
             `when`(sharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null))
                 .doReturn(dateLastUpdated)
             return mockPlaylist
         }
 
         private suspend fun mockSongOfTheDayPlaylistWithSong(dateLastUpdated: String?) : Playlist{
-            `when`(repository.getRandomSong()).doReturn(getMockSong(2L))
+            coEvery { repository.getRandomSong() } returns getMockSong(2L)
             return mockSongOfTheDayPlaylist(dateLastUpdated)
         }
 
@@ -443,7 +444,7 @@ class MusicLibraryViewModelTest {
         @Test
         fun getAllSongs_success() = runTest {
             val song = getMockSong()
-            `when`(repository.getAllSongs()).doReturn(listOf(song))
+            coEvery { repository.getAllSongs() } returns listOf(song)
 
             val songs = musicLibraryViewModel.getAllSongs()
             assertEquals(1, songs.size)
@@ -462,7 +463,7 @@ class MusicLibraryViewModelTest {
             song2.title = "Second title"
             val song3 = getMockSong(3L)
             song3.title = "Third title"
-            `when`(repository.getAllSongsOrderByTitle()).doReturn(listOf(song1, song2, song3))
+            coEvery { repository.getAllSongsOrderByTitle() } returns listOf(song1, song2, song3)
 
             val songs = musicLibraryViewModel.getAllSongsOrderByTitle()
             assertEquals(3, songs.size)
@@ -479,7 +480,7 @@ class MusicLibraryViewModelTest {
         fun getAllPlaylists_success() = runTest {
             val userPlaylist = getMockPlaylist()
             val defaultPlaylist = getMockFavouritesPlaylist()
-            `when`(repository.getAllPlaylists()).doReturn(listOf(userPlaylist, defaultPlaylist))
+            coEvery { repository.getAllPlaylists() } returns listOf(userPlaylist, defaultPlaylist)
 
             val playlists = musicLibraryViewModel.getAllPlaylists()
             assertEquals(2, playlists.size)
@@ -492,7 +493,7 @@ class MusicLibraryViewModelTest {
         @Test
         fun getAllUserPlaylists_success() = runTest {
             val userPlaylist = getMockPlaylist()
-            `when`(repository.getAllUserPlaylists()).doReturn(listOf(userPlaylist))
+            coEvery { repository.getAllUserPlaylists() } returns listOf(userPlaylist)
 
             val playlists = musicLibraryViewModel.getAllUserPlaylists()
             assertEquals(1, playlists.size)
@@ -521,12 +522,12 @@ class MusicLibraryViewModelTest {
 
     private suspend fun mockGetPlaylistResponse(playlistName: String): Playlist {
         val mockPlaylist = getMockPlaylist()
-        `when`(repository.getPlaylistByName(playlistName)).doReturn(mockPlaylist)
+        coEvery { repository.getPlaylistByName(playlistName) } returns mockPlaylist
         return mockPlaylist
     }
 
     private fun stubEditor() {
-        `when`(sharedPreferences.edit()).doReturn(editor)
+        every { sharedPreferences.edit() } returns editor
         ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "sharedPreferences", sharedPreferences)
     }
 }
