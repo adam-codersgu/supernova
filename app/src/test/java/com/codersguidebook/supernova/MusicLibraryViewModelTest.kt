@@ -125,6 +125,7 @@ class MusicLibraryViewModelTest {
 
         @Test
         fun failure_playlist_not_found() = runTest {
+            every { defaultPlaylistHelper.favourites } returns Pair(1, "Favourites")
             val songToFavourite = getMockSong(2L, false)
             coEvery { repository.getPlaylistById(any()) } returns null
 
@@ -163,6 +164,7 @@ class MusicLibraryViewModelTest {
 
         @Test
         fun getPlaylistByName_playlist_does_not_exist() = runTest {
+            coEvery { repository.getPlaylistByName(any()) } returns null
             val playlist = musicLibraryViewModel.getPlaylistByName(playlistB)
 
             assertNull(playlist)
@@ -368,6 +370,7 @@ class MusicLibraryViewModelTest {
 
         @Test
         fun refreshSongOfTheDay_alreadyLoadedForToday_success() = runTest {
+            stubEditor()
             val mockPlaylist = mockSongOfTheDayPlaylist(today)
 
             refreshSongOfTheDay()
@@ -380,6 +383,7 @@ class MusicLibraryViewModelTest {
 
         @Test
         fun refreshSongOfTheDay_forceUpdate_success() = runTest {
+            stubEditor()
             val mockPlaylist = mockSongOfTheDayPlaylistWithSong(today)
 
             refreshSongOfTheDay(true)
