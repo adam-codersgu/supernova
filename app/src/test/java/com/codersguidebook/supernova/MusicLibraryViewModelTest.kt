@@ -41,7 +41,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import java.lang.Thread.sleep
 import java.text.SimpleDateFormat
 import java.util.Date
 import kotlin.reflect.full.callSuspend
@@ -83,17 +82,14 @@ class MusicLibraryViewModelTest {
 
             val isFavourite = musicLibraryViewModel.toggleSongFavouriteStatus(song)
 
-            // FIXME - Need to use a better solution for pausing the thread - also other tests already written that could benefit e.g. favourites tests?
-            sleep(100)
-
-            assertTrue(isFavourite)
-            assertTrue(song.isFavourite)
-
             val playlistSlot = slot<List<Playlist>>()
-            coVerify { repository.updatePlaylists(capture(playlistSlot)) }
+            coVerify(timeout = 1000L) { repository.updatePlaylists(capture(playlistSlot)) }
             val updatedIds = PlaylistHelper.extractSongIds(playlistSlot.captured.first().songs)
             assertTrue(updatedIds.size > 1)
             assertTrue(updatedIds.contains(99L))
+
+            assertTrue(isFavourite)
+            assertTrue(song.isFavourite)
 
             val songSlot = slot<List<Song>>()
             coVerify { repository.updateSongs(capture(songSlot)) }
@@ -107,16 +103,13 @@ class MusicLibraryViewModelTest {
 
             val isFavourite = musicLibraryViewModel.toggleSongFavouriteStatus(song)
 
-            // FIXME - Need to use a better solution for pausing the thread - also other tests already written that could benefit e.g. favourites tests?
-            sleep(100)
+            val playlistSlot = slot<List<Playlist>>()
+            coVerify(timeout = 1000L) { repository.updatePlaylists(capture(playlistSlot)) }
+            val updatedIds = PlaylistHelper.extractSongIds(playlistSlot.captured.first().songs)
+            assertTrue(updatedIds.isEmpty())
 
             assertFalse(isFavourite)
             assertFalse(song.isFavourite)
-
-            val playlistSlot = slot<List<Playlist>>()
-            coVerify { repository.updatePlaylists(capture(playlistSlot)) }
-            val updatedIds = PlaylistHelper.extractSongIds(playlistSlot.captured.first().songs)
-            assertTrue(updatedIds.isEmpty())
 
             val songSlot = slot<List<Song>>()
             coVerify { repository.updateSongs(capture(songSlot)) }
@@ -330,9 +323,24 @@ class MusicLibraryViewModelTest {
         private val songToDelete = getMockSong()
 
         @Test
+        fun deleteSong_songAppearsInPlaylistMultipleTimes() = runTest {
+            setUpImageHandlingHelper()
+
+            val mockPlaylist = getMockPlaylist(listOf(songToDelete, getMockSong(2L),
+                songToDelete, getMockSong(3L)))
+            coEvery { repository.getAllPlaylists() } answers { listOf(mockPlaylist) }
+
+            musicLibraryViewModel.deleteSong(songToDelete)
+
+            val mockPlaylistWithSongRemoved = getMockPlaylist(listOf(getMockSong(2L), getMockSong(3L)))
+            coVerify(timeout = 1000L) { repository.updatePlaylists(listOf(mockPlaylistWithSongRemoved)) }
+            coVerify { repository.deleteSong(songToDelete) }
+            unmockkObject(ImageHandlingHelper::class)
+        }
+
+        @Test
         fun deleteSong_songNotInPlaylist() = runTest {
-            mockkObject(ImageHandlingHelper)
-            every { ImageHandlingHelper.deleteAlbumArtByResourceId(application, songToDelete.albumId) } just Runs
+            setUpImageHandlingHelper()
 
             val mockPlaylist = getMockPlaylist(listOf(getMockSong(2L)))
             coEvery { repository.getAllPlaylists() } answers { listOf(mockPlaylist) }
@@ -344,11 +352,43 @@ class MusicLibraryViewModelTest {
             unmockkObject(ImageHandlingHelper::class)
         }
 
-        /* TODO test cases
-            - SONG APPEARS IN PLAYLIST MULTIPLE TIMES
-            - SONG APPEARS IN MULTIPLE PLAYLISTS
-            - SONG APPEARS IN ONE PLAYLIST BUT NOT ANOTHER
-         */
+        @Test
+        fun deleteSong_songAppearsInMultiplePlaylists() = runTest {
+            setUpImageHandlingHelper()
+
+            val mockPlaylist1 = getMockPlaylist(1, listOf(songToDelete, getMockSong(2L)))
+            val mockPlaylist2 = getMockPlaylist(2, listOf(getMockSong(3L), songToDelete))
+            coEvery { repository.getAllPlaylists() } answers { listOf(mockPlaylist1, mockPlaylist2) }
+
+            musicLibraryViewModel.deleteSong(songToDelete)
+
+            val mockPlaylistWithSongRemoved1 = getMockPlaylist(1, listOf(getMockSong(2L)))
+            val mockPlaylistWithSongRemoved2 = getMockPlaylist(2, listOf(getMockSong(3L)))
+            coVerify(timeout = 1000L) { repository.updatePlaylists(listOf(mockPlaylistWithSongRemoved1, mockPlaylistWithSongRemoved2)) }
+            coVerify { repository.deleteSong(songToDelete) }
+            unmockkObject(ImageHandlingHelper::class)
+        }
+
+        @Test
+        fun deleteSong_songAppearsInOnePlaylistOnly() = runTest {
+            setUpImageHandlingHelper()
+
+            val mockPlaylist1 = getMockPlaylist(1, listOf(getMockSong(2L), getMockSong(3L)))
+            val mockPlaylist2 = getMockPlaylist(2, listOf(getMockSong(4L), songToDelete))
+            coEvery { repository.getAllPlaylists() } answers { listOf(mockPlaylist1, mockPlaylist2) }
+
+            musicLibraryViewModel.deleteSong(songToDelete)
+
+            val mockPlaylistWithSongRemoved = getMockPlaylist(2, listOf(getMockSong(4L)))
+            coVerify(timeout = 1000L) { repository.updatePlaylists(listOf(mockPlaylistWithSongRemoved)) }
+            coVerify { repository.deleteSong(songToDelete) }
+            unmockkObject(ImageHandlingHelper::class)
+        }
+
+        private fun setUpImageHandlingHelper() {
+            mockkObject(ImageHandlingHelper)
+            every { ImageHandlingHelper.deleteAlbumArtByResourceId(application, songToDelete.albumId) } just Runs
+        }
     }
 
     @Nested
@@ -359,12 +399,12 @@ class MusicLibraryViewModelTest {
             stubEditor()
             val mockPlaylist = mockSongOfTheDayPlaylistWithSong(null)
 
-            refreshSongOfTheDay()
+            musicLibraryViewModel.refreshSongOfTheDay(false)
 
+            coVerify(timeout = 1000L) { repository.updatePlaylists(listOf(mockPlaylist)) }
             assertEquals(2, PlaylistHelper.extractSongIds(mockPlaylist.songs).size)
             assertEquals(2L, PlaylistHelper.extractSongIds(mockPlaylist.songs)[0])
             assertEquals(1L, PlaylistHelper.extractSongIds(mockPlaylist.songs)[1])
-            coVerify { repository.updatePlaylists(listOf(mockPlaylist)) }
             verify { editor.putString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, today) }
         }
 
@@ -373,7 +413,7 @@ class MusicLibraryViewModelTest {
             stubEditor()
             val mockPlaylist = mockSongOfTheDayPlaylist(today)
 
-            refreshSongOfTheDay()
+            musicLibraryViewModel.refreshSongOfTheDay(false)
 
             assertEquals(1, PlaylistHelper.extractSongIds(mockPlaylist.songs).size)
             assertEquals(1L, PlaylistHelper.extractSongIds(mockPlaylist.songs)[0])
@@ -386,11 +426,11 @@ class MusicLibraryViewModelTest {
             stubEditor()
             val mockPlaylist = mockSongOfTheDayPlaylistWithSong(today)
 
-            refreshSongOfTheDay(true)
+            musicLibraryViewModel.refreshSongOfTheDay(true)
 
+            coVerify(timeout = 1000L) { repository.updatePlaylists(listOf(mockPlaylist)) }
             assertEquals(1, PlaylistHelper.extractSongIds(mockPlaylist.songs).size)
             assertEquals(2L, PlaylistHelper.extractSongIds(mockPlaylist.songs)[0])
-            coVerify { repository.updatePlaylists(listOf(mockPlaylist)) }
             verify(exactly = 0) { editor.putString(any(), any()) }
         }
 
@@ -404,10 +444,10 @@ class MusicLibraryViewModelTest {
             every { sharedPreferences.getString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, null) } returns null
             assertMaxLengthSongOfTheDayPlaylistElements(mockPlaylist, 1L, 30L)
 
-            refreshSongOfTheDay()
+            musicLibraryViewModel.refreshSongOfTheDay(false)
 
+            coVerify(timeout = 1000L) { repository.updatePlaylists(listOf(mockPlaylist)) }
             assertMaxLengthSongOfTheDayPlaylistElements(mockPlaylist, 31L, 29L)
-            verify { repository.updatePlaylists(listOf(mockPlaylist)) }
             verify { editor.putString(SharedPreferencesConstants.SONG_OF_THE_DAY_LAST_UPDATED, today) }
         }
 
@@ -431,12 +471,6 @@ class MusicLibraryViewModelTest {
         private fun mockSongOfTheDayPlaylistWithSong(dateLastUpdated: String?) : Playlist{
             coEvery { repository.getRandomSong() } returns getMockSong(2L)
             return mockSongOfTheDayPlaylist(dateLastUpdated)
-        }
-
-        private fun refreshSongOfTheDay(forceUpdate: Boolean = false) {
-            musicLibraryViewModel.refreshSongOfTheDay(forceUpdate)
-            // FIXME - Need to use a better solution for pausing the thread - also other tests already written that could benefit e.g. favourites tests?
-            sleep(100)
         }
     }
 
