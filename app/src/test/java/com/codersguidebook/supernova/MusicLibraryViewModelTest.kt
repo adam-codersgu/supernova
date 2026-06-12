@@ -335,6 +335,7 @@ class MusicLibraryViewModelTest {
             val mockPlaylistWithSongRemoved = getMockPlaylist(listOf(getMockSong(2L), getMockSong(3L)))
             coVerify(timeout = 1000L) { repository.updatePlaylists(listOf(mockPlaylistWithSongRemoved)) }
             coVerify { repository.deleteSong(songToDelete) }
+            verify { ImageHandlingHelper.deleteAlbumArtByResourceId(application, songToDelete.albumId) }
             unmockkObject(ImageHandlingHelper::class)
         }
 
@@ -349,6 +350,7 @@ class MusicLibraryViewModelTest {
 
             coVerify(exactly = 0) { repository.updatePlaylists(any()) }
             coVerify { repository.deleteSong(songToDelete) }
+            verify { ImageHandlingHelper.deleteAlbumArtByResourceId(application, songToDelete.albumId) }
             unmockkObject(ImageHandlingHelper::class)
         }
 
@@ -366,6 +368,7 @@ class MusicLibraryViewModelTest {
             val mockPlaylistWithSongRemoved2 = getMockPlaylist(2, listOf(getMockSong(3L)))
             coVerify(timeout = 1000L) { repository.updatePlaylists(listOf(mockPlaylistWithSongRemoved1, mockPlaylistWithSongRemoved2)) }
             coVerify { repository.deleteSong(songToDelete) }
+            verify { ImageHandlingHelper.deleteAlbumArtByResourceId(application, songToDelete.albumId) }
             unmockkObject(ImageHandlingHelper::class)
         }
 
@@ -382,12 +385,38 @@ class MusicLibraryViewModelTest {
             val mockPlaylistWithSongRemoved = getMockPlaylist(2, listOf(getMockSong(4L)))
             coVerify(timeout = 1000L) { repository.updatePlaylists(listOf(mockPlaylistWithSongRemoved)) }
             coVerify { repository.deleteSong(songToDelete) }
+            verify { ImageHandlingHelper.deleteAlbumArtByResourceId(application, songToDelete.albumId) }
             unmockkObject(ImageHandlingHelper::class)
         }
 
         private fun setUpImageHandlingHelper() {
             mockkObject(ImageHandlingHelper)
             every { ImageHandlingHelper.deleteAlbumArtByResourceId(application, songToDelete.albumId) } just Runs
+        }
+    }
+
+    @Nested
+    @DisplayName("Delete a playlist")
+    inner class DeletePlaylist {
+
+        private val playlistToDelete = getMockPlaylist()
+
+        @Test
+        fun deletePlaylist() = runTest {
+            setUpImageHandlingHelper()
+
+            musicLibraryViewModel.deletePlaylist(playlistToDelete)
+
+            coVerify { repository.deletePlaylist(playlistToDelete) }
+            verify { ImageHandlingHelper.deletePlaylistArtByResourceId(application,
+                playlistToDelete.playlistId.toString()) }
+            unmockkObject(ImageHandlingHelper::class)
+        }
+
+        private fun setUpImageHandlingHelper() {
+            mockkObject(ImageHandlingHelper)
+            every { ImageHandlingHelper.deletePlaylistArtByResourceId(application,
+                playlistToDelete.playlistId.toString()) } just Runs
         }
     }
 
