@@ -22,7 +22,7 @@ abstract class BaseDialogFragment: DialogFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mainActivity = activity as MainActivity
-        musicLibraryViewModel = ViewModelProvider(mainActivity)[MusicLibraryViewModel::class.java]
+        musicLibraryViewModel = ViewModelProvider(mainActivity, MusicLibraryViewModel.Factory)[MusicLibraryViewModel::class.java]
         inflater = mainActivity.layoutInflater
     }
 

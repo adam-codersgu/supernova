@@ -5,9 +5,13 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.liveData
 import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.preference.PreferenceManager
 import com.codersguidebook.supernova.data.MusicDatabase
 import com.codersguidebook.supernova.data.MusicRepository
@@ -30,14 +34,19 @@ class MusicLibraryViewModel(application: Application,
                             private val defaultPlaylistHelper: DefaultPlaylistHelper
 ) : AndroidViewModel(application) {
 
-    @Suppress("UNUSED")
-    constructor(application: Application) : this(
-        application,
-        MusicRepository(
-            MusicDatabase.getDatabase(application)
-        ),
-        DefaultPlaylistHelper(application)
-    )
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val context = this[APPLICATION_KEY] ?: throw IllegalArgumentException("Missing Application Key")
+
+                val database = MusicDatabase.getDatabase(context)
+                val repository = MusicRepository(database)
+                val playlistHelper = DefaultPlaylistHelper(context)
+
+                MusicLibraryViewModel(context, repository, playlistHelper)
+            }
+        }
+    }
 
     private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(application)
     val allSongs: LiveData<List<Song>> = repository.allSongs

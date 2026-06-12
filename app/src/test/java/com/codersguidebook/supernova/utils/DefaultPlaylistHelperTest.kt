@@ -2,23 +2,26 @@ package com.codersguidebook.supernova.utils
 
 import android.content.Context
 import com.codersguidebook.supernova.R
+import io.mockk.every
+import io.mockk.impl.annotations.RelaxedMockK
+import io.mockk.junit5.MockKExtension
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito
-import org.mockito.Mockito.mock
-import org.mockito.kotlin.doReturn
+import org.junit.jupiter.api.extension.ExtendWith
 
+@ExtendWith(MockKExtension::class)
 class DefaultPlaylistHelperTest {
 
-    private val mockContext = mock(Context::class.java)
+    @RelaxedMockK
+    lateinit var mockContext: Context
 
     @BeforeEach
     fun beforeEach() {
-        Mockito.`when`(mockContext.getString(R.string.favourites)).doReturn("Favourites")
-        Mockito.`when`(mockContext.getString(R.string.recently_played)).doReturn("Recently played")
-        Mockito.`when`(mockContext.getString(R.string.song_day)).doReturn("Song of the day")
-        Mockito.`when`(mockContext.getString(R.string.most_played)).doReturn("Most played")
+        every { mockContext.getString(R.string.favourites) } returns "Favourites"
+        every { mockContext.getString(R.string.recently_played) } returns "Recently played"
+        every { mockContext.getString(R.string.song_day) } returns "Song of the day"
+        every { mockContext.getString(R.string.most_played) } returns "Most played"
     }
 
     @Test

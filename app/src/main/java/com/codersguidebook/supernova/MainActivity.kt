@@ -56,7 +56,6 @@ import com.codersguidebook.supernova.dialogs.CreatePlaylist
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.entities.SongWithOrderId
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ALBUM_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NO_ACTION
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ORDER_ID
@@ -149,7 +148,7 @@ class MainActivity : AppCompatActivity() {
         storagePermissionHelper = StorageAccessPermissionHelper(this)
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         musicDatabase = MusicDatabase.getDatabase(this)
-        musicLibraryViewModel = ViewModelProvider(this)[MusicLibraryViewModel::class.java]
+        musicLibraryViewModel = ViewModelProvider(this, MusicLibraryViewModel.Factory)[MusicLibraryViewModel::class.java]
 
         createChannelForMediaPlayerNotification()
 
@@ -665,12 +664,12 @@ class MainActivity : AppCompatActivity() {
             val songsToSave = if (shuffleModeOn) {
                 playQueue.map { i ->
                     val orderId = i.mediaMetadata.extras?.getInt(ORDER_ID)
-                    val song = buildSongFromMediaItem(i)
+                    val song = SongHelper.buildFromMediaItem(i)
                     SongWithOrderId(orderId, song)
                 }
             } else {
                 playQueue.map { i ->
-                    SongWithOrderId(null, buildSongFromMediaItem(i))
+                    SongWithOrderId(null, SongHelper.buildFromMediaItem(i))
                 }
             }
             val playQueueJson = GsonBuilder().setPrettyPrinting().create().toJson(songsToSave)
@@ -680,15 +679,6 @@ class MainActivity : AppCompatActivity() {
                 apply()
             }
         } catch (_: ConcurrentModificationException) {}
-    }
-
-    private fun buildSongFromMediaItem(mediaItem: MediaItem): Song {
-        val metadata = mediaItem.mediaMetadata
-        val extras = metadata.extras
-            ?: throw RuntimeException("Extras null for ${mediaItem.mediaMetadata.title}")
-        return Song(mediaItem.mediaId.toLong(), 0, metadata.title.toString(),
-            metadata.artist.toString(), metadata.albumTitle.toString(),
-            extras.getString(ALBUM_ID, "-1"), "0")
     }
 
     /**
