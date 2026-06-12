@@ -3,6 +3,8 @@ A Kotlin-based Android application that allows the user to play music from their
 
 
 ## Test coverage
+Target test coverage is 90%.
+
 Run tests
 `./gradlew test`
 

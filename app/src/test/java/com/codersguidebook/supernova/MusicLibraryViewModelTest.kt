@@ -171,7 +171,7 @@ class MusicLibraryViewModelTest {
         @Test
         fun setActiveAlbumId_success() {
             val activeAlbumIdField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeAlbumId")
-            val activeAlbumId = activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<String>
+            val activeAlbumId = activeAlbumIdField.getter.call(musicLibraryViewModel) as MutableLiveData<String>
             assertNull(activeAlbumId.value)
 
             val expectedActiveAlbumId = "3"
@@ -183,7 +183,7 @@ class MusicLibraryViewModelTest {
         @Test
         fun setActiveAlbumId_empty_string_success() {
             val activeAlbumIdField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeAlbumId")
-            val activeAlbumId = activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<String>
+            val activeAlbumId = activeAlbumIdField.getter.call(musicLibraryViewModel) as MutableLiveData<String>
             activeAlbumId.value = "2"
 
             assertEquals("2", activeAlbumId.value)
@@ -201,7 +201,7 @@ class MusicLibraryViewModelTest {
         @Test
         fun setActiveArtistName_success() {
             val activeArtistNameField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeArtistName")
-            val activeArtistName = activeArtistNameField.get(musicLibraryViewModel) as MutableLiveData<String>
+            val activeArtistName = activeArtistNameField.getter.call(musicLibraryViewModel) as MutableLiveData<String>
             assertNull(activeArtistName.value)
 
             val expectedActiveArtistName = "Band B"
@@ -213,7 +213,7 @@ class MusicLibraryViewModelTest {
         @Test
         fun setActiveArtistName_empty_string_success() {
             val activeArtistNameField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeArtistName")
-            val activeArtistName = activeArtistNameField.get(musicLibraryViewModel) as MutableLiveData<String>
+            val activeArtistName = activeArtistNameField.getter.call(musicLibraryViewModel) as MutableLiveData<String>
             activeArtistName.value = "Band A"
 
             assertEquals("Band A", activeArtistName.value)
