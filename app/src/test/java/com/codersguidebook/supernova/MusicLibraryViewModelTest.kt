@@ -421,6 +421,20 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
+    @DisplayName("Save a list of songs")
+    inner class SaveSongs {
+
+        @Test
+        fun saveSongs() = runTest {
+            val songs = listOf(getMockSong(), getMockSong(2L))
+
+            musicLibraryViewModel.saveSongs(songs)
+
+            coVerify { repository.saveSongs(songs) }
+        }
+    }
+
+    @Nested
     @DisplayName("Refresh the song of the day")
     inner class RefreshSongOfTheDay {
         @Test
