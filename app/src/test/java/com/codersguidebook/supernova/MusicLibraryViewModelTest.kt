@@ -276,6 +276,20 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
+    @DisplayName("Save the playback progress of a song")
+    inner class SavePlaybackProgress {
+        @Test
+        fun savePlaybackProgress() = runTest {
+            val mediaId = 1L
+            val playbackPosition = 1000
+
+            musicLibraryViewModel.savePlaybackProgress(mediaId, playbackPosition)
+
+            coVerify { repository.savePlaybackProgress(mediaId, playbackPosition) }
+        }
+    }
+
+    @Nested
     @DisplayName("Delete redundant artwork by song")
     inner class DeleteRedundantArtworkBySong {
 
