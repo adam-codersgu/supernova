@@ -546,10 +546,23 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
+    @DisplayName("Increase song plays by song ID")
+    inner class IncreaseSongPlaysBySongId {
+        @Test
+        fun increaseSongPlaysBySongId() = runTest {
+            val mediaId = 1L
+
+            musicLibraryViewModel.increaseSongPlaysBySongId(mediaId)
+
+            coVerify { repository.increaseSongPlaysBySongId(mediaId) }
+        }
+    }
+
+    @Nested
     @DisplayName("Get all songs")
     inner class GetAllSongs {
         @Test
-        fun getAllSongs_success() = runTest {
+        fun getAllSongs() = runTest {
             val song = getMockSong()
             coEvery { repository.getAllSongs() } returns listOf(song)
 
