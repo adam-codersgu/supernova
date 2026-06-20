@@ -562,13 +562,14 @@ class MusicLibraryViewModelTest {
     @Nested
     @DisplayName("Add a song to the recently played playlist")
     inner class AddSongByIdToRecentlyPlayedPlaylist {
+
+        private val mediaIdToAdd = 99L
+
         @Test
         fun addSongByIdToRecentlyPlayedPlaylist_addToEmptyPlaylist() = runTest {
             every { defaultPlaylistHelper.recentlyPlayed } returns Pair(2, "Recently played")
             val playlist = getMockRecentlyPlayedPlaylist(0)
             coEvery { repository.getPlaylistById(2) } returns playlist
-
-            val mediaIdToAdd = 1L
 
             musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(mediaIdToAdd)
 
@@ -584,8 +585,6 @@ class MusicLibraryViewModelTest {
             every { defaultPlaylistHelper.recentlyPlayed } returns Pair(2, "Recently played")
             val playlist = getMockRecentlyPlayedPlaylist(10)
             coEvery { repository.getPlaylistById(2) } returns playlist
-
-            val mediaIdToAdd = 99L
 
             musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(mediaIdToAdd)
 
@@ -603,8 +602,6 @@ class MusicLibraryViewModelTest {
             val expectedMediaIdToRemove = PlaylistHelper.extractSongIds(playlist.songs).last()
             coEvery { repository.getPlaylistById(2) } returns playlist
 
-            val mediaIdToAdd = 99L
-
             musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(mediaIdToAdd)
 
             val playlistSlot = slot<List<Playlist>>()
@@ -615,7 +612,15 @@ class MusicLibraryViewModelTest {
             assertFalse(updatedIds.contains(expectedMediaIdToRemove))
         }
 
-        // TODO TEST RECENTLY PLAYED PLAYLIST NOT FOUND
+        @Test
+        fun addSongByIdToRecentlyPlayedPlaylist_playlistNotFound() = runTest {
+            every { defaultPlaylistHelper.recentlyPlayed } returns Pair(2, "Recently played")
+            coEvery { repository.getPlaylistById(2) } returns null
+
+            musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(mediaIdToAdd)
+
+            coVerify(exactly = 0) { repository.updatePlaylists(any()) }
+        }
     }
 
     @Nested
