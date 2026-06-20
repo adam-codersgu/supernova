@@ -149,7 +149,8 @@ class MusicLibraryViewModelTest {
 
         @Test
         fun getPlaylistByName_playlist_exists() = runTest {
-            val mockPlaylist = mockGetPlaylistResponse(playlistA)
+            val mockPlaylist = getMockPlaylist()
+            coEvery { repository.getPlaylistByName(playlistA) } returns mockPlaylist
 
             val playlist = musicLibraryViewModel.getPlaylistByName(playlistA)
 
@@ -703,12 +704,6 @@ class MusicLibraryViewModelTest {
             assertEquals(navigationArgument, argument)
             assertEquals(null, musicLibraryViewModel.navigationArgument)
         }
-    }
-
-    private fun mockGetPlaylistResponse(playlistName: String): Playlist {
-        val mockPlaylist = getMockPlaylist()
-        coEvery { repository.getPlaylistByName(playlistName) } returns mockPlaylist
-        return mockPlaylist
     }
 
     private fun stubEditor() {
