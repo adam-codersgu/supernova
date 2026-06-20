@@ -9,6 +9,7 @@ import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.exception.PlaylistNotFoundException
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockFavouritesPlaylist
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockPlaylist
+import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockRecentlyPlayedPlaylist
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSong
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSongOfTheDayPlaylist
 import com.codersguidebook.supernova.params.SharedPreferencesConstants
@@ -556,6 +557,31 @@ class MusicLibraryViewModelTest {
 
             coVerify { repository.increaseSongPlaysBySongId(mediaId) }
         }
+    }
+
+    @Nested
+    @DisplayName("Add a song to the recently played playlist")
+    inner class AddSongByIdToRecentlyPlayedPlaylist {
+        @Test
+        fun addSongByIdToRecentlyPlayedPlaylist_addToEmptyPlaylist() = runTest {
+            every { defaultPlaylistHelper.recentlyPlayed } returns Pair(2, "Recently played")
+            val playlist = getMockRecentlyPlayedPlaylist(0)
+            coEvery { repository.getPlaylistById(2) } returns playlist
+
+            val mediaIdToAdd = 1L
+
+            musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(mediaIdToAdd)
+
+            val playlistSlot = slot<List<Playlist>>()
+            coVerify(timeout = 1000L) { repository.updatePlaylists(capture(playlistSlot)) }
+            val updatedIds = PlaylistHelper.extractSongIds(playlistSlot.captured.first().songs)
+            assertEquals(1, updatedIds.size)
+            assertTrue(updatedIds.contains(99L))
+        }
+
+        // TODO TEST PLAYLIST ALREADY HAS 30 SONGS
+        // TODO TEST PLAYLIST HAS LESS THAN 30 SONGS
+        // TODO TEST RECENTLY PLAYED PLAYLIST NOT FOUND
     }
 
     @Nested
