@@ -576,11 +576,45 @@ class MusicLibraryViewModelTest {
             coVerify(timeout = 1000L) { repository.updatePlaylists(capture(playlistSlot)) }
             val updatedIds = PlaylistHelper.extractSongIds(playlistSlot.captured.first().songs)
             assertEquals(1, updatedIds.size)
-            assertTrue(updatedIds.contains(99L))
+            assertTrue(updatedIds.contains(mediaIdToAdd))
         }
 
-        // TODO TEST PLAYLIST ALREADY HAS 30 SONGS
-        // TODO TEST PLAYLIST HAS LESS THAN 30 SONGS
+        @Test
+        fun addSongByIdToRecentlyPlayedPlaylist_addToPlaylistWithTenSongs() = runTest {
+            every { defaultPlaylistHelper.recentlyPlayed } returns Pair(2, "Recently played")
+            val playlist = getMockRecentlyPlayedPlaylist(10)
+            coEvery { repository.getPlaylistById(2) } returns playlist
+
+            val mediaIdToAdd = 99L
+
+            musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(mediaIdToAdd)
+
+            val playlistSlot = slot<List<Playlist>>()
+            coVerify(timeout = 1000L) { repository.updatePlaylists(capture(playlistSlot)) }
+            val updatedIds = PlaylistHelper.extractSongIds(playlistSlot.captured.first().songs)
+            assertEquals(11, updatedIds.size)
+            assertEquals(mediaIdToAdd, updatedIds[0])
+        }
+
+        @Test
+        fun addSongByIdToRecentlyPlayedPlaylist_addToPlaylistWithMaxQtyOfSongs() = runTest {
+            every { defaultPlaylistHelper.recentlyPlayed } returns Pair(2, "Recently played")
+            val playlist = getMockRecentlyPlayedPlaylist(30)
+            val expectedMediaIdToRemove = PlaylistHelper.extractSongIds(playlist.songs).last()
+            coEvery { repository.getPlaylistById(2) } returns playlist
+
+            val mediaIdToAdd = 99L
+
+            musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(mediaIdToAdd)
+
+            val playlistSlot = slot<List<Playlist>>()
+            coVerify(timeout = 1000L) { repository.updatePlaylists(capture(playlistSlot)) }
+            val updatedIds = PlaylistHelper.extractSongIds(playlistSlot.captured.first().songs)
+            assertEquals(30, updatedIds.size)
+            assertEquals(mediaIdToAdd, updatedIds[0])
+            assertFalse(updatedIds.contains(expectedMediaIdToRemove))
+        }
+
         // TODO TEST RECENTLY PLAYED PLAYLIST NOT FOUND
     }
 
