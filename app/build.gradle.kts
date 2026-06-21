@@ -5,6 +5,7 @@ plugins {
     id("com.google.devtools.ksp")
     id("androidx.navigation.safeargs.kotlin")
     id("tech.apter.junit5.jupiter.robolectric-extension-gradle-plugin") version "0.9.0"
+    jacoco
 }
 
 android {
@@ -51,6 +52,12 @@ android {
     }
     buildFeatures {
         viewBinding = true
+    }
+    tasks.withType<Test>().configureEach {
+        configure<JacocoTaskExtension> {
+            isIncludeNoLocationClasses = true
+            excludes = listOf("jdk.internal.*")
+        }
     }
 }
 
