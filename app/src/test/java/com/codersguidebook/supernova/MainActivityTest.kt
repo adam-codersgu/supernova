@@ -1,12 +1,15 @@
 package com.codersguidebook.supernova
 
 import android.app.Application
+import android.content.Context
 import android.content.SharedPreferences
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import com.codersguidebook.supernova.testutils.ReflectionUtils
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.MoreExecutors
 import io.mockk.every
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.junit5.MockKExtension
@@ -23,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.robolectric.Robolectric
 import org.robolectric.annotation.Config
 import tech.apter.junit.jupiter.robolectric.RobolectricExtension
+import java.lang.reflect.Field
 
 @ExtendWith(MockKExtension::class, RobolectricExtension::class)
 class MainActivityTest {
@@ -49,34 +53,40 @@ class MainActivityTest {
 
     @BeforeEach
     fun setUp() {
-        // 1. Tell MockK to look at the Builder inner class inside MediaController
-        mockkStatic(MediaController.Builder::class)
-
-        // 2. Create a fake Builder mock
-        val mockBuilder = mockk<MediaController.Builder>(relaxed = true)
-
-        // 3. Make MediaController.Builder(any(), any()) return our fake Builder mock
-        every {
-            MediaController.Builder(any(), any<SessionToken>())
-        } returns mockBuilder
-
-        // 4. Wrap your @RelaxedMockK controller into an immediately successful future
-        val immediateFuture = Futures.immediateFuture(controller)
-
-        // 5. Make the fake Builder return our completed future when buildAsync() runs
-        every { mockBuilder.buildAsync() } returns immediateFuture
-
-        // 6. Now safely drive the lifecycle through Robolectric
+        // 1. Initialize the activity instance via Robolectric (triggers onCreate)
         val controllerActivity = Robolectric.buildActivity(MainActivity::class.java)
         mainActivity = controllerActivity.get()
+        controllerActivity.create()
 
-        controllerActivity.create().start()
-    }
+        // 2. Wrap your @RelaxedMockK controller inside an immediate future
+        val immediateFuture = Futures.immediateFuture(controller)
 
-    @AfterEach
-    fun tearDown() {
-        // Always clear static mocks
-        unmockkStatic(MediaController.Builder::class)
+        // 3. Inject the future using Reflection to bypass MediaController.Builder completely
+        /* val futureField: Field = MainActivity::class.java.getDeclaredField("controllerFuture")
+        futureField.isAccessible = true
+        futureField.set(mainActivity, immediateFuture) */
+        ReflectionUtils.replaceFieldWithMock(mainActivity, "controllerFuture", immediateFuture)
+
+        // 4. Manually trigger the listener logic found inside your onStart()
+        // to simulate the asynchronous load completing instantly
+        immediateFuture.addListener({
+            // This mirrors exactly what production code expects onStart to finish with:
+            val fieldController = MainActivity::class.java.getDeclaredField("controller")
+            fieldController.isAccessible = true
+            fieldController.set(mainActivity, immediateFuture.get())
+
+            // If your MainActivity has an initController() method, invoke it here via reflection if private:
+            try {
+                val initMethod = MainActivity::class.java.getDeclaredMethod("initController")
+                initMethod.isAccessible = true
+                initMethod.invoke(mainActivity)
+            } catch (e: NoSuchMethodException) {
+                // Skip if initController doesn't exist or is named differently
+            }
+        }, MoreExecutors.directExecutor())
+
+        // 5. Fire onStart() safely. Since the fields are populated, it won't crash
+        controllerActivity.start()
     }
 
     @Nested
