@@ -50,7 +50,6 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import androidx.preference.PreferenceManager
-import com.codersguidebook.supernova.data.MusicDatabase
 import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.dialogs.CreatePlaylist
 import com.codersguidebook.supernova.entities.Playlist
@@ -96,7 +95,6 @@ class MainActivity : AppCompatActivity() {
     private var handler = Handler(Looper.getMainLooper())
     private val playQueueViewModel: PlayQueueViewModel by viewModels()
     private var mediaStoreContentObserver: MediaStoreContentObserver? = null
-    private var musicDatabase: MusicDatabase? = null
     private var songCompleted = false
     private lateinit var controller: MediaController
     private lateinit var controllerFuture: ListenableFuture<MediaController>
@@ -147,7 +145,6 @@ class MainActivity : AppCompatActivity() {
 
         storagePermissionHelper = StorageAccessPermissionHelper(this)
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        musicDatabase = MusicDatabase.getDatabase(this)
         musicLibraryViewModel = ViewModelProvider(this, MusicLibraryViewModel.Factory)[MusicLibraryViewModel::class.java]
 
         createChannelForMediaPlayerNotification(this)
