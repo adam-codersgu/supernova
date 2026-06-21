@@ -1,5 +1,6 @@
 package com.codersguidebook.supernova.testutils
 
+import java.lang.reflect.Method
 import kotlin.reflect.KFunction
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty1
@@ -33,7 +34,13 @@ object ReflectionUtils {
         return property
     }
 
-    fun setMethodVisible(targetObject: Any, methodName: String): KFunction<*> {
+    fun setMethodVisibleForInvokeIntParam(targetObject: Any, methodName: String): Method {
+        val targetMethod = targetObject.javaClass.getDeclaredMethod(methodName, Int::class.java)
+        targetMethod.isAccessible = true
+        return targetMethod
+    }
+
+    fun setMethodVisibleForSuspend(targetObject: Any, methodName: String): KFunction<*> {
         val targetMethod = targetObject::class.declaredFunctions
             .first { it.name == methodName }
         targetMethod.isAccessible = true

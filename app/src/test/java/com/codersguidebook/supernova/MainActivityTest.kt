@@ -12,13 +12,13 @@ import com.google.common.util.concurrent.MoreExecutors
 import io.mockk.every
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.junit5.MockKExtension
-import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -32,6 +32,7 @@ import org.robolectric.Robolectric
 import tech.apter.junit.jupiter.robolectric.RobolectricExtension
 
 @ExtendWith(MockKExtension::class, RobolectricExtension::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class MainActivityTest {
 
     @RelaxedMockK
@@ -50,13 +51,15 @@ class MainActivityTest {
     lateinit var playQueueViewModel: PlayQueueViewModel
 
     @RelaxedMockK
+    lateinit var mockLiveData: MutableLiveData<Int>
+
+    @RelaxedMockK
     lateinit var musicLibraryViewModel: MusicLibraryViewModel
 
     @RelaxedMockK
     lateinit var sharedPreferences: SharedPreferences
 
     private lateinit var mainActivity: MainActivity
-    private val mockLiveData = mockk<MutableLiveData<Int>>(relaxed = true)
 
     @BeforeEach
     fun setUp() {
@@ -92,42 +95,50 @@ class MainActivityTest {
         }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun saveCurrentlyPlayingIndex() = runTest {
-        // TODO - TIDY AND ABSTRACT OUT THIS CODE
-        val testDispatcher = StandardTestDispatcher(testScheduler)
-        Dispatchers.setMain(testDispatcher)
-        mockkStatic(Dispatchers::class)
-        every { Dispatchers.IO } returns testDispatcher
+        stubIODispatcher(testScheduler)
 
         try {
             every { playQueueViewModel.currentQueueItemIndex } returns mockLiveData
 
-            val lazyMock = lazy { playQueueViewModel }
-            ReflectionUtils.replaceFieldWithMock(mainActivity, "playQueueViewModel", lazyMock)
-
+            stubPlayQueueViewModel()
             stubEditor()
 
             val index = 2
 
-            val method = mainActivity.javaClass.getDeclaredMethod("saveCurrentlyPlayingIndex", Int::class.java)
-            method.isAccessible = true
+            val method = ReflectionUtils
+                .setMethodVisibleForInvokeIntParam(mainActivity, "saveCurrentlyPlayingIndex")
             method.invoke(mainActivity, index)
 
             advanceUntilIdle()
 
             verify { mockLiveData.postValue(index) }
             verify { editor.putInt(SharedPreferencesConstants.CURRENT_QUEUE_ITEM_INDEX, index) }
-
         } finally {
-            Dispatchers.resetMain()
-            unmockkStatic(Dispatchers::class)
+            resetDispatchers()
         }
     }
 
     private fun stubEditor() {
         every { sharedPreferences.edit() } returns editor
         ReflectionUtils.replaceFieldWithMock(mainActivity, "sharedPreferences", sharedPreferences)
+    }
+
+    private fun stubIODispatcher(testScheduler: TestCoroutineScheduler) {
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(testDispatcher)
+        mockkStatic(Dispatchers::class)
+        every { Dispatchers.IO } returns testDispatcher
+    }
+
+    private fun stubPlayQueueViewModel() {
+        val lazyMock = lazy { playQueueViewModel }
+        ReflectionUtils.replaceFieldWithMock(mainActivity, "playQueueViewModel", lazyMock)
+    }
+
+    private fun resetDispatchers() {
+        Dispatchers.resetMain()
+        unmockkStatic(Dispatchers::class)
     }
 }

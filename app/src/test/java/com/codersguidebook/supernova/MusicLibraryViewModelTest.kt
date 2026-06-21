@@ -304,7 +304,7 @@ class MusicLibraryViewModelTest {
             mockkObject(ImageHandlingHelper)
             every { ImageHandlingHelper.deleteAlbumArtByResourceId(application, song.albumId) } just Runs
 
-            val method = ReflectionUtils.setMethodVisible(musicLibraryViewModel, "deleteRedundantArtworkBySong")
+            val method = ReflectionUtils.setMethodVisibleForSuspend(musicLibraryViewModel, "deleteRedundantArtworkBySong")
             method.callSuspend(musicLibraryViewModel, song)
 
             coVerify { repository.getSongsByAlbumIdOrderByTrack(song.albumId) }
@@ -321,7 +321,7 @@ class MusicLibraryViewModelTest {
             mockkObject(ImageHandlingHelper)
             every { ImageHandlingHelper.deleteAlbumArtByResourceId(application, song.albumId) } just Runs
 
-            val method = ReflectionUtils.setMethodVisible(musicLibraryViewModel, "deleteRedundantArtworkBySong")
+            val method = ReflectionUtils.setMethodVisibleForSuspend(musicLibraryViewModel, "deleteRedundantArtworkBySong")
             method.callSuspend(musicLibraryViewModel, song)
 
             coVerify { repository.getSongsByAlbumIdOrderByTrack(song.albumId) }
