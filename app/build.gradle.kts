@@ -4,6 +4,7 @@ plugins {
     id("kotlin-parcelize")
     id("com.google.devtools.ksp")
     id("androidx.navigation.safeargs.kotlin")
+    id("tech.apter.junit5.jupiter.robolectric-extension-gradle-plugin") version "0.9.0"
 }
 
 android {
@@ -64,9 +65,10 @@ dependencies {
     implementation("androidx.navigation:navigation-ui-ktx:2.9.8")
     testImplementation("io.kotest:kotest-runner-junit5:5.6.2")
     testImplementation("io.kotest:kotest-assertions-core:5.6.2")
+    testImplementation("io.mockk:mockk:1.14.11")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     testImplementation("org.jetbrains.kotlin:kotlin-reflect:2.2.21")
-    testImplementation("io.mockk:mockk:1.14.11")
+    testImplementation("org.robolectric:robolectric:4.14")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
 
     val media3 = "1.10.1"
