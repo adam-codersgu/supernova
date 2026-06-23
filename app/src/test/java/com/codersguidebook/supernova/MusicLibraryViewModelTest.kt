@@ -226,6 +226,36 @@ class MusicLibraryViewModelTest {
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
+    @Nested
+    @DisplayName("Set the name of the playlist being viewed")
+    inner class SetActivePlaylistName {
+        @Test
+        fun setActivePlaylistName_success() {
+            val activePlaylistNameField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activePlaylistName")
+            val activePlaylistName = activePlaylistNameField.getter.call(musicLibraryViewModel) as MutableLiveData<String>
+            assertNull(activePlaylistName.value)
+
+            val expectedActivePlaylistName = "New playlist"
+            musicLibraryViewModel.setActivePlaylistName(expectedActivePlaylistName)
+
+            assertEquals(expectedActivePlaylistName, activePlaylistName.value)
+        }
+
+        @Test
+        fun setActivePlaylistName_empty_string_success() {
+            val activePlaylistNameField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activePlaylistName")
+            val activePlaylistName = activePlaylistNameField.getter.call(musicLibraryViewModel) as MutableLiveData<String>
+            activePlaylistName.value = "New playlist"
+
+            assertEquals("New playlist", activePlaylistName.value)
+
+            musicLibraryViewModel.setActivePlaylistName("")
+
+            assertEquals("", activePlaylistName.value)
+        }
+    }
+
     @Nested
     @DisplayName("Extract playlist songs")
     inner class ExtractPlaylistSongs {
