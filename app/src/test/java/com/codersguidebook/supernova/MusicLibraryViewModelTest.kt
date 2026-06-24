@@ -257,6 +257,31 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
+    @DisplayName("Verifies whether a given playlist exists")
+    inner class DoesPlaylistExistByName {
+
+        private val playlistName = "Playlist A"
+
+        @Test
+        fun doesPlaylistExistByName_success() = runTest {
+            coEvery { repository.getPlaylistByName(playlistName) } returns getMockPlaylist()
+
+            val playlistExists = musicLibraryViewModel.doesPlaylistExistByName(playlistName)
+
+            assertTrue(playlistExists)
+        }
+
+        @Test
+        fun doesPlaylistExistByName_false() = runTest {
+            coEvery { repository.getPlaylistByName(playlistName) } returns null
+
+            val playlistExists = musicLibraryViewModel.doesPlaylistExistByName(playlistName)
+
+            assertFalse(playlistExists)
+        }
+    }
+
+    @Nested
     @DisplayName("Extract playlist songs")
     inner class ExtractPlaylistSongs {
         @Test
