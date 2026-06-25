@@ -616,6 +616,32 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
+    @DisplayName("Save a playlist with a list of song IDs")
+    inner class SavePlaylistWithSongIds {
+
+        @Test
+        fun savePlaylistWithSongIds_listOfSongs() = runTest {
+            val playlist = getMockPlaylist()
+            val songIds = listOf(1L,5L,10L)
+
+            musicLibraryViewModel.savePlaylistWithSongIds(playlist, songIds)
+
+            playlist.songs = PlaylistHelper.serialiseSongIds(songIds)
+            coVerify { repository.updatePlaylists(listOf(playlist)) }
+        }
+        
+        @Test
+        fun savePlaylistWithSongIds_emptyListOfSongs() = runTest {
+            val playlist = getMockPlaylist()
+
+            musicLibraryViewModel.savePlaylistWithSongIds(playlist, listOf())
+
+            playlist.songs = null
+            coVerify { repository.updatePlaylists(listOf(playlist)) }
+        }
+    }
+
+    @Nested
     @DisplayName("Add a song to the recently played playlist")
     inner class AddSongByIdToRecentlyPlayedPlaylist {
 
