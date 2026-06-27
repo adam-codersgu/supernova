@@ -30,6 +30,11 @@ object PlaylistFixture {
         return Playlist(3, "Song of the day", PlaylistHelper.serialiseSongIds(songIds), true)
     }
 
+    fun getMockMostPlayedPlaylist(songQty: Int = 1): Playlist {
+        val songIds = getListOfIds(songQty)
+        return Playlist(4, "Most played", PlaylistHelper.serialiseSongIds(songIds), true)
+    }
+
     private fun getListOfIds(length: Int): MutableList<Long> {
         val songIds = mutableListOf<Long>()
         for (i in 1..length) {
