@@ -5,6 +5,8 @@ import android.content.SharedPreferences
 import androidx.lifecycle.MutableLiveData
 import androidx.media3.session.MediaController
 import com.codersguidebook.supernova.params.SharedPreferencesConstants
+import com.codersguidebook.supernova.testutils.DispatcherUtils.resetDispatchers
+import com.codersguidebook.supernova.testutils.DispatcherUtils.stubIODispatcher
 import com.codersguidebook.supernova.testutils.ReflectionUtils
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.google.common.util.concurrent.Futures
@@ -125,20 +127,8 @@ class MainActivityTest {
         ReflectionUtils.replaceFieldWithMock(mainActivity, "sharedPreferences", sharedPreferences)
     }
 
-    private fun stubIODispatcher(testScheduler: TestCoroutineScheduler) {
-        val testDispatcher = StandardTestDispatcher(testScheduler)
-        Dispatchers.setMain(testDispatcher)
-        mockkStatic(Dispatchers::class)
-        every { Dispatchers.IO } returns testDispatcher
-    }
-
     private fun stubPlayQueueViewModel() {
         val lazyMock = lazy { playQueueViewModel }
         ReflectionUtils.replaceFieldWithMock(mainActivity, "playQueueViewModel", lazyMock)
-    }
-
-    private fun resetDispatchers() {
-        Dispatchers.resetMain()
-        unmockkStatic(Dispatchers::class)
     }
 }
