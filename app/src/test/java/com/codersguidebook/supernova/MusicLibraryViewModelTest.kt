@@ -8,11 +8,14 @@ import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.exception.PlaylistNotFoundException
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockFavouritesPlaylist
+import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockMostPlayedPlaylist
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockPlaylist
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockRecentlyPlayedPlaylist
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSong
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSongOfTheDayPlaylist
 import com.codersguidebook.supernova.params.SharedPreferencesConstants
+import com.codersguidebook.supernova.testutils.DispatcherUtils.resetDispatchers
+import com.codersguidebook.supernova.testutils.DispatcherUtils.stubIODispatcher
 import com.codersguidebook.supernova.testutils.InstantTaskExecutorExtension
 import com.codersguidebook.supernova.testutils.ReflectionUtils
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
@@ -30,7 +33,9 @@ import io.mockk.mockkObject
 import io.mockk.slot
 import io.mockk.unmockkObject
 import io.mockk.verify
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -70,7 +75,7 @@ class MusicLibraryViewModelTest {
 
     @BeforeEach
     fun setUp() {
-        musicLibraryViewModel = MusicLibraryViewModel(application, repository, defaultPlaylistHelper)
+        initialiseViewModel()
     }
 
     @Nested
@@ -600,6 +605,11 @@ class MusicLibraryViewModelTest {
             coEvery { repository.getRandomSong() } returns getMockSong(2L)
             return mockSongOfTheDayPlaylist(dateLastUpdated)
         }
+
+        private fun stubEditor() {
+            every { sharedPreferences.edit() } returns editor
+            ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "sharedPreferences", sharedPreferences)
+        }
     }
 
     @Nested
@@ -638,6 +648,70 @@ class MusicLibraryViewModelTest {
 
             playlist.songs = null
             coVerify { repository.updatePlaylists(listOf(playlist)) }
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Nested
+    @DisplayName("An observer updates the most played playlist whenever the list of most played songs changes")
+    inner class MostPlayedSongsObserver {
+
+        @Test
+        fun observerDetectsNewSongs_updatesMostPlayedPlaylist() = runTest {
+            stubIODispatcher(testScheduler)
+            try {
+                val mostPlayedSongsByIdLiveData = MutableLiveData<List<Long>>()
+                every { repository.mostPlayedSongsById } returns mostPlayedSongsByIdLiveData
+
+                mockMostPlayedPlaylist()
+
+                initialiseViewModel()
+
+                val newSongIds = listOf(1L, 2L, 3L)
+                mostPlayedSongsByIdLiveData.value = newSongIds
+
+                advanceUntilIdle()
+
+                verify {
+                    repository.updatePlaylists(withArg { playlists ->
+                        assertEquals(1, playlists.size)
+                        assertEquals(4, playlists.first().playlistId)
+                        assertEquals("Most played", playlists.first().name)
+                        assertEquals(PlaylistHelper.serialiseSongIds(newSongIds), playlists.first().songs)
+                    })
+                }
+            } finally {
+                resetDispatchers()
+            }
+        }
+
+        @Test
+        fun observerDetectsNewSongs_noUpdates() = runTest {
+            stubIODispatcher(testScheduler)
+            try {
+                val mostPlayedSongsByIdLiveData = MutableLiveData<List<Long>>()
+                every { repository.mostPlayedSongsById } returns mostPlayedSongsByIdLiveData
+
+                mockMostPlayedPlaylist()
+
+                initialiseViewModel()
+
+                mostPlayedSongsByIdLiveData.value = listOf(1L)
+
+                advanceUntilIdle()
+
+                verify(exactly = 0) {
+                    repository.updatePlaylists(any())
+                }
+            } finally {
+                resetDispatchers()
+            }
+        }
+
+        private fun mockMostPlayedPlaylist() {
+            every { defaultPlaylistHelper.mostPlayed } returns Pair(4, "Most played")
+            val mockPlaylist = getMockMostPlayedPlaylist()
+            coEvery { repository.getPlaylistById(defaultPlaylistHelper.mostPlayed.first) } returns mockPlaylist
         }
     }
 
@@ -787,8 +861,7 @@ class MusicLibraryViewModelTest {
         }
     }
 
-    private fun stubEditor() {
-        every { sharedPreferences.edit() } returns editor
-        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "sharedPreferences", sharedPreferences)
+    private fun initialiseViewModel() {
+        musicLibraryViewModel = MusicLibraryViewModel(application, repository, defaultPlaylistHelper)
     }
 }
