@@ -716,6 +716,30 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
+    @DisplayName("Get song plays by artist or song ID and timeframe")
+    inner class GetSongPlays {
+
+        @Test
+        fun getSongPlaysByArtist() = runTest {
+            val artistName = "Artist"
+
+            musicLibraryViewModel.getSongPlaysByArtist(artistName)
+
+            coVerify { repository.getSongPlaysByArtist(artistName) }
+        }
+
+        @Test
+        fun getSongPlaysBySongIdsAndTimeframe() = runTest {
+            every { sharedPreferences.getString(SharedPreferencesConstants.MOST_PLAYED_PLAYLIST_TIMEFRAME, "all_time") } returns "all_time"
+            val songIds = listOf(1L, 3L, 7L)
+
+            musicLibraryViewModel.getSongPlaysBySongIdsAndTimeframe(songIds)
+
+            coVerify { repository.getSongPlaysBySongIdsAndTimeframe(songIds, "") }
+        }
+    }
+
+    @Nested
     @DisplayName("Add a song to the recently played playlist")
     inner class AddSongByIdToRecentlyPlayedPlaylist {
 
