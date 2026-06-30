@@ -3,6 +3,7 @@ package com.codersguidebook.supernova
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import com.codersguidebook.supernova.data.MusicRepository
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
@@ -18,6 +19,7 @@ import com.codersguidebook.supernova.testutils.DispatcherUtils.resetDispatchers
 import com.codersguidebook.supernova.testutils.DispatcherUtils.stubIODispatcher
 import com.codersguidebook.supernova.testutils.InstantTaskExecutorExtension
 import com.codersguidebook.supernova.testutils.ReflectionUtils
+import com.codersguidebook.supernova.testutils.ReflectionUtils.setMethodVisibleForInvoke
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
@@ -712,6 +714,26 @@ class MusicLibraryViewModelTest {
             every { defaultPlaylistHelper.mostPlayed } returns Pair(4, "Most played")
             val mockPlaylist = getMockMostPlayedPlaylist()
             coEvery { repository.getPlaylistById(defaultPlaylistHelper.mostPlayed.first) } returns mockPlaylist
+        }
+    }
+
+    @Nested
+    @DisplayName("OnCleared lifecycle metjod")
+    inner class OnCleared {
+
+        @Test
+        fun onCleared() {
+            val observerSlot = slot<Observer<List<Long>>>()
+            every { repository.mostPlayedSongsById.observeForever(capture(observerSlot)) } returns Unit
+
+            initialiseViewModel()
+
+            val capturedObserver = observerSlot.captured
+
+            val method = setMethodVisibleForInvoke(musicLibraryViewModel, "onCleared")
+            method.invoke(musicLibraryViewModel)
+
+            verify { repository.mostPlayedSongsById.removeObserver(capturedObserver) }
         }
     }
 

@@ -34,6 +34,12 @@ object ReflectionUtils {
         return property
     }
 
+    fun setMethodVisibleForInvoke(targetObject: Any, methodName: String): Method {
+        val targetMethod = targetObject.javaClass.getDeclaredMethod(methodName)
+        targetMethod.isAccessible = true
+        return targetMethod
+    }
+
     fun setMethodVisibleForInvokeIntParam(targetObject: Any, methodName: String): Method {
         val targetMethod = targetObject.javaClass.getDeclaredMethod(methodName, Int::class.java)
         targetMethod.isAccessible = true
