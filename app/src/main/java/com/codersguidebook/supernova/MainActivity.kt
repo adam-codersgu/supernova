@@ -50,13 +50,11 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import androidx.preference.PreferenceManager
-import com.codersguidebook.supernova.data.MusicDatabase
 import com.codersguidebook.supernova.databinding.ActivityMainBinding
 import com.codersguidebook.supernova.dialogs.CreatePlaylist
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.entities.SongWithOrderId
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NOTIFICATION_CHANNEL_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.NO_ACTION
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ORDER_ID
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REMEMBER_PROGRESS
@@ -72,6 +70,7 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.codersguidebook.supernova.utils.*
+import com.codersguidebook.supernova.utils.NotificationHelper.createChannelForMediaPlayerNotification
 import com.google.android.material.navigation.NavigationView
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
@@ -96,7 +95,6 @@ class MainActivity : AppCompatActivity() {
     private var handler = Handler(Looper.getMainLooper())
     private val playQueueViewModel: PlayQueueViewModel by viewModels()
     private var mediaStoreContentObserver: MediaStoreContentObserver? = null
-    private var musicDatabase: MusicDatabase? = null
     private var songCompleted = false
     private lateinit var controller: MediaController
     private lateinit var controllerFuture: ListenableFuture<MediaController>
@@ -147,10 +145,9 @@ class MainActivity : AppCompatActivity() {
 
         storagePermissionHelper = StorageAccessPermissionHelper(this)
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        musicDatabase = MusicDatabase.getDatabase(this)
         musicLibraryViewModel = ViewModelProvider(this, MusicLibraryViewModel.Factory)[MusicLibraryViewModel::class.java]
 
-        createChannelForMediaPlayerNotification()
+        createChannelForMediaPlayerNotification(this)
 
         val taskDescription = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             // Pre-SDK 33
@@ -993,20 +990,6 @@ class MainActivity : AppCompatActivity() {
      * @param dialog The dialog fragment to load.
      */
     fun openDialog(dialog: DialogFragment) = dialog.show(supportFragmentManager, "")
-
-    /** Create a channel for displaying application notifications */
-    private fun createChannelForMediaPlayerNotification() {
-        val channel = NotificationChannel(
-            NOTIFICATION_CHANNEL_ID, "Notifications",
-            NotificationManager.IMPORTANCE_DEFAULT
-        ).apply {
-            description = "All app notifications"
-            setSound(null, null)
-            setShowBadge(false)
-        }
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.createNotificationChannel(channel)
-    }
 
     /** Hides the soft input keyboard, which can sometimes obstruct views. */
     fun hideKeyboard() {

@@ -1,28 +1,55 @@
 package com.codersguidebook.supernova.testutils
 
-import java.lang.reflect.Field
+import java.lang.reflect.Method
 import kotlin.reflect.KFunction
+import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KProperty1
 import kotlin.reflect.full.declaredFunctions
+import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
+import kotlin.reflect.jvm.javaField
 
 object ReflectionUtils {
 
-    // TODO MIGRATE TO KOTLIN REFLECTION? SEE IF THERE IS A DEPENDENCY TO DELETE
-    fun setFieldVisible(targetObject: Any, fieldName: String): Field {
-        val targetField = targetObject.javaClass.getDeclaredField(fieldName)
-        targetField.isAccessible = true
-        return targetField
+    fun replaceFieldWithMock(targetObject: Any, fieldName: String, mockObject: Any) {
+        val property = setFieldVisible(targetObject, fieldName)
+
+        if (property is KMutableProperty<*>) {
+            property.setter.call(targetObject, mockObject)
+        } else {
+            val javaField = property.javaField
+                ?: throw IllegalArgumentException("Property $fieldName does not have a backing field to overwrite")
+
+            javaField.isAccessible = true
+            javaField.set(targetObject, mockObject)
+        }
     }
 
-    fun setMethodVisible(targetObject: Any, methodName: String): KFunction<*> {
-        val targetMethod = targetObject::class.declaredFunctions
-            .first { it.name == methodName }
+    fun setFieldVisible(targetObject: Any, fieldName: String): KProperty1<out Any, *> {
+        val property = targetObject::class.memberProperties
+            .firstOrNull { it.name == fieldName }
+            ?: throw NoSuchFieldException("Property $fieldName not found in class hierarchy")
+
+        property.isAccessible = true
+        return property
+    }
+
+    fun setMethodVisibleForInvoke(targetObject: Any, methodName: String): Method {
+        val targetMethod = targetObject.javaClass.getDeclaredMethod(methodName)
         targetMethod.isAccessible = true
         return targetMethod
     }
 
-    fun replaceFieldWithMock(targetObject: Any, fieldName: String, mockObject: Any) {
-        val field = setFieldVisible(targetObject, fieldName)
-        field.set(targetObject, mockObject)
+    fun setMethodVisibleForInvokeIntParam(targetObject: Any, methodName: String): Method {
+        val targetMethod = targetObject.javaClass.getDeclaredMethod(methodName, Int::class.java)
+        targetMethod.isAccessible = true
+        return targetMethod
+    }
+
+    fun setMethodVisibleForSuspend(targetObject: Any, methodName: String): KFunction<*> {
+        val targetMethod = targetObject::class.declaredFunctions
+            .first { it.name == methodName }
+        targetMethod.isAccessible = true
+        return targetMethod
     }
 }

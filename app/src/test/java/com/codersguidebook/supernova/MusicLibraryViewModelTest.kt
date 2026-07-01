@@ -3,17 +3,23 @@ package com.codersguidebook.supernova
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import com.codersguidebook.supernova.data.MusicRepository
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.exception.PlaylistNotFoundException
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockFavouritesPlaylist
+import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockMostPlayedPlaylist
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockPlaylist
+import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockRecentlyPlayedPlaylist
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSong
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSongOfTheDayPlaylist
 import com.codersguidebook.supernova.params.SharedPreferencesConstants
+import com.codersguidebook.supernova.testutils.DispatcherUtils.resetDispatchers
+import com.codersguidebook.supernova.testutils.DispatcherUtils.stubIODispatcher
 import com.codersguidebook.supernova.testutils.InstantTaskExecutorExtension
 import com.codersguidebook.supernova.testutils.ReflectionUtils
+import com.codersguidebook.supernova.testutils.ReflectionUtils.setMethodVisibleForInvoke
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.codersguidebook.supernova.utils.PlaylistHelper
@@ -29,7 +35,9 @@ import io.mockk.mockkObject
 import io.mockk.slot
 import io.mockk.unmockkObject
 import io.mockk.verify
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -69,7 +77,7 @@ class MusicLibraryViewModelTest {
 
     @BeforeEach
     fun setUp() {
-        musicLibraryViewModel = MusicLibraryViewModel(application, repository, defaultPlaylistHelper)
+        initialiseViewModel()
     }
 
     @Nested
@@ -148,7 +156,8 @@ class MusicLibraryViewModelTest {
 
         @Test
         fun getPlaylistByName_playlist_exists() = runTest {
-            val mockPlaylist = mockGetPlaylistResponse(playlistA)
+            val mockPlaylist = getMockPlaylist()
+            coEvery { repository.getPlaylistByName(playlistA) } returns mockPlaylist
 
             val playlist = musicLibraryViewModel.getPlaylistByName(playlistA)
 
@@ -171,7 +180,7 @@ class MusicLibraryViewModelTest {
         @Test
         fun setActiveAlbumId_success() {
             val activeAlbumIdField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeAlbumId")
-            val activeAlbumId = activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<String>
+            val activeAlbumId = activeAlbumIdField.getter.call(musicLibraryViewModel) as MutableLiveData<String>
             assertNull(activeAlbumId.value)
 
             val expectedActiveAlbumId = "3"
@@ -183,7 +192,7 @@ class MusicLibraryViewModelTest {
         @Test
         fun setActiveAlbumId_empty_string_success() {
             val activeAlbumIdField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeAlbumId")
-            val activeAlbumId = activeAlbumIdField.get(musicLibraryViewModel) as MutableLiveData<String>
+            val activeAlbumId = activeAlbumIdField.getter.call(musicLibraryViewModel) as MutableLiveData<String>
             activeAlbumId.value = "2"
 
             assertEquals("2", activeAlbumId.value)
@@ -201,7 +210,7 @@ class MusicLibraryViewModelTest {
         @Test
         fun setActiveArtistName_success() {
             val activeArtistNameField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeArtistName")
-            val activeArtistName = activeArtistNameField.get(musicLibraryViewModel) as MutableLiveData<String>
+            val activeArtistName = activeArtistNameField.getter.call(musicLibraryViewModel) as MutableLiveData<String>
             assertNull(activeArtistName.value)
 
             val expectedActiveArtistName = "Band B"
@@ -213,7 +222,7 @@ class MusicLibraryViewModelTest {
         @Test
         fun setActiveArtistName_empty_string_success() {
             val activeArtistNameField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeArtistName")
-            val activeArtistName = activeArtistNameField.get(musicLibraryViewModel) as MutableLiveData<String>
+            val activeArtistName = activeArtistNameField.getter.call(musicLibraryViewModel) as MutableLiveData<String>
             activeArtistName.value = "Band A"
 
             assertEquals("Band A", activeArtistName.value)
@@ -221,6 +230,61 @@ class MusicLibraryViewModelTest {
             musicLibraryViewModel.setActiveArtistName("")
 
             assertEquals("", activeArtistName.value)
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Nested
+    @DisplayName("Set the name of the playlist being viewed")
+    inner class SetActivePlaylistName {
+        @Test
+        fun setActivePlaylistName_success() {
+            val activePlaylistNameField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activePlaylistName")
+            val activePlaylistName = activePlaylistNameField.getter.call(musicLibraryViewModel) as MutableLiveData<String>
+            assertNull(activePlaylistName.value)
+
+            val expectedActivePlaylistName = "New playlist"
+            musicLibraryViewModel.setActivePlaylistName(expectedActivePlaylistName)
+
+            assertEquals(expectedActivePlaylistName, activePlaylistName.value)
+        }
+
+        @Test
+        fun setActivePlaylistName_empty_string_success() {
+            val activePlaylistNameField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activePlaylistName")
+            val activePlaylistName = activePlaylistNameField.getter.call(musicLibraryViewModel) as MutableLiveData<String>
+            activePlaylistName.value = "New playlist"
+
+            assertEquals("New playlist", activePlaylistName.value)
+
+            musicLibraryViewModel.setActivePlaylistName("")
+
+            assertEquals("", activePlaylistName.value)
+        }
+    }
+
+    @Nested
+    @DisplayName("Verifies whether a given playlist exists")
+    inner class DoesPlaylistExistByName {
+
+        private val playlistName = "Playlist A"
+
+        @Test
+        fun doesPlaylistExistByName_success() = runTest {
+            coEvery { repository.getPlaylistByName(playlistName) } returns getMockPlaylist()
+
+            val playlistExists = musicLibraryViewModel.doesPlaylistExistByName(playlistName)
+
+            assertTrue(playlistExists)
+        }
+
+        @Test
+        fun doesPlaylistExistByName_false() = runTest {
+            coEvery { repository.getPlaylistByName(playlistName) } returns null
+
+            val playlistExists = musicLibraryViewModel.doesPlaylistExistByName(playlistName)
+
+            assertFalse(playlistExists)
         }
     }
 
@@ -276,6 +340,20 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
+    @DisplayName("Save the playback progress of a song")
+    inner class SavePlaybackProgress {
+        @Test
+        fun savePlaybackProgress() = runTest {
+            val mediaId = 1L
+            val playbackPosition = 1000
+
+            musicLibraryViewModel.savePlaybackProgress(mediaId, playbackPosition)
+
+            coVerify { repository.savePlaybackProgress(mediaId, playbackPosition) }
+        }
+    }
+
+    @Nested
     @DisplayName("Delete redundant artwork by song")
     inner class DeleteRedundantArtworkBySong {
 
@@ -288,7 +366,7 @@ class MusicLibraryViewModelTest {
             mockkObject(ImageHandlingHelper)
             every { ImageHandlingHelper.deleteAlbumArtByResourceId(application, song.albumId) } just Runs
 
-            val method = ReflectionUtils.setMethodVisible(musicLibraryViewModel, "deleteRedundantArtworkBySong")
+            val method = ReflectionUtils.setMethodVisibleForSuspend(musicLibraryViewModel, "deleteRedundantArtworkBySong")
             method.callSuspend(musicLibraryViewModel, song)
 
             coVerify { repository.getSongsByAlbumIdOrderByTrack(song.albumId) }
@@ -305,7 +383,7 @@ class MusicLibraryViewModelTest {
             mockkObject(ImageHandlingHelper)
             every { ImageHandlingHelper.deleteAlbumArtByResourceId(application, song.albumId) } just Runs
 
-            val method = ReflectionUtils.setMethodVisible(musicLibraryViewModel, "deleteRedundantArtworkBySong")
+            val method = ReflectionUtils.setMethodVisibleForSuspend(musicLibraryViewModel, "deleteRedundantArtworkBySong")
             method.callSuspend(musicLibraryViewModel, song)
 
             coVerify { repository.getSongsByAlbumIdOrderByTrack(song.albumId) }
@@ -335,6 +413,7 @@ class MusicLibraryViewModelTest {
             val mockPlaylistWithSongRemoved = getMockPlaylist(listOf(getMockSong(2L), getMockSong(3L)))
             coVerify(timeout = 1000L) { repository.updatePlaylists(listOf(mockPlaylistWithSongRemoved)) }
             coVerify { repository.deleteSong(songToDelete) }
+            verify { ImageHandlingHelper.deleteAlbumArtByResourceId(application, songToDelete.albumId) }
             unmockkObject(ImageHandlingHelper::class)
         }
 
@@ -349,6 +428,7 @@ class MusicLibraryViewModelTest {
 
             coVerify(exactly = 0) { repository.updatePlaylists(any()) }
             coVerify { repository.deleteSong(songToDelete) }
+            verify { ImageHandlingHelper.deleteAlbumArtByResourceId(application, songToDelete.albumId) }
             unmockkObject(ImageHandlingHelper::class)
         }
 
@@ -366,6 +446,7 @@ class MusicLibraryViewModelTest {
             val mockPlaylistWithSongRemoved2 = getMockPlaylist(2, listOf(getMockSong(3L)))
             coVerify(timeout = 1000L) { repository.updatePlaylists(listOf(mockPlaylistWithSongRemoved1, mockPlaylistWithSongRemoved2)) }
             coVerify { repository.deleteSong(songToDelete) }
+            verify { ImageHandlingHelper.deleteAlbumArtByResourceId(application, songToDelete.albumId) }
             unmockkObject(ImageHandlingHelper::class)
         }
 
@@ -382,12 +463,66 @@ class MusicLibraryViewModelTest {
             val mockPlaylistWithSongRemoved = getMockPlaylist(2, listOf(getMockSong(4L)))
             coVerify(timeout = 1000L) { repository.updatePlaylists(listOf(mockPlaylistWithSongRemoved)) }
             coVerify { repository.deleteSong(songToDelete) }
+            verify { ImageHandlingHelper.deleteAlbumArtByResourceId(application, songToDelete.albumId) }
             unmockkObject(ImageHandlingHelper::class)
         }
 
         private fun setUpImageHandlingHelper() {
             mockkObject(ImageHandlingHelper)
             every { ImageHandlingHelper.deleteAlbumArtByResourceId(application, songToDelete.albumId) } just Runs
+        }
+    }
+
+    @Nested
+    @DisplayName("Delete a playlist")
+    inner class DeletePlaylist {
+
+        private val playlistToDelete = getMockPlaylist()
+
+        @Test
+        fun deletePlaylist() = runTest {
+            setUpImageHandlingHelper()
+
+            musicLibraryViewModel.deletePlaylist(playlistToDelete)
+
+            coVerify { repository.deletePlaylist(playlistToDelete) }
+            verify { ImageHandlingHelper.deletePlaylistArtByResourceId(application,
+                playlistToDelete.playlistId.toString()) }
+            unmockkObject(ImageHandlingHelper::class)
+        }
+
+        private fun setUpImageHandlingHelper() {
+            mockkObject(ImageHandlingHelper)
+            every { ImageHandlingHelper.deletePlaylistArtByResourceId(application,
+                playlistToDelete.playlistId.toString()) } just Runs
+        }
+    }
+
+    @Nested
+    @DisplayName("Save a list of songs")
+    inner class SaveSongs {
+
+        @Test
+        fun saveSongs() = runTest {
+            val songs = listOf(getMockSong(), getMockSong(2L))
+
+            musicLibraryViewModel.saveSongs(songs)
+
+            coVerify { repository.saveSongs(songs) }
+        }
+    }
+
+    @Nested
+    @DisplayName("Save a playlist")
+    inner class SavePlaylist {
+
+        @Test
+        fun savePlaylist() = runTest {
+            val playlist = getMockPlaylist()
+
+            musicLibraryViewModel.savePlaylist(playlist)
+
+            coVerify { repository.savePlaylist(playlist) }
         }
     }
 
@@ -472,13 +607,229 @@ class MusicLibraryViewModelTest {
             coEvery { repository.getRandomSong() } returns getMockSong(2L)
             return mockSongOfTheDayPlaylist(dateLastUpdated)
         }
+
+        private fun stubEditor() {
+            every { sharedPreferences.edit() } returns editor
+            ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "sharedPreferences", sharedPreferences)
+        }
+    }
+
+    @Nested
+    @DisplayName("Increase song plays by song ID")
+    inner class IncreaseSongPlaysBySongId {
+        @Test
+        fun increaseSongPlaysBySongId() = runTest {
+            val mediaId = 1L
+
+            musicLibraryViewModel.increaseSongPlaysBySongId(mediaId)
+
+            coVerify { repository.increaseSongPlaysBySongId(mediaId) }
+        }
+    }
+
+    @Nested
+    @DisplayName("Save a playlist with a list of song IDs")
+    inner class SavePlaylistWithSongIds {
+
+        @Test
+        fun savePlaylistWithSongIds_listOfSongs() = runTest {
+            val playlist = getMockPlaylist()
+            val songIds = listOf(1L,5L,10L)
+
+            musicLibraryViewModel.savePlaylistWithSongIds(playlist, songIds)
+
+            playlist.songs = PlaylistHelper.serialiseSongIds(songIds)
+            coVerify { repository.updatePlaylists(listOf(playlist)) }
+        }
+        
+        @Test
+        fun savePlaylistWithSongIds_emptyListOfSongs() = runTest {
+            val playlist = getMockPlaylist()
+
+            musicLibraryViewModel.savePlaylistWithSongIds(playlist, listOf())
+
+            playlist.songs = null
+            coVerify { repository.updatePlaylists(listOf(playlist)) }
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Nested
+    @DisplayName("An observer updates the most played playlist whenever the list of most played songs changes")
+    inner class MostPlayedSongsObserver {
+
+        @Test
+        fun observerDetectsNewSongs_updatesMostPlayedPlaylist() = runTest {
+            stubIODispatcher(testScheduler)
+            try {
+                val mostPlayedSongsByIdLiveData = MutableLiveData<List<Long>>()
+                every { repository.mostPlayedSongsById } returns mostPlayedSongsByIdLiveData
+
+                mockMostPlayedPlaylist()
+
+                initialiseViewModel()
+
+                val newSongIds = listOf(1L, 2L, 3L)
+                mostPlayedSongsByIdLiveData.value = newSongIds
+
+                advanceUntilIdle()
+
+                verify {
+                    repository.updatePlaylists(withArg { playlists ->
+                        assertEquals(1, playlists.size)
+                        assertEquals(4, playlists.first().playlistId)
+                        assertEquals("Most played", playlists.first().name)
+                        assertEquals(PlaylistHelper.serialiseSongIds(newSongIds), playlists.first().songs)
+                    })
+                }
+            } finally {
+                resetDispatchers()
+            }
+        }
+
+        @Test
+        fun observerDetectsNewSongs_noUpdates() = runTest {
+            stubIODispatcher(testScheduler)
+            try {
+                val mostPlayedSongsByIdLiveData = MutableLiveData<List<Long>>()
+                every { repository.mostPlayedSongsById } returns mostPlayedSongsByIdLiveData
+
+                mockMostPlayedPlaylist()
+
+                initialiseViewModel()
+
+                mostPlayedSongsByIdLiveData.value = listOf(1L)
+
+                advanceUntilIdle()
+
+                verify(exactly = 0) {
+                    repository.updatePlaylists(any())
+                }
+            } finally {
+                resetDispatchers()
+            }
+        }
+
+        private fun mockMostPlayedPlaylist() {
+            every { defaultPlaylistHelper.mostPlayed } returns Pair(4, "Most played")
+            val mockPlaylist = getMockMostPlayedPlaylist()
+            coEvery { repository.getPlaylistById(defaultPlaylistHelper.mostPlayed.first) } returns mockPlaylist
+        }
+    }
+
+    @Nested
+    @DisplayName("OnCleared lifecycle metjod")
+    inner class OnCleared {
+
+        @Test
+        fun onCleared() {
+            val observerSlot = slot<Observer<List<Long>>>()
+            every { repository.mostPlayedSongsById.observeForever(capture(observerSlot)) } returns Unit
+
+            initialiseViewModel()
+
+            val capturedObserver = observerSlot.captured
+
+            val method = setMethodVisibleForInvoke(musicLibraryViewModel, "onCleared")
+            method.invoke(musicLibraryViewModel)
+
+            verify { repository.mostPlayedSongsById.removeObserver(capturedObserver) }
+        }
+    }
+
+    @Nested
+    @DisplayName("Get song plays by artist or song ID and timeframe")
+    inner class GetSongPlays {
+
+        @Test
+        fun getSongPlaysByArtist() = runTest {
+            val artistName = "Artist"
+
+            musicLibraryViewModel.getSongPlaysByArtist(artistName)
+
+            coVerify { repository.getSongPlaysByArtist(artistName) }
+        }
+
+        @Test
+        fun getSongPlaysBySongIdsAndTimeframe() = runTest {
+            every { sharedPreferences.getString(SharedPreferencesConstants.MOST_PLAYED_PLAYLIST_TIMEFRAME, "all_time") } returns "all_time"
+            val songIds = listOf(1L, 3L, 7L)
+
+            musicLibraryViewModel.getSongPlaysBySongIdsAndTimeframe(songIds)
+
+            coVerify { repository.getSongPlaysBySongIdsAndTimeframe(songIds, "") }
+        }
+    }
+
+    @Nested
+    @DisplayName("Add a song to the recently played playlist")
+    inner class AddSongByIdToRecentlyPlayedPlaylist {
+
+        private val mediaIdToAdd = 99L
+
+        @Test
+        fun addSongByIdToRecentlyPlayedPlaylist_addToEmptyPlaylist() = runTest {
+            every { defaultPlaylistHelper.recentlyPlayed } returns Pair(2, "Recently played")
+            val playlist = getMockRecentlyPlayedPlaylist(0)
+            coEvery { repository.getPlaylistById(2) } returns playlist
+
+            musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(mediaIdToAdd)
+
+            val playlistSlot = slot<List<Playlist>>()
+            coVerify(timeout = 1000L) { repository.updatePlaylists(capture(playlistSlot)) }
+            val updatedIds = PlaylistHelper.extractSongIds(playlistSlot.captured.first().songs)
+            assertEquals(1, updatedIds.size)
+            assertTrue(updatedIds.contains(mediaIdToAdd))
+        }
+
+        @Test
+        fun addSongByIdToRecentlyPlayedPlaylist_addToPlaylistWithTenSongs() = runTest {
+            every { defaultPlaylistHelper.recentlyPlayed } returns Pair(2, "Recently played")
+            val playlist = getMockRecentlyPlayedPlaylist(10)
+            coEvery { repository.getPlaylistById(2) } returns playlist
+
+            musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(mediaIdToAdd)
+
+            val playlistSlot = slot<List<Playlist>>()
+            coVerify(timeout = 1000L) { repository.updatePlaylists(capture(playlistSlot)) }
+            val updatedIds = PlaylistHelper.extractSongIds(playlistSlot.captured.first().songs)
+            assertEquals(11, updatedIds.size)
+            assertEquals(mediaIdToAdd, updatedIds[0])
+        }
+
+        @Test
+        fun addSongByIdToRecentlyPlayedPlaylist_addToPlaylistWithMaxQtyOfSongs() = runTest {
+            every { defaultPlaylistHelper.recentlyPlayed } returns Pair(2, "Recently played")
+            val playlist = getMockRecentlyPlayedPlaylist(30)
+            val expectedMediaIdToRemove = PlaylistHelper.extractSongIds(playlist.songs).last()
+            coEvery { repository.getPlaylistById(2) } returns playlist
+
+            musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(mediaIdToAdd)
+
+            val playlistSlot = slot<List<Playlist>>()
+            coVerify(timeout = 1000L) { repository.updatePlaylists(capture(playlistSlot)) }
+            val updatedIds = PlaylistHelper.extractSongIds(playlistSlot.captured.first().songs)
+            assertEquals(30, updatedIds.size)
+            assertEquals(mediaIdToAdd, updatedIds[0])
+            assertFalse(updatedIds.contains(expectedMediaIdToRemove))
+        }
+
+        @Test
+        fun addSongByIdToRecentlyPlayedPlaylist_playlistNotFound() = runTest {
+            every { defaultPlaylistHelper.recentlyPlayed } returns Pair(2, "Recently played")
+            coEvery { repository.getPlaylistById(2) } returns null
+
+            musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(mediaIdToAdd)
+
+            coVerify(exactly = 0) { repository.updatePlaylists(any()) }
+        }
     }
 
     @Nested
     @DisplayName("Get all songs")
     inner class GetAllSongs {
         @Test
-        fun getAllSongs_success() = runTest {
+        fun getAllSongs() = runTest {
             val song = getMockSong()
             coEvery { repository.getAllSongs() } returns listOf(song)
 
@@ -556,14 +907,7 @@ class MusicLibraryViewModelTest {
         }
     }
 
-    private fun mockGetPlaylistResponse(playlistName: String): Playlist {
-        val mockPlaylist = getMockPlaylist()
-        coEvery { repository.getPlaylistByName(playlistName) } returns mockPlaylist
-        return mockPlaylist
-    }
-
-    private fun stubEditor() {
-        every { sharedPreferences.edit() } returns editor
-        ReflectionUtils.replaceFieldWithMock(musicLibraryViewModel, "sharedPreferences", sharedPreferences)
+    private fun initialiseViewModel() {
+        musicLibraryViewModel = MusicLibraryViewModel(application, repository, defaultPlaylistHelper)
     }
 }

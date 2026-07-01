@@ -20,12 +20,27 @@ object PlaylistFixture {
         return Playlist(1, "Favourites", songIds, true)
     }
 
+    fun getMockRecentlyPlayedPlaylist(songQty: Int = 1): Playlist {
+        val songIds = getListOfIds(songQty)
+        return Playlist(2, "Recently played", PlaylistHelper.serialiseSongIds(songIds), true)
+    }
+
     fun getMockSongOfTheDayPlaylist(songQty: Int = 1): Playlist {
+        val songIds = getListOfIds(songQty)
+        return Playlist(3, "Song of the day", PlaylistHelper.serialiseSongIds(songIds), true)
+    }
+
+    fun getMockMostPlayedPlaylist(songQty: Int = 1): Playlist {
+        val songIds = getListOfIds(songQty)
+        return Playlist(4, "Most played", PlaylistHelper.serialiseSongIds(songIds), true)
+    }
+
+    private fun getListOfIds(length: Int): MutableList<Long> {
         val songIds = mutableListOf<Long>()
-        for (i in 1..songQty) {
+        for (i in 1..length) {
             songIds.add(i.toLong())
         }
-        return Playlist(3, "Song of the day", PlaylistHelper.serialiseSongIds(songIds), true)
+        return songIds
     }
 
     // TODO: Delegate the below song data setup methods to another fixture class

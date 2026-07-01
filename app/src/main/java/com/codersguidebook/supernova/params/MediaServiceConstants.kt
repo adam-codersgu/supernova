@@ -4,6 +4,7 @@ package com.codersguidebook.supernova.params
  * Class containing identifying values for custom commands, actions and messages
  * regarding the media browser service.
  **/
+// TODO - MIGRATE THIS TO AN OBJECT AND USE PUBLIC CONST VALUES
 class MediaServiceConstants {
     companion object {
         const val ALBUM_ID = "albumId"
