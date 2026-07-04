@@ -20,7 +20,10 @@ android {
         versionName = "3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        resourceConfigurations += listOf("en-rGB", "es")
+    }
+
+    androidResources {
+        localeFilters += listOf("en-rGB", "es")
     }
 
     buildTypes {
