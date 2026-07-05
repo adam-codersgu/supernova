@@ -97,6 +97,18 @@ class MainActivityTest {
         }
     }
 
+    @Nested
+    @DisplayName("Fast forward playback")
+    inner class FastForward {
+
+        @Test
+        fun fastForward() {
+            mainActivity.fastForward()
+
+            verify { controller.seekForward() }
+        }
+    }
+
     @Test
     fun saveCurrentlyPlayingIndex() = runTest {
         stubIODispatcher(testScheduler)
