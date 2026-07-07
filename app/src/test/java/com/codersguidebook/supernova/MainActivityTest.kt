@@ -2,36 +2,37 @@ package com.codersguidebook.supernova
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.database.Cursor
+import android.provider.MediaStore
 import androidx.lifecycle.MutableLiveData
 import androidx.media3.session.MediaController
+import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.params.SharedPreferencesConstants
 import com.codersguidebook.supernova.testutils.DispatcherUtils.resetDispatchers
 import com.codersguidebook.supernova.testutils.DispatcherUtils.stubIODispatcher
 import com.codersguidebook.supernova.testutils.ReflectionUtils
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
+import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.MoreExecutors
 import io.mockk.every
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.junit5.MockKExtension
-import io.mockk.mockkStatic
-import io.mockk.unmockkStatic
+import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.extension.ExtendWith
 import org.robolectric.Robolectric
 import tech.apter.junit.jupiter.robolectric.RobolectricExtension
+import java.lang.reflect.Method
 
 @ExtendWith(MockKExtension::class, RobolectricExtension::class)
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -106,6 +107,31 @@ class MainActivityTest {
             mainActivity.fastForward()
 
             verify { controller.seekForward() }
+        }
+    }
+
+    @Nested
+    @DisplayName("Extract song metadata from a cursor")
+    inner class CreateSongFromCursor {
+
+        @Test
+        fun createSongFromCursor() {
+            val cursor = mockk<Cursor>(relaxed = true)
+            every { cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID) } returns 0
+            every { cursor.getLong(0) } returns 11L
+
+            val method = setMethodVisibleForInvoke(mainActivity)
+            mockkObject(ImageHandlingHelper)
+
+            val song = method.invoke(mainActivity, cursor) as Song
+
+            assertEquals(11L, song.songId)
+        }
+
+        private fun setMethodVisibleForInvoke(targetObject: Any): Method {
+            val targetMethod = targetObject.javaClass.getDeclaredMethod("createSongFromCursor", Cursor::class.java)
+            targetMethod.isAccessible = true
+            return targetMethod
         }
     }
 
