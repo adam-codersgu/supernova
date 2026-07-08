@@ -29,6 +29,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.mockkObject
+import io.mockk.spyk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -145,53 +146,54 @@ class MainActivityTest {
     @DisplayName("Extract song metadata from a cursor")
     inner class CreateSongFromCursor {
 
+        private val albumId = "434356556"
+        private val songId = 11L
+
         @Test
         fun createSongFromCursor() {
-            val cursor = mockk<Cursor>(relaxed = true)
-            every { cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID) } returns 0
-            every { cursor.getLong(0) } returns 11L
+            val cursor = getMockCursor()
 
             val method = setMethodVisibleForInvoke(mainActivity)
             mockkObject(ImageHandlingHelper)
 
             val song = method.invoke(mainActivity, cursor) as Song
 
-            assertEquals(11L, song.songId)
+            assertEquals(songId, song.songId)
+            assertEquals(albumId, song.albumId)
         }
 
         @Test
         fun createSongFromCursor_artworkNotFound() {
-            val cursor = mockk<Cursor>(relaxed = true)
-            every { cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID) } returns 0
-            every { cursor.getLong(0) } returns 11L
-            every { cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID) } returns 2
-            every { cursor.getString(2) } returns "4646"
+            val cursor = getMockCursor()
 
-            val spyActivity = io.mockk.spyk(mainActivity)
+            val spyActivity = spyk(mainActivity)
             val mockContentResolver = mockk<ContentResolver>(relaxed = true)
-
-            // 2. Intercept the activity's contentResolver
             every { spyActivity.contentResolver } returns mockContentResolver
 
-            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, 11L)
+            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, songId)
             val mockBitmap = mockk<Bitmap>()
             every {
-                mockContentResolver.loadThumbnail(eq(uri), eq(Size(640, 640)), null)
+                mockContentResolver.loadThumbnail(uri, Size(640, 640), null)
             } returns mockBitmap
 
             val method = setMethodVisibleForInvoke(spyActivity)
             mockkObject(ImageHandlingHelper)
-            every { ImageHandlingHelper.doesAlbumArtExistByResourceId(application, "4646") } returns false
-// 3. Stub the saving function so it returns true and avoids execution of the real file code
+            every { ImageHandlingHelper.doesAlbumArtExistByResourceId(application, albumId) } returns false
             every { ImageHandlingHelper.saveAlbumArtByResourceId(any(), any(), any()) } just Runs
 
-            val song = method.invoke(spyActivity, cursor) as Song
+            method.invoke(spyActivity, cursor)
 
-            assertEquals("4646", song.albumId)
+            verify { mockContentResolver.loadThumbnail(uri, Size(640, 640), null) }
+            verify { ImageHandlingHelper.saveAlbumArtByResourceId(any(), albumId, mockBitmap) }
+        }
 
-            verify(exactly = 1) {
-                mockContentResolver.loadThumbnail(eq(uri), eq(Size(640, 640)), null)
-            }
+        private fun getMockCursor(): Cursor {
+            val cursor = mockk<Cursor>(relaxed = true)
+            every { cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID) } returns 0
+            every { cursor.getLong(0) } returns songId
+            every { cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID) } returns 2
+            every { cursor.getString(2) } returns albumId
+            return cursor
         }
 
         private fun setMethodVisibleForInvoke(targetObject: Any): Method {
