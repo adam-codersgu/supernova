@@ -190,7 +190,7 @@ class MainActivityTest {
         }
 
         @ParameterizedTest
-        @CsvSource("1, 1001", "12, 1012", "123, 1123", "4321, 4321")
+        @CsvSource("1, 1001", "12, 1012", "123, 1123", "4321, 4321", "43/21, 1001")
         fun createSongFromCursor_trackString(cursorTrack: String, songTrack: Int) {
             val cursor = getMockCursor()
             every { cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK) } returns 2
