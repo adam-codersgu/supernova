@@ -40,6 +40,8 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import org.robolectric.Robolectric
 import tech.apter.junit.jupiter.robolectric.RobolectricExtension
 import java.lang.reflect.Method
@@ -187,18 +189,19 @@ class MainActivityTest {
             verify { ImageHandlingHelper.saveAlbumArtByResourceId(any(), albumId, mockBitmap) }
         }
 
-        @Test
-        fun createSongFromCursor_trackString() {
+        @ParameterizedTest
+        @CsvSource("1, 1001", "12, 1012", "123, 1123", "4321, 4321")
+        fun createSongFromCursor_trackString(cursorTrack: String, songTrack: Int) {
             val cursor = getMockCursor()
             every { cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK) } returns 2
-            every { cursor.getString(2) } returns "4"
+            every { cursor.getString(2) } returns cursorTrack
 
             val method = setMethodVisibleForInvoke(mainActivity)
             mockkObject(ImageHandlingHelper)
 
             val song = method.invoke(mainActivity, cursor) as Song
 
-            assertEquals(1004, song.track)
+            assertEquals(songTrack, song.track)
         }
 
         private fun getMockCursor(): Cursor {
