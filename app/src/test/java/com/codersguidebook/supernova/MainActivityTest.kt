@@ -187,12 +187,26 @@ class MainActivityTest {
             verify { ImageHandlingHelper.saveAlbumArtByResourceId(any(), albumId, mockBitmap) }
         }
 
+        @Test
+        fun createSongFromCursor_trackString() {
+            val cursor = getMockCursor()
+            every { cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK) } returns 2
+            every { cursor.getString(2) } returns "4"
+
+            val method = setMethodVisibleForInvoke(mainActivity)
+            mockkObject(ImageHandlingHelper)
+
+            val song = method.invoke(mainActivity, cursor) as Song
+
+            assertEquals(1004, song.track)
+        }
+
         private fun getMockCursor(): Cursor {
             val cursor = mockk<Cursor>(relaxed = true)
             every { cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID) } returns 0
             every { cursor.getLong(0) } returns songId
-            every { cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID) } returns 2
-            every { cursor.getString(2) } returns albumId
+            every { cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID) } returns 1
+            every { cursor.getString(1) } returns albumId
             return cursor
         }
 
