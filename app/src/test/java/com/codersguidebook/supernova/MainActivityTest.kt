@@ -12,6 +12,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
 import androidx.media3.session.MediaController
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.fixture.PlayQueueFixture.getPlayQueue
 import com.codersguidebook.supernova.params.SharedPreferencesConstants
 import com.codersguidebook.supernova.testutils.DispatcherUtils.resetDispatchers
 import com.codersguidebook.supernova.testutils.DispatcherUtils.stubIODispatcher
@@ -21,7 +22,9 @@ import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.MoreExecutors
+import io.kotest.engine.launcher.main
 import io.mockk.Runs
+import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.junit5.MockKExtension
@@ -79,13 +82,10 @@ class MainActivityTest {
     @BeforeEach
     fun setUp() {
 
-        // 1. Completely reset existing MockK states
-        io.mockk.clearAllMocks()
+        clearAllMocks()
 
-        // 2. Intercept any future ViewModelProvider instantiations
         mockkConstructor(ViewModelProvider::class)
 
-        // 3. Force ViewModelProvider to return your relaxed mocks instead of executing real code
         every {
             anyConstructed<ViewModelProvider>()[MusicLibraryViewModel::class.java]
         } returns musicLibraryViewModel
@@ -141,6 +141,36 @@ class MainActivityTest {
             mainActivity.fastForward()
 
             verify { controller.seekForward() }
+        }
+    }
+
+    @Nested
+    @DisplayName("Shuffle or unshuffle the play queue")
+    inner class SetShuffleMode {
+
+        private val albumId = "434356556"
+        private val songId = 11L
+
+        @Test
+        fun setShuffleMode() {
+            val method = setMethodVisibleForInvoke(mainActivity)
+            val playQueue = getPlayQueue(5)
+
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 1
+
+            method.invoke(mainActivity, true)
+        }
+
+        /*
+        TODO FUTURE TESTS
+         - PLAY QUEUE VIEW MODEL PLAY QUEUE EMPTY
+         */
+
+        private fun setMethodVisibleForInvoke(targetObject: Any): Method {
+            val targetMethod = targetObject.javaClass.getDeclaredMethod("setShuffleMode", Boolean::class.java)
+            targetMethod.isAccessible = true
+            return targetMethod
         }
     }
 
