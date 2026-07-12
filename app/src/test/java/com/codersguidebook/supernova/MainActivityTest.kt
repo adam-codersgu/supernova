@@ -10,10 +10,14 @@ import android.provider.MediaStore
 import android.util.Size
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
+import androidx.media3.common.MediaItem
 import androidx.media3.session.MediaController
+import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fixture.PlayQueueFixture.getPlayQueue
 import com.codersguidebook.supernova.params.SharedPreferencesConstants
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_INDEX
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.codersguidebook.supernova.testutils.DispatcherUtils.resetDispatchers
 import com.codersguidebook.supernova.testutils.DispatcherUtils.stubIODispatcher
 import com.codersguidebook.supernova.testutils.InstantTaskExecutorExtension
@@ -27,11 +31,13 @@ import io.mockk.Runs
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.impl.annotations.RelaxedMockK
+import io.mockk.impl.recording.WasNotCalled.method
 import io.mockk.junit5.MockKExtension
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.mockkObject
+import io.mockk.slot
 import io.mockk.spyk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -98,8 +104,6 @@ class MainActivityTest {
         // Example (repeat for any fields that your activity registers observers on):
         // every { musicLibraryViewModel.someLiveDataField } returns mockLiveData
 
-
-
         val controllerActivity = Robolectric.buildActivity(MainActivity::class.java)
         mainActivity = controllerActivity.get()
         controllerActivity.create()
@@ -153,13 +157,22 @@ class MainActivityTest {
 
         @Test
         fun setShuffleMode() {
+            stubEditor()
             val method = setMethodVisibleForInvoke(mainActivity)
             val playQueue = getPlayQueue(5)
 
             every { playQueueViewModel.playQueue.value } returns playQueue
             every { playQueueViewModel.currentQueueItemIndex.value } returns 1
+            stubPlayQueueViewModel()
 
             method.invoke(mainActivity, true)
+
+            verify { playQueueViewModel.currentQueueItemIndex.postValue(0) }
+            verify { editor.putInt(CURRENT_QUEUE_ITEM_INDEX, 0) }
+            val playQueueSlot = slot<List<MediaItem>>()
+            verify { playQueueViewModel.playQueue.value = capture(playQueueSlot) }
+            assertEquals(playQueue[1], playQueueSlot.captured.first())
+            verify { editor.putBoolean(SHUFFLE_MODE, true) }
         }
 
         /*
@@ -269,7 +282,7 @@ class MainActivityTest {
             advanceUntilIdle()
 
             verify { mockLiveData.postValue(index) }
-            verify { editor.putInt(SharedPreferencesConstants.CURRENT_QUEUE_ITEM_INDEX, index) }
+            verify { editor.putInt(CURRENT_QUEUE_ITEM_INDEX, index) }
         } finally {
             resetDispatchers()
         }
