@@ -12,10 +12,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
 import androidx.media3.common.MediaItem
 import androidx.media3.session.MediaController
-import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fixture.PlayQueueFixture.getPlayQueue
-import com.codersguidebook.supernova.params.SharedPreferencesConstants
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ORDER_ID
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_INDEX
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.codersguidebook.supernova.testutils.DispatcherUtils.resetDispatchers
@@ -26,12 +25,10 @@ import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.MoreExecutors
-import io.kotest.engine.launcher.main
 import io.mockk.Runs
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.impl.annotations.RelaxedMockK
-import io.mockk.impl.recording.WasNotCalled.method
 import io.mockk.junit5.MockKExtension
 import io.mockk.just
 import io.mockk.mockk
@@ -156,7 +153,7 @@ class MainActivityTest {
         private val songId = 11L
 
         @Test
-        fun setShuffleMode() {
+        fun setShuffleMode_true() {
             stubEditor()
             val method = setMethodVisibleForInvoke(mainActivity)
             val playQueue = getPlayQueue(5)
@@ -173,6 +170,32 @@ class MainActivityTest {
             verify { playQueueViewModel.playQueue.value = capture(playQueueSlot) }
             assertEquals(playQueue[1], playQueueSlot.captured.first())
             verify { editor.putBoolean(SHUFFLE_MODE, true) }
+        }
+
+        @Test
+        fun setShuffleMode_false() {
+            stubEditor()
+            val method = setMethodVisibleForInvoke(mainActivity)
+            val playQueue = getPlayQueue(5)
+            playQueue[0].mediaMetadata.extras?.putInt(ORDER_ID, 1)
+            playQueue[1].mediaMetadata.extras?.putInt(ORDER_ID, 2)
+            playQueue[2].mediaMetadata.extras?.putInt(ORDER_ID, 4)
+            playQueue[3].mediaMetadata.extras?.putInt(ORDER_ID, 3)
+            playQueue[4].mediaMetadata.extras?.putInt(ORDER_ID, 0)
+
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 1
+            stubPlayQueueViewModel()
+
+            method.invoke(mainActivity, false)
+
+            verify { playQueueViewModel.currentQueueItemIndex.postValue(2) }
+            verify { editor.putInt(CURRENT_QUEUE_ITEM_INDEX, 2) }
+            val playQueueSlot = slot<List<MediaItem>>()
+            verify { playQueueViewModel.playQueue.value = capture(playQueueSlot) }
+            assertEquals(playQueue[4], playQueueSlot.captured.first())
+            assertEquals(playQueue[2], playQueueSlot.captured.last())
+            verify { editor.putBoolean(SHUFFLE_MODE, false) }
         }
 
         /*
