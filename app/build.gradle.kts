@@ -73,6 +73,11 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")
     implementation("androidx.navigation:navigation-fragment-ktx:2.9.8")
     implementation("androidx.navigation:navigation-ui-ktx:2.9.8")
+
+    // Feature flags
+    api("dev.openfeature:kotlin-sdk:0.8.0")
+    implementation("org.gofeatureflag.openfeature:gofeatureflag-kotlin-provider:1.0.0")
+
     testImplementation("io.kotest:kotest-runner-junit5:5.6.2")
     testImplementation("io.kotest:kotest-assertions-core:5.6.2")
     testImplementation("io.mockk:mockk:1.14.11")

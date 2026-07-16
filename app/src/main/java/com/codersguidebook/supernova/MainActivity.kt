@@ -77,10 +77,17 @@ import com.google.common.util.concurrent.MoreExecutors
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
+import dev.openfeature.kotlin.sdk.EvaluationContext
+import dev.openfeature.kotlin.sdk.ImmutableContext
+import dev.openfeature.kotlin.sdk.OpenFeatureAPI
+import dev.openfeature.kotlin.sdk.Value
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.gofeatureflag.openfeature.GoFeatureFlagProvider
+import org.gofeatureflag.openfeature.bean.GoFeatureFlagOptions
 import java.io.FileNotFoundException
+import java.util.UUID
 import java.util.stream.IntStream
 import kotlin.math.min
 import kotlin.streams.toList
@@ -447,6 +454,39 @@ class MainActivity : AppCompatActivity() {
         try {
             Log.i(LOG_TAG, "Change to content URI for media ID $songId")
             if (handleFileUpdateByMediaId(songId.toLong()) == SONG_DELETED) {
+                try {
+                    val evaluationContext: EvaluationContext = ImmutableContext(
+                        targetingKey = UUID.randomUUID().toString(),
+                        attributes = mapOf( "age" to Value.Integer(22), "email" to Value.String("contact@gofeatureflag.org"))
+                    )
+
+                    OpenFeatureAPI.setProvider(
+                        GoFeatureFlagProvider(
+                            options = GoFeatureFlagOptions( endpoint = "http://localhost:1031")
+                        ),
+                        Dispatchers.IO,
+                        evaluationContext
+                    )
+
+                    // Get the client
+                    val client = OpenFeatureAPI.getClient()
+
+                    // Evaluate the flag safely
+                    val showNewFeature = client.getBooleanValue(
+                        key = "new-checkout-button",
+                        defaultValue = false
+                    )
+
+                    // Update your UI on the main thread
+                    withContext(Dispatchers.Main) {
+                        if (showNewFeature) {
+                            // Show the new button
+                        }
+                    }
+                } catch (e: Exception) {
+                    // Handle setup errors
+                }
+
                 playQueueViewModel.removeAllOccurrencesOfSong(songId)
             }
         } catch (_: NumberFormatException) { refreshMusicLibrary() }
