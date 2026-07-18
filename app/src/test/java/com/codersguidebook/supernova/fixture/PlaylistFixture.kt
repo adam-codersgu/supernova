@@ -44,6 +44,14 @@ object PlaylistFixture {
     }
 
     // TODO: Delegate the below song data setup methods to another fixture class
+    fun getMockSongs(length: Int): MutableList<Song> {
+        val songs = mutableListOf<Song>()
+        for (i in 1..length) {
+            songs.add(getMockSong(i.toLong()))
+        }
+        return songs
+    }
+
     fun getMockSong(isFavourite: Boolean = false): Song {
         return getMockSong(1L, isFavourite)
     }

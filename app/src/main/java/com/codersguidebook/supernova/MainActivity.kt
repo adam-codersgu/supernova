@@ -961,7 +961,7 @@ class MainActivity : AppCompatActivity() {
             val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: break
             // All occurrences of the song need to be updated in the play queue
             val matchingIndices = IntStream.range(0, playQueue.size)
-                .filter { i -> song.songId.toString().equals(playQueue[i]) }
+                .filter { i -> song.songId.toString() == playQueue[i].mediaId }
                 .toList()
 
             if (matchingIndices.isEmpty()) continue

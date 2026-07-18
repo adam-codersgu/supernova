@@ -33,7 +33,7 @@ object PlayQueueFixture {
             .build()
     }
 
-    private fun getMediaItem(mediaId: String, orderId: Int? = null): MediaItem {
+    fun getMediaItem(mediaId: String, orderId: Int? = null): MediaItem {
         return MediaItem.Builder()
             .setMediaId(mediaId)
             .setMediaMetadata(getMetadata(orderId))

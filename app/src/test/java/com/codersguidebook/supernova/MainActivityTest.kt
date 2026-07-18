@@ -13,7 +13,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.media3.common.MediaItem
 import androidx.media3.session.MediaController
 import com.codersguidebook.supernova.entities.Song
+import com.codersguidebook.supernova.fixture.PlayQueueFixture.getMediaItem
 import com.codersguidebook.supernova.fixture.PlayQueueFixture.getPlayQueue
+import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSongs
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ORDER_ID
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_INDEX
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
@@ -149,9 +151,6 @@ class MainActivityTest {
     @DisplayName("Shuffle or unshuffle the play queue")
     inner class SetShuffleMode {
 
-        private val albumId = "434356556"
-        private val songId = 11L
-
         @Test
         fun setShuffleMode_true() {
             stubEditor()
@@ -207,6 +206,25 @@ class MainActivityTest {
             val targetMethod = targetObject.javaClass.getDeclaredMethod("setShuffleMode", Boolean::class.java)
             targetMethod.isAccessible = true
             return targetMethod
+        }
+    }
+
+    @Nested
+    @DisplayName("Update a list of songs")
+    inner class UpdateSongs {
+
+        @Test
+        fun updateSongs_noMatchingSongsInPlayQueue() {
+            val playQueue = listOf(getMediaItem("999"))
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            stubPlayQueueViewModel()
+
+            val songs = getMockSongs(5)
+
+            mainActivity.updateSongs(songs)
+
+            verify { musicLibraryViewModel.updateSongs(songs) }
+            verify(exactly = 0) { controller.replaceMediaItem(any(), any()) }
         }
     }
 
