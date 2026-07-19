@@ -29,6 +29,7 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.MoreExecutors
 import io.mockk.Runs
 import io.mockk.clearAllMocks
+import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.junit5.MockKExtension
@@ -226,6 +227,37 @@ class MainActivityTest {
             verify { musicLibraryViewModel.updateSongs(songs) }
             verify(exactly = 0) { controller.replaceMediaItem(any(), any()) }
         }
+
+        @Test
+        fun updateSongs_matchingSongsInShuffledPlayQueue() {
+            val songs = getMockSongs(5)
+            val playQueue = mutableListOf(
+                getMediaItem("777", 777),
+                getMediaItem(songs[2].songId.toString(), songs[2].songId.toInt()),
+                getMediaItem(songs[4].songId.toString(), songs[4].songId.toInt()),
+                getMediaItem("888", 888),
+                getMediaItem("999", 999)
+            )
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 1
+            stubPlayQueueViewModel()
+
+            every { sharedPreferences.getBoolean(SHUFFLE_MODE, false) } returns true
+
+            mainActivity.updateSongs(songs)
+
+            verify { musicLibraryViewModel.updateSongs(songs) }
+            verify { controller.replaceMediaItem(0, songs[2].getMediaItem(songs[2].songId.toInt())) }
+            confirmVerified(controller)
+            playQueue[1] = songs[2].getMediaItem(songs[2].songId.toInt())
+            playQueue[2] = songs[4].getMediaItem(songs[4].songId.toInt())
+            verify { playQueueViewModel.playQueue.value =  playQueue }
+        }
+
+        /*
+        TODO FUTURE TESTS
+         - SONG PRESENT IN UNSHUFFLED PLAY QUEUE
+         */
     }
 
     @Nested

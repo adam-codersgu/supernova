@@ -976,7 +976,10 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     song.getMediaItem()
                 }
-                controller.replaceMediaItem(index, mediaItem)
+
+                if (index == playQueueViewModel.currentQueueItemIndex.value) {
+                    controller.replaceMediaItem(0, mediaItem)
+                }
 
                 playQueue[index] = mediaItem
             }
