@@ -27,6 +27,7 @@ import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.MoreExecutors
+import io.kotest.matchers.ints.exactly
 import io.mockk.Runs
 import io.mockk.clearAllMocks
 import io.mockk.confirmVerified
@@ -226,6 +227,8 @@ class MainActivityTest {
 
             verify { musicLibraryViewModel.updateSongs(songs) }
             verify(exactly = 0) { controller.replaceMediaItem(any(), any()) }
+            verify { playQueueViewModel.playQueue.value }
+            confirmVerified(playQueueViewModel)
         }
 
         @Test

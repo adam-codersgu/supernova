@@ -958,6 +958,7 @@ class MainActivity : AppCompatActivity() {
         musicLibraryViewModel.updateSongs(songs)
 
         val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return
+        var playQueueUpdated = false
         for (song in songs) {
             // All occurrences of the song need to be updated in the play queue
             val matchingIndices = IntStream.range(0, playQueue.size)
@@ -982,9 +983,13 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 playQueue[index] = mediaItem
+                playQueueUpdated = true
             }
         }
-        saveAndPostPlayQueue(playQueue)
+
+        if (playQueueUpdated) {
+            saveAndPostPlayQueue(playQueue)
+        }
     }
 
     /**
