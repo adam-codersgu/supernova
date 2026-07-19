@@ -957,8 +957,8 @@ class MainActivity : AppCompatActivity() {
     fun updateSongs(songs: List<Song>) {
         musicLibraryViewModel.updateSongs(songs)
 
+        val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return
         for (song in songs) {
-            val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: break
             // All occurrences of the song need to be updated in the play queue
             val matchingIndices = IntStream.range(0, playQueue.size)
                 .filter { i -> song.songId.toString() == playQueue[i].mediaId }
@@ -983,8 +983,8 @@ class MainActivity : AppCompatActivity() {
 
                 playQueue[index] = mediaItem
             }
-            saveAndPostPlayQueue(playQueue)
         }
+        saveAndPostPlayQueue(playQueue)
     }
 
     /**

@@ -251,7 +251,7 @@ class MainActivityTest {
             confirmVerified(controller)
             playQueue[1] = songs[2].getMediaItem(songs[2].songId.toInt())
             playQueue[2] = songs[4].getMediaItem(songs[4].songId.toInt())
-            verify { playQueueViewModel.playQueue.value =  playQueue }
+            verify { playQueueViewModel.playQueue.value = playQueue }
         }
 
         /*
