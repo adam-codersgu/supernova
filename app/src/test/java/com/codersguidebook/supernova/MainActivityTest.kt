@@ -199,10 +199,19 @@ class MainActivityTest {
             verify { editor.putBoolean(SHUFFLE_MODE, false) }
         }
 
-        /*
-        TODO FUTURE TESTS
-         - PLAY QUEUE VIEW MODEL PLAY QUEUE EMPTY
-         */
+        @Test
+        fun setShuffleMode_playQueueEmpty() {
+            stubEditor()
+            val method = setMethodVisibleForInvoke(mainActivity)
+
+            every { playQueueViewModel.playQueue.value } returns listOf()
+            stubPlayQueueViewModel()
+
+            method.invoke(mainActivity, false)
+
+            verify(exactly = 0) { playQueueViewModel.currentQueueItemIndex.postValue(any()) }
+            confirmVerified(editor)
+        }
 
         private fun setMethodVisibleForInvoke(targetObject: Any): Method {
             val targetMethod = targetObject.javaClass.getDeclaredMethod("setShuffleMode", Boolean::class.java)

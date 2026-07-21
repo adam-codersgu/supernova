@@ -517,7 +517,9 @@ class MainActivity : AppCompatActivity() {
      * @param shuffle A Boolean indicating whether the play queue should be shuffled.
      */
     private fun setShuffleMode(shuffle: Boolean) {
-        val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return
+        val playQueue = playQueueViewModel.playQueue.value?.toMutableList()
+
+        if (playQueue.isNullOrEmpty()) return
 
         if (shuffle) {
             for ((index, i) in playQueue.withIndex()) {
