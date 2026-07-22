@@ -241,6 +241,31 @@ class MainActivityTest {
         }
 
         @Test
+        fun updateSongs_matchingSongsInPlayQueue() {
+            val songs = getMockSongs(5)
+            val playQueue = mutableListOf(
+                getMediaItem("777"),
+                getMediaItem(songs[2].songId.toString()),
+                getMediaItem(songs[4].songId.toString()),
+                getMediaItem("888"),
+                getMediaItem("999")
+            )
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 3
+            stubPlayQueueViewModel()
+
+            every { sharedPreferences.getBoolean(SHUFFLE_MODE, false) } returns false
+
+            mainActivity.updateSongs(songs)
+
+            verify { musicLibraryViewModel.updateSongs(songs) }
+            confirmVerified(controller)
+            playQueue[1] = songs[2].getMediaItem(songs[2].songId.toInt())
+            playQueue[2] = songs[4].getMediaItem(songs[4].songId.toInt())
+            verify { playQueueViewModel.playQueue.value = playQueue }
+        }
+
+        @Test
         fun updateSongs_matchingSongsInShuffledPlayQueue() {
             val songs = getMockSongs(5)
             val playQueue = mutableListOf(
@@ -265,11 +290,6 @@ class MainActivityTest {
             playQueue[2] = songs[4].getMediaItem(songs[4].songId.toInt())
             verify { playQueueViewModel.playQueue.value = playQueue }
         }
-
-        /*
-        TODO FUTURE TESTS
-         - SONG PRESENT IN UNSHUFFLED PLAY QUEUE
-         */
     }
 
     @Nested
