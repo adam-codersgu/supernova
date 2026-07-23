@@ -15,6 +15,6 @@ class MediaServiceConstants {
         const val SKIP_TO_NEXT = "skipToNext"
         const val SKIP_TO_PREV = "skipToPrev"
         const val SONG_DELETED = 0
-        const val SONG_UPDATED = 1
+        const val SONG_SAVED = 1
     }
 }

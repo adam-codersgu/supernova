@@ -61,7 +61,7 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REME
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SKIP_TO_NEXT
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SKIP_TO_PREV
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_DELETED
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_UPDATED
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_SAVED
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.APPLICATION_LANGUAGE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_INDEX
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.DEFAULT_PLAYLIST_LANGUAGE
@@ -1148,16 +1148,16 @@ class MainActivity : AppCompatActivity() {
 
         val existingSong = getSongById(mediaId)
         when {
-            existingSong == null && cursor?.count!! > 0 -> {
+            cursor?.count!! > 0 -> {
                 cursor.apply {
                     this.moveToNext()
                     val createdSong = createSongFromCursor(this)
                     musicLibraryViewModel.saveSongs(listOf(createdSong))
-                    return SONG_UPDATED
+                    return SONG_SAVED
                 }
             }
-            cursor?.count == 0 -> {
-                existingSong?.let {
+            existingSong != null -> {
+                existingSong.let {
                     musicLibraryViewModel.deleteSong(existingSong)
                     return SONG_DELETED
                 }

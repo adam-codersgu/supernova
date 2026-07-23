@@ -15,6 +15,7 @@ import androidx.media3.session.MediaController
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fixture.PlayQueueFixture.getMediaItem
 import com.codersguidebook.supernova.fixture.PlayQueueFixture.getPlayQueue
+import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSong
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSongs
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ORDER_ID
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_INDEX
@@ -23,6 +24,7 @@ import com.codersguidebook.supernova.testutils.DispatcherUtils.resetDispatchers
 import com.codersguidebook.supernova.testutils.DispatcherUtils.stubIODispatcher
 import com.codersguidebook.supernova.testutils.InstantTaskExecutorExtension
 import com.codersguidebook.supernova.testutils.ReflectionUtils
+import com.codersguidebook.supernova.testutils.ReflectionUtils.setMethodVisibleForSuspend
 import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.google.common.util.concurrent.Futures
@@ -30,6 +32,8 @@ import com.google.common.util.concurrent.MoreExecutors
 import io.kotest.matchers.ints.exactly
 import io.mockk.Runs
 import io.mockk.clearAllMocks
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.impl.annotations.RelaxedMockK
@@ -55,10 +59,16 @@ import org.junit.jupiter.params.provider.CsvSource
 import org.robolectric.Robolectric
 import tech.apter.junit.jupiter.robolectric.RobolectricExtension
 import java.lang.reflect.Method
+import kotlin.reflect.full.callSuspend
 
 @ExtendWith(MockKExtension::class, RobolectricExtension::class, InstantTaskExecutorExtension::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainActivityTest {
+
+    companion object {
+        private const val ALBUM_ID = "434356556"
+        private const val SONG_ID = 11L
+    }
 
     @RelaxedMockK
     lateinit var application: Application
@@ -221,6 +231,37 @@ class MainActivityTest {
     }
 
     @Nested
+    @DisplayName("Update a file based on its media ID")
+    inner class HandleFileUpdateByMediaId {
+
+        @Test
+        fun handleFileUpdateByMediaId_saved() = runTest {
+            // fixme remove val song = getMockSong()
+            // fixme remove coEvery { musicLibraryViewModel.getSongById(SONG_ID) } returns song
+
+            val cursor = getMockCursor()
+            val spyActivity = spyk(mainActivity)
+            val mockContentResolver = mockk<ContentResolver>(relaxed = true)
+            every { spyActivity.contentResolver } returns mockContentResolver
+
+            every { mockContentResolver.query(any(), any(), any(), any(), any()) } returns cursor
+
+            val method = setMethodVisibleForSuspend(spyActivity, "handleFileUpdateByMediaId")
+
+            val result = method.callSuspend(spyActivity, SONG_ID) as Int
+
+            coVerify { musicLibraryViewModel.saveSongs(any()) }
+            assertEquals(1, result)
+        }
+
+        /**
+         * TODO OTHER TESTS
+         *  - DELETED
+         *  - NO ACTION
+         */
+    }
+
+    @Nested
     @DisplayName("Update a list of songs")
     inner class UpdateSongs {
 
@@ -296,9 +337,6 @@ class MainActivityTest {
     @DisplayName("Extract song metadata from a cursor")
     inner class CreateSongFromCursor {
 
-        private val albumId = "434356556"
-        private val songId = 11L
-
         @Test
         fun createSongFromCursor() {
             val cursor = getMockCursor()
@@ -308,8 +346,8 @@ class MainActivityTest {
 
             val song = method.invoke(mainActivity, cursor) as Song
 
-            assertEquals(songId, song.songId)
-            assertEquals(albumId, song.albumId)
+            assertEquals(SONG_ID, song.songId)
+            assertEquals(ALBUM_ID, song.albumId)
         }
 
         @Test
@@ -320,7 +358,7 @@ class MainActivityTest {
             val mockContentResolver = mockk<ContentResolver>(relaxed = true)
             every { spyActivity.contentResolver } returns mockContentResolver
 
-            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, songId)
+            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, SONG_ID)
             val mockBitmap = mockk<Bitmap>()
             every {
                 mockContentResolver.loadThumbnail(uri, Size(640, 640), null)
@@ -328,13 +366,13 @@ class MainActivityTest {
 
             val method = setMethodVisibleForInvoke(spyActivity)
             mockkObject(ImageHandlingHelper)
-            every { ImageHandlingHelper.doesAlbumArtExistByResourceId(application, albumId) } returns false
+            every { ImageHandlingHelper.doesAlbumArtExistByResourceId(application, ALBUM_ID) } returns false
             every { ImageHandlingHelper.saveAlbumArtByResourceId(any(), any(), any()) } just Runs
 
             method.invoke(spyActivity, cursor)
 
             verify { mockContentResolver.loadThumbnail(uri, Size(640, 640), null) }
-            verify { ImageHandlingHelper.saveAlbumArtByResourceId(any(), albumId, mockBitmap) }
+            verify { ImageHandlingHelper.saveAlbumArtByResourceId(any(), ALBUM_ID, mockBitmap) }
         }
 
         @ParameterizedTest
@@ -350,15 +388,6 @@ class MainActivityTest {
             val song = method.invoke(mainActivity, cursor) as Song
 
             assertEquals(songTrack, song.track)
-        }
-
-        private fun getMockCursor(): Cursor {
-            val cursor = mockk<Cursor>(relaxed = true)
-            every { cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID) } returns 0
-            every { cursor.getLong(0) } returns songId
-            every { cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID) } returns 1
-            every { cursor.getString(1) } returns albumId
-            return cursor
         }
 
         private fun setMethodVisibleForInvoke(targetObject: Any): Method {
@@ -391,6 +420,16 @@ class MainActivityTest {
         } finally {
             resetDispatchers()
         }
+    }
+
+    private fun getMockCursor(): Cursor {
+        val cursor = mockk<Cursor>(relaxed = true)
+        every { cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID) } returns 0
+        every { cursor.getLong(0) } returns SONG_ID
+        every { cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID) } returns 1
+        every { cursor.getString(1) } returns ALBUM_ID
+        every { cursor.count } returns 1
+        return cursor
     }
 
     private fun stubEditor() {
