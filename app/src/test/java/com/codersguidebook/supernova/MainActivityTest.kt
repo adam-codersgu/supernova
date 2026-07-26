@@ -256,9 +256,7 @@ class MainActivityTest {
             val song = getMockSong()
             coEvery { musicLibraryViewModel.getSongById(SONG_ID) } returns song
 
-            val spyActivity = spyk(mainActivity)
-            val mockContentResolver = mockk<ContentResolver>(relaxed = true)
-            every { spyActivity.contentResolver } returns mockContentResolver
+            val spyActivity = getSpyActivity(mainActivity)
 
             val method = setMethodVisibleForSuspend(spyActivity, "handleFileUpdateByMediaId")
 
@@ -266,6 +264,25 @@ class MainActivityTest {
 
             coVerify { musicLibraryViewModel.deleteSong(song) }
             assertEquals(0, result)
+        }
+
+        @Test
+        fun handleFileUpdateByMediaId_noAction() = runTest {
+            coEvery { musicLibraryViewModel.getSongById(SONG_ID) } returns null
+            val spyActivity = getSpyActivity(mainActivity)
+
+            val method = setMethodVisibleForSuspend(spyActivity, "handleFileUpdateByMediaId")
+
+            val result = method.callSuspend(spyActivity, SONG_ID) as Int
+
+            assertEquals(-1, result)
+        }
+
+        private fun getSpyActivity(mainActivity: MainActivity): MainActivity {
+            val spyActivity = spyk(mainActivity)
+            val mockContentResolver = mockk<ContentResolver>(relaxed = true)
+            every { spyActivity.contentResolver } returns mockContentResolver
+            return spyActivity
         }
 
         /**
