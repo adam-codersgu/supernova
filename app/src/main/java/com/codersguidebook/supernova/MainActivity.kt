@@ -61,7 +61,7 @@ import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.REME
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SKIP_TO_NEXT
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SKIP_TO_PREV
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_DELETED
-import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_UPDATED
+import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.SONG_SAVED
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.APPLICATION_LANGUAGE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_INDEX
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.DEFAULT_PLAYLIST_LANGUAGE
@@ -517,7 +517,9 @@ class MainActivity : AppCompatActivity() {
      * @param shuffle A Boolean indicating whether the play queue should be shuffled.
      */
     private fun setShuffleMode(shuffle: Boolean) {
-        val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return
+        val playQueue = playQueueViewModel.playQueue.value?.toMutableList()
+
+        if (playQueue.isNullOrEmpty()) return
 
         if (shuffle) {
             for ((index, i) in playQueue.withIndex()) {
@@ -957,11 +959,12 @@ class MainActivity : AppCompatActivity() {
     fun updateSongs(songs: List<Song>) {
         musicLibraryViewModel.updateSongs(songs)
 
+        val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return
+        var playQueueUpdated = false
         for (song in songs) {
-            val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: break
             // All occurrences of the song need to be updated in the play queue
             val matchingIndices = IntStream.range(0, playQueue.size)
-                .filter { i -> song.songId.toString().equals(playQueue[i]) }
+                .filter { i -> song.songId.toString() == playQueue[i].mediaId }
                 .toList()
 
             if (matchingIndices.isEmpty()) continue
@@ -976,10 +979,17 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     song.getMediaItem()
                 }
-                controller.replaceMediaItem(index, mediaItem)
+
+                if (index == playQueueViewModel.currentQueueItemIndex.value) {
+                    controller.replaceMediaItem(0, mediaItem)
+                }
 
                 playQueue[index] = mediaItem
+                playQueueUpdated = true
             }
+        }
+
+        if (playQueueUpdated) {
             saveAndPostPlayQueue(playQueue)
         }
     }
@@ -1138,16 +1148,16 @@ class MainActivity : AppCompatActivity() {
 
         val existingSong = getSongById(mediaId)
         when {
-            existingSong == null && cursor?.count!! > 0 -> {
+            cursor?.count!! > 0 -> {
                 cursor.apply {
                     this.moveToNext()
                     val createdSong = createSongFromCursor(this)
                     musicLibraryViewModel.saveSongs(listOf(createdSong))
-                    return SONG_UPDATED
+                    return SONG_SAVED
                 }
             }
-            cursor?.count == 0 -> {
-                existingSong?.let {
+            existingSong != null -> {
+                existingSong.let {
                     musicLibraryViewModel.deleteSong(existingSong)
                     return SONG_DELETED
                 }
