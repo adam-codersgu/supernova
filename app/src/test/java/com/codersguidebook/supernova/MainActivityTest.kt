@@ -8,10 +8,12 @@ import android.database.Cursor
 import android.graphics.Bitmap
 import android.provider.MediaStore
 import android.util.Size
+import android.view.MenuItem
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
 import androidx.media3.common.MediaItem
 import androidx.media3.session.MediaController
+import androidx.navigation.NavController
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fixture.PlayQueueFixture.getMediaItem
 import com.codersguidebook.supernova.fixture.PlayQueueFixture.getPlayQueue
@@ -133,6 +135,36 @@ class MainActivityTest {
         }, MoreExecutors.directExecutor())
 
         controllerActivity.start()
+    }
+
+    @Nested
+    @DisplayName("Handle navigation events to different areas of the application")
+    inner class Navigate {
+
+        @Test
+        fun navigate_home() {
+            val method = setMethodVisibleForInvoke(mainActivity)
+
+            val cursor = getMockCursor()
+            val spyActivity = spyk(mainActivity)
+            val mockContentResolver = mockk<ContentResolver>(relaxed = true)
+            every { spyActivity.contentResolver } returns mockContentResolver
+
+            every { mockContentResolver.query(any(), any(), any(), any(), any()) } returns cursor
+
+            val result = method.callSuspend(spyActivity, SONG_ID) as Int
+
+            coVerify { musicLibraryViewModel.saveSongs(any()) }
+            assertEquals(1, result)
+        }
+
+        private fun setMethodVisibleForInvoke(targetObject: Any): Method {
+            val targetMethod = targetObject.javaClass.getDeclaredMethod("navigate",
+                NavController::class.java,
+                MenuItem::class.java)
+            targetMethod.isAccessible = true
+            return targetMethod
+        }
     }
 
     @Nested
@@ -284,11 +316,6 @@ class MainActivityTest {
             every { spyActivity.contentResolver } returns mockContentResolver
             return spyActivity
         }
-
-        /**
-         * TODO OTHER TESTS
-         *  - NO ACTION
-         */
     }
 
     @Nested
