@@ -31,7 +31,7 @@ import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.MoreExecutors
-import io.kotest.matchers.ints.exactly
+import io.kotest.assertions.fail
 import io.mockk.Runs
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
@@ -141,21 +141,23 @@ class MainActivityTest {
     @DisplayName("Handle navigation events to different areas of the application")
     inner class Navigate {
 
-        @Test
-        fun navigate_home() {
+        @ParameterizedTest
+        @CsvSource("nav_home", "nav_queue")
+        fun navigate_toId(navigationKey: String) {
+            val itemId = when (navigationKey) {
+                "nav_home" -> R.id.nav_home
+                "nav_queue" -> R.id.nav_queue
+                else -> fail("Unsupported navigation key")
+            }
+
+            val mockNavController = mockk<NavController>(relaxed = true)
+            val mockMenuItem = mockk<MenuItem>()
+            every { mockMenuItem.itemId } returns itemId
+
             val method = setMethodVisibleForInvoke(mainActivity)
+            method.invoke(mainActivity, mockNavController, mockMenuItem)
 
-            val cursor = getMockCursor()
-            val spyActivity = spyk(mainActivity)
-            val mockContentResolver = mockk<ContentResolver>(relaxed = true)
-            every { spyActivity.contentResolver } returns mockContentResolver
-
-            every { mockContentResolver.query(any(), any(), any(), any(), any()) } returns cursor
-
-            val result = method.callSuspend(spyActivity, SONG_ID) as Int
-
-            coVerify { musicLibraryViewModel.saveSongs(any()) }
-            assertEquals(1, result)
+            verify { mockNavController.navigate(itemId) }
         }
 
         private fun setMethodVisibleForInvoke(targetObject: Any): Method {
