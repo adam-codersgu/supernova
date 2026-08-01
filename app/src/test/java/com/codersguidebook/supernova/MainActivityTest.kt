@@ -160,6 +160,34 @@ class MainActivityTest {
             verify { mockNavController.navigate(itemId) }
         }
 
+        @ParameterizedTest
+        @CsvSource("nav_playlists", "nav_artists", "nav_albums", "nav_songs")
+        fun navigate_toAction(navigationKey: String) {
+            val itemId = when (navigationKey) {
+                "nav_playlists" -> R.id.nav_playlists
+                "nav_artists" -> R.id.nav_artists
+                "nav_albums" -> R.id.nav_albums
+                "nav_songs" -> R.id.nav_songs
+                else -> fail("Unsupported navigation key")
+            }
+            val action = when (navigationKey) {
+                "nav_playlists" -> MobileNavigationDirections.actionLibrary(0)
+                "nav_artists" -> MobileNavigationDirections.actionLibrary(1)
+                "nav_albums" -> MobileNavigationDirections.actionLibrary(2)
+                "nav_songs" -> MobileNavigationDirections.actionLibrary(3)
+                else -> fail("Unsupported navigation key")
+            }
+
+            val mockNavController = mockk<NavController>(relaxed = true)
+            val mockMenuItem = mockk<MenuItem>()
+            every { mockMenuItem.itemId } returns itemId
+
+            val method = setMethodVisibleForInvoke(mainActivity)
+            method.invoke(mainActivity, mockNavController, mockMenuItem)
+
+            verify { mockNavController.navigate(action) }
+        }
+
         private fun setMethodVisibleForInvoke(targetObject: Any): Method {
             val targetMethod = targetObject.javaClass.getDeclaredMethod("navigate",
                 NavController::class.java,
