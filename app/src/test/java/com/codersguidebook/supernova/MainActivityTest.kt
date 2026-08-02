@@ -3,6 +3,7 @@ package com.codersguidebook.supernova
 import android.app.Application
 import android.content.ContentResolver
 import android.content.ContentUris
+import android.content.Intent
 import android.content.SharedPreferences
 import android.database.Cursor
 import android.graphics.Bitmap
@@ -186,6 +187,22 @@ class MainActivityTest {
             method.invoke(mainActivity, mockNavController, mockMenuItem)
 
             verify { mockNavController.navigate(action) }
+        }
+
+        @Test
+        fun navigate_toSettingsActivity() {
+            val mockNavController = mockk<NavController>(relaxed = true)
+            val mockMenuItem = mockk<MenuItem>()
+            every { mockMenuItem.itemId } returns R.id.nav_settings
+
+            val spyActivity = spyk(mainActivity)
+            val method = setMethodVisibleForInvoke(spyActivity)
+            method.invoke(spyActivity, mockNavController, mockMenuItem)
+
+            val intent = slot<Intent>()
+            verify { spyActivity.startActivity(capture(intent)) }
+            assertEquals("com.codersguidebook.supernova.SettingsActivity",
+                intent.captured.component?.className)
         }
 
         private fun setMethodVisibleForInvoke(targetObject: Any): Method {
@@ -484,28 +501,33 @@ class MainActivityTest {
         }
     }
 
-    @Test
-    fun saveCurrentlyPlayingIndex() = runTest {
-        stubIODispatcher(testScheduler)
+    @Nested
+    @DisplayName("Save the queue index of the currently playing song")
+    inner class SaveCurrentlyPlayingIndex {
 
-        try {
-            every { playQueueViewModel.currentQueueItemIndex } returns mockLiveData
+        @Test
+        fun saveCurrentlyPlayingIndex() = runTest {
+            stubIODispatcher(testScheduler)
 
-            stubPlayQueueViewModel()
-            stubEditor()
+            try {
+                every { playQueueViewModel.currentQueueItemIndex } returns mockLiveData
 
-            val index = 2
+                stubPlayQueueViewModel()
+                stubEditor()
 
-            val method = ReflectionUtils
-                .setMethodVisibleForInvokeIntParam(mainActivity, "saveCurrentlyPlayingIndex")
-            method.invoke(mainActivity, index)
+                val index = 2
 
-            advanceUntilIdle()
+                val method = ReflectionUtils
+                    .setMethodVisibleForInvokeIntParam(mainActivity, "saveCurrentlyPlayingIndex")
+                method.invoke(mainActivity, index)
 
-            verify { mockLiveData.postValue(index) }
-            verify { editor.putInt(CURRENT_QUEUE_ITEM_INDEX, index) }
-        } finally {
-            resetDispatchers()
+                advanceUntilIdle()
+
+                verify { mockLiveData.postValue(index) }
+                verify { editor.putInt(CURRENT_QUEUE_ITEM_INDEX, index) }
+            } finally {
+                resetDispatchers()
+            }
         }
     }
 
