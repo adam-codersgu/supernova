@@ -10,6 +10,9 @@ import android.graphics.Bitmap
 import android.provider.MediaStore
 import android.util.Size
 import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
 import androidx.media3.common.MediaItem
@@ -209,6 +212,33 @@ class MainActivityTest {
             val targetMethod = targetObject.javaClass.getDeclaredMethod("navigate",
                 NavController::class.java,
                 MenuItem::class.java)
+            targetMethod.isAccessible = true
+            return targetMethod
+        }
+    }
+
+    @Nested
+    @DisplayName("Apply Window Insets")
+    inner class ApplyWindowInsets {
+
+        @Test
+        fun applyWindowInsets() {
+            val mockView = mockk<View>(relaxed = true)
+            every { mockView.layoutParams } returns ViewGroup.MarginLayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+
+            val method = setMethodVisibleForInvoke(mainActivity)
+            val result = method.invoke(mainActivity, mockView, mockk<WindowInsetsCompat>(relaxed = true))
+
+            assertEquals(WindowInsetsCompat.CONSUMED, result)
+        }
+
+        private fun setMethodVisibleForInvoke(targetObject: Any): Method {
+            val targetMethod = targetObject.javaClass.getDeclaredMethod("applyWindowInsets",
+                View::class.java,
+                WindowInsetsCompat::class.java)
             targetMethod.isAccessible = true
             return targetMethod
         }
