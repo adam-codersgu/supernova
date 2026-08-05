@@ -3,15 +3,21 @@ package com.codersguidebook.supernova
 import android.app.Application
 import android.content.ContentResolver
 import android.content.ContentUris
+import android.content.Intent
 import android.content.SharedPreferences
 import android.database.Cursor
 import android.graphics.Bitmap
 import android.provider.MediaStore
 import android.util.Size
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
 import androidx.media3.common.MediaItem
 import androidx.media3.session.MediaController
+import androidx.navigation.NavController
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fixture.PlayQueueFixture.getMediaItem
 import com.codersguidebook.supernova.fixture.PlayQueueFixture.getPlayQueue
@@ -29,7 +35,7 @@ import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.MoreExecutors
-import io.kotest.matchers.ints.exactly
+import io.kotest.assertions.fail
 import io.mockk.Runs
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
@@ -133,6 +139,109 @@ class MainActivityTest {
         }, MoreExecutors.directExecutor())
 
         controllerActivity.start()
+    }
+
+    @Nested
+    @DisplayName("Handle navigation events to different areas of the application")
+    inner class Navigate {
+
+        @ParameterizedTest
+        @CsvSource("nav_home", "nav_queue")
+        fun navigate_toId(navigationKey: String) {
+            val itemId = when (navigationKey) {
+                "nav_home" -> R.id.nav_home
+                "nav_queue" -> R.id.nav_queue
+                else -> fail("Unsupported navigation key")
+            }
+
+            val mockNavController = mockk<NavController>(relaxed = true)
+            val mockMenuItem = mockk<MenuItem>()
+            every { mockMenuItem.itemId } returns itemId
+
+            val method = setMethodVisibleForInvoke(mainActivity)
+            method.invoke(mainActivity, mockNavController, mockMenuItem)
+
+            verify { mockNavController.navigate(itemId) }
+        }
+
+        @ParameterizedTest
+        @CsvSource("nav_playlists", "nav_artists", "nav_albums", "nav_songs")
+        fun navigate_toAction(navigationKey: String) {
+            val itemId = when (navigationKey) {
+                "nav_playlists" -> R.id.nav_playlists
+                "nav_artists" -> R.id.nav_artists
+                "nav_albums" -> R.id.nav_albums
+                "nav_songs" -> R.id.nav_songs
+                else -> fail("Unsupported navigation key")
+            }
+            val action = when (navigationKey) {
+                "nav_playlists" -> MobileNavigationDirections.actionLibrary(0)
+                "nav_artists" -> MobileNavigationDirections.actionLibrary(1)
+                "nav_albums" -> MobileNavigationDirections.actionLibrary(2)
+                "nav_songs" -> MobileNavigationDirections.actionLibrary(3)
+                else -> fail("Unsupported navigation key")
+            }
+
+            val mockNavController = mockk<NavController>(relaxed = true)
+            val mockMenuItem = mockk<MenuItem>()
+            every { mockMenuItem.itemId } returns itemId
+
+            val method = setMethodVisibleForInvoke(mainActivity)
+            method.invoke(mainActivity, mockNavController, mockMenuItem)
+
+            verify { mockNavController.navigate(action) }
+        }
+
+        @Test
+        fun navigate_toSettingsActivity() {
+            val mockNavController = mockk<NavController>(relaxed = true)
+            val mockMenuItem = mockk<MenuItem>()
+            every { mockMenuItem.itemId } returns R.id.nav_settings
+
+            val spyActivity = spyk(mainActivity)
+            val method = setMethodVisibleForInvoke(spyActivity)
+            method.invoke(spyActivity, mockNavController, mockMenuItem)
+
+            val intent = slot<Intent>()
+            verify { spyActivity.startActivity(capture(intent)) }
+            assertEquals("com.codersguidebook.supernova.SettingsActivity",
+                intent.captured.component?.className)
+        }
+
+        private fun setMethodVisibleForInvoke(targetObject: Any): Method {
+            val targetMethod = targetObject.javaClass.getDeclaredMethod("navigate",
+                NavController::class.java,
+                MenuItem::class.java)
+            targetMethod.isAccessible = true
+            return targetMethod
+        }
+    }
+
+    @Nested
+    @DisplayName("Apply Window Insets")
+    inner class ApplyWindowInsets {
+
+        @Test
+        fun applyWindowInsets() {
+            val mockView = mockk<View>(relaxed = true)
+            every { mockView.layoutParams } returns ViewGroup.MarginLayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+
+            val method = setMethodVisibleForInvoke(mainActivity)
+            val result = method.invoke(mainActivity, mockView, mockk<WindowInsetsCompat>(relaxed = true))
+
+            assertEquals(WindowInsetsCompat.CONSUMED, result)
+        }
+
+        private fun setMethodVisibleForInvoke(targetObject: Any): Method {
+            val targetMethod = targetObject.javaClass.getDeclaredMethod("applyWindowInsets",
+                View::class.java,
+                WindowInsetsCompat::class.java)
+            targetMethod.isAccessible = true
+            return targetMethod
+        }
     }
 
     @Nested
@@ -284,11 +393,6 @@ class MainActivityTest {
             every { spyActivity.contentResolver } returns mockContentResolver
             return spyActivity
         }
-
-        /**
-         * TODO OTHER TESTS
-         *  - NO ACTION
-         */
     }
 
     @Nested
@@ -427,28 +531,33 @@ class MainActivityTest {
         }
     }
 
-    @Test
-    fun saveCurrentlyPlayingIndex() = runTest {
-        stubIODispatcher(testScheduler)
+    @Nested
+    @DisplayName("Save the queue index of the currently playing song")
+    inner class SaveCurrentlyPlayingIndex {
 
-        try {
-            every { playQueueViewModel.currentQueueItemIndex } returns mockLiveData
+        @Test
+        fun saveCurrentlyPlayingIndex() = runTest {
+            stubIODispatcher(testScheduler)
 
-            stubPlayQueueViewModel()
-            stubEditor()
+            try {
+                every { playQueueViewModel.currentQueueItemIndex } returns mockLiveData
 
-            val index = 2
+                stubPlayQueueViewModel()
+                stubEditor()
 
-            val method = ReflectionUtils
-                .setMethodVisibleForInvokeIntParam(mainActivity, "saveCurrentlyPlayingIndex")
-            method.invoke(mainActivity, index)
+                val index = 2
 
-            advanceUntilIdle()
+                val method = ReflectionUtils
+                    .setMethodVisibleForInvokeIntParam(mainActivity, "saveCurrentlyPlayingIndex")
+                method.invoke(mainActivity, index)
 
-            verify { mockLiveData.postValue(index) }
-            verify { editor.putInt(CURRENT_QUEUE_ITEM_INDEX, index) }
-        } finally {
-            resetDispatchers()
+                advanceUntilIdle()
+
+                verify { mockLiveData.postValue(index) }
+                verify { editor.putInt(CURRENT_QUEUE_ITEM_INDEX, index) }
+            } finally {
+                resetDispatchers()
+            }
         }
     }
 

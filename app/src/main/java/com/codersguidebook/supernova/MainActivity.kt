@@ -13,6 +13,8 @@ import android.provider.MediaStore
 import android.util.Log
 import android.util.Size
 import android.view.Menu
+import android.view.MenuItem
+import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
@@ -43,6 +45,7 @@ import androidx.media3.common.Player.REPEAT_MODE_ONE
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
@@ -176,32 +179,7 @@ class MainActivity : AppCompatActivity() {
         binding.navView.setupWithNavController(navController)
 
         val onNavigationItemSelectedListener = NavigationView.OnNavigationItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_home -> navController.navigate(R.id.nav_home)
-                R.id.nav_queue -> navController.navigate(R.id.nav_queue)
-                R.id.nav_playlists -> {
-                    val action = MobileNavigationDirections.actionLibrary(0)
-                    navController.navigate(action)
-                }
-                R.id.nav_artists -> {
-                    val action = MobileNavigationDirections.actionLibrary(1)
-                    navController.navigate(action)
-                }
-                R.id.nav_albums -> {
-                    val action = MobileNavigationDirections.actionLibrary(2)
-                    navController.navigate(action)
-                }
-                R.id.nav_songs -> {
-                    val action = MobileNavigationDirections.actionLibrary(3)
-                    navController.navigate(action)
-                }
-                R.id.nav_settings -> {
-                    val intent = Intent(this, SettingsActivity::class.java)
-                    startActivity(intent)
-                }
-            }
-            binding.drawerLayout.closeDrawer(GravityCompat.START)
-            true
+            navigate(navController, item)
         }
         binding.navView.setNavigationItemSelectedListener(onNavigationItemSelectedListener)
         binding.navView.itemIconTintList = null
@@ -216,15 +194,7 @@ class MainActivity : AppCompatActivity() {
         else storagePermissionHelper.requestPermissions()
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.body) { v, windowInsets ->
-            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                leftMargin = insets.left
-                bottomMargin = insets.bottom
-                rightMargin = insets.right
-                topMargin = insets.top
-            }
-
-            WindowInsetsCompat.CONSUMED
+            applyWindowInsets(v, windowInsets)
         }
     }
 
@@ -292,6 +262,47 @@ class MainActivity : AppCompatActivity() {
         controllerFuture.let {
             MediaController.releaseFuture(it)
         }
+    }
+
+    private fun navigate(navController: NavController, item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.nav_home -> navController.navigate(R.id.nav_home)
+            R.id.nav_queue -> navController.navigate(R.id.nav_queue)
+            R.id.nav_playlists -> {
+                val action = MobileNavigationDirections.actionLibrary(0)
+                navController.navigate(action)
+            }
+            R.id.nav_artists -> {
+                val action = MobileNavigationDirections.actionLibrary(1)
+                navController.navigate(action)
+            }
+            R.id.nav_albums -> {
+                val action = MobileNavigationDirections.actionLibrary(2)
+                navController.navigate(action)
+            }
+            R.id.nav_songs -> {
+                val action = MobileNavigationDirections.actionLibrary(3)
+                navController.navigate(action)
+            }
+            R.id.nav_settings -> {
+                val intent = Intent(this, SettingsActivity::class.java)
+                startActivity(intent)
+            }
+        }
+        binding.drawerLayout.closeDrawer(GravityCompat.START)
+        return true
+    }
+
+    private fun applyWindowInsets(v: View, windowInsets: WindowInsetsCompat): WindowInsetsCompat {
+        val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+        v.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+            leftMargin = insets.left
+            bottomMargin = insets.bottom
+            rightMargin = insets.right
+            topMargin = insets.top
+        }
+
+        return WindowInsetsCompat.CONSUMED
     }
 
     private fun initController() {
