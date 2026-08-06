@@ -81,12 +81,10 @@ class MediaPlaybackService : MediaSessionService(), MediaSession.Callback {
             }
 
             override fun seekToNext() {
-                super.seekToNext()
                 sendBroadcastIntent(SKIP_TO_NEXT)
             }
 
             override fun seekToPrevious() {
-                super.seekToPrevious()
                 sendBroadcastIntent(SKIP_TO_PREV)
             }
         }
