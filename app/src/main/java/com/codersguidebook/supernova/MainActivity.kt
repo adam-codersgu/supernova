@@ -131,6 +131,8 @@ class MainActivity : AppCompatActivity() {
 
     private val skipTrackReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
+            Log.i(LOG_TAG,
+                "Received a broadcast intent with the action: ${intent?.action}")
             when (intent?.action) {
                 SKIP_TO_NEXT -> skipForward()
                 SKIP_TO_PREV -> skipBack()
@@ -196,6 +198,16 @@ class MainActivity : AppCompatActivity() {
         ViewCompat.setOnApplyWindowInsetsListener(binding.body) { v, windowInsets ->
             applyWindowInsets(v, windowInsets)
         }
+        val filter = IntentFilter().apply {
+            addAction(SKIP_TO_NEXT)
+            addAction(SKIP_TO_PREV)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(skipTrackReceiver, filter, RECEIVER_NOT_EXPORTED)
+        } else {
+            ContextCompat.registerReceiver(this, skipTrackReceiver,
+                filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        }
     }
 
     @OptIn(UnstableApi::class)
@@ -208,16 +220,6 @@ class MainActivity : AppCompatActivity() {
                 controller = get()
                 initController()
             }, MoreExecutors.directExecutor())
-        }
-        val filter = IntentFilter().apply {
-            addAction(SKIP_TO_NEXT)
-            addAction(SKIP_TO_PREV)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(skipTrackReceiver, filter, RECEIVER_NOT_EXPORTED)
-        } else {
-            ContextCompat.registerReceiver(this, skipTrackReceiver,
-                filter, ContextCompat.RECEIVER_NOT_EXPORTED)
         }
     }
 
@@ -239,7 +241,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        unregisterReceiver(skipTrackReceiver)
 
         sharedPreferences.edit().apply {
             putLong(PLAYBACK_POSITION, controller.currentPosition)
@@ -249,6 +250,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+
+        unregisterReceiver(skipTrackReceiver)
 
         sharedPreferences.edit {
             remove(SHUFFLE_MODE)
