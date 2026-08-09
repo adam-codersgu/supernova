@@ -561,6 +561,35 @@ class MainActivityTest {
         }
     }
 
+    @Nested
+    @DisplayName("Commence playback of a new list of songs")
+    inner class PlayNewPlayQueue {
+
+        @Test
+        fun playNewPlayQueue() {
+            val songs = getMockSongs(5)
+            val expectedPlayQueue = songs.map { s -> s.getMediaItem() }.toList()
+            every { playQueueViewModel.playQueue.value } returns expectedPlayQueue
+            stubPlayQueueViewModel()
+            stubEditor()
+            every { controller.isPlaying } returns true
+
+            mainActivity.playNewPlayQueue(songs)
+
+            verify { playQueueViewModel.playQueue.value = expectedPlayQueue }
+            verify { controller.setMediaItem(expectedPlayQueue[0]) }
+            verify { controller.prepare() }
+            verify { controller.play() }
+            verify { editor.putBoolean(SHUFFLE_MODE, false) }
+        }
+
+        /** TODO FURTHER TESTS
+         *      - EMPTY PLAY QUEUE
+         *      - NON ZERO START INDEX
+         *      - SHUFFLE IS TRUE
+         */
+    }
+
     private fun getMockCursor(): Cursor {
         val cursor = mockk<Cursor>(relaxed = true)
         every { cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID) } returns 0
