@@ -583,8 +583,18 @@ class MainActivityTest {
             verify { editor.putBoolean(SHUFFLE_MODE, false) }
         }
 
+        @Test
+        fun playNewPlayQueue_emptyPlayQueue() {
+            mainActivity.playNewPlayQueue(listOf())
+
+            verify(exactly = 0) { playQueueViewModel.playQueue.value = any() }
+            verify(exactly = 0) { controller.setMediaItem(any()) }
+            verify(exactly = 0) { controller.prepare() }
+            verify(exactly = 0) { controller.play() }
+            verify(exactly = 0) { editor.putBoolean(SHUFFLE_MODE, any()) }
+        }
+
         /** TODO FURTHER TESTS
-         *      - EMPTY PLAY QUEUE
          *      - NON ZERO START INDEX
          *      - SHUFFLE IS TRUE
          */
