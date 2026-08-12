@@ -578,6 +578,7 @@ class MainActivityTest {
 
             verify { playQueueViewModel.playQueue.value = expectedPlayQueue }
             verify { controller.setMediaItem(expectedPlayQueue[0]) }
+            verify { controller.stop() }
             verify { controller.prepare() }
             verify { controller.play() }
             verify { editor.putBoolean(SHUFFLE_MODE, false) }
@@ -594,8 +595,26 @@ class MainActivityTest {
             verify(exactly = 0) { editor.putBoolean(SHUFFLE_MODE, any()) }
         }
 
+        @Test
+        fun playNewPlayQueue_nonZeroStartIndex() {
+            val songs = getMockSongs(5)
+            val expectedPlayQueue = songs.map { s -> s.getMediaItem() }.toList()
+            every { playQueueViewModel.playQueue.value } returns expectedPlayQueue
+            stubPlayQueueViewModel()
+            stubEditor()
+            every { controller.isPlaying } returns false
+
+            mainActivity.playNewPlayQueue(songs, 2)
+
+            verify { playQueueViewModel.playQueue.value = expectedPlayQueue }
+            verify { controller.setMediaItem(expectedPlayQueue[2]) }
+            verify(exactly = 0) { controller.stop() }
+            verify { controller.prepare() }
+            verify { controller.play() }
+            verify { editor.putBoolean(SHUFFLE_MODE, false) }
+        }
+
         /** TODO FURTHER TESTS
-         *      - NON ZERO START INDEX
          *      - SHUFFLE IS TRUE
          */
     }
