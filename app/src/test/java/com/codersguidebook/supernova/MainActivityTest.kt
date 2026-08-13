@@ -622,11 +622,10 @@ class MainActivityTest {
 
             mainActivity.playNewPlayQueue(songs, shuffle = true)
 
-            verify { playQueueViewModel.playQueue.value = any() }
             val playQueueSlot = slot<List<MediaItem>>()
             verify { playQueueViewModel.playQueue.value = capture(playQueueSlot) }
             playQueueSlot.captured.shouldContainExactlyInAnyOrder(expectedPlayQueue)
-            verify { controller.setMediaItem(playQueueSlot.captured[0]) }
+            verify { controller.setMediaItem(expectedPlayQueue[0]) }
             verify(exactly = 0) { controller.stop() }
             verify { controller.prepare() }
             verify { controller.play() }
