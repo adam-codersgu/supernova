@@ -31,11 +31,11 @@ import com.codersguidebook.supernova.testutils.DispatcherUtils.stubIODispatcher
 import com.codersguidebook.supernova.testutils.InstantTaskExecutorExtension
 import com.codersguidebook.supernova.testutils.ReflectionUtils
 import com.codersguidebook.supernova.testutils.ReflectionUtils.setMethodVisibleForSuspend
-import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.MoreExecutors
 import io.kotest.assertions.fail
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.mockk.Runs
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
@@ -81,9 +81,6 @@ class MainActivityTest {
 
     @RelaxedMockK
     lateinit var controller: MediaController
-
-    @RelaxedMockK
-    lateinit var defaultPlaylistHelper: DefaultPlaylistHelper
 
     @RelaxedMockK
     lateinit var editor: SharedPreferences.Editor
@@ -614,9 +611,27 @@ class MainActivityTest {
             verify { editor.putBoolean(SHUFFLE_MODE, false) }
         }
 
-        /** TODO FURTHER TESTS
-         *      - SHUFFLE IS TRUE
-         */
+        @Test
+        fun playNewPlayQueue_shuffle() {
+            val songs = getMockSongs(5)
+            val expectedPlayQueue = songs.map { s -> s.getMediaItem() }.toList()
+            every { playQueueViewModel.playQueue.value } returns expectedPlayQueue
+            stubPlayQueueViewModel()
+            stubEditor()
+            every { controller.isPlaying } returns false
+
+            mainActivity.playNewPlayQueue(songs, shuffle = true)
+
+            verify { playQueueViewModel.playQueue.value = any() }
+            val playQueueSlot = slot<List<MediaItem>>()
+            verify { playQueueViewModel.playQueue.value = capture(playQueueSlot) }
+            playQueueSlot.captured.shouldContainExactlyInAnyOrder(expectedPlayQueue)
+            verify { controller.setMediaItem(playQueueSlot.captured[0]) }
+            verify(exactly = 0) { controller.stop() }
+            verify { controller.prepare() }
+            verify { controller.play() }
+            verify { editor.putBoolean(SHUFFLE_MODE, true) }
+        }
     }
 
     private fun getMockCursor(): Cursor {
