@@ -559,6 +559,27 @@ class MainActivityTest {
     }
 
     @Nested
+    @DisplayName("Seek to a playback position in the currently playing song")
+    inner class SeekTo {
+
+        private val duration = 9999L
+        private val position = 100L
+
+        @Test
+        fun seekTo() {
+            every { controller.currentPosition } returns position
+            every { controller.duration } returns duration
+            stubPlayQueueViewModel()
+
+            mainActivity.seekTo(position)
+
+            verify { controller.seekTo(position) }
+            verify { playQueueViewModel.playbackDuration.value = duration.toInt() }
+            verify { playQueueViewModel.playbackPosition.value = position.toInt() }
+        }
+    }
+
+    @Nested
     @DisplayName("Commence playback of a new list of songs")
     inner class PlayNewPlayQueue {
 
