@@ -25,11 +25,13 @@ import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSong
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSongs
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ORDER_ID
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_INDEX
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_POSITION
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.codersguidebook.supernova.testutils.DispatcherUtils.resetDispatchers
 import com.codersguidebook.supernova.testutils.DispatcherUtils.stubIODispatcher
 import com.codersguidebook.supernova.testutils.InstantTaskExecutorExtension
 import com.codersguidebook.supernova.testutils.ReflectionUtils
+import com.codersguidebook.supernova.testutils.ReflectionUtils.setMethodVisibleForInvoke
 import com.codersguidebook.supernova.testutils.ReflectionUtils.setMethodVisibleForSuspend
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.google.common.util.concurrent.Futures
@@ -576,6 +578,24 @@ class MainActivityTest {
             verify { controller.seekTo(position) }
             verify { playQueueViewModel.playbackDuration.value = duration.toInt() }
             verify { playQueueViewModel.playbackPosition.value = position.toInt() }
+        }
+    }
+
+    @Nested
+    @DisplayName("Stop playback")
+    inner class OnStop {
+
+        private val position = 100L
+
+        @Test
+        fun onStop() {
+            stubEditor()
+            every { controller.currentPosition } returns position
+
+            val method = setMethodVisibleForInvoke(mainActivity, "onStop")
+            method.invoke(mainActivity)
+
+            verify { editor.putLong(PLAYBACK_POSITION, position) }
         }
     }
 
