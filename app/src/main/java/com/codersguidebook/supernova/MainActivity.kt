@@ -618,7 +618,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             (playQueueViewModel.currentQueueItemIndex.value ?: return) - 1
         }
-        saveCurrentlyPlayingItemPrepareAndPlay(newIndex, controller.isPlaying)
+        skipToQueueIndex(newIndex, controller.isPlaying)
     }
 
     /** Skip forward to the next song in the play queue. */
@@ -635,11 +635,12 @@ class MainActivity : AppCompatActivity() {
         } else {
             (playQueueViewModel.currentQueueItemIndex.value ?: return) + 1
         }
-        saveCurrentlyPlayingItemPrepareAndPlay(newIndex, controller.isPlaying)
+        skipToQueueIndex(newIndex, controller.isPlaying)
     }
 
-    private fun saveCurrentlyPlayingItemPrepareAndPlay(index: Int, play: Boolean = true) {
-        controller.setMediaItem(playQueueViewModel.playQueue.value?.get(index) ?: return)
+    fun skipToQueueIndex(index: Int, play: Boolean = true) {
+        val item = playQueueViewModel.playQueue.value?.get(index)
+        controller.setMediaItem(item ?: return)
         controller.prepare()
         if (play) {
             controller.play()
@@ -719,7 +720,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         saveAndPostPlayQueue(playQueue)
-        saveCurrentlyPlayingItemPrepareAndPlay(startIndex)
+        skipToQueueIndex(startIndex)
 
         sharedPreferences.edit {
             putBoolean(SHUFFLE_MODE, shuffle)
@@ -790,17 +791,6 @@ class MainActivity : AppCompatActivity() {
     fun seekTo(position: Long) {
         controller.seekTo(position)
         updatePlaybackDurationAndPosition()
-    }
-
-    /**
-     * Skip to a specific item in the play queue based on its index in the play queue.
-     *
-     * @param targetIndex The index in the queue to skip to.
-     */
-    fun skipToQueueIndex(targetIndex: Int) = lifecycleScope.launch(Dispatchers.Main) {
-        val item = playQueueViewModel.playQueue.value?.get(targetIndex) ?: return@launch
-        controller.setMediaItem(item)
-        saveCurrentlyPlayingItemPrepareAndPlay(targetIndex)
     }
 
     /**

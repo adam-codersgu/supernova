@@ -582,6 +582,30 @@ class MainActivityTest {
     }
 
     @Nested
+    @DisplayName("Skip to a song at a given index in the play queue")
+    inner class SkipToQueueIndex {
+
+        @Test
+        fun skipToQueueIndex() = runTest {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            stubPlayQueueViewModel()
+
+            val targetIndex = 2
+            mainActivity.skipToQueueIndex(targetIndex)
+
+            val item = playQueue[targetIndex]
+            verify { controller.setMediaItem(item) }
+            verify { controller.prepare() }
+            verify { controller.play() }
+        }
+
+        /**
+         * TODO - QUEUE ITEM NOT FOUND AT INDEX
+         */
+    }
+
+    @Nested
     @DisplayName("Stop playback")
     inner class OnStop {
 
