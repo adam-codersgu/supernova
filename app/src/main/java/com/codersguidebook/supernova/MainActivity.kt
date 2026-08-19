@@ -639,8 +639,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun skipToQueueIndex(index: Int, play: Boolean = true) {
-        val item = playQueueViewModel.playQueue.value?.get(index)
-        controller.setMediaItem(item ?: return)
+        val playQueue = playQueueViewModel.playQueue.value
+        if (playQueue == null || index >= playQueue.size) return
+
+        controller.setMediaItem(playQueue[index])
         controller.prepare()
         if (play) {
             controller.play()

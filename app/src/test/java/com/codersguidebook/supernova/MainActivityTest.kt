@@ -600,9 +600,17 @@ class MainActivityTest {
             verify { controller.play() }
         }
 
-        /**
-         * TODO - QUEUE ITEM NOT FOUND AT INDEX
-         */
+        @Test
+        fun skipToQueueIndex_noItemAtIndex() = runTest {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            stubPlayQueueViewModel()
+
+            val targetIndex = 6
+            mainActivity.skipToQueueIndex(targetIndex)
+
+            confirmVerified(controller)
+        }
     }
 
     @Nested
