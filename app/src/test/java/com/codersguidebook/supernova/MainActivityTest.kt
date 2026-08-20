@@ -16,6 +16,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player.REPEAT_MODE_ALL
+import androidx.media3.common.Player.REPEAT_MODE_OFF
 import androidx.media3.session.MediaController
 import androidx.navigation.NavController
 import com.codersguidebook.supernova.entities.Song
@@ -26,6 +28,7 @@ import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSongs
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ORDER_ID
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_INDEX
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_POSITION
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.codersguidebook.supernova.testutils.DispatcherUtils.resetDispatchers
 import com.codersguidebook.supernova.testutils.DispatcherUtils.stubIODispatcher
@@ -611,6 +614,29 @@ class MainActivityTest {
 
             confirmVerified(controller)
         }
+    }
+
+    @Nested
+    @DisplayName("Toggle repeat mode")
+    inner class ToggleRepeatMode {
+
+        @Test
+        fun toggleRepeatMode_repeatModeOff() = runTest {
+            stubEditor()
+
+            every { sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_OFF) } returns REPEAT_MODE_OFF
+
+            val repeatMode = mainActivity.toggleRepeatMode()
+
+            verify { editor.putInt(REPEAT_MODE, REPEAT_MODE_ALL) }
+            assertEquals(REPEAT_MODE_ALL, repeatMode)
+        }
+
+        /**
+         * TODO
+         *  REPEAT MODE ALL
+         *  REPEAT MODE NONE
+         */
     }
 
     @Nested
