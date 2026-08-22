@@ -18,6 +18,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player.REPEAT_MODE_ALL
 import androidx.media3.common.Player.REPEAT_MODE_OFF
+import androidx.media3.common.Player.REPEAT_MODE_ONE
 import androidx.media3.session.MediaController
 import androidx.navigation.NavController
 import com.codersguidebook.supernova.entities.Song
@@ -620,23 +621,20 @@ class MainActivityTest {
     @DisplayName("Toggle repeat mode")
     inner class ToggleRepeatMode {
 
-        @Test
-        fun toggleRepeatMode_repeatModeOff() = runTest {
+        @ParameterizedTest
+        @CsvSource("$REPEAT_MODE_OFF, $REPEAT_MODE_ALL",
+            "$REPEAT_MODE_ALL, $REPEAT_MODE_ONE",
+            "$REPEAT_MODE_ONE, $REPEAT_MODE_OFF")
+        fun toggleRepeatMode(currentRepeatMode: Int, expectedRepeatMode: Int) {
             stubEditor()
 
-            every { sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_OFF) } returns REPEAT_MODE_OFF
+            every { sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_OFF) } returns currentRepeatMode
 
             val repeatMode = mainActivity.toggleRepeatMode()
 
-            verify { editor.putInt(REPEAT_MODE, REPEAT_MODE_ALL) }
-            assertEquals(REPEAT_MODE_ALL, repeatMode)
+            verify { editor.putInt(REPEAT_MODE, expectedRepeatMode) }
+            assertEquals(expectedRepeatMode, repeatMode)
         }
-
-        /**
-         * TODO
-         *  REPEAT MODE ALL
-         *  REPEAT MODE NONE
-         */
     }
 
     @Nested
