@@ -12,6 +12,7 @@ import android.util.Size
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.ActionBar
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
@@ -244,6 +245,21 @@ class MainActivityTest {
                 WindowInsetsCompat::class.java)
             targetMethod.isAccessible = true
             return targetMethod
+        }
+    }
+
+    @Nested
+    @DisplayName("Hide or reveal status bars")
+    inner class HideStatusBars {
+
+        @Test
+        fun hideStatusBars_true() {
+            val mockSupportActionBar = mockk<ActionBar>(relaxed = true)
+            val spyActivity = spyk(mainActivity)
+            every { spyActivity.supportActionBar } returns mockSupportActionBar
+            spyActivity.hideStatusBars(true)
+
+            verify { mockSupportActionBar.setDisplayShowTitleEnabled(false) }
         }
     }
 
