@@ -288,6 +288,34 @@ class MainActivityTest {
     }
 
     @Nested
+    @DisplayName("Skip to the next song in the play queue")
+    inner class SkipForward {
+
+        @Test
+        fun skipForward() {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 0
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            every { playQueueViewModel.playQueueContainsMoreThanOneSong() } returns true
+            stubPlayQueueViewModel()
+            every { controller.isPlaying } returns true
+
+            mainActivity.skipForward()
+
+            verify { controller.setMediaItem(playQueue[1]) }
+            verify { controller.play() }
+            verify { controller.play() }
+        }
+
+        /**
+         * TODO
+         *  PLAY QUEUE CONTAINS ONLY ONE SONG playQueueContainsMoreThanOneSong() FALSE
+         *  REPEAT MODE ALL
+         *  CONTROLLER IS NOT PLAYING
+         */
+    }
+
+    @Nested
     @DisplayName("Shuffle or unshuffle the play queue")
     inner class SetShuffleMode {
 
