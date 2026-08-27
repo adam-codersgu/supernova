@@ -307,9 +307,18 @@ class MainActivityTest {
             verify { controller.play() }
         }
 
+        @Test
+        fun skipForward_playQueueContainsOneSong() {
+            every { playQueueViewModel.playQueueContainsMoreThanOneSong() } returns false
+            stubPlayQueueViewModel()
+
+            mainActivity.skipForward()
+
+            confirmVerified(controller)
+        }
+
         /**
          * TODO
-         *  PLAY QUEUE CONTAINS ONLY ONE SONG playQueueContainsMoreThanOneSong() FALSE
          *  REPEAT MODE ALL
          *  CONTROLLER IS NOT PLAYING
          */
