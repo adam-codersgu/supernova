@@ -303,7 +303,7 @@ class MainActivityTest {
             mainActivity.skipForward()
 
             verify { controller.setMediaItem(playQueue[1]) }
-            verify { controller.play() }
+            verify { controller.prepare() }
             verify { controller.play() }
         }
 
@@ -317,11 +317,23 @@ class MainActivityTest {
             confirmVerified(controller)
         }
 
-        /**
-         * TODO
-         *  REPEAT MODE ALL
-         *  CONTROLLER IS NOT PLAYING
-         */
+        @Test
+        fun skipForward_repeatModeAll() {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 4
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            every { playQueueViewModel.playQueueContainsMoreThanOneSong() } returns true
+            stubPlayQueueViewModel()
+            stubEditor()
+            every { sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_OFF) } returns REPEAT_MODE_ALL
+            every { controller.isPlaying } returns false
+
+            mainActivity.skipForward()
+
+            verify { controller.setMediaItem(playQueue[0]) }
+            verify { controller.prepare() }
+            verify(exactly = 0) { controller.play() }
+        }
     }
 
     @Nested
