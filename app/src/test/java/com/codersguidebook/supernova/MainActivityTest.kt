@@ -318,7 +318,20 @@ class MainActivityTest {
         }
 
         @Test
-        fun skipForward_repeatModeAll() {
+        fun skipForward_endOfPlayQueue() {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 4
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            every { playQueueViewModel.playQueueContainsMoreThanOneSong() } returns true
+            stubPlayQueueViewModel()
+
+            mainActivity.skipForward()
+
+            confirmVerified(controller)
+        }
+
+        @Test
+        fun skipForward_endOfPlayQueue_repeatModeAll() {
             val playQueue = getPlayQueue(5)
             every { playQueueViewModel.currentQueueItemIndex.value } returns 4
             every { playQueueViewModel.playQueue.value } returns playQueue
