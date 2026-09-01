@@ -8,6 +8,7 @@ import android.content.SharedPreferences
 import android.database.Cursor
 import android.graphics.Bitmap
 import android.provider.MediaStore
+import android.util.Log
 import android.util.Size
 import android.view.MenuItem
 import android.view.View
@@ -347,6 +348,32 @@ class MainActivityTest {
             verify { controller.prepare() }
             verify(exactly = 0) { controller.play() }
         }
+    }
+
+    @Nested
+    @DisplayName("Move an item in the play queue")
+    inner class NotifyQueueItemMoved {
+
+        @Test
+        fun notifyQueueItemMoved() {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 0
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            stubPlayQueueViewModel()
+            stubEditor()
+
+            mainActivity.notifyQueueItemMoved(2, 3)
+
+            verify(exactly = 0) { editor.putInt(CURRENT_QUEUE_ITEM_INDEX, any()) }
+            val playQueueSlot = slot<List<MediaItem>>()
+            verify { playQueueViewModel.playQueue.value = capture(playQueueSlot) }
+            assertEquals(playQueue[2], playQueueSlot.captured[3])
+        }
+
+        /**
+         * TODO
+         *  MOVE THE CURRENTLY PLAYING QUEUE ITEM
+         */
     }
 
     @Nested
