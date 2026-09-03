@@ -45,7 +45,6 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -81,8 +80,8 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("Toggle the song favourite status")
     inner class ToggleSongFavouriteStatus {
+
         @Test
         fun success_add_favourite_song() = runTest {
             repositoryShouldReturnFavouritesPlaylistById()
@@ -148,7 +147,6 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("Find a playlist by name")
     inner class GetPlaylistByName {
 
         private val playlistA = "Playlist A"
@@ -175,8 +173,8 @@ class MusicLibraryViewModelTest {
 
     @Suppress("UNCHECKED_CAST")
     @Nested
-    @DisplayName("Set the ID of the album being viewed")
     inner class SetActiveAlbumId {
+
         @Test
         fun setActiveAlbumId_success() {
             val activeAlbumIdField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeAlbumId")
@@ -205,8 +203,8 @@ class MusicLibraryViewModelTest {
 
     @Suppress("UNCHECKED_CAST")
     @Nested
-    @DisplayName("Set the name of the artist being viewed")
     inner class SetActiveArtistName {
+
         @Test
         fun setActiveArtistName_success() {
             val activeArtistNameField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activeArtistName")
@@ -235,8 +233,8 @@ class MusicLibraryViewModelTest {
 
     @Suppress("UNCHECKED_CAST")
     @Nested
-    @DisplayName("Set the name of the playlist being viewed")
     inner class SetActivePlaylistName {
+
         @Test
         fun setActivePlaylistName_success() {
             val activePlaylistNameField = ReflectionUtils.setFieldVisible(musicLibraryViewModel, "activePlaylistName")
@@ -264,7 +262,6 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("Verifies whether a given playlist exists")
     inner class DoesPlaylistExistByName {
 
         private val playlistName = "Playlist A"
@@ -289,8 +286,8 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("Extract playlist songs")
     inner class ExtractPlaylistSongs {
+
         @Test
         fun extractPlaylistSongs() = runTest {
             coEvery { repository.getSongById(1L) } returns getMockSong(1L)
@@ -340,8 +337,8 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("Save the playback progress of a song")
     inner class SavePlaybackProgress {
+
         @Test
         fun savePlaybackProgress() = runTest {
             val mediaId = 1L
@@ -354,7 +351,6 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("Delete redundant artwork by song")
     inner class DeleteRedundantArtworkBySong {
 
         private val song = getMockSong()
@@ -395,7 +391,6 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("Delete a song")
     inner class DeleteSong {
 
         private val songToDelete = getMockSong()
@@ -474,7 +469,6 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("Delete a playlist")
     inner class DeletePlaylist {
 
         private val playlistToDelete = getMockPlaylist()
@@ -499,7 +493,6 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("Save a list of songs")
     inner class SaveSongs {
 
         @Test
@@ -513,7 +506,6 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("Save a playlist")
     inner class SavePlaylist {
 
         @Test
@@ -527,8 +519,8 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("Refresh the song of the day")
     inner class RefreshSongOfTheDay {
+
         @Test
         fun refreshSongOfTheDay_notLoadedForToday_success() = runTest {
             stubEditor()
@@ -615,8 +607,8 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("Increase song plays by song ID")
     inner class IncreaseSongPlaysBySongId {
+
         @Test
         fun increaseSongPlaysBySongId() = runTest {
             val mediaId = 1L
@@ -628,7 +620,6 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("Save a playlist with a list of song IDs")
     inner class SavePlaylistWithSongIds {
 
         @Test
@@ -655,7 +646,6 @@ class MusicLibraryViewModelTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Nested
-    @DisplayName("An observer updates the most played playlist whenever the list of most played songs changes")
     inner class MostPlayedSongsObserver {
 
         @Test
@@ -718,7 +708,6 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("OnCleared lifecycle metjod")
     inner class OnCleared {
 
         @Test
@@ -738,7 +727,6 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("Get song plays by artist or song ID and timeframe")
     inner class GetSongPlays {
 
         @Test
@@ -762,7 +750,6 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("Add a song to the recently played playlist")
     inner class AddSongByIdToRecentlyPlayedPlaylist {
 
         private val mediaIdToAdd = 99L
@@ -826,8 +813,8 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("Get all songs")
     inner class GetAllSongs {
+
         @Test
         fun getAllSongs() = runTest {
             val song = getMockSong()
@@ -840,8 +827,8 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("Get all songs ordered by title")
     inner class GetAllSongsOrderBySongTitle {
+
         @Test
         fun getAllSongsOrderBySongTitle_success() = runTest {
             val song1 = getMockSong(1L)
@@ -861,8 +848,8 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("Get all playlists")
     inner class GetAllPlaylists {
+
         @Test
         fun getAllPlaylists_success() = runTest {
             val userPlaylist = getMockPlaylist()
@@ -875,8 +862,8 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("Get all user playlists")
     inner class GetAllUserPlaylists {
+
         @Test
         fun getAllUserPlaylists_success() = runTest {
             val userPlaylist = getMockPlaylist()
@@ -891,7 +878,6 @@ class MusicLibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("Get updated navigation argument")
     inner class GetUpdatedNavigationArgument {
 
         private val navigationArgument = "arg1"
