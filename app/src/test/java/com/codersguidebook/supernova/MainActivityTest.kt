@@ -63,7 +63,6 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -146,7 +145,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Handle navigation events to different areas of the application")
     inner class Navigate {
 
         @ParameterizedTest
@@ -222,7 +220,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Apply Window Insets")
     inner class ApplyWindowInsets {
 
         @Test
@@ -249,7 +246,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Hide or reveal status bars")
     inner class HideStatusBars {
 
         @Test
@@ -261,10 +257,14 @@ class MainActivityTest {
 
             verify { mockSupportActionBar.setDisplayShowTitleEnabled(false) }
         }
+
+        /**
+         * TODO
+         *  WRITE FALSE TEST
+         */
     }
 
     @Nested
-    @DisplayName("Commence/resume playback")
     inner class Play {
 
         @Test
@@ -276,7 +276,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Fast forward playback")
     inner class FastForward {
 
         @Test
@@ -317,7 +316,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Skip to the next song in the play queue")
     inner class SkipForward {
 
         @Test
@@ -379,7 +377,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Move an item in the play queue")
     inner class NotifyQueueItemMoved {
 
         @Test
@@ -416,7 +413,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Shuffle or unshuffle the play queue")
     inner class SetShuffleMode {
 
         @Test
@@ -487,7 +483,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Update a file based on its media ID")
     inner class HandleFileUpdateByMediaId {
 
         @Test
@@ -543,7 +538,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Update a list of songs")
     inner class UpdateSongs {
 
         @Test
@@ -615,7 +609,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Extract song metadata from a cursor")
     inner class CreateSongFromCursor {
 
         @Test
@@ -679,7 +672,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Save the queue index of the currently playing song")
     inner class SaveCurrentlyPlayingIndex {
 
         @Test
@@ -709,7 +701,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Seek to a playback position in the currently playing song")
     inner class SeekTo {
 
         private val duration = 9999L
@@ -730,7 +721,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Skip to a song at a given index in the play queue")
     inner class SkipToQueueIndex {
 
         @Test
@@ -762,7 +752,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Toggle repeat mode")
     inner class ToggleRepeatMode {
 
         @ParameterizedTest
@@ -782,7 +771,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Stop playback")
     inner class OnStop {
 
         private val position = 100L
@@ -800,7 +788,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Commence playback of a new list of songs")
     inner class PlayNewPlayQueue {
 
         @Test
