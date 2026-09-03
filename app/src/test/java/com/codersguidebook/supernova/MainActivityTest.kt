@@ -288,6 +288,35 @@ class MainActivityTest {
     }
 
     @Nested
+    inner class SkipBack {
+
+        @Test
+        fun skipBack() {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 1
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            every { playQueueViewModel.playQueueContainsMoreThanOneSong() } returns true
+            stubPlayQueueViewModel()
+            every { controller.currentPosition } returns 0L
+            every { controller.isPlaying } returns true
+
+            mainActivity.skipBack()
+
+            verify { controller.setMediaItem(playQueue[0]) }
+            verify { controller.prepare() }
+            verify { controller.play() }
+        }
+
+        /**
+         * TODO
+         *  CURRENT PLAYBACK POSITION ABOVE 5000
+         *  PLAY QUEUE CONTAINS ONLY ONE SONG playQueueContainsMoreThanOneSong() IS FALSE
+         *  playQueueViewModel.currentQueueItemIndex.value IS 0
+         *  controller.isPlaying IS FALSE
+         */
+    }
+
+    @Nested
     @DisplayName("Skip to the next song in the play queue")
     inner class SkipForward {
 
