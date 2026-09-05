@@ -306,9 +306,20 @@ class MainActivityTest {
             verify { controller.play() }
         }
 
+        @Test
+        fun skipBack_over5000msThroughSong() {
+            every { controller.currentPosition } returns 5001L
+
+            mainActivity.skipBack()
+
+            verify { controller.seekTo(0) }
+            verify(exactly = 0) { controller.setMediaItem(any()) }
+            verify(exactly = 0) { controller.prepare() }
+            verify(exactly = 0) { controller.play() }
+        }
+
         /**
          * TODO
-         *  CURRENT PLAYBACK POSITION ABOVE 5000
          *  PLAY QUEUE CONTAINS ONLY ONE SONG playQueueContainsMoreThanOneSong() IS FALSE
          *  playQueueViewModel.currentQueueItemIndex.value IS 0
          *  controller.isPlaying IS FALSE
