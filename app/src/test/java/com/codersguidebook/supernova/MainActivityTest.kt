@@ -296,7 +296,6 @@ class MainActivityTest {
             every { playQueueViewModel.playQueue.value } returns playQueue
             every { playQueueViewModel.playQueueContainsMoreThanOneSong() } returns true
             stubPlayQueueViewModel()
-            every { controller.currentPosition } returns 0L
             every { controller.isPlaying } returns true
 
             mainActivity.skipBack()
@@ -313,6 +312,19 @@ class MainActivityTest {
             mainActivity.skipBack()
 
             verify { controller.seekTo(0) }
+            verify(exactly = 0) { controller.setMediaItem(any()) }
+            verify(exactly = 0) { controller.prepare() }
+            verify(exactly = 0) { controller.play() }
+        }
+
+        @Test
+        fun skipBack_playQueueContainsOneSong() {
+            every { playQueueViewModel.playQueueContainsMoreThanOneSong() } returns false
+            stubPlayQueueViewModel()
+
+            mainActivity.skipBack()
+
+            verify(exactly = 0) { controller.seekTo(any()) }
             verify(exactly = 0) { controller.setMediaItem(any()) }
             verify(exactly = 0) { controller.prepare() }
             verify(exactly = 0) { controller.play() }
