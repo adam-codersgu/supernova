@@ -330,10 +330,25 @@ class MainActivityTest {
             verify(exactly = 0) { controller.play() }
         }
 
+        @Test
+        fun skipBack_atBeginningOfPlayQueue() {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 0
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            every { playQueueViewModel.playQueueContainsMoreThanOneSong() } returns true
+            stubPlayQueueViewModel()
+            every { controller.isPlaying } returns true
+
+            mainActivity.skipBack()
+
+            verify(exactly = 0) { controller.seekTo(any()) }
+            verify(exactly = 0) { controller.setMediaItem(any()) }
+            verify(exactly = 0) { controller.prepare() }
+            verify(exactly = 0) { controller.play() }
+        }
+
         /**
          * TODO
-         *  PLAY QUEUE CONTAINS ONLY ONE SONG playQueueContainsMoreThanOneSong() IS FALSE
-         *  playQueueViewModel.currentQueueItemIndex.value IS 0
          *  controller.isPlaying IS FALSE
          */
     }
