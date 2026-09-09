@@ -347,10 +347,21 @@ class MainActivityTest {
             verify(exactly = 0) { controller.play() }
         }
 
-        /**
-         * TODO
-         *  controller.isPlaying IS FALSE
-         */
+        @Test
+        fun skipBack_notPlaying() {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 2
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            every { playQueueViewModel.playQueueContainsMoreThanOneSong() } returns true
+            stubPlayQueueViewModel()
+            every { controller.isPlaying } returns false
+
+            mainActivity.skipBack()
+
+            verify { controller.setMediaItem(playQueue[1]) }
+            verify { controller.prepare() }
+            verify(exactly = 0) { controller.play() }
+        }
     }
 
     @Nested
