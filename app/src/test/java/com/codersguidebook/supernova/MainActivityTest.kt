@@ -258,10 +258,15 @@ class MainActivityTest {
             verify { mockSupportActionBar.setDisplayShowTitleEnabled(false) }
         }
 
-        /**
-         * TODO
-         *  WRITE FALSE TEST
-         */
+        @Test
+        fun hideStatusBars_false() {
+            val mockSupportActionBar = mockk<ActionBar>(relaxed = true)
+            val spyActivity = spyk(mainActivity)
+            every { spyActivity.supportActionBar } returns mockSupportActionBar
+            spyActivity.hideStatusBars(false)
+
+            verify { mockSupportActionBar.setDisplayShowTitleEnabled(true) }
+        }
     }
 
     @Nested
