@@ -873,7 +873,7 @@ class MainActivity : AppCompatActivity() {
         try {
             val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, songId)
 
-            val numberDeleted = application.contentResolver.delete(uri, null, null)
+            val numberDeleted = application.contentResolver.delete(uri, null)
             if (numberDeleted > 0) {
                 musicLibraryViewModel.songIdToDelete = null
             }

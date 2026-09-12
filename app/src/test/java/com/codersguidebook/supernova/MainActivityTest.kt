@@ -270,6 +270,41 @@ class MainActivityTest {
     }
 
     @Nested
+    inner class DeleteSongById {
+
+        private val songId = 2L
+
+        @Test
+        fun deleteSongById() {
+            val spyActivity = spyk(mainActivity)
+            val mockContentResolver = mockk<ContentResolver>(relaxed = true)
+            every { mockContentResolver.delete(any(), null) } returns 1
+            every { spyActivity.application.contentResolver } returns mockContentResolver
+
+            val method = setMethodVisibleForInvoke(spyActivity)
+            method.invoke(spyActivity, songId)
+
+            verify { musicLibraryViewModel.songIdToDelete = songId }
+            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, songId)
+            verify { mockContentResolver.delete(uri, null) }
+            verify { musicLibraryViewModel.songIdToDelete = null }
+        }
+
+        private fun setMethodVisibleForInvoke(targetObject: Any): Method {
+            val targetMethod = targetObject.javaClass.getDeclaredMethod("deleteSongById",
+                Long::class.java)
+            targetMethod.isAccessible = true
+            return targetMethod
+        }
+
+        /**
+         * TODO
+         *  NUMBER DELETED IS 0
+         *  RecoverableSecurityException IS THROWN
+         */
+    }
+
+    @Nested
     inner class Play {
 
         @Test
