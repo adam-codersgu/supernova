@@ -2,7 +2,6 @@ package com.codersguidebook.supernova
 
 import android.app.Application
 import android.app.RecoverableSecurityException
-import android.app.RemoteAction
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Intent
@@ -293,6 +292,22 @@ class MainActivityTest {
         }
 
         @Test
+        fun deleteSongById_zeroSongsDeleted() {
+            val spyActivity = spyk(mainActivity)
+            val mockContentResolver = mockk<ContentResolver>(relaxed = true)
+            every { mockContentResolver.delete(any(), null) } returns 0
+            every { spyActivity.application.contentResolver } returns mockContentResolver
+
+            val method = setMethodVisibleForInvoke(spyActivity)
+            method.invoke(spyActivity, songId)
+
+            verify { musicLibraryViewModel.songIdToDelete = songId }
+            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, songId)
+            verify { mockContentResolver.delete(uri, null) }
+            verify(exactly = 0) { musicLibraryViewModel.songIdToDelete = null }
+        }
+
+        @Test
         fun deleteSongById_noPermissionToDelete() {
             val spyActivity = spyk(mainActivity)
             val mockContentResolver = mockk<ContentResolver>(relaxed = true)
@@ -314,11 +329,6 @@ class MainActivityTest {
             targetMethod.isAccessible = true
             return targetMethod
         }
-
-        /**
-         * TODO
-         *  NUMBER DELETED IS 0
-         */
     }
 
     @Nested
