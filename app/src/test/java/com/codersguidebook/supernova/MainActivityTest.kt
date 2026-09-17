@@ -887,6 +887,23 @@ class MainActivityTest {
     }
 
     @Nested
+    inner class OnDestroy {
+
+        private val position = 100L
+
+        @Test
+        fun onStop() {
+            stubEditor()
+
+            val method = setMethodVisibleForInvoke(mainActivity, "onDestroy")
+            method.invoke(mainActivity)
+
+            verify { editor.remove(SHUFFLE_MODE) }
+            verify { controller.stop() }
+        }
+    }
+
+    @Nested
     inner class OnStop {
 
         private val position = 100L
