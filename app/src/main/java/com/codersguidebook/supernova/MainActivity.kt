@@ -404,8 +404,6 @@ class MainActivity : AppCompatActivity() {
         if (controller.isPlaying
             && position >= (duration * SONG_NEARLY_FINISHED_THRESHOLD)
             && !songCompleted) {
-            Log.i("DEBUG", "Incrementing the song plays for " +
-                    "${playQueueViewModel.currentlyPlayingSongMetadata.value!!.title}")
             val mediaId = playQueueViewModel.getCurrentSongMediaId()
             musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(mediaId!!)
             musicLibraryViewModel.increaseSongPlaysBySongId(mediaId)

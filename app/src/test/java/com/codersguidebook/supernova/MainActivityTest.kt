@@ -725,6 +725,32 @@ class MainActivityTest {
     }
 
     @Nested
+    inner class UpdatePlaybackDurationAndPosition {
+
+        @Test
+        fun updatePlaybackDurationAndPosition() {
+            every { playQueueViewModel.getCurrentSongMediaId() } returns 2L
+            stubPlayQueueViewModel()
+            every { controller.duration } returns 1000L
+            every { controller.currentPosition } returns 999L
+            every { controller.isPlaying } returns true
+
+            val method = setMethodVisibleForInvoke(mainActivity, "updatePlaybackDurationAndPosition")
+            method.invoke(mainActivity)
+
+            verify { musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(2L) }
+            verify { musicLibraryViewModel.increaseSongPlaysBySongId(2L) }
+        }
+
+        /**
+         * TODO
+         *  CONTROLLER IS NOT PLAYING
+         *  PLAYING BUT POSITION IS LESS THAN THE NEARLY FINISHED THRESHOLD
+         *  CONTROLLER IS PLAYING AND PLAYBACK WITHIN NEARLY FINISHED THRESHOLD BUT ISCOMPLETED IS TRUE
+         */
+    }
+
+    @Nested
     inner class CreateSongFromCursor {
 
         @Test
@@ -889,10 +915,8 @@ class MainActivityTest {
     @Nested
     inner class OnDestroy {
 
-        private val position = 100L
-
         @Test
-        fun onStop() {
+        fun onDestroy() {
             stubEditor()
 
             val method = setMethodVisibleForInvoke(mainActivity, "onDestroy")
