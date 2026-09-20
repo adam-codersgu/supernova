@@ -738,13 +738,31 @@ class MainActivityTest {
             val method = setMethodVisibleForInvoke(mainActivity, "updatePlaybackDurationAndPosition")
             method.invoke(mainActivity)
 
+            verify { playQueueViewModel.playbackDuration.value = 1000 }
+            verify { playQueueViewModel.playbackPosition.value = 999 }
             verify { musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(2L) }
             verify { musicLibraryViewModel.increaseSongPlaysBySongId(2L) }
         }
 
+        @Test
+        fun updatePlaybackDurationAndPosition_notPlaying() {
+            every { playQueueViewModel.getCurrentSongMediaId() } returns 2L
+            stubPlayQueueViewModel()
+            every { controller.duration } returns 1000L
+            every { controller.currentPosition } returns 999L
+            every { controller.isPlaying } returns false
+
+            val method = setMethodVisibleForInvoke(mainActivity, "updatePlaybackDurationAndPosition")
+            method.invoke(mainActivity)
+
+            verify { playQueueViewModel.playbackDuration.value = 1000 }
+            verify { playQueueViewModel.playbackPosition.value = 999 }
+            verify(exactly = 0) { musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(any()) }
+            verify(exactly = 0) { musicLibraryViewModel.increaseSongPlaysBySongId(any()) }
+        }
+
         /**
          * TODO
-         *  CONTROLLER IS NOT PLAYING
          *  PLAYING BUT POSITION IS LESS THAN THE NEARLY FINISHED THRESHOLD
          *  CONTROLLER IS PLAYING AND PLAYBACK WITHIN NEARLY FINISHED THRESHOLD BUT ISCOMPLETED IS TRUE
          */
