@@ -761,9 +761,25 @@ class MainActivityTest {
             verify(exactly = 0) { musicLibraryViewModel.increaseSongPlaysBySongId(any()) }
         }
 
+        @Test
+        fun updatePlaybackDurationAndPosition_playbackProgressLessThanThreshold() {
+            every { playQueueViewModel.getCurrentSongMediaId() } returns 2L
+            stubPlayQueueViewModel()
+            every { controller.duration } returns 1000L
+            every { controller.currentPosition } returns 30L
+            every { controller.isPlaying } returns true
+
+            val method = setMethodVisibleForInvoke(mainActivity, "updatePlaybackDurationAndPosition")
+            method.invoke(mainActivity)
+
+            verify { playQueueViewModel.playbackDuration.value = 1000 }
+            verify { playQueueViewModel.playbackPosition.value = 30 }
+            verify(exactly = 0) { musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(any()) }
+            verify(exactly = 0) { musicLibraryViewModel.increaseSongPlaysBySongId(any()) }
+        }
+
         /**
          * TODO
-         *  PLAYING BUT POSITION IS LESS THAN THE NEARLY FINISHED THRESHOLD
          *  CONTROLLER IS PLAYING AND PLAYBACK WITHIN NEARLY FINISHED THRESHOLD BUT ISCOMPLETED IS TRUE
          */
     }
