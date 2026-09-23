@@ -72,6 +72,7 @@ import org.junit.jupiter.params.provider.CsvSource
 import org.robolectric.Robolectric
 import tech.apter.junit.jupiter.robolectric.RobolectricExtension
 import java.lang.reflect.Method
+import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.callSuspend
 
 @ExtendWith(MockKExtension::class, RobolectricExtension::class, InstantTaskExecutorExtension::class)
@@ -778,10 +779,25 @@ class MainActivityTest {
             verify(exactly = 0) { musicLibraryViewModel.increaseSongPlaysBySongId(any()) }
         }
 
-        /**
-         * TODO
-         *  CONTROLLER IS PLAYING AND PLAYBACK WITHIN NEARLY FINISHED THRESHOLD BUT ISCOMPLETED IS TRUE
-         */
+        @Suppress("UNCHECKED_CAST")
+        @Test
+        fun updatePlaybackDurationAndPosition_isCompletedIsTrue() {
+            every { playQueueViewModel.getCurrentSongMediaId() } returns 2L
+            stubPlayQueueViewModel()
+            every { controller.duration } returns 1000L
+            every { controller.currentPosition } returns 999L
+            every { controller.isPlaying } returns true
+            val songCompletedField = ReflectionUtils.setFieldVisible(mainActivity, "songCompleted") as KMutableProperty1<Any, Boolean>
+            songCompletedField.set(mainActivity, true)
+
+            val method = setMethodVisibleForInvoke(mainActivity, "updatePlaybackDurationAndPosition")
+            method.invoke(mainActivity)
+
+            verify { playQueueViewModel.playbackDuration.value = 1000 }
+            verify { playQueueViewModel.playbackPosition.value = 999 }
+            verify(exactly = 0) { musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(any()) }
+            verify(exactly = 0) { musicLibraryViewModel.increaseSongPlaysBySongId(any()) }
+        }
     }
 
     @Nested
