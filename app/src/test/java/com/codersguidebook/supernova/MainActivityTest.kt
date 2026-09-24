@@ -801,6 +801,29 @@ class MainActivityTest {
     }
 
     @Nested
+    inner class PlayPauseControl {
+
+        @Test
+        fun playPauseControl() {
+            every { playQueueViewModel.playQueue.value } returns getPlayQueue()
+            stubPlayQueueViewModel()
+            every { controller.isPlaying } returns true
+
+            mainActivity.playPauseControl()
+
+            verify { controller.pause() }
+            verify(exactly = 0) { controller.play() }
+            verify(exactly = 0) { musicLibraryViewModel.getAllSongsOrderByTitle() }
+        }
+
+        /**
+         * TODO
+         *  PLAY QUEUE NOT EMPTY AND CONTROLLER IS NOT PLAYING
+         *  PLAY QUEUE IS EMPTY runTest
+         */
+    }
+
+    @Nested
     inner class CreateSongFromCursor {
 
         @Test
