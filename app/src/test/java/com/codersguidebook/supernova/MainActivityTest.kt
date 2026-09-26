@@ -816,9 +816,21 @@ class MainActivityTest {
             verify(exactly = 0) { musicLibraryViewModel.getAllSongsOrderByTitle() }
         }
 
+        @Test
+        fun playPauseControl_notPlaying() {
+            every { playQueueViewModel.playQueue.value } returns getPlayQueue()
+            stubPlayQueueViewModel()
+            every { controller.isPlaying } returns false
+
+            mainActivity.playPauseControl()
+
+            verify(exactly = 0) { controller.pause() }
+            verify { controller.play() }
+            verify(exactly = 0) { musicLibraryViewModel.getAllSongsOrderByTitle() }
+        }
+
         /**
          * TODO
-         *  PLAY QUEUE NOT EMPTY AND CONTROLLER IS NOT PLAYING
          *  PLAY QUEUE IS EMPTY runTest
          */
     }
