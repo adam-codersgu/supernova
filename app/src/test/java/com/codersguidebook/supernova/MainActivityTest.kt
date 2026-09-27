@@ -829,10 +829,25 @@ class MainActivityTest {
             verify(exactly = 0) { musicLibraryViewModel.getAllSongsOrderByTitle() }
         }
 
-        /**
-         * TODO
-         *  PLAY QUEUE IS EMPTY runTest
-         */
+        @Test
+        fun playPauseControl_playQueueEmpty() = runTest {
+            stubIODispatcher(testScheduler)
+
+            try {
+                every { playQueueViewModel.playQueue.value } returns listOf()
+                stubPlayQueueViewModel()
+
+                mainActivity.playPauseControl()
+
+                advanceUntilIdle()
+
+                verify(exactly = 0) { controller.pause() }
+                verify(exactly = 0) { controller.play() }
+                verify { musicLibraryViewModel.getAllSongsOrderByTitle() }
+            } finally {
+                resetDispatchers()
+            }
+        }
     }
 
     @Nested
