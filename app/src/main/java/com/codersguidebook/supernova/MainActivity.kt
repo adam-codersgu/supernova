@@ -404,8 +404,6 @@ class MainActivity : AppCompatActivity() {
         if (controller.isPlaying
             && position >= (duration * SONG_NEARLY_FINISHED_THRESHOLD)
             && !songCompleted) {
-            Log.i("DEBUG", "Incrementing the song plays for " +
-                    "${playQueueViewModel.currentlyPlayingSongMetadata.value!!.title}")
             val mediaId = playQueueViewModel.getCurrentSongMediaId()
             musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(mediaId!!)
             musicLibraryViewModel.increaseSongPlaysBySongId(mediaId)
@@ -618,7 +616,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             (playQueueViewModel.currentQueueItemIndex.value ?: return) - 1
         }
-        saveCurrentlyPlayingItemPrepareAndPlay(newIndex, controller.isPlaying)
+        skipToQueueIndex(newIndex, controller.isPlaying)
     }
 
     /** Skip forward to the next song in the play queue. */
@@ -635,11 +633,14 @@ class MainActivity : AppCompatActivity() {
         } else {
             (playQueueViewModel.currentQueueItemIndex.value ?: return) + 1
         }
-        saveCurrentlyPlayingItemPrepareAndPlay(newIndex, controller.isPlaying)
+        skipToQueueIndex(newIndex, controller.isPlaying)
     }
 
-    private fun saveCurrentlyPlayingItemPrepareAndPlay(index: Int, play: Boolean = true) {
-        controller.setMediaItem(playQueueViewModel.playQueue.value?.get(index) ?: return)
+    fun skipToQueueIndex(index: Int, play: Boolean = true) {
+        val playQueue = playQueueViewModel.playQueue.value
+        if (playQueue == null || index >= playQueue.size) return
+
+        controller.setMediaItem(playQueue[index])
         controller.prepare()
         if (play) {
             controller.play()
@@ -719,7 +720,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         saveAndPostPlayQueue(playQueue)
-        saveCurrentlyPlayingItemPrepareAndPlay(startIndex)
+        skipToQueueIndex(startIndex)
 
         sharedPreferences.edit {
             putBoolean(SHUFFLE_MODE, shuffle)
@@ -790,17 +791,6 @@ class MainActivity : AppCompatActivity() {
     fun seekTo(position: Long) {
         controller.seekTo(position)
         updatePlaybackDurationAndPosition()
-    }
-
-    /**
-     * Skip to a specific item in the play queue based on its index in the play queue.
-     *
-     * @param targetIndex The index in the queue to skip to.
-     */
-    fun skipToQueueIndex(targetIndex: Int) = lifecycleScope.launch(Dispatchers.Main) {
-        val item = playQueueViewModel.playQueue.value?.get(targetIndex) ?: return@launch
-        controller.setMediaItem(item)
-        saveCurrentlyPlayingItemPrepareAndPlay(targetIndex)
     }
 
     /**
@@ -881,7 +871,7 @@ class MainActivity : AppCompatActivity() {
         try {
             val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, songId)
 
-            val numberDeleted = application.contentResolver.delete(uri, null, null)
+            val numberDeleted = application.contentResolver.delete(uri, null)
             if (numberDeleted > 0) {
                 musicLibraryViewModel.songIdToDelete = null
             }

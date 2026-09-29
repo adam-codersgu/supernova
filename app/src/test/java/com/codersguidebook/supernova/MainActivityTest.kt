@@ -1,6 +1,7 @@
 package com.codersguidebook.supernova
 
 import android.app.Application
+import android.app.RecoverableSecurityException
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Intent
@@ -12,10 +13,14 @@ import android.util.Size
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.ActionBar
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player.REPEAT_MODE_ALL
+import androidx.media3.common.Player.REPEAT_MODE_OFF
+import androidx.media3.common.Player.REPEAT_MODE_ONE
 import androidx.media3.session.MediaController
 import androidx.navigation.NavController
 import com.codersguidebook.supernova.entities.Song
@@ -25,17 +30,20 @@ import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSong
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSongs
 import com.codersguidebook.supernova.params.MediaServiceConstants.Companion.ORDER_ID
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.CURRENT_QUEUE_ITEM_INDEX
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.PLAYBACK_POSITION
+import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.codersguidebook.supernova.testutils.DispatcherUtils.resetDispatchers
 import com.codersguidebook.supernova.testutils.DispatcherUtils.stubIODispatcher
 import com.codersguidebook.supernova.testutils.InstantTaskExecutorExtension
 import com.codersguidebook.supernova.testutils.ReflectionUtils
+import com.codersguidebook.supernova.testutils.ReflectionUtils.setMethodVisibleForInvoke
 import com.codersguidebook.supernova.testutils.ReflectionUtils.setMethodVisibleForSuspend
-import com.codersguidebook.supernova.utils.DefaultPlaylistHelper
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.MoreExecutors
 import io.kotest.assertions.fail
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.mockk.Runs
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
@@ -56,7 +64,6 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -65,6 +72,7 @@ import org.junit.jupiter.params.provider.CsvSource
 import org.robolectric.Robolectric
 import tech.apter.junit.jupiter.robolectric.RobolectricExtension
 import java.lang.reflect.Method
+import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.callSuspend
 
 @ExtendWith(MockKExtension::class, RobolectricExtension::class, InstantTaskExecutorExtension::class)
@@ -81,9 +89,6 @@ class MainActivityTest {
 
     @RelaxedMockK
     lateinit var controller: MediaController
-
-    @RelaxedMockK
-    lateinit var defaultPlaylistHelper: DefaultPlaylistHelper
 
     @RelaxedMockK
     lateinit var editor: SharedPreferences.Editor
@@ -142,7 +147,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Handle navigation events to different areas of the application")
     inner class Navigate {
 
         @ParameterizedTest
@@ -218,7 +222,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Apply Window Insets")
     inner class ApplyWindowInsets {
 
         @Test
@@ -245,7 +248,91 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Commence/resume playback")
+    inner class HideStatusBars {
+
+        @Test
+        fun hideStatusBars_true() {
+            val mockSupportActionBar = mockk<ActionBar>(relaxed = true)
+            val spyActivity = spyk(mainActivity)
+            every { spyActivity.supportActionBar } returns mockSupportActionBar
+            spyActivity.hideStatusBars(true)
+
+            verify { mockSupportActionBar.setDisplayShowTitleEnabled(false) }
+        }
+
+        @Test
+        fun hideStatusBars_false() {
+            val mockSupportActionBar = mockk<ActionBar>(relaxed = true)
+            val spyActivity = spyk(mainActivity)
+            every { spyActivity.supportActionBar } returns mockSupportActionBar
+            spyActivity.hideStatusBars(false)
+
+            verify { mockSupportActionBar.setDisplayShowTitleEnabled(true) }
+        }
+    }
+
+    @Nested
+    inner class DeleteSongById {
+
+        private val songId = 2L
+
+        @Test
+        fun deleteSongById() {
+            val spyActivity = spyk(mainActivity)
+            val mockContentResolver = mockk<ContentResolver>(relaxed = true)
+            every { mockContentResolver.delete(any(), null) } returns 1
+            every { spyActivity.application.contentResolver } returns mockContentResolver
+
+            val method = setMethodVisibleForInvoke(spyActivity)
+            method.invoke(spyActivity, songId)
+
+            verify { musicLibraryViewModel.songIdToDelete = songId }
+            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, songId)
+            verify { mockContentResolver.delete(uri, null) }
+            verify { musicLibraryViewModel.songIdToDelete = null }
+        }
+
+        @Test
+        fun deleteSongById_zeroSongsDeleted() {
+            val spyActivity = spyk(mainActivity)
+            val mockContentResolver = mockk<ContentResolver>(relaxed = true)
+            every { mockContentResolver.delete(any(), null) } returns 0
+            every { spyActivity.application.contentResolver } returns mockContentResolver
+
+            val method = setMethodVisibleForInvoke(spyActivity)
+            method.invoke(spyActivity, songId)
+
+            verify { musicLibraryViewModel.songIdToDelete = songId }
+            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, songId)
+            verify { mockContentResolver.delete(uri, null) }
+            verify(exactly = 0) { musicLibraryViewModel.songIdToDelete = null }
+        }
+
+        @Test
+        fun deleteSongById_noPermissionToDelete() {
+            val spyActivity = spyk(mainActivity)
+            val mockContentResolver = mockk<ContentResolver>(relaxed = true)
+            every { mockContentResolver.delete(any(), null) } throws mockk<RecoverableSecurityException>(relaxed = true)
+            every { spyActivity.application.contentResolver } returns mockContentResolver
+
+            val method = setMethodVisibleForInvoke(spyActivity)
+            method.invoke(spyActivity, songId)
+
+            verify { musicLibraryViewModel.songIdToDelete = songId }
+            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, songId)
+            verify { mockContentResolver.delete(uri, null) }
+            verify(exactly = 0) { musicLibraryViewModel.songIdToDelete = null }
+        }
+
+        private fun setMethodVisibleForInvoke(targetObject: Any): Method {
+            val targetMethod = targetObject.javaClass.getDeclaredMethod("deleteSongById",
+                Long::class.java)
+            targetMethod.isAccessible = true
+            return targetMethod
+        }
+    }
+
+    @Nested
     inner class Play {
 
         @Test
@@ -257,7 +344,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Fast forward playback")
     inner class FastForward {
 
         @Test
@@ -269,7 +355,181 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Shuffle or unshuffle the play queue")
+    inner class SkipBack {
+
+        @Test
+        fun skipBack() {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 1
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            every { playQueueViewModel.playQueueContainsMoreThanOneSong() } returns true
+            stubPlayQueueViewModel()
+            every { controller.isPlaying } returns true
+
+            mainActivity.skipBack()
+
+            verify { controller.setMediaItem(playQueue[0]) }
+            verify { controller.prepare() }
+            verify { controller.play() }
+        }
+
+        @Test
+        fun skipBack_over5000msThroughSong() {
+            every { controller.currentPosition } returns 5001L
+
+            mainActivity.skipBack()
+
+            verify { controller.seekTo(0) }
+            verify(exactly = 0) { controller.setMediaItem(any()) }
+            verify(exactly = 0) { controller.prepare() }
+            verify(exactly = 0) { controller.play() }
+        }
+
+        @Test
+        fun skipBack_playQueueContainsOneSong() {
+            every { playQueueViewModel.playQueueContainsMoreThanOneSong() } returns false
+            stubPlayQueueViewModel()
+
+            mainActivity.skipBack()
+
+            verify(exactly = 0) { controller.seekTo(any()) }
+            verify(exactly = 0) { controller.setMediaItem(any()) }
+            verify(exactly = 0) { controller.prepare() }
+            verify(exactly = 0) { controller.play() }
+        }
+
+        @Test
+        fun skipBack_atBeginningOfPlayQueue() {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 0
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            every { playQueueViewModel.playQueueContainsMoreThanOneSong() } returns true
+            stubPlayQueueViewModel()
+            every { controller.isPlaying } returns true
+
+            mainActivity.skipBack()
+
+            verify(exactly = 0) { controller.seekTo(any()) }
+            verify(exactly = 0) { controller.setMediaItem(any()) }
+            verify(exactly = 0) { controller.prepare() }
+            verify(exactly = 0) { controller.play() }
+        }
+
+        @Test
+        fun skipBack_notPlaying() {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 2
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            every { playQueueViewModel.playQueueContainsMoreThanOneSong() } returns true
+            stubPlayQueueViewModel()
+            every { controller.isPlaying } returns false
+
+            mainActivity.skipBack()
+
+            verify { controller.setMediaItem(playQueue[1]) }
+            verify { controller.prepare() }
+            verify(exactly = 0) { controller.play() }
+        }
+    }
+
+    @Nested
+    inner class SkipForward {
+
+        @Test
+        fun skipForward() {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 0
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            every { playQueueViewModel.playQueueContainsMoreThanOneSong() } returns true
+            stubPlayQueueViewModel()
+            every { controller.isPlaying } returns true
+
+            mainActivity.skipForward()
+
+            verify { controller.setMediaItem(playQueue[1]) }
+            verify { controller.prepare() }
+            verify { controller.play() }
+        }
+
+        @Test
+        fun skipForward_playQueueContainsOneSong() {
+            every { playQueueViewModel.playQueueContainsMoreThanOneSong() } returns false
+            stubPlayQueueViewModel()
+
+            mainActivity.skipForward()
+
+            confirmVerified(controller)
+        }
+
+        @Test
+        fun skipForward_endOfPlayQueue() {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 4
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            every { playQueueViewModel.playQueueContainsMoreThanOneSong() } returns true
+            stubPlayQueueViewModel()
+
+            mainActivity.skipForward()
+
+            confirmVerified(controller)
+        }
+
+        @Test
+        fun skipForward_endOfPlayQueue_repeatModeAll() {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 4
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            every { playQueueViewModel.playQueueContainsMoreThanOneSong() } returns true
+            stubPlayQueueViewModel()
+            stubEditor()
+            every { sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_OFF) } returns REPEAT_MODE_ALL
+            every { controller.isPlaying } returns false
+
+            mainActivity.skipForward()
+
+            verify { controller.setMediaItem(playQueue[0]) }
+            verify { controller.prepare() }
+            verify(exactly = 0) { controller.play() }
+        }
+    }
+
+    @Nested
+    inner class NotifyQueueItemMoved {
+
+        @Test
+        fun notifyQueueItemMoved() {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 0
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            stubPlayQueueViewModel()
+            stubEditor()
+
+            mainActivity.notifyQueueItemMoved(2, 3)
+
+            verify(exactly = 0) { editor.putInt(CURRENT_QUEUE_ITEM_INDEX, any()) }
+            val playQueueSlot = slot<List<MediaItem>>()
+            verify { playQueueViewModel.playQueue.value = capture(playQueueSlot) }
+            assertEquals(playQueue[2], playQueueSlot.captured[3])
+        }
+
+        @Test
+        fun notifyQueueItemMoved_moveC() {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 3
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            stubPlayQueueViewModel()
+            stubEditor()
+
+            mainActivity.notifyQueueItemMoved(3, 4)
+
+            verify { editor.putInt(CURRENT_QUEUE_ITEM_INDEX, 4) }
+            val playQueueSlot = slot<List<MediaItem>>()
+            verify { playQueueViewModel.playQueue.value = capture(playQueueSlot) }
+            assertEquals(playQueue[3], playQueueSlot.captured[4])
+        }
+    }
+
+    @Nested
     inner class SetShuffleMode {
 
         @Test
@@ -340,7 +600,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Update a file based on its media ID")
     inner class HandleFileUpdateByMediaId {
 
         @Test
@@ -396,7 +655,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Update a list of songs")
     inner class UpdateSongs {
 
         @Test
@@ -468,7 +726,131 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Extract song metadata from a cursor")
+    inner class UpdatePlaybackDurationAndPosition {
+
+        @Test
+        fun updatePlaybackDurationAndPosition() {
+            every { playQueueViewModel.getCurrentSongMediaId() } returns 2L
+            stubPlayQueueViewModel()
+            every { controller.duration } returns 1000L
+            every { controller.currentPosition } returns 999L
+            every { controller.isPlaying } returns true
+
+            val method = setMethodVisibleForInvoke(mainActivity, "updatePlaybackDurationAndPosition")
+            method.invoke(mainActivity)
+
+            verify { playQueueViewModel.playbackDuration.value = 1000 }
+            verify { playQueueViewModel.playbackPosition.value = 999 }
+            verify { musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(2L) }
+            verify { musicLibraryViewModel.increaseSongPlaysBySongId(2L) }
+        }
+
+        @Test
+        fun updatePlaybackDurationAndPosition_notPlaying() {
+            every { playQueueViewModel.getCurrentSongMediaId() } returns 2L
+            stubPlayQueueViewModel()
+            every { controller.duration } returns 1000L
+            every { controller.currentPosition } returns 999L
+            every { controller.isPlaying } returns false
+
+            val method = setMethodVisibleForInvoke(mainActivity, "updatePlaybackDurationAndPosition")
+            method.invoke(mainActivity)
+
+            verify { playQueueViewModel.playbackDuration.value = 1000 }
+            verify { playQueueViewModel.playbackPosition.value = 999 }
+            verify(exactly = 0) { musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(any()) }
+            verify(exactly = 0) { musicLibraryViewModel.increaseSongPlaysBySongId(any()) }
+        }
+
+        @Test
+        fun updatePlaybackDurationAndPosition_playbackProgressLessThanThreshold() {
+            every { playQueueViewModel.getCurrentSongMediaId() } returns 2L
+            stubPlayQueueViewModel()
+            every { controller.duration } returns 1000L
+            every { controller.currentPosition } returns 30L
+            every { controller.isPlaying } returns true
+
+            val method = setMethodVisibleForInvoke(mainActivity, "updatePlaybackDurationAndPosition")
+            method.invoke(mainActivity)
+
+            verify { playQueueViewModel.playbackDuration.value = 1000 }
+            verify { playQueueViewModel.playbackPosition.value = 30 }
+            verify(exactly = 0) { musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(any()) }
+            verify(exactly = 0) { musicLibraryViewModel.increaseSongPlaysBySongId(any()) }
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        @Test
+        fun updatePlaybackDurationAndPosition_isCompletedIsTrue() {
+            every { playQueueViewModel.getCurrentSongMediaId() } returns 2L
+            stubPlayQueueViewModel()
+            every { controller.duration } returns 1000L
+            every { controller.currentPosition } returns 999L
+            every { controller.isPlaying } returns true
+            val songCompletedField = ReflectionUtils.setFieldVisible(mainActivity, "songCompleted") as KMutableProperty1<Any, Boolean>
+            songCompletedField.set(mainActivity, true)
+
+            val method = setMethodVisibleForInvoke(mainActivity, "updatePlaybackDurationAndPosition")
+            method.invoke(mainActivity)
+
+            verify { playQueueViewModel.playbackDuration.value = 1000 }
+            verify { playQueueViewModel.playbackPosition.value = 999 }
+            verify(exactly = 0) { musicLibraryViewModel.addSongByIdToRecentlyPlayedPlaylist(any()) }
+            verify(exactly = 0) { musicLibraryViewModel.increaseSongPlaysBySongId(any()) }
+        }
+    }
+
+    @Nested
+    inner class PlayPauseControl {
+
+        @Test
+        fun playPauseControl() {
+            every { playQueueViewModel.playQueue.value } returns getPlayQueue()
+            stubPlayQueueViewModel()
+            every { controller.isPlaying } returns true
+
+            mainActivity.playPauseControl()
+
+            verify { controller.pause() }
+            verify(exactly = 0) { controller.play() }
+            verify(exactly = 0) { musicLibraryViewModel.getAllSongsOrderByTitle() }
+        }
+
+        @Test
+        fun playPauseControl_notPlaying() {
+            every { playQueueViewModel.playQueue.value } returns getPlayQueue()
+            stubPlayQueueViewModel()
+            every { controller.isPlaying } returns false
+
+            mainActivity.playPauseControl()
+
+            verify(exactly = 0) { controller.pause() }
+            verify { controller.play() }
+            verify(exactly = 0) { musicLibraryViewModel.getAllSongsOrderByTitle() }
+        }
+
+        @Test
+        fun playPauseControl_playQueueEmpty() = runTest {
+            stubIODispatcher(testScheduler)
+
+            try {
+                every { playQueueViewModel.playQueue.value } returns listOf()
+                stubPlayQueueViewModel()
+
+                mainActivity.playPauseControl()
+
+                advanceUntilIdle()
+
+                verify(exactly = 0) { controller.pause() }
+                verify(exactly = 0) { controller.play() }
+                verify { musicLibraryViewModel.getAllSongsOrderByTitle() }
+            } finally {
+                resetDispatchers()
+            }
+        }
+    }
+
+    @Nested
     inner class CreateSongFromCursor {
 
         @Test
@@ -532,7 +914,6 @@ class MainActivityTest {
     }
 
     @Nested
-    @DisplayName("Save the queue index of the currently playing song")
     inner class SaveCurrentlyPlayingIndex {
 
         @Test
@@ -558,6 +939,182 @@ class MainActivityTest {
             } finally {
                 resetDispatchers()
             }
+        }
+    }
+
+    @Nested
+    inner class SeekTo {
+
+        private val duration = 9999L
+        private val position = 100L
+
+        @Test
+        fun seekTo() {
+            every { controller.currentPosition } returns position
+            every { controller.duration } returns duration
+            stubPlayQueueViewModel()
+
+            mainActivity.seekTo(position)
+
+            verify { controller.seekTo(position) }
+            verify { playQueueViewModel.playbackDuration.value = duration.toInt() }
+            verify { playQueueViewModel.playbackPosition.value = position.toInt() }
+        }
+    }
+
+    @Nested
+    inner class SkipToQueueIndex {
+
+        @Test
+        fun skipToQueueIndex() = runTest {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            stubPlayQueueViewModel()
+
+            val targetIndex = 2
+            mainActivity.skipToQueueIndex(targetIndex)
+
+            val item = playQueue[targetIndex]
+            verify { controller.setMediaItem(item) }
+            verify { controller.prepare() }
+            verify { controller.play() }
+        }
+
+        @Test
+        fun skipToQueueIndex_noItemAtIndex() = runTest {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            stubPlayQueueViewModel()
+
+            val targetIndex = 6
+            mainActivity.skipToQueueIndex(targetIndex)
+
+            confirmVerified(controller)
+        }
+    }
+
+    @Nested
+    inner class ToggleRepeatMode {
+
+        @ParameterizedTest
+        @CsvSource("$REPEAT_MODE_OFF, $REPEAT_MODE_ALL",
+            "$REPEAT_MODE_ALL, $REPEAT_MODE_ONE",
+            "$REPEAT_MODE_ONE, $REPEAT_MODE_OFF")
+        fun toggleRepeatMode(currentRepeatMode: Int, expectedRepeatMode: Int) {
+            stubEditor()
+
+            every { sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_OFF) } returns currentRepeatMode
+
+            val repeatMode = mainActivity.toggleRepeatMode()
+
+            verify { editor.putInt(REPEAT_MODE, expectedRepeatMode) }
+            assertEquals(expectedRepeatMode, repeatMode)
+        }
+    }
+
+    @Nested
+    inner class OnDestroy {
+
+        @Test
+        fun onDestroy() {
+            stubEditor()
+
+            val method = setMethodVisibleForInvoke(mainActivity, "onDestroy")
+            method.invoke(mainActivity)
+
+            verify { editor.remove(SHUFFLE_MODE) }
+            verify { controller.stop() }
+        }
+    }
+
+    @Nested
+    inner class OnStop {
+
+        private val position = 100L
+
+        @Test
+        fun onStop() {
+            stubEditor()
+            every { controller.currentPosition } returns position
+
+            val method = setMethodVisibleForInvoke(mainActivity, "onStop")
+            method.invoke(mainActivity)
+
+            verify { editor.putLong(PLAYBACK_POSITION, position) }
+        }
+    }
+
+    @Nested
+    inner class PlayNewPlayQueue {
+
+        @Test
+        fun playNewPlayQueue() {
+            val songs = getMockSongs(5)
+            val expectedPlayQueue = songs.map { s -> s.getMediaItem() }.toList()
+            every { playQueueViewModel.playQueue.value } returns expectedPlayQueue
+            stubPlayQueueViewModel()
+            stubEditor()
+            every { controller.isPlaying } returns true
+
+            mainActivity.playNewPlayQueue(songs)
+
+            verify { playQueueViewModel.playQueue.value = expectedPlayQueue }
+            verify { controller.setMediaItem(expectedPlayQueue[0]) }
+            verify { controller.stop() }
+            verify { controller.prepare() }
+            verify { controller.play() }
+            verify { editor.putBoolean(SHUFFLE_MODE, false) }
+        }
+
+        @Test
+        fun playNewPlayQueue_emptyPlayQueue() {
+            mainActivity.playNewPlayQueue(listOf())
+
+            verify(exactly = 0) { playQueueViewModel.playQueue.value = any() }
+            verify(exactly = 0) { controller.setMediaItem(any()) }
+            verify(exactly = 0) { controller.prepare() }
+            verify(exactly = 0) { controller.play() }
+            verify(exactly = 0) { editor.putBoolean(SHUFFLE_MODE, any()) }
+        }
+
+        @Test
+        fun playNewPlayQueue_nonZeroStartIndex() {
+            val songs = getMockSongs(5)
+            val expectedPlayQueue = songs.map { s -> s.getMediaItem() }.toList()
+            every { playQueueViewModel.playQueue.value } returns expectedPlayQueue
+            stubPlayQueueViewModel()
+            stubEditor()
+            every { controller.isPlaying } returns false
+
+            mainActivity.playNewPlayQueue(songs, 2)
+
+            verify { playQueueViewModel.playQueue.value = expectedPlayQueue }
+            verify { controller.setMediaItem(expectedPlayQueue[2]) }
+            verify(exactly = 0) { controller.stop() }
+            verify { controller.prepare() }
+            verify { controller.play() }
+            verify { editor.putBoolean(SHUFFLE_MODE, false) }
+        }
+
+        @Test
+        fun playNewPlayQueue_shuffle() {
+            val songs = getMockSongs(5)
+            val expectedPlayQueue = songs.map { s -> s.getMediaItem() }.toList()
+            every { playQueueViewModel.playQueue.value } returns expectedPlayQueue
+            stubPlayQueueViewModel()
+            stubEditor()
+            every { controller.isPlaying } returns false
+
+            mainActivity.playNewPlayQueue(songs, shuffle = true)
+
+            val playQueueSlot = slot<List<MediaItem>>()
+            verify { playQueueViewModel.playQueue.value = capture(playQueueSlot) }
+            playQueueSlot.captured.shouldContainExactlyInAnyOrder(expectedPlayQueue)
+            verify { controller.setMediaItem(expectedPlayQueue[0]) }
+            verify(exactly = 0) { controller.stop() }
+            verify { controller.prepare() }
+            verify { controller.play() }
+            verify { editor.putBoolean(SHUFFLE_MODE, true) }
         }
     }
 
