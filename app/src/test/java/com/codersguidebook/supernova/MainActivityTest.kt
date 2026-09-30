@@ -63,6 +63,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -491,6 +492,31 @@ class MainActivityTest {
             verify { controller.prepare() }
             verify(exactly = 0) { controller.play() }
         }
+    }
+
+    @Nested
+    inner class RemoveQueueItemByIndex {
+
+        @Test
+        fun removeQueueItemByIndex() {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 2
+            stubPlayQueueViewModel()
+
+            mainActivity.removeQueueItemByIndex(1)
+
+            val playQueueSlot = slot<List<MediaItem>>()
+            verify { playQueueViewModel.playQueue.value = capture(playQueueSlot) }
+            assertEquals(4, playQueueSlot.captured.size)
+            assertTrue(!playQueueSlot.captured.contains(playQueue[1]))
+            verify { playQueueViewModel.currentQueueItemIndex.postValue(1) }
+        }
+
+        /**
+         * TODO
+         *  NEW INDEX MORE THAN CURRENT INDEX
+         */
     }
 
     @Nested
