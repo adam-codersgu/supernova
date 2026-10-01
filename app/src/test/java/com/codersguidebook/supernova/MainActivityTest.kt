@@ -513,10 +513,20 @@ class MainActivityTest {
             verify { playQueueViewModel.currentQueueItemIndex.postValue(1) }
         }
 
-        /**
-         * TODO
-         *  NEW INDEX MORE THAN CURRENT INDEX
-         */
+        @Test
+        fun removeQueueItemByIndex_indexHigherThanCurrentlyPlaying() {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 2
+            stubPlayQueueViewModel()
+
+            mainActivity.removeQueueItemByIndex(3)
+
+            val playQueueSlot = slot<List<MediaItem>>()
+            verify { playQueueViewModel.playQueue.value = capture(playQueueSlot) }
+            assertEquals(4, playQueueSlot.captured.size)
+            assertTrue(!playQueueSlot.captured.contains(playQueue[3]))
+        }
     }
 
     @Nested
