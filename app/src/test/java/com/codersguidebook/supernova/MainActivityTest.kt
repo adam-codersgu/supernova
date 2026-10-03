@@ -40,6 +40,7 @@ import com.codersguidebook.supernova.testutils.ReflectionUtils
 import com.codersguidebook.supernova.testutils.ReflectionUtils.setMethodVisibleForInvoke
 import com.codersguidebook.supernova.testutils.ReflectionUtils.setMethodVisibleForSuspend
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
+import com.codersguidebook.supernova.utils.StorageAccessPermissionHelper
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.MoreExecutors
 import io.kotest.assertions.fail
@@ -106,6 +107,9 @@ class MainActivityTest {
     @RelaxedMockK
     lateinit var sharedPreferences: SharedPreferences
 
+    @RelaxedMockK
+    lateinit var storagePermissionHelper: StorageAccessPermissionHelper
+
     private lateinit var mainActivity: MainActivity
 
     @BeforeEach
@@ -130,6 +134,8 @@ class MainActivityTest {
         val controllerActivity = Robolectric.buildActivity(MainActivity::class.java)
         mainActivity = controllerActivity.get()
         controllerActivity.create()
+
+        ReflectionUtils.replaceFieldWithMock(mainActivity, "storagePermissionHelper", storagePermissionHelper)
 
         val immediateFuture = Futures.immediateFuture(controller)
 
@@ -884,6 +890,32 @@ class MainActivityTest {
                 resetDispatchers()
             }
         }
+    }
+
+    @Nested
+    inner class OnRequestPermissionsResult {
+
+        @Test
+        fun onRequestPermissionsResult() {
+            every { storagePermissionHelper.hasPermissions() } returns true
+
+            mainActivity.onRequestPermissionsResult(
+                requestCode = 100,
+                permissions = arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE),
+                grantResults = intArrayOf(android.content.pm.PackageManager.PERMISSION_GRANTED)
+            )
+
+            verify { storagePermissionHelper.hasPermissions() }
+            verify(exactly = 0) { storagePermissionHelper.shouldShowPermissionRationale() }
+            verify(exactly = 0) { storagePermissionHelper.launchPermissionSettings() }
+        }
+
+        /**
+         * TODO
+         *  PERMISSIONS NOT GRANTED AND SHOULD SHOW PERMISSION RATIONALE
+         *  PERMISSIONS NOT GRANTED AND SHOULD NOT SHOW PERMISSION RATIONALE
+         */
+
     }
 
     @Nested
