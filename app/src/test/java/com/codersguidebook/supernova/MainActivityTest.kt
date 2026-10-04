@@ -910,9 +910,24 @@ class MainActivityTest {
             verify(exactly = 0) { storagePermissionHelper.launchPermissionSettings() }
         }
 
+        @Test
+        fun onRequestPermissionsResult_showPermissionRationale() {
+            every { storagePermissionHelper.hasPermissions() } returns false
+            every { storagePermissionHelper.shouldShowPermissionRationale() } returns true
+
+            mainActivity.onRequestPermissionsResult(
+                requestCode = 100,
+                permissions = arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE),
+                grantResults = intArrayOf(android.content.pm.PackageManager.PERMISSION_GRANTED)
+            )
+
+            verify { storagePermissionHelper.hasPermissions() }
+            verify { storagePermissionHelper.shouldShowPermissionRationale() }
+            verify(exactly = 0) { storagePermissionHelper.launchPermissionSettings() }
+        }
+
         /**
          * TODO
-         *  PERMISSIONS NOT GRANTED AND SHOULD SHOW PERMISSION RATIONALE
          *  PERMISSIONS NOT GRANTED AND SHOULD NOT SHOW PERMISSION RATIONALE
          */
 
