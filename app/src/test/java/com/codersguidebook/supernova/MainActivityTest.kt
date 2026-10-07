@@ -1106,6 +1106,25 @@ class MainActivityTest {
     }
 
     @Nested
+    inner class ToggleShuffleMode {
+
+        @Test
+        fun toggleShuffleMode() {
+            stubEditor()
+
+            every { sharedPreferences.getBoolean(SHUFFLE_MODE, false) } returns false
+
+            val shuffleMode = mainActivity.toggleShuffleMode()
+            assertEquals(true, shuffleMode)
+        }
+
+        /**
+         *  TODO
+         *      GET SHUFFLE MODE RETURNS TRUE
+         */
+    }
+
+    @Nested
     inner class OnDestroy {
 
         @Test
