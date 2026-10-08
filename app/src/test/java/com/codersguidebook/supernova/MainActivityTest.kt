@@ -1118,10 +1118,15 @@ class MainActivityTest {
             assertEquals(true, shuffleMode)
         }
 
-        /**
-         *  TODO
-         *      GET SHUFFLE MODE RETURNS TRUE
-         */
+        @Test
+        fun toggleShuffleMode_alreadyShuffled() {
+            stubEditor()
+
+            every { sharedPreferences.getBoolean(SHUFFLE_MODE, false) } returns true
+
+            val shuffleMode = mainActivity.toggleShuffleMode()
+            assertEquals(false, shuffleMode)
+        }
     }
 
     @Nested
