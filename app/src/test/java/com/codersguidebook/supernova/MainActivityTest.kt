@@ -362,6 +362,17 @@ class MainActivityTest {
     }
 
     @Nested
+    inner class FastRewind {
+
+        @Test
+        fun fastRewind() {
+            mainActivity.fastRewind()
+
+            verify { controller.seekBack() }
+        }
+    }
+
+    @Nested
     inner class SkipBack {
 
         @Test
