@@ -1,10 +1,12 @@
 package com.codersguidebook.supernova
 
 import android.app.Application
+import android.app.PendingIntent
 import android.app.RecoverableSecurityException
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Intent
+import android.content.IntentSender
 import android.content.SharedPreferences
 import android.database.Cursor
 import android.graphics.Bitmap
@@ -13,6 +15,8 @@ import android.util.Size
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
 import androidx.appcompat.app.ActionBar
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.MutableLiveData
@@ -57,8 +61,10 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.mockkObject
+import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.spyk
+import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -225,6 +231,29 @@ class MainActivityTest {
                 MenuItem::class.java)
             targetMethod.isAccessible = true
             return targetMethod
+        }
+    }
+
+    @Nested
+    inner class DeleteSongs {
+
+        @Test
+        fun deleteSongs() {
+            val songs = getMockSongs(1)
+            every { musicLibraryViewModel.songIdToDelete } returns 1L
+            mockkStatic(MediaStore::class)
+            val pendingIntent = mockk<PendingIntent>()
+            val intentSender = mockk<IntentSender>()
+            val mediaDeletionLauncher = mockk<ActivityResultLauncher<IntentSenderRequest>>(relaxed = true)
+            ReflectionUtils.replaceFieldWithMock(mainActivity, "mediaDeletionLauncher", mediaDeletionLauncher)
+
+            every { pendingIntent.intentSender } returns intentSender
+            every { MediaStore.createDeleteRequest(any(), any()) } returns pendingIntent
+
+            mainActivity.deleteSongs(songs)
+
+            verify { mediaDeletionLauncher.launch(any()) }
+            unmockkStatic(MediaStore::class)
         }
     }
 
