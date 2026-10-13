@@ -10,6 +10,7 @@ import android.content.IntentSender
 import android.content.SharedPreferences
 import android.database.Cursor
 import android.graphics.Bitmap
+import android.media.AudioManager
 import android.provider.MediaStore
 import android.util.Size
 import android.view.MenuItem
@@ -1166,6 +1167,18 @@ class MainActivityTest {
 
             val shuffleMode = mainActivity.toggleShuffleMode()
             assertEquals(false, shuffleMode)
+        }
+    }
+
+    @Nested
+    inner class OnResume {
+
+        @Test
+        fun onResume() {
+            val method = setMethodVisibleForInvoke(mainActivity, "onResume")
+            method.invoke(mainActivity)
+
+            assertEquals(AudioManager.STREAM_MUSIC, mainActivity.volumeControlStream)
         }
     }
 
