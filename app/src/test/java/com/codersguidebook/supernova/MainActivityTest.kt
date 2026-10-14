@@ -1183,6 +1183,18 @@ class MainActivityTest {
     }
 
     @Nested
+    inner class OnRestart {
+
+        @Test
+        fun onRestart() {
+            val method = setMethodVisibleForInvoke(mainActivity, "onRestart")
+            method.invoke(mainActivity)
+
+            verify { musicLibraryViewModel.setMostPlayedPlaylistTimeframe() }
+        }
+    }
+
+    @Nested
     inner class OnDestroy {
 
         @Test
