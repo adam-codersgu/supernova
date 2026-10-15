@@ -13,9 +13,11 @@ import android.graphics.Bitmap
 import android.media.AudioManager
 import android.provider.MediaStore
 import android.util.Size
+import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.SearchView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.appcompat.app.ActionBar
@@ -111,6 +113,8 @@ class MainActivityTest {
     @RelaxedMockK
     lateinit var musicLibraryViewModel: MusicLibraryViewModel
 
+   // private lateinit var searchView: SearchView
+
     @RelaxedMockK
     lateinit var sharedPreferences: SharedPreferences
 
@@ -124,6 +128,9 @@ class MainActivityTest {
 
         clearAllMocks()
 
+        val controllerActivity = Robolectric.buildActivity(MainActivity::class.java)
+        mainActivity = controllerActivity.get()
+
         mockkConstructor(ViewModelProvider::class)
 
         every {
@@ -134,13 +141,9 @@ class MainActivityTest {
             anyConstructed<ViewModelProvider>()[PlayQueueViewModel::class.java]
         } returns playQueueViewModel
 
-        // 4. Stub any internal LiveData dependencies that onCreate / fragments observe
-        // Example (repeat for any fields that your activity registers observers on):
-        // every { musicLibraryViewModel.someLiveDataField } returns mockLiveData
-
-        val controllerActivity = Robolectric.buildActivity(MainActivity::class.java)
-        mainActivity = controllerActivity.get()
         controllerActivity.create()
+
+       // searchView = mockk<SearchView>(relaxed = true)
 
         ReflectionUtils.replaceFieldWithMock(mainActivity, "storagePermissionHelper", storagePermissionHelper)
 
@@ -150,11 +153,6 @@ class MainActivityTest {
 
         immediateFuture.addListener({
             ReflectionUtils.replaceFieldWithMock(mainActivity, "controller", immediateFuture.get())
-
-            // If your MainActivity has an initController() method, invoke it here via reflection if private:
-            /* val initMethod = MainActivity::class.java.getDeclaredMethod("initController")
-                initMethod.isAccessible = true
-                initMethod.invoke(mainActivity) */
         }, MoreExecutors.directExecutor())
 
         controllerActivity.start()
@@ -1223,6 +1221,22 @@ class MainActivityTest {
             method.invoke(mainActivity)
 
             verify { editor.putLong(PLAYBACK_POSITION, position) }
+        }
+    }
+
+    @Nested
+    inner class OnCreateOptionsMenu {
+
+        @Test
+        fun onCreateOptionsMenu() {
+            val menu = mockk<Menu>(relaxed = true)
+            val searchView = mockk<SearchView>(relaxed = true)
+            every { menu.findItem(R.id.search).actionView } returns searchView
+
+            mainActivity.onCreateOptionsMenu(menu)
+
+            verify { menu.findItem(R.id.search).actionView }
+            verify { searchView.setOnSearchClickListener(any()) }
         }
     }
 
