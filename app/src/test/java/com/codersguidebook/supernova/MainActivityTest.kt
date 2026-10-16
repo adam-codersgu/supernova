@@ -17,6 +17,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.SearchView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
@@ -980,6 +981,39 @@ class MainActivityTest {
             verify { storagePermissionHelper.shouldShowPermissionRationale() }
             verify { storagePermissionHelper.launchPermissionSettings() }
         }
+    }
+
+    @Nested
+    inner class LoadRandomArtworkBySongIds {
+
+        @Test
+        fun loadRandomArtworkBySongIds() = runTest {
+            stubIODispatcher(testScheduler)
+
+            try {
+                val songIds = listOf(2L)
+                val song = getMockSong(2L)
+                mockkObject(ImageHandlingHelper)
+                every { ImageHandlingHelper.loadImageByAlbumId(any(), any(), any()) } just Runs
+                val imageView = mockk<ImageView>(relaxed = true)
+                coEvery { musicLibraryViewModel.getSongById(2L) } returns song
+
+                mainActivity.loadRandomArtworkBySongIds(songIds, imageView)
+
+                advanceUntilIdle()
+
+                coVerify { musicLibraryViewModel.getSongById(2L) }
+                verify { ImageHandlingHelper.loadImageByAlbumId(any(), song.albumId, imageView) }
+            } finally {
+                resetDispatchers()
+            }
+        }
+
+        /**
+         * TODO
+         *  SONG ID LIST EMPTY
+         *  GET SONG BY ID RETURNS NULL
+         */
     }
 
     @Nested
