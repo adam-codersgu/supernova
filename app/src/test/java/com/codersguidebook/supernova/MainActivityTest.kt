@@ -1009,9 +1009,27 @@ class MainActivityTest {
             }
         }
 
+        @Test
+        fun loadRandomArtworkBySongIds_emptySongList() = runTest {
+            stubIODispatcher(testScheduler)
+
+            try {
+                mockkObject(ImageHandlingHelper)
+                every { ImageHandlingHelper.loadImageByAlbumId(any(), any(), any()) } just Runs
+                val imageView = mockk<ImageView>(relaxed = true)
+
+                mainActivity.loadRandomArtworkBySongIds(listOf(), imageView)
+
+                advanceUntilIdle()
+
+                verify { ImageHandlingHelper.loadImageByAlbumId(any(), null, imageView) }
+            } finally {
+                resetDispatchers()
+            }
+        }
+
         /**
          * TODO
-         *  SONG ID LIST EMPTY
          *  GET SONG BY ID RETURNS NULL
          */
     }
