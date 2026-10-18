@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.app.RecoverableSecurityException
 import android.content.ContentResolver
 import android.content.ContentUris
+import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.content.SharedPreferences
@@ -17,6 +18,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
 import android.widget.SearchView
 import androidx.activity.result.ActivityResultLauncher
@@ -984,6 +986,23 @@ class MainActivityTest {
     }
 
     @Nested
+    inner class HideKeyboard {
+
+        @Test
+        fun hideKeyboard() {
+            val spyActivity = spyk(mainActivity)
+            val view = mockk<View>(relaxed = true)
+            every { spyActivity.currentFocus } returns view
+            val inputManager = mockk<InputMethodManager>(relaxed = true)
+            every { spyActivity.getSystemService(Context.INPUT_METHOD_SERVICE) } returns inputManager
+
+            spyActivity.hideKeyboard()
+
+            verify { inputManager.hideSoftInputFromWindow(view.windowToken, InputMethodManager.HIDE_NOT_ALWAYS) }
+        }
+    }
+
+    @Nested
     inner class LoadRandomArtworkBySongIds {
 
         @Test
@@ -1076,6 +1095,8 @@ class MainActivityTest {
         }
 
         @ParameterizedTest
+        // TODO - INVESTIGATE WHETHER THE 43/21 TEST CASE IN CSVSOURCE IS THE REASON THIS ISN'T BEING PICKED UP
+        //  MOVE TO ITS OWN TEST TO SEE
         @CsvSource("1, 1001", "12, 1012", "123, 1123", "4321, 4321", "43/21, 1001")
         fun createSongFromCursor_trackString(cursorTrack: String, songTrack: Int) {
             val cursor = getMockCursor()
