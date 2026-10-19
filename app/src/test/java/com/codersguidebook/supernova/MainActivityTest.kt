@@ -1054,6 +1054,27 @@ class MainActivityTest {
     }
 
     @Nested
+    inner class OpenAddToPlaylistDialog {
+
+        @Test
+        fun openAddToPlaylistDialog() = runTest {
+            stubIODispatcher(testScheduler)
+
+            try {
+                val songs = getMockSongs(5)
+
+                mainActivity.openAddToPlaylistDialog(songs)
+
+                advanceUntilIdle()
+
+                coVerify { musicLibraryViewModel.getAllUserPlaylists() }
+            } finally {
+                resetDispatchers()
+            }
+        }
+    }
+
+    @Nested
     inner class CreateSongFromCursor {
 
         @Test
@@ -1095,8 +1116,6 @@ class MainActivityTest {
         }
 
         @ParameterizedTest
-        // TODO - INVESTIGATE WHETHER THE 43/21 TEST CASE IN CSVSOURCE IS THE REASON THIS ISN'T BEING PICKED UP
-        //  MOVE TO ITS OWN TEST TO SEE
         @CsvSource("1, 1001", "12, 1012", "123, 1123", "4321, 4321", "43/21, 1001")
         fun createSongFromCursor_trackString(cursorTrack: String, songTrack: Int) {
             val cursor = getMockCursor()
