@@ -1047,10 +1047,27 @@ class MainActivityTest {
             }
         }
 
-        /**
-         * TODO
-         *  GET SONG BY ID RETURNS NULL
-         */
+        @Test
+        fun loadRandomArtworkBySongIds_nullSongId() = runTest {
+            stubIODispatcher(testScheduler)
+
+            try {
+                val songIds = listOf(2L)
+                mockkObject(ImageHandlingHelper)
+                every { ImageHandlingHelper.loadImageByAlbumId(any(), any(), any()) } just Runs
+                val imageView = mockk<ImageView>(relaxed = true)
+                coEvery { musicLibraryViewModel.getSongById(2L) } returns null
+
+                mainActivity.loadRandomArtworkBySongIds(songIds, imageView)
+
+                advanceUntilIdle()
+
+                coVerify { musicLibraryViewModel.getSongById(2L) }
+                verify { ImageHandlingHelper.loadImageByAlbumId(any(), null, imageView) }
+            } finally {
+                resetDispatchers()
+            }
+        }
     }
 
     @Nested
