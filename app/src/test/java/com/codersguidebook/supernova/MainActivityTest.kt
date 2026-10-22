@@ -739,6 +739,27 @@ class MainActivityTest {
     }
 
     @Nested
+    inner class ProcessPendingSeekToRequest {
+
+        @Test
+        fun processPendingSeekToRequest() {
+            every { playQueueViewModel.pendingSeekToInstruction.value } returns 20L
+            stubPlayQueueViewModel()
+
+            val method = setMethodVisibleForInvoke(mainActivity, "processPendingSeekToRequest")
+            method.invoke(mainActivity)
+
+            verify { controller.seekTo(20L) }
+            verify {playQueueViewModel.pendingSeekToInstruction.postValue(null) }
+        }
+
+        /**
+         * TODO
+         *  playQueueViewModel.pendingSeekToInstruction.value IS NULL
+         */
+    }
+
+    @Nested
     inner class UpdateSongs {
 
         @Test
