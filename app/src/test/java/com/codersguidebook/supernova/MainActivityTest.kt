@@ -1024,6 +1024,41 @@ class MainActivityTest {
     }
 
     @Nested
+    inner class AddSongsToPlayQueue {
+
+        @Test
+        fun addSongsToPlayQueue() = runTest {
+            stubIODispatcher(testScheduler)
+
+            try {
+                every { playQueueViewModel.playQueue.value } returns getPlayQueue(5)
+                stubPlayQueueViewModel()
+                stubEditor()
+                every { sharedPreferences.getBoolean(SHUFFLE_MODE, false) } returns false
+
+                val songs = listOf(getMockSong(6L), getMockSong(7L))
+                mainActivity.addSongsToPlayQueue(songs)
+
+                advanceUntilIdle()
+
+                val playQueueSlot = slot<List<MediaItem>>()
+                verify { playQueueViewModel.playQueue.value = capture(playQueueSlot) }
+                assertEquals(7, playQueueSlot.captured.size)
+                assertEquals(6L, playQueueSlot.captured[5].mediaId)
+                assertEquals(7L, playQueueSlot.captured[6].mediaId)
+            } finally {
+                resetDispatchers()
+            }
+        }
+
+        /**
+         * TODO
+         *  addSongsAfterCurrentQueueItem = TRUE
+         *  SHUFFLE MODE IS TRUE
+         */
+    }
+
+    @Nested
     inner class LoadRandomArtworkBySongIds {
 
         @Test
