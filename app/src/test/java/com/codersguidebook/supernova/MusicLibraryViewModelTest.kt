@@ -16,7 +16,7 @@ import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSong
 import com.codersguidebook.supernova.fixture.PlaylistFixture.getMockSongOfTheDayPlaylist
 import com.codersguidebook.supernova.params.SharedPreferencesConstants
 import com.codersguidebook.supernova.testutils.DispatcherUtils.resetDispatchers
-import com.codersguidebook.supernova.testutils.DispatcherUtils.stubIODispatcher
+import com.codersguidebook.supernova.testutils.DispatcherUtils.stubDispatchers
 import com.codersguidebook.supernova.testutils.InstantTaskExecutorExtension
 import com.codersguidebook.supernova.testutils.ReflectionUtils
 import com.codersguidebook.supernova.testutils.ReflectionUtils.setMethodVisibleForInvoke
@@ -650,7 +650,7 @@ class MusicLibraryViewModelTest {
 
         @Test
         fun observerDetectsNewSongs_updatesMostPlayedPlaylist() = runTest {
-            stubIODispatcher(testScheduler)
+            stubDispatchers(testScheduler)
             try {
                 val mostPlayedSongsByIdLiveData = MutableLiveData<List<Long>>()
                 every { repository.mostPlayedSongsById } returns mostPlayedSongsByIdLiveData
@@ -679,7 +679,7 @@ class MusicLibraryViewModelTest {
 
         @Test
         fun observerDetectsNewSongs_noUpdates() = runTest {
-            stubIODispatcher(testScheduler)
+            stubDispatchers(testScheduler)
             try {
                 val mostPlayedSongsByIdLiveData = MutableLiveData<List<Long>>()
                 every { repository.mostPlayedSongsById } returns mostPlayedSongsByIdLiveData

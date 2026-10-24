@@ -44,7 +44,7 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.codersguidebook.supernova.testutils.DispatcherUtils.resetDispatchers
-import com.codersguidebook.supernova.testutils.DispatcherUtils.stubIODispatcher
+import com.codersguidebook.supernova.testutils.DispatcherUtils.stubDispatchers
 import com.codersguidebook.supernova.testutils.InstantTaskExecutorExtension
 import com.codersguidebook.supernova.testutils.ReflectionUtils
 import com.codersguidebook.supernova.testutils.ReflectionUtils.setMethodVisibleForInvoke
@@ -936,7 +936,7 @@ class MainActivityTest {
 
         @Test
         fun playPauseControl_playQueueEmpty() = runTest {
-            stubIODispatcher(testScheduler)
+            stubDispatchers(testScheduler)
 
             try {
                 every { playQueueViewModel.playQueue.value } returns listOf()
@@ -1028,10 +1028,13 @@ class MainActivityTest {
 
         @Test
         fun addSongsToPlayQueue() = runTest {
-            stubIODispatcher(testScheduler)
+            stubDispatchers(testScheduler)
 
             try {
                 every { playQueueViewModel.playQueue.value } returns getPlayQueue(5)
+                val playQueueSlot = slot<List<MediaItem>>()
+                every { playQueueViewModel.playQueue.value = capture(playQueueSlot) } just Runs
+
                 stubPlayQueueViewModel()
                 stubEditor()
                 every { sharedPreferences.getBoolean(SHUFFLE_MODE, false) } returns false
@@ -1041,11 +1044,9 @@ class MainActivityTest {
 
                 advanceUntilIdle()
 
-                val playQueueSlot = slot<List<MediaItem>>()
-                verify { playQueueViewModel.playQueue.value = capture(playQueueSlot) }
                 assertEquals(7, playQueueSlot.captured.size)
-                assertEquals(6L, playQueueSlot.captured[5].mediaId)
-                assertEquals(7L, playQueueSlot.captured[6].mediaId)
+                assertEquals("6", playQueueSlot.captured[5].mediaId)
+                assertEquals("7", playQueueSlot.captured[6].mediaId)
             } finally {
                 resetDispatchers()
             }
@@ -1063,7 +1064,7 @@ class MainActivityTest {
 
         @Test
         fun loadRandomArtworkBySongIds() = runTest {
-            stubIODispatcher(testScheduler)
+            stubDispatchers(testScheduler)
 
             try {
                 val songIds = listOf(2L)
@@ -1086,7 +1087,7 @@ class MainActivityTest {
 
         @Test
         fun loadRandomArtworkBySongIds_emptySongList() = runTest {
-            stubIODispatcher(testScheduler)
+            stubDispatchers(testScheduler)
 
             try {
                 mockkObject(ImageHandlingHelper)
@@ -1105,7 +1106,7 @@ class MainActivityTest {
 
         @Test
         fun loadRandomArtworkBySongIds_nullSongId() = runTest {
-            stubIODispatcher(testScheduler)
+            stubDispatchers(testScheduler)
 
             try {
                 val songIds = listOf(2L)
@@ -1131,7 +1132,7 @@ class MainActivityTest {
 
         @Test
         fun openAddToPlaylistDialog() = runTest {
-            stubIODispatcher(testScheduler)
+            stubDispatchers(testScheduler)
 
             try {
                 val songs = getMockSongs(5)
@@ -1215,7 +1216,7 @@ class MainActivityTest {
 
         @Test
         fun saveCurrentlyPlayingIndex() = runTest {
-            stubIODispatcher(testScheduler)
+            stubDispatchers(testScheduler)
 
             try {
                 every { playQueueViewModel.currentQueueItemIndex } returns mockLiveData
