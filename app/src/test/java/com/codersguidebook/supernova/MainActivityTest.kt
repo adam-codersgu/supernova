@@ -1052,9 +1052,35 @@ class MainActivityTest {
             }
         }
 
+        @Test
+        fun addSongsToPlayQueue_afterCurrentQueueItem() = runTest {
+            stubDispatchers(testScheduler)
+
+            try {
+                every { playQueueViewModel.playQueue.value } returns getPlayQueue(5)
+                val playQueueSlot = slot<List<MediaItem>>()
+                every { playQueueViewModel.playQueue.value = capture(playQueueSlot) } just Runs
+                every { playQueueViewModel.currentQueueItemIndex.value } returns 2
+
+                stubPlayQueueViewModel()
+                stubEditor()
+                every { sharedPreferences.getBoolean(SHUFFLE_MODE, false) } returns false
+
+                val songs = listOf(getMockSong(6L), getMockSong(7L))
+                mainActivity.addSongsToPlayQueue(songs, true)
+
+                advanceUntilIdle()
+
+                assertEquals(7, playQueueSlot.captured.size)
+                assertEquals("6", playQueueSlot.captured[3].mediaId)
+                assertEquals("7", playQueueSlot.captured[4].mediaId)
+            } finally {
+                resetDispatchers()
+            }
+        }
+
         /**
          * TODO
-         *  addSongsAfterCurrentQueueItem = TRUE
          *  SHUFFLE MODE IS TRUE
          */
     }
