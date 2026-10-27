@@ -750,13 +750,19 @@ class MainActivityTest {
             method.invoke(mainActivity)
 
             verify { controller.seekTo(20L) }
-            verify {playQueueViewModel.pendingSeekToInstruction.postValue(null) }
+            verify { playQueueViewModel.pendingSeekToInstruction.postValue(null) }
         }
 
-        /**
-         * TODO
-         *  playQueueViewModel.pendingSeekToInstruction.value IS NULL
-         */
+        @Test
+        fun processPendingSeekToRequest_nullPendingSeekTo() {
+            every { playQueueViewModel.pendingSeekToInstruction.value } returns null
+            stubPlayQueueViewModel()
+
+            val method = setMethodVisibleForInvoke(mainActivity, "processPendingSeekToRequest")
+            method.invoke(mainActivity)
+
+            verify(exactly = 0) { controller.seekTo(any()) }
+        }
     }
 
     @Nested
