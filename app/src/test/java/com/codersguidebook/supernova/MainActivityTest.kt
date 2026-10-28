@@ -1406,6 +1406,22 @@ class MainActivityTest {
     }
 
     @Nested
+    inner class OnPause {
+
+        @Test
+        fun onPause() {
+            stubPlayQueueViewModel()
+            every { playQueueViewModel.getCurrentSongMediaId() } returns 2L
+            every { controller.currentPosition } returns 10L
+
+            val method = setMethodVisibleForInvoke(mainActivity, "onPause")
+            method.invoke(mainActivity)
+
+            verify {  musicLibraryViewModel.savePlaybackProgress(2, 10) }
+        }
+    }
+
+    @Nested
     inner class OnStop {
 
         private val position = 100L
