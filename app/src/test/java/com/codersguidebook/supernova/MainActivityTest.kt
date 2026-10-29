@@ -85,6 +85,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.robolectric.Robolectric
+import org.robolectric.shadows.ShadowLog
 import tech.apter.junit.jupiter.robolectric.RobolectricExtension
 import java.lang.reflect.Method
 import kotlin.reflect.KMutableProperty1
@@ -129,7 +130,7 @@ class MainActivityTest {
 
     @BeforeEach
     fun setUp() {
-
+        ShadowLog.clear()
         clearAllMocks()
 
         val controllerActivity = Robolectric.buildActivity(MainActivity::class.java)
@@ -1051,6 +1052,9 @@ class MainActivityTest {
 
                 advanceUntilIdle()
 
+                assertTrue(ShadowLog.getLogsForTag("MainActivity")
+                    .filter { l -> l.msg.equals("Change to content URI for media ID $SONG_ID") }
+                    .size == 1)
                 coVerify { playQueueViewModel.removeAllOccurrencesOfSong(SONG_ID.toString()) }
             } finally {
                 resetDispatchers()
@@ -1059,7 +1063,7 @@ class MainActivityTest {
 
         /**
          * TODO
-         *  NumberFormatException
+         *  NumberFormatException - COULD VERIFY refreshMusicLibrary CALLED USING A LOG ASSERTION?
          *  handleFileUpdateByMediaId NOT EQUAL TO DELETED
          */
 
