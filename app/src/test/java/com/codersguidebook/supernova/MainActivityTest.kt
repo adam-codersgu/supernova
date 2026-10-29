@@ -12,6 +12,7 @@ import android.content.SharedPreferences
 import android.database.Cursor
 import android.graphics.Bitmap
 import android.media.AudioManager
+import android.net.Uri
 import android.provider.MediaStore
 import android.util.Size
 import android.view.Menu
@@ -1026,6 +1027,47 @@ class MainActivityTest {
             spyActivity.hideKeyboard()
 
             verify { inputManager.hideSoftInputFromWindow(view.windowToken, InputMethodManager.HIDE_NOT_ALWAYS) }
+        }
+    }
+
+    @Nested
+    inner class HandleChangeToContentUri {
+
+        @Test
+        fun handleChangeToContentUri() = runTest {
+            stubDispatchers(testScheduler)
+
+            try {
+                val uriString = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + "/$SONG_ID"
+                val uri = Uri.parse(uriString)
+                stubPlayQueueViewModel()
+
+                val song = getMockSong()
+                coEvery { musicLibraryViewModel.getSongById(SONG_ID) } returns song
+
+                val spyActivity = getSpyActivity(mainActivity)
+
+                spyActivity.handleChangeToContentUri(uri)
+
+                advanceUntilIdle()
+
+                coVerify { playQueueViewModel.removeAllOccurrencesOfSong(SONG_ID.toString()) }
+            } finally {
+                resetDispatchers()
+            }
+        }
+
+        /**
+         * TODO
+         *  NumberFormatException
+         *  handleFileUpdateByMediaId NOT EQUAL TO DELETED
+         */
+
+        private fun getSpyActivity(mainActivity: MainActivity): MainActivity {
+            val spyActivity = spyk(mainActivity)
+            val mockContentResolver = mockk<ContentResolver>(relaxed = true)
+            every { spyActivity.contentResolver } returns mockContentResolver
+            return spyActivity
         }
     }
 
