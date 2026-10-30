@@ -1078,7 +1078,7 @@ class MainActivityTest {
 
                 assertTrue(ShadowLog.getLogsForTag("MainActivity")
                     .filter { l -> l.msg.equals("Change to content URI for media ID $SONG_ID") }
-                    .isEmpty())
+                    .size == 1)
                 coVerify(exactly = 0) { playQueueViewModel.removeAllOccurrencesOfSong(SONG_ID.toString()) }
             } finally {
                 resetDispatchers()
