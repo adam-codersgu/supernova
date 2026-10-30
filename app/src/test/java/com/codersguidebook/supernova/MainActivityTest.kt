@@ -1061,10 +1061,33 @@ class MainActivityTest {
             }
         }
 
+        @Test
+        fun handleChangeToContentUri_notDeleted() = runTest {
+            stubDispatchers(testScheduler)
+
+            try {
+                val uriString = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + "/$SONG_ID"
+                val uri = Uri.parse(uriString)
+                stubPlayQueueViewModel()
+
+                val spyActivity = getSpyActivity(mainActivity)
+
+                spyActivity.handleChangeToContentUri(uri)
+
+                advanceUntilIdle()
+
+                assertTrue(ShadowLog.getLogsForTag("MainActivity")
+                    .filter { l -> l.msg.equals("Change to content URI for media ID $SONG_ID") }
+                    .isEmpty())
+                coVerify(exactly = 0) { playQueueViewModel.removeAllOccurrencesOfSong(SONG_ID.toString()) }
+            } finally {
+                resetDispatchers()
+            }
+        }
+
         /**
          * TODO
          *  NumberFormatException - COULD VERIFY refreshMusicLibrary CALLED USING A LOG ASSERTION?
-         *  handleFileUpdateByMediaId NOT EQUAL TO DELETED
          */
 
         private fun getSpyActivity(mainActivity: MainActivity): MainActivity {
