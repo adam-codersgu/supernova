@@ -35,10 +35,6 @@ import androidx.media3.common.Player.REPEAT_MODE_OFF
 import androidx.media3.common.Player.REPEAT_MODE_ONE
 import androidx.media3.session.MediaController
 import androidx.navigation.NavController
-import androidx.navigation.findNavController
-import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fixture.PlayQueueFixture.getMediaItem
 import com.codersguidebook.supernova.fixture.PlayQueueFixture.getPlayQueue
@@ -104,9 +100,6 @@ class MainActivityTest {
         private const val ALBUM_ID = "434356556"
         private const val SONG_ID = 11L
     }
-
-    @RelaxedMockK
-    lateinit var appBarConfiguration: AppBarConfiguration
 
     @RelaxedMockK
     lateinit var application: Application
@@ -1111,11 +1104,6 @@ class MainActivityTest {
 
             assertTrue(mainActivity.onSupportNavigateUp())
         }
-
-        /**
-         * TODO
-         *  mockNavController.navigateUp(appBarConfiguration) IS FALSE
-         */
     }
 
     @Nested
