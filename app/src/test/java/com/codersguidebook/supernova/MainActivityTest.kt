@@ -25,6 +25,7 @@ import android.widget.SearchView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.appcompat.app.ActionBar
+import androidx.appcompat.view.menu.MenuBuilder
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
@@ -34,6 +35,10 @@ import androidx.media3.common.Player.REPEAT_MODE_OFF
 import androidx.media3.common.Player.REPEAT_MODE_ONE
 import androidx.media3.session.MediaController
 import androidx.navigation.NavController
+import androidx.navigation.findNavController
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.AppBarConfiguration
+import androidx.navigation.ui.navigateUp
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fixture.PlayQueueFixture.getMediaItem
 import com.codersguidebook.supernova.fixture.PlayQueueFixture.getPlayQueue
@@ -101,6 +106,9 @@ class MainActivityTest {
     }
 
     @RelaxedMockK
+    lateinit var appBarConfiguration: AppBarConfiguration
+
+    @RelaxedMockK
     lateinit var application: Application
 
     @RelaxedMockK
@@ -117,8 +125,6 @@ class MainActivityTest {
 
     @RelaxedMockK
     lateinit var musicLibraryViewModel: MusicLibraryViewModel
-
-   // private lateinit var searchView: SearchView
 
     @RelaxedMockK
     lateinit var sharedPreferences: SharedPreferences
@@ -147,8 +153,6 @@ class MainActivityTest {
         } returns playQueueViewModel
 
         controllerActivity.create()
-
-       // searchView = mockk<SearchView>(relaxed = true)
 
         ReflectionUtils.replaceFieldWithMock(mainActivity, "storagePermissionHelper", storagePermissionHelper)
 
@@ -1095,6 +1099,29 @@ class MainActivityTest {
             every { spyActivity.contentResolver } returns mockContentResolver
             return spyActivity
         }
+    }
+
+    @Nested
+    inner class OnSupportNavigateUp {
+
+        @Test
+        fun onSupportNavigateUp() {
+            val menu = MenuBuilder(mainActivity)
+            mainActivity.onCreateOptionsMenu(menu)
+
+            //val spyActivity = spyk(mainActivity)
+            //val mockNavController = mockk<NavController>(relaxed = true)
+
+            //every { mainActivity.findNavController(R.id.nav_host_fragment) } returns mockNavController
+            //every { mockNavController.navigateUp(appBarConfiguration) } returns true
+
+            assertTrue(mainActivity.onSupportNavigateUp())
+        }
+
+        /**
+         * TODO
+         *  mockNavController.navigateUp(appBarConfiguration) IS FALSE
+         */
     }
 
     @Nested
