@@ -1109,12 +1109,6 @@ class MainActivityTest {
             val menu = MenuBuilder(mainActivity)
             mainActivity.onCreateOptionsMenu(menu)
 
-            //val spyActivity = spyk(mainActivity)
-            //val mockNavController = mockk<NavController>(relaxed = true)
-
-            //every { mainActivity.findNavController(R.id.nav_host_fragment) } returns mockNavController
-            //every { mockNavController.navigateUp(appBarConfiguration) } returns true
-
             assertTrue(mainActivity.onSupportNavigateUp())
         }
 
