@@ -1081,11 +1081,6 @@ class MainActivityTest {
             }
         }
 
-        /**
-         * TODO
-         *  NumberFormatException - COULD VERIFY refreshMusicLibrary CALLED USING A LOG ASSERTION?
-         */
-
         private fun getSpyActivity(mainActivity: MainActivity): MainActivity {
             val spyActivity = spyk(mainActivity)
             val mockContentResolver = mockk<ContentResolver>(relaxed = true)
