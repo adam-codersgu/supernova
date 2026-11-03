@@ -1157,10 +1157,37 @@ class MainActivityTest {
             }
         }
 
-        /**
-         * TODO
-         *  SHUFFLE MODE IS TRUE
-         */
+        @Test
+        fun addSongsToPlayQueue_shuffleModeTrue() = runTest {
+            stubDispatchers(testScheduler)
+
+            try {
+                every { playQueueViewModel.playQueue.value } returns listOf(
+                    getMediaItem("1", 1),
+                    getMediaItem("3", 3),
+                    getMediaItem("2", 2)
+                )
+                val playQueueSlot = slot<List<MediaItem>>()
+                every { playQueueViewModel.playQueue.value = capture(playQueueSlot) } just Runs
+
+                stubPlayQueueViewModel()
+                stubEditor()
+                every { sharedPreferences.getBoolean(SHUFFLE_MODE, false) } returns true
+
+                val songs = listOf(getMockSong(6L), getMockSong(7L))
+                mainActivity.addSongsToPlayQueue(songs)
+
+                advanceUntilIdle()
+
+                assertEquals(5, playQueueSlot.captured.size)
+                assertEquals("6", playQueueSlot.captured[3].mediaId)
+                assertEquals("7", playQueueSlot.captured[4].mediaId)
+                assertEquals(4, playQueueSlot.captured[3].mediaMetadata.extras?.getInt(ORDER_ID))
+                assertEquals(5, playQueueSlot.captured[4].mediaMetadata.extras?.getInt(ORDER_ID))
+            } finally {
+                resetDispatchers()
+            }
+        }
     }
 
     @Nested
