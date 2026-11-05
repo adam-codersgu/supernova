@@ -1,19 +1,31 @@
 package com.codersguidebook.supernova
 
 import android.app.Application
+import android.app.PendingIntent
 import android.app.RecoverableSecurityException
 import android.content.ContentResolver
 import android.content.ContentUris
+import android.content.Context
 import android.content.Intent
+import android.content.IntentSender
 import android.content.SharedPreferences
 import android.database.Cursor
 import android.graphics.Bitmap
+import android.media.AudioManager
+import android.net.Uri
 import android.provider.MediaStore
 import android.util.Size
+import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
+import android.widget.ImageView
+import android.widget.SearchView
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
 import androidx.appcompat.app.ActionBar
+import androidx.appcompat.view.menu.MenuBuilder
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
@@ -34,12 +46,13 @@ import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.REPEAT_MODE
 import com.codersguidebook.supernova.params.SharedPreferencesConstants.Companion.SHUFFLE_MODE
 import com.codersguidebook.supernova.testutils.DispatcherUtils.resetDispatchers
-import com.codersguidebook.supernova.testutils.DispatcherUtils.stubIODispatcher
+import com.codersguidebook.supernova.testutils.DispatcherUtils.stubDispatchers
 import com.codersguidebook.supernova.testutils.InstantTaskExecutorExtension
 import com.codersguidebook.supernova.testutils.ReflectionUtils
 import com.codersguidebook.supernova.testutils.ReflectionUtils.setMethodVisibleForInvoke
 import com.codersguidebook.supernova.testutils.ReflectionUtils.setMethodVisibleForSuspend
 import com.codersguidebook.supernova.utils.ImageHandlingHelper
+import com.codersguidebook.supernova.utils.StorageAccessPermissionHelper
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.MoreExecutors
 import io.kotest.assertions.fail
@@ -56,13 +69,16 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.mockkObject
+import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.spyk
+import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -70,6 +86,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.robolectric.Robolectric
+import org.robolectric.shadows.ShadowLog
 import tech.apter.junit.jupiter.robolectric.RobolectricExtension
 import java.lang.reflect.Method
 import kotlin.reflect.KMutableProperty1
@@ -105,12 +122,18 @@ class MainActivityTest {
     @RelaxedMockK
     lateinit var sharedPreferences: SharedPreferences
 
+    @RelaxedMockK
+    lateinit var storagePermissionHelper: StorageAccessPermissionHelper
+
     private lateinit var mainActivity: MainActivity
 
     @BeforeEach
     fun setUp() {
-
+        ShadowLog.clear()
         clearAllMocks()
+
+        val controllerActivity = Robolectric.buildActivity(MainActivity::class.java)
+        mainActivity = controllerActivity.get()
 
         mockkConstructor(ViewModelProvider::class)
 
@@ -122,13 +145,9 @@ class MainActivityTest {
             anyConstructed<ViewModelProvider>()[PlayQueueViewModel::class.java]
         } returns playQueueViewModel
 
-        // 4. Stub any internal LiveData dependencies that onCreate / fragments observe
-        // Example (repeat for any fields that your activity registers observers on):
-        // every { musicLibraryViewModel.someLiveDataField } returns mockLiveData
-
-        val controllerActivity = Robolectric.buildActivity(MainActivity::class.java)
-        mainActivity = controllerActivity.get()
         controllerActivity.create()
+
+        ReflectionUtils.replaceFieldWithMock(mainActivity, "storagePermissionHelper", storagePermissionHelper)
 
         val immediateFuture = Futures.immediateFuture(controller)
 
@@ -136,11 +155,6 @@ class MainActivityTest {
 
         immediateFuture.addListener({
             ReflectionUtils.replaceFieldWithMock(mainActivity, "controller", immediateFuture.get())
-
-            // If your MainActivity has an initController() method, invoke it here via reflection if private:
-            /* val initMethod = MainActivity::class.java.getDeclaredMethod("initController")
-                initMethod.isAccessible = true
-                initMethod.invoke(mainActivity) */
         }, MoreExecutors.directExecutor())
 
         controllerActivity.start()
@@ -218,6 +232,29 @@ class MainActivityTest {
                 MenuItem::class.java)
             targetMethod.isAccessible = true
             return targetMethod
+        }
+    }
+
+    @Nested
+    inner class DeleteSongs {
+
+        @Test
+        fun deleteSongs() {
+            val songs = getMockSongs(1)
+            every { musicLibraryViewModel.songIdToDelete } returns 1L
+            mockkStatic(MediaStore::class)
+            val pendingIntent = mockk<PendingIntent>()
+            val intentSender = mockk<IntentSender>()
+            val mediaDeletionLauncher = mockk<ActivityResultLauncher<IntentSenderRequest>>(relaxed = true)
+            ReflectionUtils.replaceFieldWithMock(mainActivity, "mediaDeletionLauncher", mediaDeletionLauncher)
+
+            every { pendingIntent.intentSender } returns intentSender
+            every { MediaStore.createDeleteRequest(any(), any()) } returns pendingIntent
+
+            mainActivity.deleteSongs(songs)
+
+            verify { mediaDeletionLauncher.launch(any()) }
+            unmockkStatic(MediaStore::class)
         }
     }
 
@@ -351,6 +388,17 @@ class MainActivityTest {
             mainActivity.fastForward()
 
             verify { controller.seekForward() }
+        }
+    }
+
+    @Nested
+    inner class FastRewind {
+
+        @Test
+        fun fastRewind() {
+            mainActivity.fastRewind()
+
+            verify { controller.seekBack() }
         }
     }
 
@@ -490,6 +538,41 @@ class MainActivityTest {
             verify { controller.setMediaItem(playQueue[0]) }
             verify { controller.prepare() }
             verify(exactly = 0) { controller.play() }
+        }
+    }
+
+    @Nested
+    inner class RemoveQueueItemByIndex {
+
+        @Test
+        fun removeQueueItemByIndex() {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 2
+            stubPlayQueueViewModel()
+
+            mainActivity.removeQueueItemByIndex(1)
+
+            val playQueueSlot = slot<List<MediaItem>>()
+            verify { playQueueViewModel.playQueue.value = capture(playQueueSlot) }
+            assertEquals(4, playQueueSlot.captured.size)
+            assertTrue(!playQueueSlot.captured.contains(playQueue[1]))
+            verify { playQueueViewModel.currentQueueItemIndex.postValue(1) }
+        }
+
+        @Test
+        fun removeQueueItemByIndex_indexHigherThanCurrentlyPlaying() {
+            val playQueue = getPlayQueue(5)
+            every { playQueueViewModel.playQueue.value } returns playQueue
+            every { playQueueViewModel.currentQueueItemIndex.value } returns 2
+            stubPlayQueueViewModel()
+
+            mainActivity.removeQueueItemByIndex(3)
+
+            val playQueueSlot = slot<List<MediaItem>>()
+            verify { playQueueViewModel.playQueue.value = capture(playQueueSlot) }
+            assertEquals(4, playQueueSlot.captured.size)
+            assertTrue(!playQueueSlot.captured.contains(playQueue[3]))
         }
     }
 
@@ -651,6 +734,33 @@ class MainActivityTest {
             val mockContentResolver = mockk<ContentResolver>(relaxed = true)
             every { spyActivity.contentResolver } returns mockContentResolver
             return spyActivity
+        }
+    }
+
+    @Nested
+    inner class ProcessPendingSeekToRequest {
+
+        @Test
+        fun processPendingSeekToRequest() {
+            every { playQueueViewModel.pendingSeekToInstruction.value } returns 20L
+            stubPlayQueueViewModel()
+
+            val method = setMethodVisibleForInvoke(mainActivity, "processPendingSeekToRequest")
+            method.invoke(mainActivity)
+
+            verify { controller.seekTo(20L) }
+            verify { playQueueViewModel.pendingSeekToInstruction.postValue(null) }
+        }
+
+        @Test
+        fun processPendingSeekToRequest_nullPendingSeekTo() {
+            every { playQueueViewModel.pendingSeekToInstruction.value } returns null
+            stubPlayQueueViewModel()
+
+            val method = setMethodVisibleForInvoke(mainActivity, "processPendingSeekToRequest")
+            method.invoke(mainActivity)
+
+            verify(exactly = 0) { controller.seekTo(any()) }
         }
     }
 
@@ -831,7 +941,7 @@ class MainActivityTest {
 
         @Test
         fun playPauseControl_playQueueEmpty() = runTest {
-            stubIODispatcher(testScheduler)
+            stubDispatchers(testScheduler)
 
             try {
                 every { playQueueViewModel.playQueue.value } returns listOf()
@@ -844,6 +954,325 @@ class MainActivityTest {
                 verify(exactly = 0) { controller.pause() }
                 verify(exactly = 0) { controller.play() }
                 verify { musicLibraryViewModel.getAllSongsOrderByTitle() }
+            } finally {
+                resetDispatchers()
+            }
+        }
+    }
+
+    @Nested
+    inner class OnRequestPermissionsResult {
+
+        @Test
+        fun onRequestPermissionsResult() {
+            every { storagePermissionHelper.hasPermissions() } returns true
+
+            mainActivity.onRequestPermissionsResult(
+                requestCode = 100,
+                permissions = arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE),
+                grantResults = intArrayOf(android.content.pm.PackageManager.PERMISSION_GRANTED)
+            )
+
+            verify { storagePermissionHelper.hasPermissions() }
+            verify(exactly = 0) { storagePermissionHelper.shouldShowPermissionRationale() }
+            verify(exactly = 0) { storagePermissionHelper.launchPermissionSettings() }
+        }
+
+        @Test
+        fun onRequestPermissionsResult_showPermissionRationale() {
+            every { storagePermissionHelper.hasPermissions() } returns false
+            every { storagePermissionHelper.shouldShowPermissionRationale() } returns true
+
+            mainActivity.onRequestPermissionsResult(
+                requestCode = 100,
+                permissions = arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE),
+                grantResults = intArrayOf(android.content.pm.PackageManager.PERMISSION_GRANTED)
+            )
+
+            verify { storagePermissionHelper.hasPermissions() }
+            verify { storagePermissionHelper.shouldShowPermissionRationale() }
+            verify(exactly = 0) { storagePermissionHelper.launchPermissionSettings() }
+        }
+
+        @Test
+        fun onRequestPermissionsResult_doNotShowPermissionRationale() {
+            every { storagePermissionHelper.hasPermissions() } returns false
+            every { storagePermissionHelper.shouldShowPermissionRationale() } returns false
+
+            mainActivity.onRequestPermissionsResult(
+                requestCode = 100,
+                permissions = arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE),
+                grantResults = intArrayOf(android.content.pm.PackageManager.PERMISSION_GRANTED)
+            )
+
+            verify { storagePermissionHelper.hasPermissions() }
+            verify { storagePermissionHelper.shouldShowPermissionRationale() }
+            verify { storagePermissionHelper.launchPermissionSettings() }
+        }
+    }
+
+    @Nested
+    inner class HideKeyboard {
+
+        @Test
+        fun hideKeyboard() {
+            val spyActivity = spyk(mainActivity)
+            val view = mockk<View>(relaxed = true)
+            every { spyActivity.currentFocus } returns view
+            val inputManager = mockk<InputMethodManager>(relaxed = true)
+            every { spyActivity.getSystemService(Context.INPUT_METHOD_SERVICE) } returns inputManager
+
+            spyActivity.hideKeyboard()
+
+            verify { inputManager.hideSoftInputFromWindow(view.windowToken, InputMethodManager.HIDE_NOT_ALWAYS) }
+        }
+    }
+
+    @Nested
+    inner class HandleChangeToContentUri {
+
+        @Test
+        fun handleChangeToContentUri() = runTest {
+            stubDispatchers(testScheduler)
+
+            try {
+                val uriString = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + "/$SONG_ID"
+                val uri = Uri.parse(uriString)
+                stubPlayQueueViewModel()
+
+                val song = getMockSong()
+                coEvery { musicLibraryViewModel.getSongById(SONG_ID) } returns song
+
+                val spyActivity = getSpyActivity(mainActivity)
+
+                spyActivity.handleChangeToContentUri(uri)
+
+                advanceUntilIdle()
+
+                assertTrue(ShadowLog.getLogsForTag("MainActivity")
+                    .filter { l -> l.msg.equals("Change to content URI for media ID $SONG_ID") }
+                    .size == 1)
+                coVerify { playQueueViewModel.removeAllOccurrencesOfSong(SONG_ID.toString()) }
+            } finally {
+                resetDispatchers()
+            }
+        }
+
+        @Test
+        fun handleChangeToContentUri_notDeleted() = runTest {
+            stubDispatchers(testScheduler)
+
+            try {
+                val uriString = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + "/$SONG_ID"
+                val uri = Uri.parse(uriString)
+                stubPlayQueueViewModel()
+
+                val spyActivity = getSpyActivity(mainActivity)
+
+                spyActivity.handleChangeToContentUri(uri)
+
+                advanceUntilIdle()
+
+                assertTrue(ShadowLog.getLogsForTag("MainActivity")
+                    .filter { l -> l.msg.equals("Change to content URI for media ID $SONG_ID") }
+                    .size == 1)
+            } finally {
+                resetDispatchers()
+            }
+        }
+
+        private fun getSpyActivity(mainActivity: MainActivity): MainActivity {
+            val spyActivity = spyk(mainActivity)
+            val mockContentResolver = mockk<ContentResolver>(relaxed = true)
+            every { spyActivity.contentResolver } returns mockContentResolver
+            return spyActivity
+        }
+    }
+
+    @Nested
+    inner class OnSupportNavigateUp {
+
+        @Test
+        fun onSupportNavigateUp() {
+            val menu = MenuBuilder(mainActivity)
+            mainActivity.onCreateOptionsMenu(menu)
+
+            assertTrue(mainActivity.onSupportNavigateUp())
+        }
+    }
+
+    @Nested
+    inner class AddSongsToPlayQueue {
+
+        @Test
+        fun addSongsToPlayQueue() = runTest {
+            stubDispatchers(testScheduler)
+
+            try {
+                every { playQueueViewModel.playQueue.value } returns getPlayQueue(5)
+                val playQueueSlot = slot<List<MediaItem>>()
+                every { playQueueViewModel.playQueue.value = capture(playQueueSlot) } just Runs
+
+                stubPlayQueueViewModel()
+                stubEditor()
+                every { sharedPreferences.getBoolean(SHUFFLE_MODE, false) } returns false
+
+                val songs = listOf(getMockSong(6L), getMockSong(7L))
+                mainActivity.addSongsToPlayQueue(songs)
+
+                advanceUntilIdle()
+
+                assertEquals(7, playQueueSlot.captured.size)
+                assertEquals("6", playQueueSlot.captured[5].mediaId)
+                assertEquals("7", playQueueSlot.captured[6].mediaId)
+            } finally {
+                resetDispatchers()
+            }
+        }
+
+        @Test
+        fun addSongsToPlayQueue_afterCurrentQueueItem() = runTest {
+            stubDispatchers(testScheduler)
+
+            try {
+                every { playQueueViewModel.playQueue.value } returns getPlayQueue(5)
+                val playQueueSlot = slot<List<MediaItem>>()
+                every { playQueueViewModel.playQueue.value = capture(playQueueSlot) } just Runs
+                every { playQueueViewModel.currentQueueItemIndex.value } returns 2
+
+                stubPlayQueueViewModel()
+                stubEditor()
+                every { sharedPreferences.getBoolean(SHUFFLE_MODE, false) } returns false
+
+                val songs = listOf(getMockSong(6L), getMockSong(7L))
+                mainActivity.addSongsToPlayQueue(songs, true)
+
+                advanceUntilIdle()
+
+                assertEquals(7, playQueueSlot.captured.size)
+                assertEquals("6", playQueueSlot.captured[3].mediaId)
+                assertEquals("7", playQueueSlot.captured[4].mediaId)
+            } finally {
+                resetDispatchers()
+            }
+        }
+
+        @Test
+        fun addSongsToPlayQueue_shuffleModeTrue() = runTest {
+            stubDispatchers(testScheduler)
+
+            try {
+                every { playQueueViewModel.playQueue.value } returns listOf(
+                    getMediaItem("1", 1),
+                    getMediaItem("3", 3),
+                    getMediaItem("2", 2)
+                )
+                val playQueueSlot = slot<List<MediaItem>>()
+                every { playQueueViewModel.playQueue.value = capture(playQueueSlot) } just Runs
+
+                stubPlayQueueViewModel()
+                stubEditor()
+                every { sharedPreferences.getBoolean(SHUFFLE_MODE, false) } returns true
+
+                val songs = listOf(getMockSong(6L), getMockSong(7L))
+                mainActivity.addSongsToPlayQueue(songs)
+
+                advanceUntilIdle()
+
+                assertEquals(5, playQueueSlot.captured.size)
+                assertEquals("6", playQueueSlot.captured[3].mediaId)
+                assertEquals("7", playQueueSlot.captured[4].mediaId)
+                assertEquals(4, playQueueSlot.captured[3].mediaMetadata.extras?.getInt(ORDER_ID))
+                assertEquals(5, playQueueSlot.captured[4].mediaMetadata.extras?.getInt(ORDER_ID))
+            } finally {
+                resetDispatchers()
+            }
+        }
+    }
+
+    @Nested
+    inner class LoadRandomArtworkBySongIds {
+
+        @Test
+        fun loadRandomArtworkBySongIds() = runTest {
+            stubDispatchers(testScheduler)
+
+            try {
+                val songIds = listOf(2L)
+                val song = getMockSong(2L)
+                mockkObject(ImageHandlingHelper)
+                every { ImageHandlingHelper.loadImageByAlbumId(any(), any(), any()) } just Runs
+                val imageView = mockk<ImageView>(relaxed = true)
+                coEvery { musicLibraryViewModel.getSongById(2L) } returns song
+
+                mainActivity.loadRandomArtworkBySongIds(songIds, imageView)
+
+                advanceUntilIdle()
+
+                coVerify { musicLibraryViewModel.getSongById(2L) }
+                verify { ImageHandlingHelper.loadImageByAlbumId(any(), song.albumId, imageView) }
+            } finally {
+                resetDispatchers()
+            }
+        }
+
+        @Test
+        fun loadRandomArtworkBySongIds_emptySongList() = runTest {
+            stubDispatchers(testScheduler)
+
+            try {
+                mockkObject(ImageHandlingHelper)
+                every { ImageHandlingHelper.loadImageByAlbumId(any(), any(), any()) } just Runs
+                val imageView = mockk<ImageView>(relaxed = true)
+
+                mainActivity.loadRandomArtworkBySongIds(listOf(), imageView)
+
+                advanceUntilIdle()
+
+                verify { ImageHandlingHelper.loadImageByAlbumId(any(), null, imageView) }
+            } finally {
+                resetDispatchers()
+            }
+        }
+
+        @Test
+        fun loadRandomArtworkBySongIds_nullSongId() = runTest {
+            stubDispatchers(testScheduler)
+
+            try {
+                val songIds = listOf(2L)
+                mockkObject(ImageHandlingHelper)
+                every { ImageHandlingHelper.loadImageByAlbumId(any(), any(), any()) } just Runs
+                val imageView = mockk<ImageView>(relaxed = true)
+                coEvery { musicLibraryViewModel.getSongById(2L) } returns null
+
+                mainActivity.loadRandomArtworkBySongIds(songIds, imageView)
+
+                advanceUntilIdle()
+
+                coVerify { musicLibraryViewModel.getSongById(2L) }
+                verify { ImageHandlingHelper.loadImageByAlbumId(any(), null, imageView) }
+            } finally {
+                resetDispatchers()
+            }
+        }
+    }
+
+    @Nested
+    inner class OpenAddToPlaylistDialog {
+
+        @Test
+        fun openAddToPlaylistDialog() = runTest {
+            stubDispatchers(testScheduler)
+
+            try {
+                val songs = getMockSongs(5)
+
+                mainActivity.openAddToPlaylistDialog(songs)
+
+                advanceUntilIdle()
+
+                coVerify { musicLibraryViewModel.getAllUserPlaylists() }
             } finally {
                 resetDispatchers()
             }
@@ -918,7 +1347,7 @@ class MainActivityTest {
 
         @Test
         fun saveCurrentlyPlayingIndex() = runTest {
-            stubIODispatcher(testScheduler)
+            stubDispatchers(testScheduler)
 
             try {
                 every { playQueueViewModel.currentQueueItemIndex } returns mockLiveData
@@ -1013,6 +1442,54 @@ class MainActivityTest {
     }
 
     @Nested
+    inner class ToggleShuffleMode {
+
+        @Test
+        fun toggleShuffleMode() {
+            stubEditor()
+
+            every { sharedPreferences.getBoolean(SHUFFLE_MODE, false) } returns false
+
+            val shuffleMode = mainActivity.toggleShuffleMode()
+            assertEquals(true, shuffleMode)
+        }
+
+        @Test
+        fun toggleShuffleMode_alreadyShuffled() {
+            stubEditor()
+
+            every { sharedPreferences.getBoolean(SHUFFLE_MODE, false) } returns true
+
+            val shuffleMode = mainActivity.toggleShuffleMode()
+            assertEquals(false, shuffleMode)
+        }
+    }
+
+    @Nested
+    inner class OnResume {
+
+        @Test
+        fun onResume() {
+            val method = setMethodVisibleForInvoke(mainActivity, "onResume")
+            method.invoke(mainActivity)
+
+            assertEquals(AudioManager.STREAM_MUSIC, mainActivity.volumeControlStream)
+        }
+    }
+
+    @Nested
+    inner class OnRestart {
+
+        @Test
+        fun onRestart() {
+            val method = setMethodVisibleForInvoke(mainActivity, "onRestart")
+            method.invoke(mainActivity)
+
+            verify { musicLibraryViewModel.setMostPlayedPlaylistTimeframe() }
+        }
+    }
+
+    @Nested
     inner class OnDestroy {
 
         @Test
@@ -1024,6 +1501,22 @@ class MainActivityTest {
 
             verify { editor.remove(SHUFFLE_MODE) }
             verify { controller.stop() }
+        }
+    }
+
+    @Nested
+    inner class OnPause {
+
+        @Test
+        fun onPause() {
+            stubPlayQueueViewModel()
+            every { playQueueViewModel.getCurrentSongMediaId() } returns 2L
+            every { controller.currentPosition } returns 10L
+
+            val method = setMethodVisibleForInvoke(mainActivity, "onPause")
+            method.invoke(mainActivity)
+
+            verify {  musicLibraryViewModel.savePlaybackProgress(2, 10) }
         }
     }
 
@@ -1041,6 +1534,22 @@ class MainActivityTest {
             method.invoke(mainActivity)
 
             verify { editor.putLong(PLAYBACK_POSITION, position) }
+        }
+    }
+
+    @Nested
+    inner class OnCreateOptionsMenu {
+
+        @Test
+        fun onCreateOptionsMenu() {
+            val menu = mockk<Menu>(relaxed = true)
+            val searchView = mockk<SearchView>(relaxed = true)
+            every { menu.findItem(R.id.search).actionView } returns searchView
+
+            mainActivity.onCreateOptionsMenu(menu)
+
+            verify { menu.findItem(R.id.search).actionView }
+            verify { searchView.setOnSearchClickListener(any()) }
         }
     }
 

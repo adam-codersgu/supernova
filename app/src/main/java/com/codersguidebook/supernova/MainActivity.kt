@@ -456,12 +456,10 @@ class MainActivity : AppCompatActivity() {
     fun handleChangeToContentUri(uri: Uri) = lifecycleScope.launch(Dispatchers.IO) {
         val songId = uri.toString().removePrefix(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + "/")
-        try {
-            Log.i(LOG_TAG, "Change to content URI for media ID $songId")
-            if (handleFileUpdateByMediaId(songId.toLong()) == SONG_DELETED) {
-                playQueueViewModel.removeAllOccurrencesOfSong(songId)
-            }
-        } catch (_: NumberFormatException) { refreshMusicLibrary() }
+        Log.i(LOG_TAG, "Change to content URI for media ID $songId")
+        if (handleFileUpdateByMediaId(songId.toLong()) == SONG_DELETED) {
+            playQueueViewModel.removeAllOccurrencesOfSong(songId)
+        }
     }
 
     /**
@@ -1072,6 +1070,7 @@ class MainActivity : AppCompatActivity() {
 
     /** Refresh the music library. Add new songs, remove deleted songs, and implement language changes. */
     private fun refreshMusicLibrary() = lifecycleScope.launch(Dispatchers.Default) {
+        Log.i(LOG_TAG, "Refreshing the music library")
         processLanguageLocale()
         val songsToAddToMusicLibrary = mutableListOf<Song>()
 

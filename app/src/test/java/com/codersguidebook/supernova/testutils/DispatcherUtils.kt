@@ -13,11 +13,14 @@ import kotlinx.coroutines.test.setMain
 @OptIn(ExperimentalCoroutinesApi::class)
 object DispatcherUtils {
 
-    fun stubIODispatcher(testScheduler: TestCoroutineScheduler) {
+    fun stubDispatchers(testScheduler: TestCoroutineScheduler) {
         val testDispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(testDispatcher)
+        val mainTestDispatcher = Dispatchers.Main
         mockkStatic(Dispatchers::class)
         every { Dispatchers.IO } returns testDispatcher
+        every { Dispatchers.Main } returns mainTestDispatcher
+        every { Dispatchers.Default } returns testDispatcher
     }
 
     fun resetDispatchers() {
