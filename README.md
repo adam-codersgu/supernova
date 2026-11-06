@@ -9,10 +9,10 @@ Run tests
 `./gradlew test`
 
 Generate a report
-`./gradlew :app:createDebugUnitTestCoverageReport`
+`./gradlew :app:jacocoUnitTestReport`
 
 View the report
-`/supernova/app/build/reports/coverage/test/debug/index.html`
+`./app/build/reports/jacoco/jacocoUnitTestReport/html/index.html`
 
 ### Troubleshooting
 
