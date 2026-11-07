@@ -56,7 +56,6 @@ android {
     buildFeatures {
         viewBinding = true
     }
-    // TODO - Can we remove this now we generate a report manually
     tasks.withType<Test>().configureEach {
         configure<JacocoTaskExtension> {
             isIncludeNoLocationClasses = true
