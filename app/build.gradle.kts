@@ -28,7 +28,7 @@ android {
 
     buildTypes {
         debug {
-            enableUnitTestCoverage = true
+            enableUnitTestCoverage = false
             enableAndroidTestCoverage = true
         }
         release {
@@ -112,4 +112,44 @@ dependencies {
     implementation("com.codersguidebook:recyclerview-fastscroller-with-value-label:1.0")
 
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
+}
+
+// Register a custom report task that guarantees exclusions
+tasks.register<JacocoReport>("jacocoUnitTestReport") {
+    dependsOn("testDebugUnitTest")
+    group = "Reporting"
+    description = "Generate Custom JaCoCo coverage report with DataBinding exclusions."
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+
+    // Explicit exclusions
+    val fileFilter = listOf(
+        "**/com/codersguidebook/supernova/databinding/**",
+        "**/databinding/*",
+        "**/*BindingImpl.*",
+        "**/*Binding.*",
+        "**/BR.*",
+        "**/R.class",
+        "**/R$*.class",
+        "**/BuildConfig.*",
+        "**/Manifest*.*"
+    )
+
+    val javaClasses = fileTree("${project.layout.buildDirectory.get()}/intermediates/javac/debug") {
+        exclude(fileFilter)
+    }
+    val kotlinClasses = fileTree("${project.layout.buildDirectory.get()}/tmp/kotlin-classes/debug") {
+        exclude(fileFilter)
+    }
+
+    classDirectories.setFrom(files(javaClasses, kotlinClasses))
+    sourceDirectories.setFrom(files("${project.projectDir}/src/main/java", "${project.projectDir}/src/main/kotlin"))
+
+    // Pick up execution metric matrix safely
+    executionData.setFrom(fileTree("${project.layout.buildDirectory.get()}/jacoco") {
+        include("testDebugUnitTest.exec")
+    })
 }
