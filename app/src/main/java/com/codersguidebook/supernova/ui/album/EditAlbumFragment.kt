@@ -3,7 +3,6 @@ package com.codersguidebook.supernova.ui.album
 import android.net.Uri
 import android.os.Bundle
 import android.text.SpannableStringBuilder
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
@@ -20,6 +19,7 @@ import com.codersguidebook.supernova.utils.ImageHandlingHelper
 class EditAlbumFragment : BaseEditMusicFragment() {
 
     private var albumId: String? = null
+    private var oldRememberAlbumProgress: Boolean? = null
 
     override var _binding: ViewBinding? = null
         get() = field as FragmentEditAlbumBinding?
@@ -53,6 +53,9 @@ class EditAlbumFragment : BaseEditMusicFragment() {
                 binding.editAlbumTitle.text = SpannableStringBuilder(songToUseForDisplay.albumName)
                 binding.editAlbumYear.text = SpannableStringBuilder(songToUseForDisplay.year)
                 binding.editAlbumId.text = SpannableStringBuilder(albumId)
+                // Only true if all songs have remember progress checked
+                oldRememberAlbumProgress = songs.all { s -> s.rememberProgress }
+                binding.rememberPlaybackProgress.isChecked = oldRememberAlbumProgress!!
             }
         }
 
@@ -73,6 +76,7 @@ class EditAlbumFragment : BaseEditMusicFragment() {
                     val newAlbumTitle = binding.editAlbumTitle.text.toString()
                     val newAlbumYear = binding.editAlbumYear.text.toString()
                     val newAlbumId = binding.editAlbumId.text.toString()
+                    val newRememberAlbumProgress = binding.rememberPlaybackProgress.isChecked
 
                     when {
                         newAlbumTitle.isEmpty() -> Toast.makeText(mainActivity,
@@ -87,16 +91,25 @@ class EditAlbumFragment : BaseEditMusicFragment() {
                                     albumId!!, albumArt)
                             }
 
+                            var updateSongs = false
                             if (newAlbumTitle != songs[0].title || newAlbumYear != songs[0].year
                                 || newAlbumId != albumId) {
-                                for (song in songs) {
+                                songs.forEach { song ->
                                     song.albumName = newAlbumTitle
                                     song.year = newAlbumYear
                                     song.albumId = newAlbumId
                                 }
-                                mainActivity.updateSongs(songs)
-                                Log.i(null, "Songs saved")
+                                updateSongs = true
                             }
+
+                            if (oldRememberAlbumProgress != newRememberAlbumProgress) {
+                                songs.forEach { song ->
+                                    song.rememberProgress = newRememberAlbumProgress
+                                }
+                                updateSongs = true
+                            }
+
+                            if (updateSongs) mainActivity.updateSongs(songs)
 
                             musicLibraryViewModel.navigationArgument = newAlbumId
                             requireView().findNavController().popBackStack()
