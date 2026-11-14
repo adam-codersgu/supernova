@@ -22,7 +22,7 @@ class EditAlbumFragment : BaseEditMusicFragment() {
     private var oldRememberAlbumProgress: Boolean? = null
 
     override var _binding: ViewBinding? = null
-        get() = field as FragmentEditAlbumBinding?
+        get() = field as? FragmentEditAlbumBinding
     override val binding: FragmentEditAlbumBinding
         get() = _binding!! as FragmentEditAlbumBinding
 
