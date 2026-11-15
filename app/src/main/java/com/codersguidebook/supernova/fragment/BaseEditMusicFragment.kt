@@ -33,13 +33,9 @@ abstract class BaseEditMusicFragment: BaseFragment() {
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         setupMenu()
-        return super.onCreateView(inflater, container, savedInstanceState)
+        super.onViewCreated(view, savedInstanceState)
     }
 
     /** Configure the menu items and responses for the fragment. */

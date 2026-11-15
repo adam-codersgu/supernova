@@ -88,7 +88,7 @@ import java.util.stream.IntStream
 import kotlin.math.min
 import kotlin.streams.toList
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), MainActivityFragments {
 
     companion object {
         private const val LOG_TAG = "MainActivity"
@@ -485,7 +485,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Respond to clicks on the play/pause button **/
-    fun playPauseControl() {
+    override fun playPauseControl() {
         if (!playQueueViewModel.playQueue.value.isNullOrEmpty()) {
             if (controller.isPlaying) {
                 controller.pause()
@@ -598,7 +598,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Skip back to the previous track in the play queue (or restart the current song if less that five seconds in). */
-    fun skipBack() {
+    override fun skipBack() {
         if (controller.currentPosition >= 5000L) {
             seekTo(0)
             return
@@ -618,7 +618,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Skip forward to the next song in the play queue. */
-    fun skipForward() {
+    override fun skipForward() {
         if (!playQueueViewModel.playQueueContainsMoreThanOneSong()) {
             return
         }
@@ -656,10 +656,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Rewind the playback of the current song. */
-    fun fastRewind() = controller.seekBack()
+    override fun fastRewind() = controller.seekBack()
 
     /** Fast forward the playback of the current song. */
-    fun fastForward() = controller.seekForward()
+    override fun fastForward() = controller.seekForward()
 
     private fun saveAndPostPlayQueue(playQueue: List<MediaItem>) {
         playQueueViewModel.playQueue.value = playQueue
@@ -852,7 +852,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Restore an expanded SearchView to its iconified state. */
-    fun iconifySearchView() {
+    private fun iconifySearchView() {
         if (!searchView.isIconified) {
             searchView.isIconified = true
             searchView.onActionViewCollapsed()
@@ -958,7 +958,7 @@ class MainActivity : AppCompatActivity() {
      *
      * @param songs The list of Song objects containing updated metadata.
      */
-    fun updateSongs(songs: List<Song>) {
+    override fun updateSongs(songs: List<Song>) {
         musicLibraryViewModel.updateSongs(songs)
 
         val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return

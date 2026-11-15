@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
 class ControlsFragment : BaseFragment() {
     
     override var _binding: ViewBinding? = null
-        get() = field as PlayerControlsBinding?
+        get() = field as? PlayerControlsBinding
     override val binding: PlayerControlsBinding
         get() = _binding!! as PlayerControlsBinding
     private var fastForwarding = false
@@ -57,19 +57,19 @@ class ControlsFragment : BaseFragment() {
         }
 
         binding.btnPlay.setOnClickListener {
-            mainActivity.playPauseControl()
+            mainActivity?.playPauseControl()
         }
 
         binding.btnBackward.setOnClickListener{
             if (fastRewinding) fastRewinding = false
-            else mainActivity.skipBack()
+            else mainActivity?.skipBack()
         }
 
         binding.btnBackward.setOnLongClickListener {
             fastRewinding = true
             lifecycleScope.launch {
                 do {
-                    mainActivity.fastRewind()
+                    mainActivity?.fastRewind()
                     delay(500)
                 } while (fastRewinding)
             }
@@ -78,14 +78,14 @@ class ControlsFragment : BaseFragment() {
 
         binding.btnForward.setOnClickListener{
             if (fastForwarding) fastForwarding = false
-            else mainActivity.skipForward()
+            else mainActivity?.skipForward()
         }
 
         binding.btnForward.setOnLongClickListener {
             fastForwarding = true
             lifecycleScope.launch {
                 do {
-                    mainActivity.fastForward()
+                    mainActivity?.fastForward()
                     delay(500)
                 } while (fastForwarding)
             }
@@ -128,9 +128,9 @@ class ControlsFragment : BaseFragment() {
 
         if (metadata != null) {
             val albumId = metadata.extras?.getString(ALBUM_ID)
-            ImageHandlingHelper.loadImageByAlbumId(mainActivity.application, albumId, binding.artwork)
+            ImageHandlingHelper.loadImageByAlbumId(requireActivity().application, albumId, binding.artwork)
         } else {
-            Glide.with(mainActivity)
+            Glide.with(requireActivity())
                 .clear(binding.artwork)
         }
     }

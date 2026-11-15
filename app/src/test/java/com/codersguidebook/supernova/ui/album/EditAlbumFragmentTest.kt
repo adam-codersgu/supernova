@@ -42,7 +42,7 @@ class EditAlbumFragmentTest {
 
         @Test
         fun onCreateView() {
-            val controller = Robolectric.buildActivity(MainActivity::class.java).create()
+            /* val controller = Robolectric.buildActivity(MainActivity::class.java).create()
             val activity = controller.get()
 
             val fragment = EditAlbumFragment().apply {
@@ -58,7 +58,7 @@ class EditAlbumFragmentTest {
             assertNotNull(fragment._binding)
             assertNotNull(fragment.binding)
             val albumIdField = ReflectionUtils.setFieldVisible(fragment, "albumId") as KMutableProperty1<Any, String>
-            assertEquals("album-123", albumIdField.get(fragment))
+            assertEquals("album-123", albumIdField.get(fragment)) */
 
             /* val controller = Robolectric.buildActivity(MainActivity::class.java).create()
             val hostActivity = controller.get()
@@ -84,7 +84,10 @@ class EditAlbumFragmentTest {
             val albumIdField = ReflectionUtils.setFieldVisible(fragment, "albumId") as KMutableProperty1<Any, String>
             assertEquals("album-123", albumIdField.get(fragment)) */
 
-            /* val scenario = launchFragmentInContainer<EditAlbumFragment>(
+            val fragmentArgs = Bundle()
+            fragmentArgs.putString("albumId", "album-123")
+
+            val scenario = launchFragmentInContainer<EditAlbumFragment>(
                 fragmentArgs = fragmentArgs,
             )
 
@@ -93,7 +96,7 @@ class EditAlbumFragmentTest {
                 assertNotNull(fragment.binding)
                 val albumIdField = ReflectionUtils.setFieldVisible(fragment, "albumId") as KMutableProperty1<Any, String>
                 assertEquals("album-123", albumIdField.get(fragment))
-            } */
+            }
 
         }
     }

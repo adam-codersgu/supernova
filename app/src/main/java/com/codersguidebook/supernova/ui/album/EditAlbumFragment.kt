@@ -22,6 +22,8 @@ class EditAlbumFragment : BaseEditMusicFragment() {
     private var oldRememberAlbumProgress: Boolean? = null
 
     override var _binding: ViewBinding? = null
+        // TODO - DO A PROJECT-WIDE FIND AND REPLACE ON field as Fragment to field as? Fragment
+        //  THEN REMOVE ? FROM THE FRAGMENT
         get() = field as? FragmentEditAlbumBinding
     override val binding: FragmentEditAlbumBinding
         get() = _binding!! as FragmentEditAlbumBinding
@@ -59,7 +61,7 @@ class EditAlbumFragment : BaseEditMusicFragment() {
             }
         }
 
-        ImageHandlingHelper.loadImageByAlbumId(mainActivity.application, albumId, binding.editAlbumArtwork)
+        ImageHandlingHelper.loadImageByAlbumId(requireActivity().application, albumId, binding.editAlbumArtwork)
         binding.editAlbumArtwork.setOnClickListener { getImage() }
 
         binding.editAlbumArtworkIcon.setOnClickListener { getImage() }
@@ -79,15 +81,15 @@ class EditAlbumFragment : BaseEditMusicFragment() {
                     val newRememberAlbumProgress = binding.rememberPlaybackProgress.isChecked
 
                     when {
-                        newAlbumTitle.isEmpty() -> Toast.makeText(mainActivity,
+                        newAlbumTitle.isEmpty() -> Toast.makeText(requireActivity(),
                             getString(R.string.album_name_cannot_be_empty), Toast.LENGTH_SHORT).show()
-                        newAlbumYear.isEmpty() -> Toast.makeText(mainActivity,
+                        newAlbumYear.isEmpty() -> Toast.makeText(requireActivity(),
                             getString(R.string.album_year_cannot_be_empty), Toast.LENGTH_SHORT).show()
-                        newAlbumId.isEmpty() -> Toast.makeText(mainActivity,
+                        newAlbumId.isEmpty() -> Toast.makeText(requireActivity(),
                             getString(R.string.album_id_cannot_be_empty), Toast.LENGTH_SHORT).show()
                         else -> {
                             newArtwork?.let { albumArt ->
-                                ImageHandlingHelper.saveAlbumArtByResourceId(mainActivity.application,
+                                ImageHandlingHelper.saveAlbumArtByResourceId(requireActivity().application,
                                     albumId!!, albumArt)
                             }
 
@@ -109,7 +111,7 @@ class EditAlbumFragment : BaseEditMusicFragment() {
                                 updateSongs = true
                             }
 
-                            if (updateSongs) mainActivity.updateSongs(songs)
+                            if (updateSongs) mainActivity?.updateSongs(songs)
 
                             musicLibraryViewModel.navigationArgument = newAlbumId
                             requireView().findNavController().popBackStack()
