@@ -182,18 +182,20 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
         setShuffleButtonAppearance(shuffleMode)
 
         binding.currentButtonShuffle.setOnClickListener {
-            setShuffleButtonAppearance(mainActivity.toggleShuffleMode())
+            setShuffleButtonAppearance(mainActivity?.toggleShuffleMode()
+                ?: return@setOnClickListener)
         }
         
         val repeatMode = sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_OFF)
         setRepeatButtonAppearance(repeatMode)
 
         binding.currentButtonRepeat.setOnClickListener {
-            setRepeatButtonAppearance(mainActivity.toggleRepeatMode())
+            setRepeatButtonAppearance(mainActivity?.toggleRepeatMode()
+                ?: return@setOnClickListener)
         }
 
         binding.currentAddToPlaylist.setOnClickListener {
-            currentSong?.let { song -> mainActivity.openAddToPlaylistDialog(listOf(song)) }
+            currentSong?.let { song -> mainActivity?.openAddToPlaylistDialog(listOf(song)) }
         }
 
         binding.currentClose.setOnClickListener { this.pullToCloseDismissed() }
@@ -206,7 +208,7 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
             override fun onStopTrackingTouch(seekBar: SeekBar) { }
             override fun onStartTrackingTouch(seekBar: SeekBar) { }
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) mainActivity.seekTo(progress.toLong())
+                if (fromUser) mainActivity?.seekTo(progress.toLong())
             }
         })
     }
@@ -319,12 +321,12 @@ class CurrentlyPlayingFragment : BaseFragment(), PullToCloseLayout.Listener {
 
     override fun onResume() {
         super.onResume()
-        mainActivity.hideStatusBars(true)
+        mainActivity?.hideStatusBars(true)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        mainActivity.hideStatusBars(false)
+        mainActivity?.hideStatusBars(false)
         onBackPressedCallback.remove()
     }
 

@@ -507,7 +507,7 @@ class MainActivity : AppCompatActivity(), MainActivityFragments {
      *
      * @return A Boolean indicating whether the play queue is now shuffled
      */
-    fun toggleShuffleMode(): Boolean {
+    override fun toggleShuffleMode(): Boolean {
         val shouldShuffle = !sharedPreferences.getBoolean(SHUFFLE_MODE, false)
 
         setShuffleMode(shouldShuffle)
@@ -576,7 +576,7 @@ class MainActivity : AppCompatActivity(), MainActivityFragments {
      *
      * @return An Integer representing the active repeat mode preference.
      */
-    fun toggleRepeatMode(): Int {
+    override fun toggleRepeatMode(): Int {
         val newRepeatMode = when (sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_OFF)) {
             REPEAT_MODE_OFF -> REPEAT_MODE_ALL
             REPEAT_MODE_ALL -> REPEAT_MODE_ONE
@@ -786,7 +786,7 @@ class MainActivity : AppCompatActivity(), MainActivityFragments {
      *
      * @param position The desired playback position.
      */
-    fun seekTo(position: Long) {
+    override fun seekTo(position: Long) {
         controller.seekTo(position)
         updatePlaybackDurationAndPosition()
     }
@@ -814,7 +814,7 @@ class MainActivity : AppCompatActivity(), MainActivityFragments {
      * @param hide A Boolean indicating whether the status bars should be hidden (true) or
      * revealed (false)
      */
-    fun hideStatusBars(hide: Boolean) {
+    override fun hideStatusBars(hide: Boolean) {
         val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
         if (hide) {
             supportActionBar?.setDisplayShowTitleEnabled(false)
@@ -913,7 +913,7 @@ class MainActivity : AppCompatActivity(), MainActivityFragments {
      *
      * @param songs The list of Song objects to be added to a playlist.
      */
-    fun openAddToPlaylistDialog(songs: List<Song>) = lifecycleScope.launch(Dispatchers.Main) {
+    override fun openAddToPlaylistDialog(songs: List<Song>) = lifecycleScope.launch(Dispatchers.Main) {
         val songIds = songs.map { it.songId }
 
         val positiveButtonClick = { _: DialogInterface, _: Int ->
