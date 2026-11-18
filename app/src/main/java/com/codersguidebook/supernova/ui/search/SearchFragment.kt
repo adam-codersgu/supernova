@@ -12,6 +12,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.viewbinding.ViewBinding
+import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.data.MusicDatabase
 import com.codersguidebook.supernova.databinding.FragmentSearchBinding
@@ -27,7 +28,7 @@ import kotlinx.coroutines.launch
 class SearchFragment : BaseRecyclerViewFragment() {
 
     override var _binding: ViewBinding? = null
-        get() = field as FragmentSearchBinding?
+        get() = field as? FragmentSearchBinding
     override val binding: FragmentSearchBinding
         get() = _binding!! as FragmentSearchBinding
 
@@ -49,16 +50,16 @@ class SearchFragment : BaseRecyclerViewFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        musicDatabase = MusicDatabase.getDatabase(mainActivity)
+        musicDatabase = MusicDatabase.getDatabase(requireActivity())
 
         onBackPressedCallback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                mainActivity.iconifySearchView()
+                mainActivity?.iconifySearchView()
                 findNavController().popBackStack()
             }
         }
 
-        mainActivity.onBackPressedDispatcher.addCallback(viewLifecycleOwner, onBackPressedCallback)
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, onBackPressedCallback)
 
         binding.recyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
 
@@ -82,7 +83,7 @@ class SearchFragment : BaseRecyclerViewFragment() {
     }
 
     override fun initialiseAdapter() {
-        adapter = SearchAdapter(mainActivity)
+        adapter = SearchAdapter(requireActivity() as MainActivity)
     }
 
     override fun requestNewData() {
@@ -158,7 +159,7 @@ class SearchFragment : BaseRecyclerViewFragment() {
 
     override fun onStop() {
         super.onStop()
-        mainActivity.hideKeyboard()
+        mainActivity?.hideKeyboard()
     }
 
     override fun onDestroyView() {

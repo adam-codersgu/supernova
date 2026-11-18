@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
 import androidx.viewbinding.ViewBinding
+import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.databinding.FragmentHomeBinding
 import com.codersguidebook.supernova.entities.Playlist
@@ -41,7 +42,7 @@ class HomeFragment : BaseFragment() {
     }
 
     override var _binding: ViewBinding? = null
-        get() = field as FragmentHomeBinding?
+        get() = field as? FragmentHomeBinding
     override val binding: FragmentHomeBinding
         get() = _binding!! as FragmentHomeBinding
     private var isUpdating = false
@@ -66,10 +67,10 @@ class HomeFragment : BaseFragment() {
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
 
-        songOfTheDayAdapter = SongOfTheDayAdapter(mainActivity)
-        favouritesAdapter = HomeAdapter(mainActivity)
-        mostPlayedAdapter = MostPlayedAdapter(mainActivity)
-        recentlyPlayedAdapter = HomeAdapter(mainActivity)
+        songOfTheDayAdapter = SongOfTheDayAdapter(requireActivity() as MainActivity)
+        favouritesAdapter = HomeAdapter(requireActivity() as MainActivity)
+        mostPlayedAdapter = MostPlayedAdapter(requireActivity() as MainActivity)
+        recentlyPlayedAdapter = HomeAdapter(requireActivity() as MainActivity)
 
         songOfTheDayAdapter.stateRestorationPolicy = PREVENT_WHEN_EMPTY
         favouritesAdapter.stateRestorationPolicy = PREVENT_WHEN_EMPTY
@@ -129,7 +130,7 @@ class HomeFragment : BaseFragment() {
 
     private fun initRecyclerView(recyclerView: RecyclerView) {
         recyclerView.layoutManager = WrapContentLinearLayoutManager(
-            mainActivity, LinearLayoutManager.HORIZONTAL, false)
+            requireActivity(), LinearLayoutManager.HORIZONTAL, false)
         recyclerView.itemAnimator = getItemAnimatorWithNoChangeAnimation()
     }
 

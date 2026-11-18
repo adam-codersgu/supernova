@@ -1,9 +1,7 @@
 package com.codersguidebook.supernova.dialogs
 
 import android.app.Dialog
-import android.os.Build
 import android.os.Bundle
-import androidx.core.view.isGone
 import androidx.navigation.findNavController
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.R
@@ -14,7 +12,7 @@ import com.codersguidebook.supernova.ui.artist.ArtistFragmentDirections
 class ArtistOptions(private val artist: String) : BaseDialogFragment() {
 
     override var _binding: ViewBinding? = null
-        get() = field as ArtistOptionsBinding?
+        get() = field as? ArtistOptionsBinding
     override val binding: ArtistOptionsBinding
         get() = _binding!! as ArtistOptionsBinding
 
@@ -47,13 +45,10 @@ class ArtistOptions(private val artist: String) : BaseDialogFragment() {
                 dismiss()
             }
 
-            // Delete Artist feature only available from SDK 30 and up
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
-                binding.deleteArtist.setOnClickListener {
-                    mainActivity.deleteSongs(songs)
-                    dismiss()
-                }
-            } else binding.deleteArtist.isGone = true
+            binding.deleteArtist.setOnClickListener {
+                mainActivity.deleteSongs(songs)
+                dismiss()
+            }
         }
 
         return super.onCreateDialog(savedInstanceState)

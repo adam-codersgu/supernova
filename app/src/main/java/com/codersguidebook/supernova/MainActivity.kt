@@ -468,7 +468,7 @@ class MainActivity : AppCompatActivity(), MainActivityFragments {
      * @param oldIndex The original index in the play queue of the item that is being moved.
      * @param newIndex The new index in the play queue that the item should occupy.
      */
-    fun notifyQueueItemMoved(oldIndex: Int, newIndex: Int) {
+    override fun notifyQueueItemMoved(oldIndex: Int, newIndex: Int) {
         val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return
         val item = playQueue[oldIndex]
 
@@ -702,7 +702,7 @@ class MainActivity : AppCompatActivity(), MainActivityFragments {
      * N.B. If shuffle is true then the startIndex is ignored.
      * @param shuffle Indicates whether the play queue should be shuffled.
      */
-    fun playNewPlayQueue(songs: List<Song>, startIndex: Int = 0, shuffle: Boolean = false) {
+    override fun playNewPlayQueue(songs: List<Song>, startIndex: Int, shuffle: Boolean) {
         if (songs.isEmpty() || startIndex >= songs.size) {
             Toast.makeText(this@MainActivity,
                 getString(R.string.error_generic_playback), Toast.LENGTH_LONG).show()
@@ -852,7 +852,7 @@ class MainActivity : AppCompatActivity(), MainActivityFragments {
     }
 
     /** Restore an expanded SearchView to its iconified state. */
-    private fun iconifySearchView() {
+    override fun iconifySearchView() {
         if (!searchView.isIconified) {
             searchView.isIconified = true
             searchView.onActionViewCollapsed()
@@ -1001,10 +1001,10 @@ class MainActivity : AppCompatActivity(), MainActivityFragments {
      *
      * @param dialog The dialog fragment to load.
      */
-    fun openDialog(dialog: DialogFragment) = dialog.show(supportFragmentManager, "")
+    override fun openDialog(dialog: DialogFragment) = dialog.show(supportFragmentManager, "")
 
     /** Hides the soft input keyboard, which can sometimes obstruct views. */
-    fun hideKeyboard() {
+    override fun hideKeyboard() {
         this.currentFocus?.let {
             val inputManager = this.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             inputManager.hideSoftInputFromWindow(it.windowToken, InputMethodManager.HIDE_NOT_ALWAYS)

@@ -1,9 +1,7 @@
 package com.codersguidebook.supernova.dialogs
 
 import android.app.Dialog
-import android.os.Build
 import android.os.Bundle
-import androidx.core.view.isGone
 import androidx.navigation.findNavController
 import androidx.viewbinding.ViewBinding
 import com.codersguidebook.supernova.R
@@ -15,7 +13,7 @@ import com.codersguidebook.supernova.ui.artists.ArtistsFragmentDirections
 class AlbumOptions(private val albumId: String) : BaseDialogFragment() {
 
     override var _binding: ViewBinding? = null
-        get() = field as AlbumOptionsBinding?
+        get() = field as? AlbumOptionsBinding
     override val binding: AlbumOptionsBinding
         get() = _binding!! as AlbumOptionsBinding
 
@@ -59,13 +57,10 @@ class AlbumOptions(private val albumId: String) : BaseDialogFragment() {
                 dismiss()
             }
 
-            // Delete Album feature only available from SDK 30 and up
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
-                binding.deleteAlbum.setOnClickListener {
-                    mainActivity.deleteSongs(songs)
-                    dismiss()
-                }
-            } else binding.deleteAlbum.isGone = true
+            binding.deleteAlbum.setOnClickListener {
+                mainActivity.deleteSongs(songs)
+                dismiss()
+            }
         }
 
         return super.onCreateDialog(savedInstanceState)

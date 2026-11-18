@@ -50,7 +50,7 @@ class PlayQueueFragment : RecyclerViewFragment() {
                 viewHolder.itemView.alpha = 1.0f
 
                 if (from != null && to != null) {
-                    mainActivity.notifyQueueItemMoved(from!!, to!!)
+                    mainActivity?.notifyQueueItemMoved(from!!, to!!)
 
                     if (adapter.currentlyPlayingQueueIndex in from!!..to!!) {
                         Log.i("DEBUG", "The currently playing index ${adapter.currentlyPlayingQueueIndex}" +
@@ -133,7 +133,7 @@ class PlayQueueFragment : RecyclerViewFragment() {
                         for (queueItem in (adapter.items as List<MediaItem>)) {
                             songIds.add(queueItem.mediaId.toLong())
                         }
-                        if (songIds.isNotEmpty()) mainActivity.openDialog(CreatePlaylist(songIds))
+                        if (songIds.isNotEmpty()) mainActivity?.openDialog(CreatePlaylist(songIds))
                         else Toast.makeText(requireActivity(), getString(R.string.empty_play_queue), Toast.LENGTH_SHORT).show()
 
                         true

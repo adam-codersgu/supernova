@@ -16,7 +16,7 @@ import com.google.android.material.tabs.TabLayoutMediator
 
 class LibraryFragment : BaseFragment() {
     override var _binding: ViewBinding? = null
-        get() = field as FragmentLibraryBinding?
+        get() = field as? FragmentLibraryBinding
     override val binding: FragmentLibraryBinding
         get() = _binding!! as FragmentLibraryBinding
     private var viewPagerPosition: Int? = null

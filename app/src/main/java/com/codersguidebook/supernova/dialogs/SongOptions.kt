@@ -20,7 +20,7 @@ import kotlinx.coroutines.withContext
 class SongOptions(private val song: Song) : BaseDialogFragment() {
 
     override var _binding: ViewBinding? = null
-        get() = field as SongOptionsBinding?
+        get() = field as? SongOptionsBinding
     override val binding: SongOptionsBinding
         get() = _binding!! as SongOptionsBinding
 

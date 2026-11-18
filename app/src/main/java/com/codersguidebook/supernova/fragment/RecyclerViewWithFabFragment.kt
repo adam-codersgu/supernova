@@ -13,11 +13,12 @@ import com.codersguidebook.supernova.databinding.FragmentWithFabBinding
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.adapter.SongAdapter
 import com.codersguidebook.supernova.fragment.adapter.SongWithHeaderAdapter
+import androidx.core.view.isVisible
 
 abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
 
     override var _binding: ViewBinding? = null
-        get() = field as FragmentWithFabBinding?
+        get() = field as? FragmentWithFabBinding
     override val binding: FragmentWithFabBinding
         get() = _binding!! as FragmentWithFabBinding
     override lateinit var adapter: SongAdapter
@@ -42,7 +43,7 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                     super.onScrolled(recyclerView, dx, dy)
 
-                    if (dy > 0 && binding.fab.visibility == VISIBLE) binding.fab.hide()
+                    if (dy > 0 && binding.fab.isVisible) binding.fab.hide()
                     else if (dy < 0 && binding.fab.visibility != VISIBLE) binding.fab.show()
                }
             })
@@ -57,7 +58,7 @@ abstract class RecyclerViewWithFabFragment: BaseRecyclerViewFragment() {
         setIsUpdatingTrue()
 
         binding.fab.setOnClickListener {
-            mainActivity.playNewPlayQueue(songs, shuffle = true)
+            mainActivity?.playNewPlayQueue(songs, shuffle = true)
         }
 
         adapter.processNewItems(songs)

@@ -15,7 +15,7 @@ import com.codersguidebook.supernova.ui.playlist.PlaylistFragmentDirections
 class PlaylistOptions(private val playlist: Playlist) : BaseDialogFragment() {
 
     override var _binding: ViewBinding? = null
-        get() = field as PlaylistOptionsBinding?
+        get() = field as? PlaylistOptionsBinding
     override val binding: PlaylistOptionsBinding
         get() = _binding!! as PlaylistOptionsBinding
 
