@@ -735,7 +735,7 @@ class MainActivity : AppCompatActivity(), MainActivityFragments {
      * @param addSongsAfterCurrentQueueItem A Boolean indicating whether the songs should be added to
      * after the currently playing queue item. Default value = false.
      */
-    fun addSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false)
+    override fun addSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean)
             = lifecycleScope.launch(Dispatchers.Default) {
         val shuffleModeOn = sharedPreferences.getBoolean(SHUFFLE_MODE, false)
         val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return@launch
@@ -885,7 +885,7 @@ class MainActivity : AppCompatActivity(), MainActivityFragments {
      *
      * @param songs A list of Song objects to be deleted
      */
-    fun deleteSongs(songs: List<Song>) {
+    override fun deleteSongs(songs: List<Song>) {
         val uris = songs.map { song ->
             ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, song.songId)
         }

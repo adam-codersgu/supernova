@@ -6,6 +6,8 @@ import kotlinx.coroutines.Job
 
 interface MainActivityFragments {
 
+    fun addSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false): Job
+    fun deleteSongs(songs: List<Song>)
     fun fastForward()
     fun fastRewind()
     fun hideKeyboard()

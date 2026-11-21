@@ -17,7 +17,7 @@ class SongsFragment : RecyclerViewWithFabFragment() {
     }
 
     override fun initialiseAdapter() {
-        adapter = SongsAdapter(mainActivity)
+        adapter = SongsAdapter(requireActivity() as MainActivity)
         adapter.stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
     }
 

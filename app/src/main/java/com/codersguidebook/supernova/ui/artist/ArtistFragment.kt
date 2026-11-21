@@ -13,6 +13,7 @@ import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.RecyclerViewFragment
@@ -89,7 +90,7 @@ class ArtistFragment : RecyclerViewFragment() {
     }
 
     override fun initialiseAdapter() {
-        adapter = ArtistAdapter(mainActivity)
+        adapter = ArtistAdapter(requireActivity() as MainActivity)
     }
 
     override fun setupMenu() {
@@ -109,14 +110,14 @@ class ArtistFragment : RecyclerViewFragment() {
                 }
 
                 when (menuItem.itemId) {
-                    R.id.artist_play_next -> mainActivity.addSongsToPlayQueue(songs, true)
-                    R.id.artist_add_queue -> mainActivity.addSongsToPlayQueue(songs)
-                    R.id.artist_add_playlist -> mainActivity.openAddToPlaylistDialog(songs)
+                    R.id.artist_play_next -> mainActivity?.addSongsToPlayQueue(songs, true)
+                    R.id.artist_add_queue -> mainActivity?.addSongsToPlayQueue(songs)
+                    R.id.artist_add_playlist -> mainActivity?.openAddToPlaylistDialog(songs)
                     R.id.artist_edit_artist_info -> {
                         findNavController().navigate(ArtistFragmentDirections.actionEditArtist(artistName))
                     }
                     R.id.artist_delete_artist -> {
-                        mainActivity.deleteSongs(songs)
+                        mainActivity?.deleteSongs(songs)
                     }
                     else -> return false
                 }

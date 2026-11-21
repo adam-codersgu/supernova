@@ -34,7 +34,7 @@ class ArtistSongsFragment : RecyclerViewWithFabFragment() {
     }
 
     override fun initialiseAdapter() {
-        adapter = SongsAdapter(mainActivity)
+        adapter = SongsAdapter(requireActivity() as MainActivity)
     }
 
     override fun requestNewData() {

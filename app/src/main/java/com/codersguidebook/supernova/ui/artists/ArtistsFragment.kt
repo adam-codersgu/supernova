@@ -41,7 +41,7 @@ class ArtistsFragment : RecyclerViewWithScrollFragment() {
     }
 
     override fun initialiseAdapter() {
-        adapter = ArtistsAdapter(mainActivity)
+        adapter = ArtistsAdapter(requireActivity() as MainActivity)
         adapter.stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
     }
 }

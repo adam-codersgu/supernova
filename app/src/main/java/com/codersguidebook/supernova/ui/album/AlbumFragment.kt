@@ -12,6 +12,7 @@ import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
+import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.RecyclerViewWithFabFragment
@@ -46,7 +47,7 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
     }
 
     override fun initialiseAdapter() {
-        adapter = AlbumAdapter(mainActivity)
+        adapter = AlbumAdapter(requireActivity() as MainActivity)
     }
 
     override fun updateRecyclerView(songs: List<Song>) {
@@ -88,10 +89,10 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
 
                 when (menuItem.itemId) {
                     R.id.album_play_next -> {
-                        mainActivity.addSongsToPlayQueue(songs, true)
+                        mainActivity?.addSongsToPlayQueue(songs, true)
                     }
-                    R.id.album_add_queue -> mainActivity.addSongsToPlayQueue(songs)
-                    R.id.album_add_playlist -> mainActivity.openAddToPlaylistDialog(songs)
+                    R.id.album_add_queue -> mainActivity?.addSongsToPlayQueue(songs)
+                    R.id.album_add_playlist -> mainActivity?.openAddToPlaylistDialog(songs)
                     R.id.album_view_artist -> {
                         val action = ArtistsFragmentDirections.actionSelectArtist(songs[0].artist)
                         findNavController().navigate(action)
@@ -101,8 +102,7 @@ class AlbumFragment : RecyclerViewWithFabFragment() {
                         findNavController().navigate(action)
                     }
                     R.id.album_delete_album -> {
-                        // Delete Album feature only available from SDK 30 and up
-                        mainActivity.deleteSongs(songs)
+                        mainActivity?.deleteSongs(songs)
                     }
                     else -> return false
                 }
