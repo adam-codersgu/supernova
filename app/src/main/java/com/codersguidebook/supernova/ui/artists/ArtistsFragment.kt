@@ -3,6 +3,7 @@ package com.codersguidebook.supernova.ui.artists
 import android.os.Bundle
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
+import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.entities.Artist
 import com.codersguidebook.supernova.fragment.RecyclerViewWithScrollFragment
 import com.codersguidebook.supernova.fragment.adapter.ArtistsAdapter
