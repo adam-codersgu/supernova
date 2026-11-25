@@ -18,7 +18,7 @@ class QueueOptions(private val queueItem: MediaItem,
                    private val currentlyPlaying: Boolean) : BaseDialogFragment() {
 
     override var _binding: ViewBinding? = null
-        get() = field as QueueOptionsBinding?
+        get() = field as? QueueOptionsBinding
     override val binding: QueueOptionsBinding
         get() = _binding!! as QueueOptionsBinding
 

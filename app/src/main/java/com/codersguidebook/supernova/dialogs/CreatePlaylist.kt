@@ -17,7 +17,7 @@ import kotlinx.coroutines.withContext
 class CreatePlaylist (private val songIds: List<Long>) : BaseDialogFragment() {
 
     override var _binding: ViewBinding? = null
-        get() = field as CreatePlaylistBinding?
+        get() = field as? CreatePlaylistBinding
     override val binding: CreatePlaylistBinding
         get() = _binding!! as CreatePlaylistBinding
 
