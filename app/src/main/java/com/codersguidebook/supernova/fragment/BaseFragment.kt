@@ -6,9 +6,10 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.viewbinding.ViewBinding
-import com.codersguidebook.supernova.MainActivity
+import com.codersguidebook.supernova.MainActivityFragments
 import com.codersguidebook.supernova.MusicLibraryViewModel
 
 @Suppress("PropertyName")
@@ -16,13 +17,25 @@ abstract class BaseFragment: Fragment() {
 
     abstract var _binding: ViewBinding?
     abstract val binding: ViewBinding
-    lateinit var mainActivity: MainActivity
+
+    protected val mainActivity: MainActivityFragments?
+        get() = activity as? MainActivityFragments
+
+    protected open val viewModelOwner: ViewModelStoreOwner
+        get() = requireActivity()
+
     lateinit var musicLibraryViewModel: MusicLibraryViewModel
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View {
-        mainActivity = activity as MainActivity
-        musicLibraryViewModel = ViewModelProvider(mainActivity, MusicLibraryViewModel.Factory)[MusicLibraryViewModel::class.java]
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        musicLibraryViewModel = ViewModelProvider(
+            viewModelOwner,
+            MusicLibraryViewModel.Factory
+        )[MusicLibraryViewModel::class.java]
+
         return binding.root
     }
 

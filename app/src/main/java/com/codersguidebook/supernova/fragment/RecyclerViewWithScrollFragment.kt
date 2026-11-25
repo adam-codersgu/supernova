@@ -11,7 +11,7 @@ import com.codersguidebook.supernova.databinding.ScrollRecyclerViewBinding
 abstract class RecyclerViewWithScrollFragment: BaseRecyclerViewFragment() {
 
     override var _binding: ViewBinding? = null
-        get() = field as ScrollRecyclerViewBinding?
+        get() = field as? ScrollRecyclerViewBinding
     override val binding: ScrollRecyclerViewBinding
         get() = _binding!! as ScrollRecyclerViewBinding
 

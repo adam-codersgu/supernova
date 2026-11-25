@@ -20,7 +20,7 @@ import com.codersguidebook.supernova.utils.ImageHandlingHelper
 class EditSongFragment : BaseEditMusicFragment() {
 
     override var _binding: ViewBinding? = null
-        get() = field as FragmentEditSongBinding?
+        get() = field as? FragmentEditSongBinding
     override val binding: FragmentEditSongBinding
         get() = _binding!! as FragmentEditSongBinding
     private var song: Song? = null
@@ -42,7 +42,7 @@ class EditSongFragment : BaseEditMusicFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        ImageHandlingHelper.loadImageByAlbumId( mainActivity.application, song?.albumId,
+        ImageHandlingHelper.loadImageByAlbumId( requireActivity().application, song?.albumId,
             binding.editSongArtwork)
         binding.editSongArtwork.setOnClickListener { getImage() }
 
@@ -80,7 +80,7 @@ class EditSongFragment : BaseEditMusicFragment() {
 
                         // artwork has been changed
                         newArtwork?.let { artwork ->
-                            ImageHandlingHelper.saveAlbumArtByResourceId( mainActivity.application,
+                            ImageHandlingHelper.saveAlbumArtByResourceId( requireActivity().application,
                                 song?.albumId!!, artwork)
                         }
 
@@ -92,7 +92,7 @@ class EditSongFragment : BaseEditMusicFragment() {
                         if (newRememberProgress != song!!.rememberProgress) song!!.resetProgress()
                         song!!.rememberProgress = newRememberProgress
 
-                        mainActivity.updateSongs(listOf(song!!))
+                        mainActivity?.updateSongs(listOf(song!!))
                     }
 
                     Toast.makeText(activity, getString(R.string.details_saved), Toast.LENGTH_SHORT).show()

@@ -58,12 +58,12 @@ class EditPlaylistFragment : BaseEditMusicFragment() {
                 playlist = withContext(Dispatchers.IO) {
                     musicLibraryViewModel.getPlaylistByName(name)
                 }?.also {
-                    if (!ImageHandlingHelper.loadImageByPlaylist(mainActivity.application,
+                    if (!ImageHandlingHelper.loadImageByPlaylist(requireActivity().application,
                             it, binding.artwork)) {
                         musicLibraryViewModel.activePlaylistSongs.observe(viewLifecycleOwner) { songs ->
                             val randomSong = if (songs.isNotEmpty()) songs.random()
                             else return@observe
-                            ImageHandlingHelper.loadImageByAlbumId(mainActivity.application,
+                            ImageHandlingHelper.loadImageByAlbumId(requireActivity().application,
                                 randomSong.albumId, binding.artwork)
                         }
                     }
@@ -90,7 +90,7 @@ class EditPlaylistFragment : BaseEditMusicFragment() {
 
                         newArtwork?.let {
                             ImageHandlingHelper.savePlaylistArtByResourceId(
-                                mainActivity.application, this.playlistId.toString(), it)
+                                requireActivity().application, this.playlistId.toString(), it)
                         }
 
                         musicLibraryViewModel.updatePlaylists(listOf(this))

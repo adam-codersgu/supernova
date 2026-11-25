@@ -1,6 +1,5 @@
 package com.codersguidebook.supernova.ui.artist
 
-import android.os.Build
 import android.os.Bundle
 import android.view.*
 import android.widget.Toast
@@ -8,6 +7,7 @@ import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
+import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.fragment.RecyclerViewWithFabFragment
 import com.codersguidebook.supernova.fragment.adapter.SongsAdapter
@@ -34,7 +34,7 @@ class ArtistSongsFragment : RecyclerViewWithFabFragment() {
     }
 
     override fun initialiseAdapter() {
-        adapter = SongsAdapter(mainActivity)
+        adapter = SongsAdapter(requireActivity() as MainActivity)
     }
 
     override fun requestNewData() {
@@ -45,9 +45,6 @@ class ArtistSongsFragment : RecyclerViewWithFabFragment() {
         (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
             override fun onPrepareMenu(menu: Menu) {
                 menu.setGroupVisible(R.id.menu_group_artist_actions, true)
-                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
-                    menu.findItem(R.id.artist_delete_artist).isVisible = false
-                }
             }
 
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) { }
@@ -61,17 +58,14 @@ class ArtistSongsFragment : RecyclerViewWithFabFragment() {
                 }
 
                 when (menuItem.itemId) {
-                    R.id.artist_play_next -> mainActivity.addSongsToPlayQueue(songs, true)
-                    R.id.artist_add_queue -> mainActivity.addSongsToPlayQueue(songs)
-                    R.id.artist_add_playlist -> mainActivity.openAddToPlaylistDialog(songs)
+                    R.id.artist_play_next -> mainActivity?.addSongsToPlayQueue(songs, true)
+                    R.id.artist_add_queue -> mainActivity?.addSongsToPlayQueue(songs)
+                    R.id.artist_add_playlist -> mainActivity?.openAddToPlaylistDialog(songs)
                     R.id.artist_edit_artist_info -> {
                         findNavController().navigate(ArtistFragmentDirections.actionEditArtist(artistName))
                     }
                     R.id.artist_delete_artist -> {
-                        // Delete Artist feature only available from SDK 30 and up
-                        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
-                            mainActivity.deleteSongs(songs)
-                        }
+                        mainActivity?.deleteSongs(songs)
                     }
                     else -> return false
                 }

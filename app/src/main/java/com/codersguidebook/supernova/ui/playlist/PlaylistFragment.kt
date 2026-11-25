@@ -15,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
+import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.entities.Song
@@ -113,7 +114,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
         setIsUpdatingTrue()
 
         binding.fab.setOnClickListener {
-            mainActivity.playNewPlayQueue(songs, shuffle = true)
+            mainActivity?.playNewPlayQueue(songs, shuffle = true)
         }
 
         if (this.playlistName == getString(R.string.most_played)) {
@@ -131,7 +132,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
     }
 
     override fun initialiseAdapter() {
-        adapter = PlaylistAdapter(this, mainActivity)
+        adapter = PlaylistAdapter(this, requireActivity() as MainActivity)
     }
 
     override fun requestNewData() {
@@ -142,7 +143,7 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
         (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
             override fun onPrepareMenu(menu: Menu) {
                 menu.setGroupVisible(R.id.universal_playlist_actions, true)
-                val defaultPlaylistHelper = DefaultPlaylistHelper(mainActivity)
+                val defaultPlaylistHelper = DefaultPlaylistHelper(requireActivity())
                 if (!defaultPlaylistHelper.getDefaultPlaylistNames().contains(playlistName)) {
                     menu.setGroupVisible(R.id.user_playlist_actions, true)
                     reorderPlaylist = menu.findItem(R.id.reorderPlaylist)
@@ -158,14 +159,14 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
                 when (menuItem.itemId) {
                     R.id.playPlaylistNext -> {
                         if (!songs.isNullOrEmpty()){
-                            mainActivity.addSongsToPlayQueue(songs, true)
+                            mainActivity?.addSongsToPlayQueue(songs, true)
                         } else {
                             Toast.makeText(activity,
                                 getString(R.string.playlist_contains_zero_songs), Toast.LENGTH_SHORT).show()
                         }
                     }
                     R.id.queuePlaylist -> {
-                        if (!songs.isNullOrEmpty()) mainActivity.addSongsToPlayQueue(songs)
+                        if (!songs.isNullOrEmpty()) mainActivity?.addSongsToPlayQueue(songs)
                         else Toast.makeText(activity,
                             getString(R.string.playlist_contains_zero_songs), Toast.LENGTH_SHORT).show()
                     }
@@ -177,13 +178,13 @@ class PlaylistFragment : RecyclerViewWithFabFragment() {
                     R.id.editPlaylist -> {
                         playlistName?.let {
                             val action = PlaylistFragmentDirections.actionEditPlaylist(it)
-                            mainActivity.findNavController(R.id.nav_host_fragment).navigate(action)
+                            requireActivity().findNavController(R.id.nav_host_fragment).navigate(action)
                         }
                     }
                     R.id.deletePlaylist -> {
                         playlist?.let {
                             musicLibraryViewModel.deletePlaylist(it)
-                            mainActivity.findNavController(R.id.nav_host_fragment).popBackStack()
+                            requireActivity().findNavController(R.id.nav_host_fragment).popBackStack()
                         }
                     }
                     R.id.done -> {

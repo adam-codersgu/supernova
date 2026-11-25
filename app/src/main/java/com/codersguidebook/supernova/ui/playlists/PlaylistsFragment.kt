@@ -3,6 +3,7 @@ package com.codersguidebook.supernova.ui.playlists
 import android.os.Bundle
 import android.view.View
 import androidx.recyclerview.widget.GridLayoutManager
+import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.entities.Playlist
 import com.codersguidebook.supernova.fragment.RecyclerViewFragment
 import com.codersguidebook.supernova.fragment.adapter.PlaylistsAdapter
@@ -14,7 +15,7 @@ class PlaylistsFragment : RecyclerViewFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.root.layoutManager = GridLayoutManager(mainActivity, 3)
+        binding.root.layoutManager = GridLayoutManager(requireActivity(), 3)
 
         musicLibraryViewModel.allPlaylists.observe(viewLifecycleOwner) {
             updateRecyclerView(it)
@@ -22,7 +23,7 @@ class PlaylistsFragment : RecyclerViewFragment() {
     }
 
     override fun initialiseAdapter() {
-        adapter = PlaylistsAdapter(mainActivity)
+        adapter = PlaylistsAdapter(requireActivity() as MainActivity)
     }
 
     override fun requestNewData() {

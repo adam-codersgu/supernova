@@ -88,7 +88,7 @@ import java.util.stream.IntStream
 import kotlin.math.min
 import kotlin.streams.toList
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), MainActivityFragments {
 
     companion object {
         private const val LOG_TAG = "MainActivity"
@@ -468,7 +468,7 @@ class MainActivity : AppCompatActivity() {
      * @param oldIndex The original index in the play queue of the item that is being moved.
      * @param newIndex The new index in the play queue that the item should occupy.
      */
-    fun notifyQueueItemMoved(oldIndex: Int, newIndex: Int) {
+    override fun notifyQueueItemMoved(oldIndex: Int, newIndex: Int) {
         val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return
         val item = playQueue[oldIndex]
 
@@ -485,7 +485,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Respond to clicks on the play/pause button **/
-    fun playPauseControl() {
+    override fun playPauseControl() {
         if (!playQueueViewModel.playQueue.value.isNullOrEmpty()) {
             if (controller.isPlaying) {
                 controller.pause()
@@ -507,7 +507,7 @@ class MainActivity : AppCompatActivity() {
      *
      * @return A Boolean indicating whether the play queue is now shuffled
      */
-    fun toggleShuffleMode(): Boolean {
+    override fun toggleShuffleMode(): Boolean {
         val shouldShuffle = !sharedPreferences.getBoolean(SHUFFLE_MODE, false)
 
         setShuffleMode(shouldShuffle)
@@ -576,7 +576,7 @@ class MainActivity : AppCompatActivity() {
      *
      * @return An Integer representing the active repeat mode preference.
      */
-    fun toggleRepeatMode(): Int {
+    override fun toggleRepeatMode(): Int {
         val newRepeatMode = when (sharedPreferences.getInt(REPEAT_MODE, REPEAT_MODE_OFF)) {
             REPEAT_MODE_OFF -> REPEAT_MODE_ALL
             REPEAT_MODE_ALL -> REPEAT_MODE_ONE
@@ -598,7 +598,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Skip back to the previous track in the play queue (or restart the current song if less that five seconds in). */
-    fun skipBack() {
+    override fun skipBack() {
         if (controller.currentPosition >= 5000L) {
             seekTo(0)
             return
@@ -618,7 +618,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Skip forward to the next song in the play queue. */
-    fun skipForward() {
+    override fun skipForward() {
         if (!playQueueViewModel.playQueueContainsMoreThanOneSong()) {
             return
         }
@@ -656,10 +656,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Rewind the playback of the current song. */
-    fun fastRewind() = controller.seekBack()
+    override fun fastRewind() = controller.seekBack()
 
     /** Fast forward the playback of the current song. */
-    fun fastForward() = controller.seekForward()
+    override fun fastForward() = controller.seekForward()
 
     private fun saveAndPostPlayQueue(playQueue: List<MediaItem>) {
         playQueueViewModel.playQueue.value = playQueue
@@ -702,7 +702,7 @@ class MainActivity : AppCompatActivity() {
      * N.B. If shuffle is true then the startIndex is ignored.
      * @param shuffle Indicates whether the play queue should be shuffled.
      */
-    fun playNewPlayQueue(songs: List<Song>, startIndex: Int = 0, shuffle: Boolean = false) {
+    override fun playNewPlayQueue(songs: List<Song>, startIndex: Int, shuffle: Boolean) {
         if (songs.isEmpty() || startIndex >= songs.size) {
             Toast.makeText(this@MainActivity,
                 getString(R.string.error_generic_playback), Toast.LENGTH_LONG).show()
@@ -735,7 +735,7 @@ class MainActivity : AppCompatActivity() {
      * @param addSongsAfterCurrentQueueItem A Boolean indicating whether the songs should be added to
      * after the currently playing queue item. Default value = false.
      */
-    fun addSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean = false)
+    override fun addSongsToPlayQueue(songs: List<Song>, addSongsAfterCurrentQueueItem: Boolean)
             = lifecycleScope.launch(Dispatchers.Default) {
         val shuffleModeOn = sharedPreferences.getBoolean(SHUFFLE_MODE, false)
         val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return@launch
@@ -786,7 +786,7 @@ class MainActivity : AppCompatActivity() {
      *
      * @param position The desired playback position.
      */
-    fun seekTo(position: Long) {
+    override fun seekTo(position: Long) {
         controller.seekTo(position)
         updatePlaybackDurationAndPosition()
     }
@@ -814,7 +814,7 @@ class MainActivity : AppCompatActivity() {
      * @param hide A Boolean indicating whether the status bars should be hidden (true) or
      * revealed (false)
      */
-    fun hideStatusBars(hide: Boolean) {
+    override fun hideStatusBars(hide: Boolean) {
         val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
         if (hide) {
             supportActionBar?.setDisplayShowTitleEnabled(false)
@@ -852,7 +852,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Restore an expanded SearchView to its iconified state. */
-    fun iconifySearchView() {
+    override fun iconifySearchView() {
         if (!searchView.isIconified) {
             searchView.isIconified = true
             searchView.onActionViewCollapsed()
@@ -885,7 +885,7 @@ class MainActivity : AppCompatActivity() {
      *
      * @param songs A list of Song objects to be deleted
      */
-    fun deleteSongs(songs: List<Song>) {
+    override fun deleteSongs(songs: List<Song>) {
         val uris = songs.map { song ->
             ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, song.songId)
         }
@@ -913,7 +913,7 @@ class MainActivity : AppCompatActivity() {
      *
      * @param songs The list of Song objects to be added to a playlist.
      */
-    fun openAddToPlaylistDialog(songs: List<Song>) = lifecycleScope.launch(Dispatchers.Main) {
+    override fun openAddToPlaylistDialog(songs: List<Song>) = lifecycleScope.launch(Dispatchers.Main) {
         val songIds = songs.map { it.songId }
 
         val positiveButtonClick = { _: DialogInterface, _: Int ->
@@ -958,7 +958,7 @@ class MainActivity : AppCompatActivity() {
      *
      * @param songs The list of Song objects containing updated metadata.
      */
-    fun updateSongs(songs: List<Song>) {
+    override fun updateSongs(songs: List<Song>) {
         musicLibraryViewModel.updateSongs(songs)
 
         val playQueue = playQueueViewModel.playQueue.value?.toMutableList() ?: return
@@ -1001,10 +1001,10 @@ class MainActivity : AppCompatActivity() {
      *
      * @param dialog The dialog fragment to load.
      */
-    fun openDialog(dialog: DialogFragment) = dialog.show(supportFragmentManager, "")
+    override fun openDialog(dialog: DialogFragment) = dialog.show(supportFragmentManager, "")
 
     /** Hides the soft input keyboard, which can sometimes obstruct views. */
-    fun hideKeyboard() {
+    override fun hideKeyboard() {
         this.currentFocus?.let {
             val inputManager = this.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             inputManager.hideSoftInputFromWindow(it.windowToken, InputMethodManager.HIDE_NOT_ALWAYS)

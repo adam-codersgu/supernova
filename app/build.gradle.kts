@@ -82,6 +82,11 @@ dependencies {
     testImplementation("org.robolectric:robolectric:4.14")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
 
+    val fragmentVersion = "1.9.1"
+    debugImplementation("androidx.fragment:fragment-testing-manifest:$fragmentVersion")
+    testImplementation("androidx.fragment:fragment-testing:$fragmentVersion")
+    androidTestImplementation("androidx.fragment:fragment-testing:$fragmentVersion")
+
     val media3 = "1.10.1"
     implementation("androidx.media3:media3-exoplayer:$media3")
     implementation("androidx.media3:media3-session:$media3")

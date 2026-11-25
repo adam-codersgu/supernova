@@ -26,7 +26,7 @@ class PlaylistSongOptions(private val song: Song,
 ) : BaseDialogFragment() {
 
     override var _binding: ViewBinding? = null
-        get() = field as PlaylistSongOptionsBinding?
+        get() = field as? PlaylistSongOptionsBinding
     override val binding: PlaylistSongOptionsBinding
         get() = _binding!! as PlaylistSongOptionsBinding
 

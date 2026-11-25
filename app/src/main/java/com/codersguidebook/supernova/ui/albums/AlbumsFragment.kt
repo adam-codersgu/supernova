@@ -3,6 +3,7 @@ package com.codersguidebook.supernova.ui.albums
 import android.os.Bundle
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
+import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.entities.Song
 import com.codersguidebook.supernova.fragment.RecyclerViewWithScrollFragment
 import com.codersguidebook.supernova.fragment.adapter.AlbumsAdapter
@@ -42,7 +43,7 @@ class AlbumsFragment : RecyclerViewWithScrollFragment() {
     }
 
     override fun initialiseAdapter() {
-        adapter = AlbumsAdapter(mainActivity)
+        adapter = AlbumsAdapter(requireActivity() as MainActivity)
         adapter.stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
     }
 }

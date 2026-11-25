@@ -58,7 +58,7 @@ class EditArtistFragment : BaseEditMusicFragment() {
                         Toast.LENGTH_SHORT).show()
                     else -> {
                         for (song in songs) song.artist = newName
-                        mainActivity.updateSongs(songs)
+                        mainActivity?.updateSongs(songs)
                         musicLibraryViewModel.navigationArgument = newName
                         requireView().findNavController().popBackStack()
                         Toast.makeText(activity, getString(R.string.artist_updated),

@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.ItemTouchHelper.SimpleCallback
 import androidx.recyclerview.widget.ItemTouchHelper.UP
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.codersguidebook.supernova.MainActivity
 import com.codersguidebook.supernova.PlayQueueViewModel
 import com.codersguidebook.supernova.R
 import com.codersguidebook.supernova.dialogs.CreatePlaylist
@@ -49,7 +50,7 @@ class PlayQueueFragment : RecyclerViewFragment() {
                 viewHolder.itemView.alpha = 1.0f
 
                 if (from != null && to != null) {
-                    mainActivity.notifyQueueItemMoved(from!!, to!!)
+                    mainActivity?.notifyQueueItemMoved(from!!, to!!)
 
                     if (adapter.currentlyPlayingQueueIndex in from!!..to!!) {
                         Log.i("DEBUG", "The currently playing index ${adapter.currentlyPlayingQueueIndex}" +
@@ -101,7 +102,7 @@ class PlayQueueFragment : RecyclerViewFragment() {
     }
 
     override fun initialiseAdapter() {
-        adapter = PlayQueueAdapter(this, mainActivity)
+        adapter = PlayQueueAdapter(this, requireActivity() as MainActivity)
     }
 
     override fun requestNewData() {
@@ -132,8 +133,8 @@ class PlayQueueFragment : RecyclerViewFragment() {
                         for (queueItem in (adapter.items as List<MediaItem>)) {
                             songIds.add(queueItem.mediaId.toLong())
                         }
-                        if (songIds.isNotEmpty()) mainActivity.openDialog(CreatePlaylist(songIds))
-                        else Toast.makeText(mainActivity, getString(R.string.empty_play_queue), Toast.LENGTH_SHORT).show()
+                        if (songIds.isNotEmpty()) mainActivity?.openDialog(CreatePlaylist(songIds))
+                        else Toast.makeText(requireActivity(), getString(R.string.empty_play_queue), Toast.LENGTH_SHORT).show()
 
                         true
                     }
